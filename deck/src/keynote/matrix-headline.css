@@ -1,0 +1,7 @@
+.matrix-headline .matrix-line { display: block; height: 1.18em; line-height: inherit; white-space: pre; }
+.matrix-headline .matrix-glyph { display: inline-block; position: relative; vertical-align: top; white-space: pre; }
+/* The final character reserves its own width from the first paint onward. */
+.matrix-headline .matrix-glyph::before { content: attr(data-final); visibility: hidden; }
+.matrix-headline .matrix-glyph-live { position: absolute; inset: 0; white-space: pre; }
+.matrix-headline .matrix-glyph[data-glyph-state="scrambling"] .matrix-glyph-live { overflow: hidden; color: #b9ffd0; text-shadow: 0 0 17px #76ff8b66; }
+.matrix-headline .matrix-glyph[data-glyph-state="scrambling"]::after { content: ""; position: absolute; right: -2px; bottom: .17em; width: 2px; height: .71em; background: #afffc4; box-shadow: 0 0 13px #76ff8b88; }

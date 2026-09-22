@@ -1,5 +1,5 @@
 import { Frame, Reveal } from "./KeynoteFrame";
-import musicWave from "./data/music-waveform.json";
+import EnginePreview from "./EnginePreview";
 
 export function PersonalIntro() {
  return <Frame n={13} name="서제호의 30년" className="personal-slide personal-intro">
@@ -66,10 +66,11 @@ export function PersonalEngines() {
  return <Frame n={17} name="개발 중인 세 도구" className="personal-slide personal-engines">
   <p className="personal-eyebrow">실제 화면과 결과물</p>
   <h1>제가 만들고 있는 세 가지 도구</h1>
+  <p className="personal-engine-interaction">마우스로 움직이고 · 클릭해서 크게 보기 <span aria-hidden="true">↗</span></p>
   <div className="personal-engine-previews">
-   <Reveal className="personal-engine-preview personal-tts-preview"><div className="personal-preview-title"><span>TTS</span><h2>강의 음성 수정</h2></div><figure><img src="/engines/tts-editing.png" alt="TTS 엔진에서 페이지 범위와 목소리 후보 수를 정하는 편집 화면"/></figure><p>페이지를 골라 음성을 다시 만드는 화면</p></Reveal>
-   <Reveal className="personal-engine-preview personal-assets-preview" order={1}><div className="personal-preview-title"><span>ASSETS</span><h2>장면 배치</h2></div><figure><img src="/demos/assets-previz.jpg" alt="Assets 엔진이 출력한 장면 배치 영상의 한 프레임"/></figure><p>장면 배치와 카메라를 확인하는 스케치</p></Reveal>
-   <Reveal className="personal-engine-preview personal-music-preview" order={2}><div className="personal-preview-title"><span>MUSIC</span><h2>음악 후보</h2></div><figure aria-label="실제 생성한 15초 음악 후보의 파형"><div className="personal-preview-wave">{musicWave.peaks.map((h,i)=><i key={i} style={{height:Math.max(3,h*148)}}/>)}</div><span className="personal-wave-duration">00:00 <i/> 00:15</span></figure><p>15초 개발 후보 · 최종 청취 승인 전</p></Reveal>
+   <Reveal className="personal-engine-preview personal-tts-preview"><EnginePreview engine="TTS" title="제 목소리로 만든 강의" image="/demos/tts-lecture.jpg" alt="TTS Engine으로 만든 실제 강의 영상의 장표와 자막" description="대본에 음성과 자막을 붙인 결과"/></Reveal>
+   <Reveal className="personal-engine-preview personal-assets-preview" order={1}><EnginePreview engine="ASSETS" title="설명으로 만든 이미지" image="/factory-film/03-image.jpg" alt="현재 Local Assets Engine으로 생성한 청록색 유리 깃털의 새 이미지" description="이 발표를 준비하며 새로 생성한 이미지"/></Reveal>
+   <Reveal className="personal-engine-preview personal-music-preview" order={2}><EnginePreview engine="MUSIC" title="가사로 만든 음악" image="/factory-film/04-music.jpg" alt="실제 음악 후보의 파형을 원반 위에 표현한 Blender 장면" description="실제 음악 후보의 파형을 표현한 장면"/></Reveal>
   </div>
   <div className="personal-engines-next"><p>아직은 각각의 도구입니다.</p><span>하나씩 들어가 보겠습니다. <b aria-hidden="true">→</b></span></div>
  </Frame>;

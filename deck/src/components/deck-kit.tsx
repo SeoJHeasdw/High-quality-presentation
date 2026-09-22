@@ -325,6 +325,10 @@ export function useDeckNav(slides: SlideDef[], deckId: string) {
       sameGroup(s.index, to) ? s.runKey : s.runKey + 1;
 
     const onKey = (e: KeyboardEvent) => {
+      if (e.defaultPrevented) return;
+      // Embedded demos own activation keys; arrows still control the deck.
+      if (!jumpRef.current && (e.key === "Enter" || e.key === " ") &&
+          (e.target as Element | null)?.closest?.("button, a, [role='button'], input, textarea, select")) return;
       const go = (fn: (s: NavState) => NavState) => {
         e.preventDefault();
         setJump("");

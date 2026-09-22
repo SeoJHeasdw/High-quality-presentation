@@ -14,7 +14,8 @@
     "lessons": "node tools/lessons.mjs",
     "preflight": "node tools/preflight.mjs",
     "shots": "node tools/shots.mjs",
-    "check:keynote": "node tools/check-keynote.mjs"
+    "check:keynote": "node tools/check-keynote.mjs",
+    "check:performance": "node tools/check-performance.mjs"
   },
   "dependencies": {
     "@gsap/react": "^2.1.2",

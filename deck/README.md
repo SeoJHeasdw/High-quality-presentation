@@ -1,6 +1,6 @@
 # JAVIS / 제가 살아가려는 방식
 
-Technology Expert Lab 팀과 나누는 30년 생존 실험. 30장, 16:9 브라우저 발표다.
+Technology Expert Lab 팀과 나누는 30년 생존 실험. 37장, 58개 발표 단계로 구성한 16:9 브라우저 발표다.
 일반 설명은 숫자·비교·도해와 실제 결과물로, 대상 이동은 발표자가 누르는 큐로 표현한다. 표지와 Factory 연속 장면에는 공간 연출을 쓴다.
 
 ## 실행
@@ -18,6 +18,10 @@ npm run dev
 `F`: 전체화면, `H`: 조작 바, `M`: 모션 정지, `R`: 현재 장면 재시작.
 발표자 창은 같은 브라우저에서 열어야 동기화된다.
 
+4·17·27·31·32·37번에는 React Bits 기반 포인터·클릭 연출이 있다. 1번은 원래 표지로 유지한다.
+17번 이미지는 클릭하면 크게 열리고 Escape로 닫힌다. 확대 중에도 방향키로 발표를 이어갈 수 있다.
+적용 컴포넌트와 조작법은 [인터랙션 기록](../docs/react-bits-performance.md)에 있다.
+
 ## 이야기 흐름
 
 | 장표 | 이야기 |
@@ -30,7 +34,9 @@ npm run dev
 | 13~17 | 개인의 자원, 내 제품의 기준, Agent OS와 Factory |
 | 18~22 | Blender로 렌더링한 갤러리, 화면 통과, 매치 컷, 셔터 전환, 원형 전환 |
 | 23~25 | 저장된 실제 강의 영상, 프리비즈, 음악 후보 재생 |
-| 26~30 | 이 발표의 제작 과정, 남길 자산, 공개와 미완성 과제, 팀에 던지는 질문 |
+| 26 | 이 발표의 제작 과정 |
+| 27~33 | 기술을 다루는 수고가 줄어들 때, 목소리 사칭·관계 조작·동의 없는 합성의 위험 |
+| 34~37 | 남길 자산, 공개와 미완성 과제, 팀에 던지는 질문 |
 
 ## 서비스 시연 방식
 
@@ -50,6 +56,12 @@ npm run dev
 Blender 원본 렌더 도구는 `tools/render-factory-film.py`, 배포용 영상과 마지막 화면은 `public/factory-film/`에 있다.
 20번에 쓰는 청록색 새는 이 발표를 위해 Local Assets Engine으로 새로 생성한 2D 이미지다.
 이미지 원본·프롬프트·모델·시드는 `public/engines/factory-assets/hero.json`에 있다. 기존 출력이나 엔진 코드는 변경하지 않았다.
+
+17번의 미리보기도 실제 강의 캡처, 새 이미지가 등장하는 장면, 음악 파형 장면으로 맞췄다.
+27번에서는 검정·녹색 픽셀 얼굴로 분위기를 전환한다. 28번의 생성·받아쓰기·재생성,
+29번의 낮아지는 작업 문턱, 30~32번의 가상 피해 상황은 발표자의 다음 입력에 맞춰 공개한다.
+33번에서는 다른 경로로 확인하는 질문으로 마무리하고, 기존 결론으로 돌아간다.
+배경 이미지의 생성 기록은 `../docs/abuse-art.md`에 있다.
 
 2번은 중앙의 고양이 사진이 왼쪽으로 이동·축소된다. 3번에서는 강의 제작 요청을 보여주고, 다음 단계에서 실제 강의 영상 캡처를 공개한다. 사진 DOM은 돌아갈 때를 위해 유지한다.
 8번은 두 번 더 눌러 판매처 선택과 가격 전략 질문을 공개한다.
@@ -75,13 +87,15 @@ Blender 원본 렌더 도구는 `tools/render-factory-film.py`, 배포용 영상
 - 공통 프레임과 번호: `src/keynote/KeynoteFrame.tsx`
 - Factory 촬영·재생: `tools/render-factory-film.py`, `src/keynote/FactoryFilm.tsx`, `EngineSequence.tsx`, `factory-film.css`, `factory-artifacts.css`
 - 새로 생성한 이미지와 출처: `public/engines/factory-assets/`
-- 대본: `script/keynote/manifesto.md`, `stories.md`
+- 악용 사례 구간: `src/keynote/AbuseSlides.tsx`, `abuse-slides.css`, `public/abuse/`
+- 대본: `script/keynote/manifesto.md`, `stories.md`, `abuse.md`
 
 ## 검사
 
 ```bash
 npm run build
 npm run check:keynote # 5180 서버 실행 필요
+npm run check:performance # 포인터·클릭·키보드·모션 정지 검사
 npm run lint:offline
 ```
 

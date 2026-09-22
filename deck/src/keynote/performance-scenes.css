@@ -1,0 +1,10 @@
+.performance-click-spark { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 45; pointer-events: none; }
+.kn-slide.future-question { background: #080e15; }
+.future-question .future-surface { position: absolute; top: -81px; right: -12px; width: 865px; height: 742px; }
+.future-surface-touch { position: absolute; inset: 0 0 27px; padding: 0; border: 0; border-radius: 50%; background: transparent; cursor: crosshair; color: inherit; }
+.future-surface-touch > .ripple-distortion, .future-surface-touch > img { width: 100%; height: 100%; display: block; object-fit: cover; }
+.future-surface-touch:focus-visible { outline: 2px solid #a1d6eb; outline-offset: 4px; }
+.future-surface-touch:disabled { cursor: default; }
+.performance-touch-cue { position: absolute; bottom: 0; left: 0; right: 0; color: #829ba8; font-size: 21px; letter-spacing: .015em; text-align: center; pointer-events: none; }
+.future-question .future-eyebrow, .future-question h1, .future-question .future-baseline { position: relative; z-index: 2; pointer-events: none; }
+.future-question .future-baseline { position: absolute; }

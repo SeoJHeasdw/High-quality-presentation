@@ -1,0 +1,24 @@
+/* React Bits TrueFocus adaptation; license: ../LICENSE.md. */
+.rb-true-focus { position: relative; }
+.rb-true-focus__item {
+  appearance: none;
+  position: relative;
+  display: block;
+  min-width: 0;
+  border: 0;
+  margin: 0;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  background: transparent;
+  cursor: pointer;
+}
+.rb-true-focus__item:focus { outline: none; }
+.rb-true-focus__item:focus-visible { outline: 1px solid #ddbd8466; outline-offset: 13px; }
+.rb-true-focus__frame { position: absolute; top: 0; left: 0; pointer-events: none; z-index: 2; }
+.rb-true-focus__corner { position: absolute; width: 24px; height: 24px; border: 2px solid var(--accent, #ddbd84); }
+.rb-true-focus__corner.is-top-left { top: -13px; left: -13px; border-right: 0; border-bottom: 0; }
+.rb-true-focus__corner.is-top-right { top: -13px; right: -13px; border-left: 0; border-bottom: 0; }
+.rb-true-focus__corner.is-bottom-left { bottom: -13px; left: -13px; border-right: 0; border-top: 0; }
+.rb-true-focus__corner.is-bottom-right { bottom: -13px; right: -13px; border-left: 0; border-top: 0; }

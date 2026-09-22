@@ -1,0 +1,8 @@
+/* Scoped adaptation of React Bits PixelTransition.css. */
+.abuse-pixel-transition { position: absolute; inset: 0; overflow: hidden; }
+.abuse-pixel-transition .pixelated-image-card__default,
+.abuse-pixel-transition .pixelated-image-card__active,
+.abuse-pixel-transition .pixelated-image-card__pixels { position: absolute; inset: 0; width: 100%; height: 100%; }
+.abuse-pixel-transition .pixelated-image-card__active { display: none; z-index: 2; }
+.abuse-pixel-transition .pixelated-image-card__pixels { pointer-events: none; z-index: 3; }
+.abuse-pixel-transition .pixelated-image-card__pixel { display: none; position: absolute; }

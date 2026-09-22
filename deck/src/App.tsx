@@ -9,6 +9,7 @@ import {
 } from "./components/deck-kit";
 import CourseDeck from "./production/CourseDeck";
 import KeynoteDeck from "./keynote/KeynoteDeck";
+import { PerformanceMotionProvider } from "./keynote/usePerformanceMotion";
 import CourseMotionBoundary from "./components/CourseMotionBoundary";
 import "./styles/base.css";
 import "./styles/course-motion.css";
@@ -75,9 +76,11 @@ function DeckView({ id }: { id: DeckKey }) {
               그대로라 마운트를 유지한다 — 배경까지 다시 그려 화면이 찢어지는 것을
               막는다. runKey 도 묶음 안에서는 올라가지 않는다 (deck-kit.tsx). */}
           {id === "keynote" ? (
-            <div key={`${slide.group ?? slide.id}-${runKey}`} style={{ position: "absolute", inset: 0 }}>
-              {slide.render({ step, runKey })}
-            </div>
+            <PerformanceMotionProvider enabled={motion}>
+              <div key={`${slide.group ?? slide.id}-${runKey}`} style={{ position: "absolute", inset: 0 }}>
+                {slide.render({ step, runKey })}
+              </div>
+            </PerformanceMotionProvider>
           ) : <CourseMotionBoundary
             key={`${id}-${slide.group ?? slide.id}-${runKey}`}
             cue={`${slide.id}:${step}:${runKey}`}

@@ -60,16 +60,18 @@
 .personal-system-status { position: absolute; bottom: 0; left: 0; right: 0; font-size: 24px; line-height: 1.5; color: #d0bd96; border-top: 1px solid #33414a; padding-top: 25px; }
 .personal-system-status span { color: #8fa4b3; margin-left: 22px; }
 .personal-engines h1 { font-size: 65px; }
-.personal-engine-previews { display: grid; grid-template-columns: 1.23fr 1fr .86fr; gap: 38px; margin-top: 62px; }
+.personal-engine-interaction { position: absolute; right: 0; top: 150px; color: #8296a6; font-size: 18px; letter-spacing: -.01em; }
+.personal-engine-interaction span { color: #d8bd88; margin-left: 10px; font-size: 22px; }
+.personal-engine-previews { display: grid; grid-template-columns: repeat(3, 1fr); gap: 38px; margin-top: 62px; }
 .personal-preview-title { margin-bottom: 24px; }
 .personal-preview-title > span { font-size: 20px; letter-spacing: .055em; color: #91b9d3; }
 .personal-preview-title h2 { font-size: 34px; font-weight: 530; margin-top: 8px; }
-.personal-engine-preview figure { height: 294px; margin: 0; overflow: hidden; position: relative; background: #101b24; border-top: 1px solid #3a5060; border-bottom: 1px solid #3a5060; }
+.personal-engine-preview figure { height: 294px; margin: 0; position: relative; background: transparent; }
 .personal-engine-preview img { display: block; width: 100%; height: 100%; object-fit: cover; }
-.personal-tts-preview img { width: 150%; height: auto; max-width: none; position: absolute; top: -350px; left: -165px; }
-.personal-assets-preview img { object-position: center 68%; }
-.personal-engine-preview > p { margin-top: 20px; font-size: 22px; color: #9fafbb; line-height: 1.5; }
-.personal-music-preview figure { display: flex; align-items: center; padding: 0 18px; }
+.personal-tts-preview img { object-fit: contain; background: #080d15; }
+.personal-assets-preview img { object-fit: contain; background: #080d15; }
+.personal-engine-preview > p { margin-top: 22px; font-size: 22px; color: #9fafbb; line-height: 1.5; }
+.personal-music-preview img { object-fit: contain; background: #080d15; }
 .personal-preview-wave { height: 160px; width: 100%; display: flex; align-items: center; gap: 1px; }
 .personal-preview-wave i { flex: 1; min-width: 1px; background: #a5bfcd; }
 .personal-wave-duration { position: absolute; bottom: 22px; left: 22px; right: 22px; display: flex; align-items: center; gap: 15px; font-size: 17px; font-variant-numeric: tabular-nums; color: #8da6b6; }

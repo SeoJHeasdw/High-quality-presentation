@@ -1,0 +1,42 @@
+.closing-choices {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 115px;
+  width: 100%;
+  padding-top: 8px;
+}
+.closing-choices__title {
+  display: block;
+  font-size: 47px;
+  line-height: 1.4;
+  font-weight: 500;
+  letter-spacing: -.035em;
+  word-break: keep-all;
+  transition: color .2s ease;
+}
+.closing-choices__description {
+  display: block;
+  font-size: 30px;
+  line-height: 1.65;
+  font-weight: 400;
+  letter-spacing: inherit;
+  color: var(--muted);
+  margin-top: 23px;
+  word-break: keep-all;
+}
+.closing-choices .rb-true-focus__item::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -22px;
+  height: 2px;
+  background: var(--accent);
+  opacity: 0;
+  transition: opacity .2s ease;
+}
+.closing-choices .rb-true-focus__item[aria-pressed="true"] .closing-choices__title { color: var(--accent); }
+.closing-choices .rb-true-focus__item[aria-pressed="true"]::after { opacity: .65; }
+.closing-choices[data-motion="off"] *,
+.deck-keynote[data-motion="off"] .closing-choices * { transition: none; }
+@media (prefers-reduced-motion: reduce) { .closing-choices * { transition: none; } }
