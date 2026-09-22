@@ -1,0 +1,16 @@
+{
+  "tts": {
+    "source": "/Users/jaehoseo/Desktop/vswrk/javis/local-tts-engine/output/edits/2026-09-08/ch00-restart-repair-172747/CH00 전체.mp4",
+    "excerptStart": 25,
+    "excerptDuration": 24
+  },
+  "assets": {
+    "source": "/Users/jaehoseo/Desktop/vswrk/javis/local-assets-engine/output/jobs/20260922-103231-1368/previz/sequence.mp4",
+    "kind": "previz sketch"
+  },
+  "music": {
+    "source": "/Users/jaehoseo/Desktop/vswrk/javis/local-music-engine/projects/p0-cli/artifacts/candidates/job_657d9d3181014a5ca3e7bd7cce1ad5eb-seed-22092603.wav",
+    "kind": "15-second development candidate",
+    "humanReview": "unreviewed"
+  }
+}

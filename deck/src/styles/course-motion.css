@@ -1,0 +1,32 @@
+/* Whole-deck default motion. The boundary applies these values to unanimated text/state changes.
+   Infinite ambience and deliberately authored camera choreography retain their own timing. */
+.deck-course {
+  --course-motion-duration: 500ms;
+  --course-motion-move-duration: var(--course-motion-duration);
+  --course-motion-enter-duration: 850ms;
+  --course-motion-distance: 14px;
+  --course-motion-ease: ease;
+  --course-motion-move-ease: var(--course-motion-ease);
+}
+
+.deck-course .course-copy-lines span {
+  transition-duration: var(--course-motion-duration);
+  transition-timing-function: var(--course-motion-ease);
+}
+
+.deck-course .step {
+  transition-duration: var(--course-motion-duration);
+  transition-timing-function: var(--course-motion-move-ease);
+}
+
+.deck-course .step[data-on="false"] { transform: translateY(var(--course-motion-distance)); }
+.deck-course .step--dim[data-on="false"] { transform: none; }
+.deck-course .slide-enter { animation-duration: var(--course-motion-duration); animation-timing-function: var(--course-motion-move-ease); }
+
+/* Explicitly static capture only. M continues to control the authored ambient motion. */
+.deck-course[data-course-motion="off"] { --course-motion-duration: 0ms; --course-motion-move-duration: 0ms; --course-motion-enter-duration: 0ms; }
+.deck-course[data-course-motion="off"] .slide * { transition-duration: 0s !important; }
+@media (prefers-reduced-motion: reduce) {
+  .deck-course { --course-motion-duration: 0ms; --course-motion-move-duration: 0ms; --course-motion-enter-duration: 0ms; }
+  .deck-course .slide *, .deck-course .slide-enter { animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition-duration: 0s !important; }
+}

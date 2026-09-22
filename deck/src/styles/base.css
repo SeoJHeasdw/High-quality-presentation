@@ -1,0 +1,400 @@
+/* ─────────────────────────────────────────────
+   base.css — 리셋 + 1920×1080 스테이지 + 공통 유틸
+   시안별 시각 언어는 deck-a/b/c/d.css 에 있다.
+   ───────────────────────────────────────────── */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: #05070c;
+  font-family:
+    "Pretendard Variable",
+    Pretendard,
+    Inter,
+    -apple-system,
+    BlinkMacSystemFont,
+    system-ui,
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  overflow: hidden;
+}
+
+h1,
+h2,
+h3,
+h4,
+p,
+figure,
+ul,
+ol {
+  margin: 0;
+  padding: 0;
+}
+
+ul,
+ol {
+  list-style: none;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+
+/* ── 스테이지: 항상 1920×1080 으로 디자인하고 화면에 맞춰 스케일 ── */
+
+.stage-wrap {
+  position: fixed;
+  inset: 0;
+  background: #000;
+  overflow: hidden;
+}
+
+/* 1920×1080 은 거의 항상 뷰포트보다 크다. grid/flex 로 가운데 정렬하면
+   브라우저가 "safe" 정렬로 떨어져 start 정렬이 되고 화면이 한쪽으로 밀린다.
+   그래서 절대배치 + translate(-50%,-50%) 로 직접 중앙에 놓는다. */
+.stage {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 1920px;
+  height: 1080px;
+  overflow: hidden;
+  transform-origin: center center;
+  transform: translate(-50%, -50%) scale(var(--stage-scale, 1));
+}
+
+/* 슬라이드 공통 골격 */
+
+.slide {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+.slide__bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.slide__body {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  height: 100%;
+  padding: 96px 132px;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 발표자 HUD (슬라이드 밖, 녹화 시 H 로 숨김) */
+
+.hud {
+  position: fixed;
+  z-index: 60;
+  bottom: 18px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 9px 16px;
+  border-radius: 999px;
+  background: rgba(14, 16, 24, 0.82);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(14px);
+  color: #e8ecf6;
+  font-size: 12.5px;
+  letter-spacing: 0.02em;
+  transition:
+    opacity 0.25s ease,
+    transform 0.25s ease;
+}
+
+.hud[data-hidden="true"] {
+  opacity: 0;
+  transform: translate(-50%, 14px);
+  pointer-events: none;
+}
+
+.hud__pill {
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.09);
+  font-variant-numeric: tabular-nums;
+}
+
+.hud__pill[data-typing] {
+  background: rgba(255, 209, 102, 0.22);
+  color: #ffd166;
+}
+
+/* ── 장표 번호 이동 ──────────────────────────────────────
+   화면이 수백 장이라 →로는 뒤쪽에 닿을 수 없다. 숫자를 누르면 이게 뜨고
+   Enter 로 확정한다. 하단 바를 숨긴(H) 상태에서도 보여야 해서 HUD 밖에 있다. */
+
+.goto {
+  position: fixed;
+  z-index: 90;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  padding: 22px 34px;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 209, 102, 0.4);
+  background: rgba(10, 13, 24, 0.88);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.55);
+  color: #eef1ff;
+  font-family: "JetBrains Mono", monospace;
+  animation: goto-in 0.16s ease-out both;
+}
+
+@keyframes goto-in {
+  from { opacity: 0; transform: translate(-50%, -46%); }
+  to   { opacity: 1; transform: translate(-50%, -50%); }
+}
+
+.goto__label {
+  font-size: 12px;
+  letter-spacing: 0.14em;
+  color: #8b96b6;
+}
+
+.goto b {
+  font-size: 52px;
+  font-weight: 700;
+  line-height: 1;
+  color: #ffd166;
+  font-variant-numeric: tabular-nums;
+}
+
+.goto__total {
+  font-size: 18px;
+  color: #8b96b6;
+}
+
+.goto__hint {
+  margin-left: 8px;
+  font-size: 11px;
+  color: #8b96b6;
+}
+
+.goto kbd {
+  display: inline-block;
+  padding: 2px 6px;
+  border-radius: 5px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  font-size: 10.5px;
+}
+
+.hud__sep {
+  width: 1px;
+  height: 14px;
+  background: rgba(255, 255, 255, 0.16);
+}
+
+.hud kbd {
+  display: inline-block;
+  min-width: 20px;
+  padding: 2px 5px;
+  border-radius: 5px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  font-family: "JetBrains Mono", monospace;
+  font-size: 10.5px;
+  text-align: center;
+}
+
+.hud__deck {
+  display: flex;
+  gap: 5px;
+}
+
+.hud__deck button {
+  width: 24px;
+  height: 24px;
+  border-radius: 7px;
+  background: rgba(255, 255, 255, 0.08);
+  font-size: 11px;
+  font-weight: 700;
+  color: #aab3c6;
+}
+
+.hud__deck button[data-active="true"] {
+  background: #fff;
+  color: #10131c;
+}
+
+.hud__deck button[data-wide="true"] {
+  width: auto;
+  padding: 0 9px;
+  font-size: 9.5px;
+  letter-spacing: 0.05em;
+}
+
+/* 진행 바 (슬라이드 안, 시안별로 색만 다름) */
+
+.progress {
+  position: absolute;
+  z-index: 5;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 4px;
+  background: var(--progress-track, rgba(255, 255, 255, 0.08));
+}
+
+.progress__fill {
+  height: 100%;
+  width: var(--progress, 0%);
+  background: var(--progress-fill, #fff);
+  transition: width 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* 스텝(프래그먼트) 전환 */
+
+.step {
+  transition:
+    opacity 0.5s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.5s cubic-bezier(0.22, 1, 0.36, 1),
+    filter 0.5s ease;
+}
+
+.step[data-on="false"] {
+  opacity: 0;
+  transform: translateY(14px);
+  filter: blur(6px);
+}
+
+.step[data-on="true"] {
+  opacity: 1;
+  transform: none;
+  filter: none;
+}
+
+/* 흐릿하게 남기는 스텝 (표 행 등) */
+
+.step--dim[data-on="false"] {
+  opacity: 0.14;
+  transform: none;
+  filter: none;
+}
+
+/* ── 모션 ─────────────────────────────────────────────
+   영상이라 정지 프레임이 길면 죽은 화면처럼 보인다.
+   다만 6~10시간짜리라 "계속 움직이는 것"은 독이다. 원칙:
+   ① 전환은 짧고 한 방향  ② 앰비언트는 인지 못 할 만큼 느리게
+   ③ 의미 있는 모션(흐름·강조)에만 눈에 띄는 속도를 준다
+   앰비언트는 M 키로 통째로 끌 수 있다 ([data-motion='off']).
+   ───────────────────────────────────────────────────── */
+
+/* 슬라이드 진입. 나가는 슬라이드는 애니메이션하지 않는다 —
+   WebGL 배경을 두 개 동시에 띄우면 전환 순간 프레임이 떨어진다. */
+@keyframes slide-enter {
+  from {
+    opacity: 0;
+    transform: scale(1.014);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.slide-enter {
+  animation: slide-enter 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* 배경 앰비언트 드리프트 — 46초 주기. 보고 있으면 안 보이고, 없으면 허전하다. */
+@keyframes bg-drift {
+  0% {
+    transform: scale(1.03);
+  }
+  50% {
+    transform: scale(1.07) translate3d(-1.1%, -0.7%, 0);
+  }
+  100% {
+    transform: scale(1.03);
+  }
+}
+
+/* 끄기는 "일괄 pause" 가 아니라 "켤 때만 건다" 로 구현한다.
+   전부 pause 하면 슬라이드 진입 애니메이션까지 멈춰서 화면이 안 뜬다.
+   그래서 앰비언트 규칙은 전부 .deck-x[data-motion='on'] 아래에만 쓴다. */
+
+/* react-bits SplitText 는 inline 스타일로 display:inline-block / overflow:hidden 을 강제한다.
+   슬라이드에서는 제목이 줄 폭을 온전히 써야 하고 글자가 잘리면 안 되므로 되돌린다.
+   (inline 스타일이라 !important 가 필요하다) */
+.split-parent {
+  display: block !important;
+  overflow: visible !important;
+  width: 100%;
+}
+
+.mono {
+  font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+}
+
+.nowrap {
+  white-space: nowrap;
+}
+
+/* 다이어그램: 방금 등장한 노드에서 한 번 퍼지는 링 */
+@keyframes dg-ping {
+  0% {
+    opacity: 0.9;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.06);
+  }
+}
+
+.dg-ping {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.dg-dot {
+  pointer-events: none;
+}
+
+/* 발표자 창을 여는 HUD 버튼 */
+.hud__open {
+  padding: 4px 11px;
+  border-radius: 7px;
+  background: rgba(124, 140, 255, 0.22);
+  border: 1px solid rgba(124, 140, 255, 0.42);
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #c8d0ff;
+  white-space: nowrap;
+}
+
+.hud__open:hover {
+  background: rgba(124, 140, 255, 0.34);
+}

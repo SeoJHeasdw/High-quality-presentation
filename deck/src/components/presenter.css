@@ -1,0 +1,303 @@
+/* 발표자 창 — 노트북에서 읽는 화면. 녹화되지 않으므로 예쁨보다 가독성. */
+
+.pv {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  background: #0d0f14;
+  color: #e9edf6;
+  font-family:
+    "Pretendard Variable",
+    Pretendard,
+    system-ui,
+    -apple-system,
+    sans-serif;
+  overflow: hidden;
+}
+
+/* ── 상단 바 ── */
+
+.pv__bar {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 14px 22px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.09);
+  background: #12151d;
+}
+
+.pv__deck {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.pv__deck b {
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+
+.pv__deck span {
+  font-size: 12px;
+  color: #7b869e;
+}
+
+.pv__pos {
+  display: flex;
+  gap: 8px;
+}
+
+.pv__right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.pv__pill {
+  padding: 5px 11px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.07);
+  font-size: 12.5px;
+  color: #aab4c9;
+  white-space: nowrap;
+}
+
+.pv__pill b {
+  color: #fff;
+  font-variant-numeric: tabular-nums;
+}
+
+.pv__pill[data-warn="true"] {
+  background: rgba(255, 92, 92, 0.16);
+  color: #ff9d9d;
+}
+
+.pv__pill[data-off="true"] {
+  background: rgba(255, 255, 255, 0.04);
+  color: #5f6878;
+}
+
+/* 번호를 입력하는 중 */
+.pv__pill[data-typing] {
+  background: rgba(255, 209, 102, 0.18);
+  color: #ffd166;
+}
+
+.pv__pill[data-typing] b {
+  color: #ffd166;
+  font-size: 15px;
+}
+
+.pv__timer {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  font-variant-numeric: tabular-nums;
+  color: #7c8cff;
+}
+
+/* ── 본문 ── */
+
+.pv__main {
+  flex: 1;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 360px;
+  min-height: 0;
+}
+
+.pv__script {
+  display: flex;
+  flex-direction: column;
+  padding: 24px 30px;
+  min-height: 0;
+}
+
+.pv__label {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #6d7790;
+}
+
+.pv__label code {
+  padding: 2px 7px;
+  border-radius: 5px;
+  background: rgba(124, 140, 255, 0.14);
+  font-family: "JetBrains Mono", monospace;
+  font-size: 11px;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #b3bdff;
+}
+
+.pv__label button {
+  margin-left: auto;
+  padding: 4px 10px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.09);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #d6dcec;
+}
+
+.pv__label button:hover {
+  background: rgba(255, 255, 255, 0.16);
+}
+
+/* 읽는 글이다. 크고 줄간격 넓게. */
+.pv__text {
+  flex: 1;
+  overflow-y: auto;
+  font-size: 30px;
+  font-weight: 500;
+  line-height: 1.72;
+  letter-spacing: -0.02em;
+  color: #f4f6fb;
+  animation: pv-in 0.28s ease both;
+}
+
+.pv__text p + p {
+  margin-top: 1.1em;
+}
+
+@keyframes pv-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+.pv__empty {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  color: #5d677d;
+  font-size: 17px;
+}
+
+.pv__empty code {
+  padding: 8px 14px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  font-family: "JetBrains Mono", monospace;
+  font-size: 13px;
+  color: #93a0bd;
+}
+
+/* ── 사이드 ── */
+
+.pv__side {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  background: rgba(255, 255, 255, 0.07);
+  border-left: 1px solid rgba(255, 255, 255, 0.07);
+  min-height: 0;
+}
+
+.pv__panel {
+  padding: 18px 20px;
+  background: #0d0f14;
+}
+
+.pv__panel--grow {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.pv__next {
+  font-size: 16px;
+  line-height: 1.62;
+  color: #97a1b8;
+  display: -webkit-box;
+  -webkit-line-clamp: 5;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.pv__keys kbd {
+  display: inline-block;
+  min-width: 20px;
+  padding: 2px 6px;
+  border-radius: 5px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  font-family: "JetBrains Mono", monospace;
+  font-size: 11px;
+  text-align: center;
+  color: #dfe5f5;
+}
+
+/* ── 하단 ── */
+
+.pv__foot {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 10px 22px;
+  border-top: 1px solid rgba(255, 255, 255, 0.09);
+  background: #12151d;
+}
+
+.pv__jump {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.pv__jump button {
+  width: 28px;
+  height: 28px;
+  border-radius: 7px;
+  background: rgba(255, 255, 255, 0.07);
+  font-size: 12px;
+  font-weight: 700;
+  color: #9aa4ba;
+}
+
+.pv__jump button[data-active="true"] {
+  background: #7c8cff;
+  color: #0b0e18;
+}
+
+.pv__jump-gap {
+  padding: 0 4px;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 12px;
+  color: #596277;
+}
+
+.pv__keys {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  font-size: 12px;
+  color: #6d7790;
+}
+
+.pv__keys span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}

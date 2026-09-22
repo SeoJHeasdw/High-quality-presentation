@@ -1,0 +1,256 @@
+/* ─────────────────────────────────────────────
+   JAVIS bespoke scenes (A안 Night Keynote 토큰 위)
+   - data-on 없는 요소는 숨김. 스텝이 닿으면 data-on이 붙는다.
+   - .javis-h-title: 커스텀 씬 공용 제목 (48px title 토큰).
+   ───────────────────────────────────────────── */
+
+.javis-h-title {
+  font-size: var(--course-font-title);
+  line-height: 1.2;
+  margin: 0 0 40px;
+  min-height: 116px;
+}
+
+/* ── b · 오프닝 연속씬 ─────────────────────── */
+
+.javis-handoff__rows {
+  display: flex;
+  flex-direction: column;
+  gap: 44px;
+}
+
+.javis-handoff__row {
+  display: flex;
+  align-items: center;
+  gap: 32px;
+  opacity: 0;
+  transform: translateY(14px);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+
+.javis-handoff__row[data-on] {
+  opacity: 1;
+  transform: none;
+}
+
+.javis-handoff__year {
+  width: 210px;
+  flex: none;
+}
+
+.javis-handoff__year b {
+  display: block;
+  font-size: var(--course-font-heading);
+  font-weight: 800;
+}
+
+.javis-handoff__year span {
+  display: block;
+  font-size: var(--course-font-secondary);
+  color: var(--course-dim);
+  margin-top: 6px;
+}
+
+.javis-handoff__chips {
+  display: flex;
+  gap: 16px;
+  flex-wrap: nowrap;
+}
+
+.javis-chip {
+  font-size: var(--course-font-body);
+  font-weight: 600;
+  padding: 18px 26px;
+  border-radius: 14px;
+  border: 1.5px solid var(--course-line);
+  white-space: nowrap;
+  transition: all 0.45s ease;
+}
+
+.javis-chip[data-tone="human"] {
+  color: var(--course-gold);
+  border-color: rgba(255, 209, 102, 0.55);
+  background: rgba(255, 209, 102, 0.08);
+}
+
+.javis-chip[data-tone="dim"] {
+  color: var(--course-dim);
+  opacity: 0.45;
+}
+
+.javis-chip[data-tone="ai"] {
+  color: #fff;
+  border-color: var(--course-accent);
+  background: rgba(132, 146, 255, 0.22);
+  box-shadow: 0 0 28px rgba(132, 146, 255, 0.35);
+  animation: javis-pop 0.5s ease;
+}
+
+@keyframes javis-pop {
+  0% { transform: scale(0.92); }
+  60% { transform: scale(1.04); }
+  100% { transform: scale(1); }
+}
+
+.javis-handoff__stamp {
+  position: absolute;
+  right: 0;
+  bottom: 8px;
+  font-size: var(--course-font-display);
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  color: var(--course-gold);
+  opacity: 0;
+  transform: translateY(12px);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+
+.javis-handoff__stamp[data-on] {
+  opacity: 1;
+  transform: none;
+}
+
+/* ── a · 토큰 티커 ─────────────────────────── */
+
+.javis-ticker__row {
+  display: flex;
+  gap: 40px;
+  margin-top: 12px;
+}
+
+.javis-ticker__cell {
+  flex: 1;
+  border: 1.5px solid var(--course-line);
+  border-radius: 18px;
+  padding: 36px 40px;
+  opacity: 0.28;
+  transform: translateY(10px);
+  transition: opacity 0.5s ease, transform 0.5s ease, border-color 0.5s ease;
+}
+
+.javis-ticker__cell[data-on] {
+  opacity: 1;
+  transform: none;
+  border-color: rgba(132, 146, 255, 0.5);
+}
+
+.javis-ticker__value {
+  font-size: var(--course-font-display);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: var(--course-dim);
+  transition: color 0.4s ease;
+}
+
+.javis-ticker__value[data-tone="ai"] {
+  color: var(--course-accent);
+}
+
+.javis-ticker__value[data-tone="gold"] {
+  color: var(--course-gold);
+  text-shadow: 0 0 32px rgba(255, 209, 102, 0.4);
+}
+
+.javis-ticker__label {
+  font-size: var(--course-font-caption);
+  color: var(--course-muted);
+  margin-top: 10px;
+}
+
+.javis-ticker__landing {
+  font-size: var(--course-font-lead);
+  color: var(--course-paper);
+  text-align: center;
+  margin-top: 44px;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+}
+
+.javis-ticker__landing[data-on] {
+  opacity: 1;
+}
+
+/* ── c · 팩토리 순환도 ─────────────────────── */
+
+.javis-loop {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.javis-loop .javis-h-title {
+  align-self: flex-start;
+  min-height: 0;
+  margin-bottom: 8px;
+}
+
+.javis-loop__svg {
+  width: 620px;
+  height: 465px;
+}
+
+.javis-loop__track {
+  fill: none;
+  stroke: var(--course-line);
+  stroke-width: 2;
+}
+
+.javis-loop__flow {
+  fill: none;
+  stroke: var(--course-accent);
+  stroke-width: 2.5;
+  stroke-dasharray: 10 14;
+  opacity: 0.7;
+  animation: javis-dash 1.2s linear infinite;
+}
+
+@keyframes javis-dash {
+  to { stroke-dashoffset: -24; }
+}
+
+.javis-loop__dot {
+  fill: var(--course-gold);
+}
+
+.javis-loop__node {
+  fill: var(--course-ink-2);
+  stroke: var(--course-line);
+  stroke-width: 2;
+  transition: all 0.45s ease;
+}
+
+.javis-loop__node[data-on] {
+  stroke: var(--course-gold);
+  fill: rgba(255, 209, 102, 0.12);
+}
+
+.javis-loop__name {
+  fill: var(--course-dim);
+  font-size: 26px;
+  font-weight: 700;
+  transition: fill 0.4s ease;
+}
+
+.javis-loop__name[data-on] {
+  fill: var(--course-paper);
+}
+
+.javis-loop__caption {
+  display: flex;
+  align-items: baseline;
+  gap: 18px;
+  margin-top: 4px;
+  font-size: var(--course-font-body);
+  color: var(--course-muted);
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+
+.javis-loop__caption[data-on] {
+  opacity: 1;
+}
+
+.javis-loop__caption strong {
+  font-size: var(--course-font-subtitle);
+  color: var(--course-gold);
+}

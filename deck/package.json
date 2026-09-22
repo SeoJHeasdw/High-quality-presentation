@@ -1,0 +1,35 @@
+{
+  "name": "javis-deck",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "typecheck": "tsc --noEmit",
+    "build": "npm run typecheck && vite build",
+    "preview": "vite preview",
+    "lint:course": "node tools/lint-course.mjs",
+    "lint:offline": "node tools/lint-course.mjs --brief --offline",
+    "where": "node tools/where.mjs",
+    "lessons": "node tools/lessons.mjs",
+    "preflight": "node tools/preflight.mjs",
+    "shots": "node tools/shots.mjs",
+    "check:keynote": "node tools/check-keynote.mjs"
+  },
+  "dependencies": {
+    "@gsap/react": "^2.1.2",
+    "gsap": "^3.13.0",
+    "motion": "^12.23.12",
+    "ogl": "^1.0.11",
+    "react": "^19.1.1",
+    "react-dom": "^19.1.1"
+  },
+  "devDependencies": {
+    "@types/react": "^19.1.9",
+    "@types/react-dom": "^19.1.7",
+    "@vitejs/plugin-react": "^4.7.0",
+    "playwright": "^1.62.0",
+    "typescript": "^5.8.3",
+    "vite": "^7.1.2"
+  }
+}
