@@ -1,0 +1,91 @@
+/* Slides 6–12: one claim or relationship per frame, with shared objects kept in place. */
+.kn-slide.story-edit .kn-body { inset: 162px 100px 125px; }
+.kn-slide.story-edit .story-heading { position: absolute; inset: 0 0 auto; }
+.kn-slide.story-edit .story-heading > p { font-size: 23px; font-weight: 450; color: #b7c2cb; letter-spacing: -.015em; margin: 0 0 22px; }
+.kn-slide.story-edit .story-heading h1 { font-size: 72px; line-height: 1.25; font-weight: 620; letter-spacing: -.04em; }
+.kn-slide.story-edit .story-source { font-size: 18px; color: #91a1ae; line-height: 1.45; }
+.kn-slide.story-edit .story-source a { color: #91a9bc; }
+.kn-slide.story-edit .kn-reveal { transform: none; }
+.kn-slide.story-edit .kn-reveal[data-on] { animation: story-reveal .5s ease both; }
+@keyframes story-reveal { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+
+/* Keep the part-to-whole relationship visible at the same scale as the numbers. */
+.story-bots-revision .request-share { position: absolute; top: 238px; left: 0; right: 0; margin: 0; }
+.story-bots-revision .request-share-labels { display: grid; grid-template-columns: 53fr 47fr; }
+.story-bots-revision .request-share-labels > div { color: #8bc9f3; }
+.story-bots-revision .request-share-labels > div:last-child { color: #ddbd84; padding-left: 28px; }
+.story-bots-revision .request-share-labels span { display: block; font-size: 31px; margin-bottom: 6px; }
+.story-bots-revision .request-share-labels strong { display: block; font-size: 164px; line-height: 1.05; font-weight: 530; letter-spacing: -.065em; }
+.story-bots-revision .request-share-labels small { font-size: 73px; font-weight: 420; margin-left: 15px; letter-spacing: -.03em; }
+.story-bots-revision .request-share-bar { display: flex; height: 29px; width: 100%; margin-top: 27px; gap: 4px; }
+.story-bots-revision .request-share-bar i:first-child { flex: 53; background: #8bc9f3; }
+.story-bots-revision .request-share-bar i:last-child { flex: 47; background: #ddbd84; }
+.story-bots-revision .request-share-question { position: absolute; top: 575px; left: 0; }
+.story-bots-revision .request-share-question h2 { font-size: 48px; font-weight: 520; line-height: 1.35; }
+.story-bots-revision .story-scope { position: absolute; bottom: 46px; left: 0; color: #97a8b6; font-size: 21px; line-height: 1.45; }
+
+/* Show the familiar human check beside the site's explicit agent interface. */
+.story-web-revision .web-access-comparison { position: absolute; top: 257px; left: 0; right: 0; display: grid; grid-template-columns: 745px 1fr; gap: 100px; }
+.story-web-revision .access-label { display: block; font-size: 28px; color: #d7bf93; margin-bottom: 39px; }
+.story-web-revision .captcha-example { width: 655px; max-width: none; height: 125px; padding: 30px; margin: 0; background: transparent; border-color: #6c7c88; gap: 27px; }
+.story-web-revision .captcha-example i { width: 55px; height: 55px; color: #ddbd84; border-color: #8c928f; }
+.story-web-revision .captcha-example b { font-size: 36px; color: #e1e4e6; }
+.story-web-revision .web-agent-access { border-left: 1px solid #394b59; padding-left: 82px; min-height: 380px; }
+.story-web-revision .web-agent-access .access-label { color: #8bc9f3; margin-bottom: 25px; }
+.story-web-revision .web-agent-access h2 { font-size: 85px; font-weight: 570; color: #a7d8f8; line-height: 1.1; letter-spacing: -.045em; }
+.story-web-revision .web-agent-access > p { color: #d4dde3; font-size: 37px; line-height: 1.5; margin-top: 29px; }
+.story-web-revision .web-aside { border-top: 1px solid #34434e; padding-top: 22px; margin-top: 42px; display: flex; gap: 26px; align-items: baseline; }
+.story-web-revision .web-aside strong { color: #b9d9ed; font-size: 28px; font-weight: 520; }
+.story-web-revision .web-aside span { color: #a4b2bd; font-size: 24px; }
+.story-web-revision .secondary-source { font-size: 18px; color: #91a9bc; }
+
+/* The common conditions are stated once; the price difference carries the comparison. */
+.story-price-revision .price-request { position: absolute; top: 183px; left: 0; }
+.story-price-revision .price-request p { font-size: 38px; color: #e0c99f; line-height: 1.4; }
+.story-price-revision .price-offers { position: absolute; top: 304px; left: 0; right: 0; }
+.story-price-revision .price-common { font-size: 25px; color: #a7b5bf; padding-bottom: 25px; border-bottom: 1px solid #4d5b66; }
+.story-price-revision .price-offers table { width: 100%; table-layout: fixed; border-collapse: collapse; text-align: left; font-variant-numeric: tabular-nums; }
+.story-price-revision .price-offers th { color: #b7c3cb; font-size: 30px; font-weight: 450; padding-top: 31px; }
+.story-price-revision .price-offers td { font-size: 91px; font-weight: 540; line-height: 1.1; letter-spacing: -.035em; padding-top: 20px; color: #e6e8e8; }
+.story-price-revision .price-offers th:last-child,.story-price-revision .price-offers td:last-child { padding-left: 80px; }
+.story-price-revision .price-offers td small { font-size: 32px; color: #a3b0ba; font-weight: 400; margin-left: 13px; }
+.story-price-revision .price-offers[data-cue="1"] td:last-child,.story-price-revision .price-offers[data-cue="2"] td:last-child { color: #9ed5fa; }
+.story-price-revision .price-choice { position: absolute; left: 940px; top: 263px; font-size: 31px; color: #9ed5fa; font-weight: 550; }
+.story-price-revision .price-choice span { color: #d2dbe0; font-weight: 430; }
+.story-price-revision .price-hypothesis { position: absolute; left: 0; top: 655px; }
+.story-price-revision .price-hypothesis h2 { font-size: 41px; font-weight: 500; line-height: 1.4; color: #e3c998; }
+
+/* Existing geometry and port positions are unchanged throughout the incident. */
+.kn-slide.story-incident-revision .story-heading h1 { font-size: 68px; }
+.story-incident-revision .story-heading > p { color: #d3bb91; }
+.story-incident-revision .incident-map { position: absolute; top: 268px; left: 0; width: 1720px; height: 360px; }
+.story-incident-revision .study-room { border-radius: 0; background: transparent; border-color: #3d5262; }
+.story-incident-revision .study-room-number { font-size: 25px; color: #9db0bd; margin-top: 4px; }
+.story-incident-revision .study-room strong { font-size: 32px; color: #dce5eb; margin-top: 15px; font-weight: 540; }
+.story-incident-revision .study-room[data-connected] { border-color: #8db8d6; background: #10212d; }
+.story-incident-revision .shared-board { border-radius: 0; border-color: #688eac; background: #102331; gap: 9px; }
+.story-incident-revision .shared-board > span { font-size: 23px; }
+.story-incident-revision .shared-board strong { font-size: 29px; }
+.story-incident-revision .outside-system { border-radius: 0; background: #211f19; border-color: #9a8158; }
+.story-incident-revision .outside-system span { font-size: 22px; }
+.story-incident-revision .outside-system strong { font-size: 36px; }
+.story-incident-revision .wire-track { opacity: .38; }
+.story-incident-revision .incident-narrative { position: absolute; top: 665px; left: 0; margin: 0; font-size: 30px; line-height: 1.5; color: #bfcbd3; animation: story-reveal .4s ease both; }
+
+/* Put latency beside the returned value, then connect it to program execution. */
+.story-jev-revision .jev-response { position: absolute; left: 0; right: 0; top: 263px; display: grid; grid-template-columns: 950px 1fr; align-items: center; gap: 52px; }
+.story-jev-revision .jev-duration strong { display: block; color: #a7d8f8; font-size: 149px; font-weight: 530; letter-spacing: -.065em; line-height: 1.05; white-space: nowrap; }
+.story-jev-revision .jev-duration small { font-size: 50px; font-weight: 400; color: #93abbc; margin-left: 21px; letter-spacing: -.03em; }
+.story-jev-revision .jev-duration > p { font-size: 25px; color: #a6b5bf; margin-top: 24px; }
+.story-jev-revision .jev-return { font-size: 46px; line-height: 1.45; color: #d4dce2; }
+.story-jev-revision .jev-return em { color: #a7d8f8; }
+.story-jev-revision .jev-action-flow { position: absolute; top: 588px; left: 0; right: 0; display: grid; grid-template-columns: 330px 1fr 430px 1fr 430px; align-items: center; border-top: 1px solid #425260; padding-top: 31px; }
+.story-jev-revision .jev-action-flow > div { font-size: 34px; line-height: 1.35; }
+.story-jev-revision .jev-action-flow > div:last-child { text-align: right; color: #d7e2e9; }
+.story-jev-revision .jev-action-model { text-align: center; color: #a7d8f8; }
+.story-jev-revision .jev-action-flow small { display: block; font-size: 21px; margin-top: 11px; color: #91abc0; }
+.story-jev-revision .jev-action-flow > i { height: 1px; background: #6a94b1; position: relative; }
+.story-jev-revision .jev-action-flow > i::after { content: ""; position: absolute; right: 0; top: -5px; width: 10px; height: 10px; border-top: 1px solid #6a94b1; border-right: 1px solid #6a94b1; transform: rotate(45deg); }
+
+.deck-keynote[data-motion="off"] .story-edit .kn-reveal,.deck-keynote[data-motion="off"] .story-edit .incident-narrative { animation: none!important; }
+@media (prefers-reduced-motion: reduce) { .story-edit .kn-reveal,.story-edit .incident-narrative { animation: none!important; } }

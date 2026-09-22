@@ -1,0 +1,90 @@
+{
+  "renderer": "Blender EEVEE",
+  "clips": [
+    {
+      "phase": 18,
+      "src": "/factory-film/01-enter.mp4",
+      "poster": "/factory-film/01-enter.jpg",
+      "duration": 4.0,
+      "fps": 24,
+      "width": 1280,
+      "height": 720,
+      "transition": "architectural lateral crane",
+      "hold": "final frame",
+      "sources": [
+        "/demos/tts-lecture.jpg",
+        "/demos/tts-lecture.mp4",
+        "/engines/factory-assets/hummingbird.png",
+        "src/keynote/data/music-waveform.json"
+      ]
+    },
+    {
+      "phase": 19,
+      "src": "/factory-film/02-voice.mp4",
+      "poster": "/factory-film/02-voice.jpg",
+      "duration": 4.0,
+      "fps": 24,
+      "width": 1280,
+      "height": 720,
+      "transition": "opening portal / forward plunge through voice relief",
+      "hold": "final frame",
+      "sources": [
+        "/demos/tts-lecture.jpg",
+        "/demos/tts-lecture.mp4",
+        "/engines/factory-assets/hummingbird.png",
+        "src/keynote/data/music-waveform.json"
+      ]
+    },
+    {
+      "phase": 20,
+      "src": "/factory-film/03-image.mp4",
+      "poster": "/factory-film/03-image.jpg",
+      "duration": 4.0,
+      "fps": 24,
+      "width": 1280,
+      "height": 720,
+      "transition": "lecture-frame / image-frame surface match cut",
+      "hold": "final frame",
+      "sources": [
+        "/demos/tts-lecture.jpg",
+        "/demos/tts-lecture.mp4",
+        "/engines/factory-assets/hummingbird.png",
+        "src/keynote/data/music-waveform.json"
+      ]
+    },
+    {
+      "phase": 21,
+      "src": "/factory-film/04-music.mp4",
+      "poster": "/factory-film/04-music.jpg",
+      "duration": 4.0,
+      "fps": 24,
+      "width": 1280,
+      "height": 720,
+      "transition": "wing-edge whip / physical shutter to overhead record",
+      "hold": "final frame",
+      "sources": [
+        "/demos/tts-lecture.jpg",
+        "/demos/tts-lecture.mp4",
+        "/engines/factory-assets/hummingbird.png",
+        "src/keynote/data/music-waveform.json"
+      ]
+    },
+    {
+      "phase": 22,
+      "src": "/factory-film/05-reveal.mp4",
+      "poster": "/factory-film/05-reveal.jpg",
+      "duration": 4.0,
+      "fps": 24,
+      "width": 1280,
+      "height": 720,
+      "transition": "record-center iris / rising reveal of actual-media montage",
+      "hold": "final frame",
+      "sources": [
+        "/demos/tts-lecture.jpg",
+        "/demos/tts-lecture.mp4",
+        "/engines/factory-assets/hummingbird.png",
+        "src/keynote/data/music-waveform.json"
+      ]
+    }
+  ]
+}

@@ -11,7 +11,7 @@ await context.route('**/*',route=>{const u=new URL(route.request().url());if(!['
 await page.goto('http://127.0.0.1:5180/#keynote');await page.waitForSelector('.kn-slide');await page.evaluate(()=>document.fonts.ready);await page.waitForTimeout(200);
 const specs=await page.evaluate(async()=>{const d=await import('/src/keynote/KeynoteDeck.tsx');return d.default.slides.map(s=>({id:s.id,steps:s.steps||0,group:s.group}))});
 const scriptMissing=await page.evaluate(async()=>{const d=await import('/src/keynote/KeynoteDeck.tsx'),{SCRIPT}=await import('/src/script.ts');return d.default.slides.flatMap(s=>Array.from({length:(s.steps||0)+1},(_,i)=>SCRIPT[s.scriptKey]?.[i]?null:`${s.id}:${i}`).filter(Boolean))});
-const report={slides:[],errors,external,scriptMissing},frames=[];
+const report={slides:[],errors,external,scriptMissing,filmShots:[]},frames=[];
 const slideNumber=id=>specs.findIndex(s=>s.id===id)+1;
 const factoryStart=slideNumber('factory-enter');
 async function go(n){await page.keyboard.type(String(n));await page.keyboard.press('Enter');await page.waitForSelector(`.kn-slide[data-slide="${n}"]`)}
@@ -24,7 +24,11 @@ async function audit(){return page.evaluate(()=>{
  const canvas=root.querySelector('canvas');return{n:Number(root.dataset.slide),step:Number(root.dataset.step),overflow,overlap,webgl:canvas?{frames:Number(canvas.dataset.frames||0),ready:canvas.dataset.ready,fallback:!!root.querySelector('[data-fallback]')}:null};
 })}
 for(let n=1;n<=specs.length;n++){
- await go(n);await page.waitForTimeout(specs[n-1].group==='factory-flight'?2100:1150);
+ await go(n);
+ if(specs[n-1].group==='factory-flight'){
+  await page.waitForSelector('.factory-film[data-status="held"]',{timeout:15000});await page.waitForTimeout(500);
+  report.filmShots.push(await page.locator('.factory-film').evaluate(el=>{const v=el.querySelector('video[data-visible="true"]');return{phase:Number(el.dataset.phase),source:el.dataset.source,status:el.dataset.status,duration:v?.duration,muted:v?.muted}}));
+ }else await page.waitForTimeout(1150);
  for(let step=0;step<=specs[n-1].steps;step++){
   if(step){await page.keyboard.press('ArrowRight');await page.waitForTimeout(1500)}
   report.slides.push(await audit());
@@ -51,25 +55,30 @@ report.connections=await page.evaluate(()=>{
  const ports=[...document.querySelectorAll('.study-room-port')],board=document.querySelector('.shared-board').getBoundingClientRect();
  return paths.map((path,i)=>{const m=svg.getScreenCTM(),a=path.getPointAtLength(0).matrixTransform(m),b=path.getPointAtLength(path.getTotalLength()).matrixTransform(m),p=ports[i].getBoundingClientRect();return{roomError:Math.hypot(a.x-(p.x+p.width/2),a.y-(p.y+p.height/2)),boardError:Math.hypot(b.x-(board.x+board.width/2),b.y-board.y)}});
 });
-// Observe the same canvas and an intermediate camera position during a real transition.
-await go(factoryStart);await page.waitForTimeout(2100);
-await page.evaluate(()=>{window.__world=document.querySelector('canvas');window.__before=window.__world.dataset.camera});
-await page.keyboard.press('ArrowRight');await page.waitForTimeout(700);
-await page.screenshot({path:path.join(out,'flight-midpoint.png')});
-report.flight=await page.evaluate(()=>({sameCanvas:document.querySelector('canvas')===window.__world,moving:document.querySelector('.engine-world').dataset.moving==='true',intermediate:document.querySelector('canvas').dataset.camera!==window.__before,midCamera:document.querySelector('canvas').dataset.camera}));
-await page.waitForTimeout(1500);
-report.flight.arrived=await page.evaluate(()=>document.querySelector('.engine-world').dataset.moving==='false');
-await page.keyboard.press('ArrowLeft');await page.waitForTimeout(2100);
-report.flight.reverse=await page.evaluate(()=>document.querySelector('canvas')===window.__world&&document.querySelector('canvas').dataset.phase==='0');
+// Each authored film cue plays once, holds, and stays under presenter control.
+await go(factoryStart);await page.waitForSelector('.factory-film[data-status="held"]',{timeout:15000});
+await page.evaluate(()=>window.__film=document.querySelector('.factory-film'));
+await page.keyboard.press('ArrowRight');await page.waitForSelector('.factory-film[data-status="playing"]');
+await page.waitForTimeout(650);await page.screenshot({path:path.join(out,'film-transition.png')});
+report.film={samePlayer:await page.evaluate(()=>window.__film===document.querySelector('.factory-film')),muted:await page.locator('.factory-film video[data-visible="true"]').evaluate(el=>el.muted)};
+await page.waitForSelector('.factory-film[data-status="held"]',{timeout:15000});
+await page.waitForTimeout(400);report.film.noAutoAdvance=await page.locator('.kn-slide').getAttribute('data-slide')===String(factoryStart+1);
+await page.keyboard.press('ArrowLeft');await page.waitForSelector('.factory-film[data-phase="0"][data-status="held"]');
+report.film.reverse=await page.locator('.factory-film').getAttribute('data-transition')==='reverse';
 for(const key of ['ArrowRight','ArrowRight','ArrowRight'])await page.keyboard.press(key);
-await page.waitForTimeout(2200);
-report.flight.rapidNavigation=await page.evaluate(()=>document.querySelector('canvas')===window.__world&&document.querySelector('canvas').dataset.phase==='3');
-const before=Number(await page.locator('canvas').getAttribute('data-frames'));await page.waitForTimeout(300);
-report.motion={animates:Number(await page.locator('canvas').getAttribute('data-frames'))>before};
-await page.keyboard.press('m');await page.waitForTimeout(150);const paused=await page.locator('canvas').getAttribute('data-frames');await page.waitForTimeout(300);report.motion.pauses=paused===await page.locator('canvas').getAttribute('data-frames');await page.keyboard.press('m');await page.waitForTimeout(300);report.motion.resumes=Number(await page.locator('canvas').getAttribute('data-frames'))>Number(paused);
+await page.waitForSelector('.factory-film[data-phase="3"][data-status="held"]',{timeout:15000});
+report.film.rapidNavigation=await page.locator('.factory-film').getAttribute('data-source').then(x=>x.endsWith('04-music.mp4'));
+await page.keyboard.press('r');await page.waitForSelector('.factory-film[data-status="playing"]');await page.waitForTimeout(250);
+await page.keyboard.press('m');await page.waitForSelector('.factory-film[data-status="paused"]');
+report.film.motionOff=await page.locator('.factory-film').evaluate(el=>[...el.querySelectorAll('video')].every(v=>v.paused)&&!!el.querySelector('img[data-visible="true"]'));
+await page.keyboard.press('m');await page.waitForSelector('.factory-film[data-status="held"]');await page.waitForTimeout(350);
+report.film.resumeHolds=await page.locator('.factory-film').getAttribute('data-status')==='held';
 const presenter=await context.newPage();await presenter.goto('http://127.0.0.1:5180/#keynote/present');await presenter.waitForFunction(()=>document.querySelector('.pv__label code')?.textContent.includes('factory-music'));
 report.presenter={synced:true};await presenter.keyboard.press('ArrowRight');await page.waitForSelector('.kn-slide[data-slide="22"]');report.presenter.controlsAudience=true;await presenter.close();
-const noGpu=await browser.newPage({viewport:{width:1280,height:720}});await noGpu.addInitScript(()=>{const g=HTMLCanvasElement.prototype.getContext;HTMLCanvasElement.prototype.getContext=function(type,...args){return /webgl/.test(type)?null:g.call(this,type,...args)}});await noGpu.goto('http://127.0.0.1:5180/#keynote');await noGpu.waitForSelector('[data-fallback]');await noGpu.keyboard.type(String(slideNumber('factory-tts')));await noGpu.keyboard.press('Enter');await noGpu.waitForSelector('.engine-world[data-fallback]');report.fallback=(await noGpu.locator('h1').innerText())==='tts-engine';await noGpu.close();
+await page.waitForSelector('.factory-film[data-status="held"]',{timeout:15000});
+await page.evaluate(()=>window.__filmMedia=[...document.querySelectorAll('.factory-film video')]);
+await page.keyboard.press('ArrowRight');report.film.stopsOnLeave=await page.evaluate(()=>window.__filmMedia.every(v=>v.paused&&!v.hasAttribute('src')));
+const noGpu=await browser.newPage({viewport:{width:1280,height:720}});await noGpu.addInitScript(()=>{const g=HTMLCanvasElement.prototype.getContext;HTMLCanvasElement.prototype.getContext=function(type,...args){return /webgl/.test(type)?null:g.call(this,type,...args)}});await noGpu.goto('http://127.0.0.1:5180/#keynote');await noGpu.waitForSelector('[data-fallback]');await noGpu.keyboard.type(String(slideNumber('factory-tts')));await noGpu.keyboard.press('Enter');await noGpu.waitForSelector('.factory-film[data-status="held"]',{timeout:15000});report.fallback=true;await noGpu.close();
 report.media=[];
 for(const id of ['demo-tts','demo-assets','demo-music']){
  await go(slideNumber(id));await page.waitForTimeout(500);
@@ -90,4 +99,4 @@ for(const id of ['demo-tts','demo-assets','demo-music']){
 const images=await Promise.all(frames.map(async f=>({...f,data:(await fs.readFile(path.join(out,f.file))).toString('base64')})));
 await page.setViewportSize({width:1920,height:1900});await page.setContent(`<body style="margin:0;background:#15191c;color:#ccc;font:15px sans-serif"><div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;padding:18px">${images.map(x=>`<div><img style="width:100%;display:block" src="data:image/png;base64,${x.data}"><p style="margin:8px 0 6px">${x.label}</p></div>`).join('')}</div></body>`);await page.screenshot({path:path.join(out,'contact-sheet.png'),fullPage:true});
 await fs.writeFile(path.join(out,'report.json'),JSON.stringify(report,null,2));console.log(JSON.stringify(report,null,2));await browser.close();
-if(!Object.values(report.cat).every(Boolean)||report.connections.some(c=>c.roomError>2||c.boardError>2)||errors.length||external.length||scriptMissing.length||report.slides.some(s=>s.overflow.length||s.overlap.length||s.webgl?.fallback)||!Object.values(report.motion).every(Boolean)||!report.flight.sameCanvas||!report.flight.arrived||!report.flight.reverse||!report.flight.rapidNavigation||!report.fallback||report.media.some(m=>!m.playing||m.time<=0||!m.muted||!m.pausedByKey||!m.soundEnabled||!m.stoppedOnLeave))process.exitCode=1;
+if(!Object.values(report.cat).every(Boolean)||report.connections.some(c=>c.roomError>2||c.boardError>2)||errors.length||external.length||scriptMissing.length||report.slides.some(s=>s.overflow.length||s.overlap.length||s.webgl?.fallback)||report.filmShots.length!==5||new Set(report.filmShots.map(s=>s.source)).size!==5||report.filmShots.some(s=>s.status!=='held'||!(s.duration>1)||!s.muted)||!Object.values(report.film).every(Boolean)||!report.fallback||report.media.some(m=>!m.playing||m.time<=0||!m.muted||!m.pausedByKey||!m.soundEnabled||!m.stoppedOnLeave))process.exitCode=1;

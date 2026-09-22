@@ -1,25 +1,26 @@
-import EngineWorld from "./EngineWorld";
+import { useState } from "react";
 import { Frame } from "./KeynoteFrame";
+import FactoryFilm, { type FactoryFilmState } from "./FactoryFilm";
 
 const CUES = [
- { name:"Factory 안으로",title:"제가 만들고 있는 생산 기반",body:"하나의 아이디어를 여러 종류의 결과물로",detail:"",output:"" },
- { name:"목소리와 강의",title:"tts-engine",body:"내 목소리로 강의를 만든다",detail:"대본에서 음성, 자막, 강의 영상까지",output:"틀린 페이지의 음성을 다시 만들고 비교한다" },
- { name:"이미지와 입체",title:"assets-engine",body:"필요한 에셋을 직접 만든다",detail:"2D 이미지와 3D 소품을 만들고 편집한다",output:"결과를 보관하고 다음 작업에 다시 쓴다" },
- { name:"음악과 후보",title:"music-engine",body:"가사와 음악 지시로 곡을 만든다",detail:"후보를 듣고 고르며, 필요한 구간을 다시 만든다",output:"선택한 결과를 WAV로 내보낸다" },
- { name:"다시, 전체를 보면",title:"제가 갖추려는 것은 만드는 능력입니다",body:"목소리, 이미지, 음악을 내 작업에 꺼내 쓸 수 있도록",detail:"",output:"" },
+ { name:"Factory 안으로", label:"JAVIS FACTORY", title:"목소리, 이미지, 음악", detail:"제가 만든 세 도구 안으로 들어가 보겠습니다.", shot:"gallery" },
+ { name:"대본에서 강의 영상으로", label:"TTS ENGINE", title:"대본을 제 목소리로 읽습니다", detail:"음성과 자막을 붙인 실제 강의 영상", shot:"portal" },
+ { name:"설명을 이미지로", label:"ASSETS ENGINE", title:"청록색 유리 깃털, 금속 몸체", detail:"Local Assets Engine으로 새로 생성한 이미지", shot:"match-cut" },
+ { name:"가사에서 음악으로", label:"MUSIC ENGINE", title:"가사와 분위기를 음악으로", detail:"실제 음악 후보의 파형을 사용했습니다.", shot:"shutter" },
+ { name:"실제 결과물", label:"MADE WITH JAVIS", title:"이제 직접 보고 들어보겠습니다", detail:"먼저 제 목소리로 만든 강의 영상입니다.", shot:"iris" },
 ];
-export default function EngineSequence({phase}:{phase:number}){
- const cue=CUES[phase],overview=phase===0||phase===4;
- return <Frame n={12+phase} name={cue.name} className={`kn-engine-sequence ${overview?"is-overview":"is-engine"}`}>
-  <EngineWorld phase={phase}/>
-  <div className="engine-copy" key={phase}>
-   <p className="kn-kicker">{overview?"JAVIS FACTORY":`LOCAL PRODUCTION / 0${phase}`}</p>
-   <h1>{cue.title}</h1><h2>{cue.body}</h2>
-   {!overview&&<div className="engine-capabilities"><p>{cue.detail}</p><p>{cue.output}</p></div>}
+
+export default function EngineSequence({phase}:{phase:number}) {
+ const cue=CUES[phase];
+ const [film,setFilm]=useState<FactoryFilmState|null>(null);
+ const settled=film?.phase===phase&&film.settled;
+ return <Frame n={18+phase} name={cue.name} className={`kn-engine-sequence kn-factory-film factory-film-phase-${phase}`}>
+  <FactoryFilm phase={phase} onStateChange={setFilm}/>
+  <div className="factory-film-caption" data-ready={settled||undefined} data-shot={cue.shot} key={phase}>
+   <span className="factory-film-label">{cue.label}</span>
+   <h1>{cue.title}</h1>
+   <p>{cue.detail}</p>
   </div>
-  <div className="engine-route" aria-label="엔진 탐색 위치">
-   {["Factory","TTS","Assets","Music","전체 조망"].map((name,i)=><span key={name} data-active={i===phase||undefined}>{name}</span>)}
-  </div>
-  <span className="engine-navigation">→ 다음 장면으로 이동</span>
+  <div className="factory-film-cues" aria-label="Factory 장면 위치">{CUES.map((item,index)=><span key={item.label} data-active={index===phase||undefined} aria-label={item.name}/>)}</div>
  </Frame>;
 }

@@ -3,9 +3,14 @@ import { Frame, Briefing, Reveal, Rows, SlidePosition } from "./KeynoteFrame";
 import EngineSequence from "./EngineSequence";
 import { CatStory, BroodStory, BotStory, WebDoorStory, PriceStory, IncidentStory, JevStory } from "./Stories";
 import DemoPlayer from "./DemoPlayer";
+import { PersonalIntro, PersonalCompute, PersonalRequirements, PersonalSystem, PersonalEngines } from "./PersonalSlides";
 import "./keynote.css";
 import "./stories.css";
 import "./presentation.css";
+import "./opening-revision.css";
+import "./story-revision.css";
+import "./personal-slides.css";
+import "./factory-artifacts.css";
 
 const OriginalDeck: DeckModule = {
  className:"deck-keynote",
@@ -13,36 +18,26 @@ const OriginalDeck: DeckModule = {
   {id:"manifesto-cover",scriptKey:"manifesto-cover",render:()=> <Frame n={1} name="제가 살아가려는 방식" scene="uncertain" className="kn-cover">
    <p className="kn-kicker">AI Engineer의 개인 실험</p><h1>나는 자비스를<br/>만들고 있다</h1><p className="hero-note">앞으로 30년, 제 일과 삶을 어떻게 바꿔갈 것인가</p>
   </Frame>},
-  {id:"manifesto-person",scriptKey:"manifesto-person",render:()=> <Briefing n={2} name="출발점" title="제 삶의 문제로 가져와 봤습니다" lead="1995년생, 32살. 서울에 사는 AI Engineer입니다.">
-   <div className="brief-columns"><Reveal><span className="column-label">제 일</span><h2>AI를 이해하고<br/>업무에 적용하는 것</h2><p>직업으로 이 변화를 가까이 보고 있습니다.</p></Reveal><Reveal order={1}><span className="column-label">제 삶</span><h2>앞으로 어떤 일을 하며<br/>살아갈 것인가</h2><p>제 시간과 비용을 어디에 쓸지 고민하고 있습니다.</p></Reveal></div>
-  </Briefing>},
+  {id:"manifesto-person",scriptKey:"manifesto-person",render:()=> <PersonalIntro/>},
   {id:"manifesto-thirty",scriptKey:"manifesto-thirty",render:()=> <Briefing n={3} name="시간의 범위" title="앞으로 30년을 생각했습니다" lead="지금의 직업과 도구가 그대로일 것이라고 가정하기 어렵습니다.">
    <div className="life-timeline">{[["2026","지금 만드는 것"],["2031","5년 뒤의 일"],["2056","30년 뒤의 삶"]].map(([year,label],i)=><Reveal key={year} order={i}><strong>{year}</strong><span>{label}</span></Reveal>)}</div><p className="brief-takeaway">일이 바뀔 때마다, 처음부터 다시 시작하고 싶지는 않습니다.</p>
   </Briefing>},
-  {id:"manifesto-unknown",scriptKey:"manifesto-unknown",render:()=> <Frame n={4} name="예측의 한계" scene="uncertain" className="kn-unknown">
-   <p className="kn-kicker">그런데</p><h1>5년 뒤의 세상도<br/>모르겠다</h1><p className="hero-note">내가 준비하던 미래가 계속 바뀐다</p><span className="kn-unknown-year">2031<span>?</span></span>
+  {id:"manifesto-unknown",scriptKey:"manifesto-unknown",render:()=> <Frame n={4} name="5년 뒤" className="future-question">
+   <p className="future-eyebrow">사진 한 장을 알아보던 AI가 여기까지 왔습니다</p><h1>5년 뒤에는<br/><em>무슨 일을</em><br/>맡기게 될까?</h1><div className="future-year" aria-hidden="true">2031<strong>?</strong></div><p className="future-baseline"><span>2026</span>지금은 강의 영상을 만들고 있습니다.</p>
   </Frame>},
   {id:"tel-personal-change",scriptKey:"tel-personal-change",steps:1,render:({step})=> <Briefing n={5} name="우리에게 익숙한 이야기" title="AI가 중요하다는 것은 알고 있습니다" lead="제가 더 해보고 싶은 것은, 그 변화에 맞춰 제 생활을 바꾸는 일입니다." step={step}>
    <div className="brief-columns"><Reveal><span className="column-label">업무에서 보는 변화</span><h2>기업에 미치는 영향<br/>기술과 산업의 방향</h2><p>우리 팀이 계속 살피고 있는 문제입니다.</p></Reveal><Reveal order={1} on={step>=1}><span className="column-label">제가 직접 바꿔볼 것</span><h2>시간을 쓰는 방식<br/>혼자 만들 수 있는 범위</h2><p>그래서 제 일을 하나씩 맡겨보기 시작했습니다.</p></Reveal></div>
   </Briefing>},
-  {id:"manifesto-compute",scriptKey:"manifesto-compute",render:()=> <Briefing n={6} name="자원과 선택" title="저는 개인이 할 수 있는 쪽을 골랐습니다" lead="H100이 여덟 장 있었다면, 더 근본적인 연구에도 도전했을지 모릅니다.">
-   <div className="brief-columns"><Reveal><span className="column-label">관심이 있는 문제</span><h2>더 좋은 메모리<br/>더 오래 일하는 에이전트</h2><p>시간과 자원을 많이 투입하는 연구 경쟁입니다.</p></Reveal><Reveal order={1}><span className="column-label">지금 선택한 문제</span><h2>좋아지는 AI를<br/>제 생산 능력으로 연결하기</h2><p>제 기준과 작업 방식을 가진 시스템을 만듭니다.</p></Reveal></div>
-  </Briefing>},
-  {id:"manifesto-requirements",scriptKey:"manifesto-requirements",steps:1,render:({step})=> <Briefing n={7} name="개인 제품의 조건" title="사용자가 저 한 명이면 기준이 달라집니다" lead="기업용 제품은 여전히 어렵습니다. 제 도구는 제가 허용할 범위를 정할 수 있습니다." step={step}>
-   <div className="requirements-table" data-personal={step>=1||undefined}><div className="requirements-head"><span>고려할 것</span><span>많은 사용자를 위한 제품</span><span>제가 쓰는 도구</span></div>{[["응답 속도","기다림이 이탈이 될 수 있음","1초 정도는 기다릴 수 있음"],["배포","서비스 연속성을 관리","내가 안 쓰는 시간에 중단"],["사용 경험","서로 다른 환경과 요구","내 손에 맞게 구성"],["기능 범위","다양한 사용자 수요","필요한 것부터 구현"]].map(([a,b,c],i)=><Reveal className="requirements-row" order={i} key={a}><span>{a}</span><span>{b}</span><b>{c}</b></Reveal>)}</div><p className="brief-footnote">돈과 중요한 기록을 다룰 때 필요한 정확성·복구 기준은 유지합니다.</p>
-  </Briefing>},
+  {id:"manifesto-compute",scriptKey:"manifesto-compute",render:()=> <PersonalCompute/>},
+  {id:"manifesto-requirements",scriptKey:"manifesto-requirements",steps:1,render:({step})=> <PersonalRequirements step={step}/>},
   {id:"manifesto-possible",scriptKey:"manifesto-possible",render:()=> <Briefing n={8} name="실제로 달라진 점" title="생각을 도구로 만드는 일이 가까워졌습니다" lead="에이전트와 함께 만들고, 직접 써보고, 필요한 부분을 고칩니다.">
    <Rows items={[["시작","혼자 구현할 양 때문에 미루던 일을 작게 만들어봅니다."],["사용","제 작업에 넣어보면 필요한 것이 더 구체적으로 보입니다."],["수정","불편한 부분을 설명하고, 고친 결과를 다시 확인합니다."]]}/>
   </Briefing>},
-  {id:"manifesto-system",scriptKey:"manifesto-system",steps:2,render:({step})=> <Briefing n={9} name="제가 원하는 자비스" title="일을 맡기고, 결과를 꺼내 쓰는 시스템" lead="내 맥락을 가지고 일을 이어가는 Agent OS와, 결과물을 만드는 Factory입니다." step={step}>
-   <div className="system-flow" data-step={step}><Reveal><span className="column-label">AGENT OS</span><h2>무엇을 할지 정리하고<br/>필요한 일을 맡긴다</h2><p>내 기준과 작업의 맥락</p></Reveal><div className="flow-connection"><i/></div><Reveal order={1} on={step>=1}><span className="column-label">FACTORY</span><h2>필요한 결과물을<br/>반복해서 만든다</h2><p>음성, 에셋, 음악을 만드는 엔진</p></Reveal></div><Reveal on={step>=2} className="brief-takeaway">무엇을 만들지, 어떤 결과를 쓸지는 제가 결정합니다.</Reveal>
-  </Briefing>},
+  {id:"manifesto-system",scriptKey:"manifesto-system",steps:2,render:({step})=> <PersonalSystem step={step}/>},
   {id:"manifesto-day",scriptKey:"manifesto-day",render:()=> <Briefing n={10} name="제 생활에 대입하면" title="만들고 싶은 것은 구체적입니다" lead="직업 밖에서도 제 아이디어를 결과물로 만들어보고 싶습니다.">
    <Rows items={[["강의 한 편","제 대본을 제 목소리로 읽고, 자막과 화면을 붙입니다."],["게임과 콘텐츠","필요한 이미지와 3D 소품을 직접 만들고 고칩니다."],["음악 한 곡","가사와 방향을 주고, 후보를 들으며 마음에 드는 곡을 고릅니다."]]}/>
   </Briefing>},
-  {id:"factory-repositories",scriptKey:"factory-repositories",render:()=> <Briefing n={11} name="실제 만들고 있는 것" title="세 엔진이 이미 별도 프로젝트로 있습니다" lead="각 엔진을 만들고 쓰면서, 자비스의 생산 기반을 쌓고 있습니다.">
-   <Rows items={[["local-tts-engine","개인 음성, 자막, 강의 영상 제작과 수정"],["local-assets-engine","2D 이미지, 3D 에셋 생성과 편집·보관"],["local-music-engine","곡 후보 생성, 비교·선택과 구간 수정"]]}/><p className="brief-footnote">Apple Silicon Mac에서 개발 중인 실제 로컬 프로젝트</p>
-  </Briefing>},
+  {id:"factory-repositories",scriptKey:"factory-repositories",render:()=> <PersonalEngines/>},
   ...["factory-enter","factory-tts","factory-assets","factory-music","factory-return"].map((id,phase)=>({id,scriptKey:id,group:"factory-flight",render:()=> <EngineSequence phase={phase}/>})),
   {id:"factory-revision",scriptKey:"factory-revision",steps:1,render:({step})=> <Briefing n={17} name="만든 뒤의 작업" title="한 번 생성하고 끝내지 않습니다" lead="결과를 고르고 수정할 수 있어야, 제 작업에 계속 쓸 수 있습니다." step={step} className="brief-evidence">
    <div className="evidence-copy"><Reveal><h2>후보를 비교하고<br/>필요한 곳을 다시 만든다</h2><p>원본과 선택 기록을 남깁니다.</p></Reveal><Reveal order={1} on={step>=1}><h2>최종 판단은 직접 한다</h2><p>발음, 음악성, 에셋 품질을<br/>자동 검사만으로 승인하지 않습니다.</p></Reveal></div>

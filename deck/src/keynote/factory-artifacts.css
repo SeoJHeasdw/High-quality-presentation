@@ -1,0 +1,15 @@
+/* Five authored shots. The player owns their timing; copy appears on the final hold. */
+.kn-factory-film .kn-body { inset: 0; }
+.kn-factory-film .kn-body::after { content: ""; position: absolute; inset: 0; z-index: 1; background: linear-gradient(0deg, #050a13d9, transparent 36%, transparent 83%, #050a1370); pointer-events: none; }
+.factory-film-caption { position: absolute; left: 100px; right: 100px; bottom: 146px; z-index: 3; opacity: 0; transform: translateY(14px); transition: none; pointer-events: none; }
+.factory-film-caption[data-ready] { opacity: 1; transform: none; transition: opacity .35s ease, transform .45s ease; }
+.factory-film-label { display: block; font-size: 20px; letter-spacing: .13em; color: #e3c895; margin-bottom: 16px; }
+.kn-factory-film .factory-film-caption h1 { font-size: 56px; line-height: 1.2; letter-spacing: -.035em; font-weight: 570; }
+.factory-film-caption p { font-size: 25px; color: #bac5ce; line-height: 1.45; margin-top: 17px; }
+.factory-film-phase-0 .factory-film-caption, .factory-film-phase-4 .factory-film-caption { text-align: center; }
+.factory-film-phase-2 .factory-film-caption { text-align: right; }
+.factory-film-cues { position: absolute; z-index: 3; left: 100px; bottom: 96px; display: flex; gap: 9px; }
+.factory-film-cues span { width: 29px; height: 2px; background: #71808a66; }
+.factory-film-cues span[data-active] { background: #e1bd7c; }
+.deck-keynote[data-motion="off"] .factory-film-caption { transition: none; }
+@media(prefers-reduced-motion:reduce) { .factory-film-caption { transition: none; } }

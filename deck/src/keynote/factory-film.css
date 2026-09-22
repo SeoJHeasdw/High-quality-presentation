@@ -1,0 +1,30 @@
+.kn-engine-sequence .kn-body { inset: 0; }
+.factory-film {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  background: radial-gradient(ellipse at 65% 48%, #122538, #060b13 70%);
+  isolation: isolate;
+}
+.factory-film__video,
+.factory-film__poster {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+  object-position: center;
+  visibility: hidden;
+  transition: none;
+}
+/* Encoded shots own their cuts. Only decoded frames become visible. */
+.factory-film [data-visible="true"] { visibility: visible; }
+.factory-film__fallback {
+  position: absolute;
+  left: 100px;
+  bottom: 190px;
+  font-size: 23px;
+  color: #b9c6d1;
+}

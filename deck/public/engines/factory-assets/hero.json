@@ -1,0 +1,21 @@
+{
+  "type": "image",
+  "name": "Mechanical hummingbird",
+  "texture": "/engines/factory-assets/hummingbird.png",
+  "reference": "/engines/factory-assets/hummingbird.png",
+  "aspect": 1,
+  "width": 1024,
+  "height": 1024,
+  "provenance": {
+    "engine": "local-assets-engine",
+    "jobId": "20260922-194414-1a74",
+    "recipe": "image",
+    "model": "flux2-klein-4b",
+    "sourceFile": "raw/candidate.png",
+    "finishedAt": "2026-09-22T19:44:39+09:00",
+    "prompt": "Photorealistic product photograph of a mechanical hummingbird sculpture hovering with both wings fully spread, translucent deep teal glass feathers, brushed titanium body, warm brass joints, soft golden light inside the chest, near-black studio background, soft rim lighting, intricate engineering details, three-quarter view, entire object visible, luxury product photograph, no text or logo, physically realistic materials, carefully controlled studio lighting, clean composition, sharp product details, natural contact shadow",
+    "seed": 22092620,
+    "review": "pending",
+    "sha256": "7ddca481d347e4480f142758c30bfc2308577fac9c96d1d8202bc1a45a349e35"
+  }
+}

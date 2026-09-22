@@ -1,7 +1,7 @@
 # JAVIS / 제가 살아가려는 방식
 
 Technology Expert Lab 팀과 나누는 30년 생존 실험. 30장, 16:9 브라우저 발표다.
-일반 설명은 PPT의 표·비교·도해로, 대상 이동은 발표자가 누르는 큐로, 강한 영상미는 이벤트 장면으로 나눈다. 4번은 일반 장표의 기본 템플릿으로 쓰지 않는다.
+일반 설명은 숫자·비교·도해와 실제 결과물로, 대상 이동은 발표자가 누르는 큐로 표현한다. 표지와 Factory 연속 장면에는 공간 연출을 쓴다.
 
 ## 실행
 
@@ -28,7 +28,7 @@ npm run dev
 | 9~11 | 초기 훈련과 이후 평가에서 격리된 에이전트들이 연결된 사건 |
 | 12 | Jev의 빠른 판단과 프로그램 안으로 들어가는 AI |
 | 13~17 | 개인의 자원, 내 제품의 기준, Agent OS와 Factory |
-| 18~22 | Factory, TTS, Assets, Music, 전체 조망을 잇는 3D 카메라 이동 |
+| 18~22 | Blender로 렌더링한 갤러리, 화면 통과, 매치 컷, 셔터 전환, 원형 전환 |
 | 23~25 | 저장된 실제 강의 영상, 프리비즈, 음악 후보 재생 |
 | 26~30 | 이 발표의 제작 과정, 남길 자산, 공개와 미완성 과제, 팀에 던지는 질문 |
 
@@ -42,16 +42,24 @@ npm run dev
 하나씩 사용한다. TTS와 Assets는 기존 `./app.sh`, Music은 기존 `npm run start:app`을 실행한다.
 이 발표에서 앱을 자동 기동하거나 무거운 생성 작업을 시작하지 않는다.
 
-18번에서 →로 22번까지 이동해야 연속 카메라 이동을 볼 수 있다.
-2~3번은 중앙의 고양이 사진이 왼쪽으로 이동·축소된 뒤, 같은 사진을 유지하며 현재의 부탁으로 이어진다.
+18번부터 →로 진행하면 각 장면의 영상이 한 번 재생되고 마지막 화면에서 멈춘다.
+18→19는 중앙 화면을 통과해 강의 화면으로 들어가고, 19→20은 화면 프레임을 맞춰 이미지 장면으로 바뀐다.
+20→21은 화면을 가로지르는 물체 뒤에서 탑뷰로 전환하고, 21→22는 원반의 중앙을 통과해 전체 결과물을 보여준다.
+←는 이전 장면의 마지막 화면을 보여준다. M으로 모션을 끄면 마지막 화면을 바로 표시하고, 다시 켜도 이미 끝난 장면을 재생하지 않는다. R은 현재 영상을 처음부터 재생한다.
+
+Blender 원본 렌더 도구는 `tools/render-factory-film.py`, 배포용 영상과 마지막 화면은 `public/factory-film/`에 있다.
+20번에 쓰는 청록색 새는 이 발표를 위해 Local Assets Engine으로 새로 생성한 2D 이미지다.
+이미지 원본·프롬프트·모델·시드는 `public/engines/factory-assets/hero.json`에 있다. 기존 출력이나 엔진 코드는 변경하지 않았다.
+
+2번은 중앙의 고양이 사진이 왼쪽으로 이동·축소된다. 3번에서는 강의 제작 요청을 보여주고, 다음 단계에서 실제 강의 영상 캡처를 공개한다. 사진 DOM은 돌아갈 때를 위해 유지한다.
 8번은 두 번 더 눌러 판매처 선택과 가격 전략 질문을 공개한다.
-9~11번은 같은 방과 게시판을 유지하며 사건의 순서를 보여준다.
+9~11번은 같은 에이전트와 공유 서버 도해를 유지하며 사건의 순서를 보여준다.
 
 ## 근거와 범위
 
 출처 링크는 해당 장표 아래와 대본에 있다. `FACT-CHECK.md`에 수치의 범위와 확인되지 않은
 주장을 정리했다. Cloudflare 비중은 2025.12.02 HTML 요청의 예시이며 현재 인터넷 전체의
-고정 비율이 아니다. 가격 전략과 실시간 주식 트레이딩은 응용 가설로 표시한다.
+고정 비율이 아니다. 가격 전략은 발표자의 가설로 표시한다. Jev 응답 시간은 개발사가 발표한 측정 범위다.
 
 저장된 미디어 원본과 발췌 위치는 `public/demos/provenance.json`에 기록했다.
 원본 엔진 저장소와 기존 생성물은 수정하지 않았다. 인터넷 연결은 외부 원문·리플레이 링크를
@@ -62,9 +70,11 @@ npm run dev
 - 순서와 본문: `src/keynote/KeynoteDeck.tsx`
 - 새 사례: `src/keynote/Stories.tsx`, `stories.css`
 - PPT 디자인과 진행 장면: `presentation.css`, `CatScene.tsx`, `PriceComparison.tsx`, `IncidentDiagram.tsx`
+- 1~17번 리뷰 반영: `opening-revision.css`, `story-revision.css`, `PersonalSlides.tsx`, `personal-slides.css`
 - 실제 미디어 재생: `src/keynote/DemoPlayer.tsx`
 - 공통 프레임과 번호: `src/keynote/KeynoteFrame.tsx`
-- Factory 세계: `src/keynote/EngineWorld.tsx`, `EngineSequence.tsx`
+- Factory 촬영·재생: `tools/render-factory-film.py`, `src/keynote/FactoryFilm.tsx`, `EngineSequence.tsx`, `factory-film.css`, `factory-artifacts.css`
+- 새로 생성한 이미지와 출처: `public/engines/factory-assets/`
 - 대본: `script/keynote/manifesto.md`, `stories.md`
 
 ## 검사
@@ -75,7 +85,7 @@ npm run check:keynote # 5180 서버 실행 필요
 npm run lint:offline
 ```
 
-전체 장표·단계와 대본 연결, 텍스트 배치, 외부 요청, 3D 공간 유지와 역방향 이동,
+전체 장표·단계와 대본 연결, 텍스트 배치, 외부 요청, 영상의 한 번 재생과 마지막 화면 유지, 역방향 이동,
 발표자 동기화, GPU 비활성 대체 화면, 미디어의 실제 로딩과 재생을 확인한다.
 검수 결과와 캡처는 `render/keynote/`에 저장한다.
 
