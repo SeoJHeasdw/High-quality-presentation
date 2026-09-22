@@ -31,6 +31,26 @@ for(let n=1;n<=specs.length;n++){
  }
  const file=`slide-${String(n).padStart(2,'0')}.png`;await page.screenshot({path:path.join(out,file)});frames.push({file,label:await page.locator('.kn-slide').getAttribute('aria-label')});
 }
+// Verify lecturer-controlled image continuity, movement and reverse navigation.
+await go(slideNumber('story-cat'));await page.waitForTimeout(1300);
+await page.evaluate(()=>{window.__cat=document.querySelector('.cat-subject img');window.__catStart=document.querySelector('.cat-subject').getBoundingClientRect().toJSON()});
+await page.keyboard.press('ArrowRight');await page.waitForTimeout(350);
+const catMiddle=await page.locator('.cat-subject').evaluate(el=>el.getBoundingClientRect().toJSON());
+await page.screenshot({path:path.join(out,'cat-midpoint.png')});
+await page.waitForTimeout(1000);
+report.cat=await page.evaluate(mid=>{const end=document.querySelector('.cat-subject').getBoundingClientRect(),start=window.__catStart;return{sameImage:document.querySelector('.cat-subject img')===window.__cat,movesLeft:end.x<start.x-200,shrinks:end.width<start.width*.8,interpolates:mid.x> end.x+1&&mid.x<start.x-1}},catMiddle);
+await page.keyboard.press('ArrowRight');await page.keyboard.press('ArrowRight');await page.waitForTimeout(1300);
+report.cat.nextSlideSameImage=await page.evaluate(()=>document.querySelector('.cat-subject img')===window.__cat);
+report.cat.singleHeading=await page.locator('.cat-scene-heading').count()===1;
+for(let i=0;i<3;i++)await page.keyboard.press('ArrowLeft');await page.waitForTimeout(1300);
+report.cat.reverse=await page.evaluate(()=>Math.abs(document.querySelector('.cat-subject').getBoundingClientRect().x-window.__catStart.x)<1);
+// Measure rendered connector endpoints against the actual HTML node ports.
+await go(slideNumber('story-board'));await page.waitForTimeout(1000);
+report.connections=await page.evaluate(()=>{
+ const svg=document.querySelector('.incident-wiring'),paths=[...svg.querySelectorAll(':scope > g:not(.outside-wire) .wire-track')];
+ const ports=[...document.querySelectorAll('.study-room-port')],board=document.querySelector('.shared-board').getBoundingClientRect();
+ return paths.map((path,i)=>{const m=svg.getScreenCTM(),a=path.getPointAtLength(0).matrixTransform(m),b=path.getPointAtLength(path.getTotalLength()).matrixTransform(m),p=ports[i].getBoundingClientRect();return{roomError:Math.hypot(a.x-(p.x+p.width/2),a.y-(p.y+p.height/2)),boardError:Math.hypot(b.x-(board.x+board.width/2),b.y-board.y)}});
+});
 // Observe the same canvas and an intermediate camera position during a real transition.
 await go(factoryStart);await page.waitForTimeout(2100);
 await page.evaluate(()=>{window.__world=document.querySelector('canvas');window.__before=window.__world.dataset.camera});
@@ -70,4 +90,4 @@ for(const id of ['demo-tts','demo-assets','demo-music']){
 const images=await Promise.all(frames.map(async f=>({...f,data:(await fs.readFile(path.join(out,f.file))).toString('base64')})));
 await page.setViewportSize({width:1920,height:1900});await page.setContent(`<body style="margin:0;background:#15191c;color:#ccc;font:15px sans-serif"><div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;padding:18px">${images.map(x=>`<div><img style="width:100%;display:block" src="data:image/png;base64,${x.data}"><p style="margin:8px 0 6px">${x.label}</p></div>`).join('')}</div></body>`);await page.screenshot({path:path.join(out,'contact-sheet.png'),fullPage:true});
 await fs.writeFile(path.join(out,'report.json'),JSON.stringify(report,null,2));console.log(JSON.stringify(report,null,2));await browser.close();
-if(errors.length||external.length||scriptMissing.length||report.slides.some(s=>s.overflow.length||s.overlap.length||s.webgl?.fallback)||!Object.values(report.motion).every(Boolean)||!report.flight.sameCanvas||!report.flight.arrived||!report.flight.reverse||!report.flight.rapidNavigation||!report.fallback||report.media.some(m=>!m.playing||m.time<=0||!m.muted||!m.pausedByKey||!m.soundEnabled||!m.stoppedOnLeave))process.exitCode=1;
+if(!Object.values(report.cat).every(Boolean)||report.connections.some(c=>c.roomError>2||c.boardError>2)||errors.length||external.length||scriptMissing.length||report.slides.some(s=>s.overflow.length||s.overlap.length||s.webgl?.fallback)||!Object.values(report.motion).every(Boolean)||!report.flight.sameCanvas||!report.flight.arrived||!report.flight.reverse||!report.flight.rapidNavigation||!report.fallback||report.media.some(m=>!m.playing||m.time<=0||!m.muted||!m.pausedByKey||!m.soundEnabled||!m.stoppedOnLeave))process.exitCode=1;

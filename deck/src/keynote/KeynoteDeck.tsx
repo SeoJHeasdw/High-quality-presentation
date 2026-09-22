@@ -5,6 +5,7 @@ import { CatStory, BroodStory, BotStory, WebDoorStory, PriceStory, IncidentStory
 import DemoPlayer from "./DemoPlayer";
 import "./keynote.css";
 import "./stories.css";
+import "./presentation.css";
 
 const OriginalDeck: DeckModule = {
  className:"deck-keynote",
@@ -68,12 +69,12 @@ const byId=(id:string)=>OriginalDeck.slides.find(slide=>slide.id===id)!;
 const ordered = [
  byId("manifesto-cover"),
  {id:"story-cat",scriptKey:"story-cat",group:"cat-opening",steps:1,render:({step})=><CatStory step={step}/>},
- {id:"story-now",scriptKey:"story-now",group:"cat-opening",render:()=> <CatStory now/>},
+ {id:"story-now",scriptKey:"story-now",group:"cat-opening",steps:1,render:({step})=> <CatStory now step={step}/>},
  byId("manifesto-unknown"),
  {id:"story-brood",scriptKey:"story-brood",steps:1,render:({step})=><BroodStory step={step}/>},
  {id:"story-bots",scriptKey:"story-bots",steps:1,render:({step})=><BotStory step={step}/>},
  {id:"story-web-door",scriptKey:"story-web-door",steps:1,render:({step})=><WebDoorStory step={step}/>},
- {id:"story-price",scriptKey:"story-price",steps:1,render:({step})=><PriceStory step={step}/>},
+ {id:"story-price",scriptKey:"story-price",steps:2,render:({step})=><PriceStory step={step}/>},
  ...["story-rooms","story-board","story-boundary"].map((id,part)=>({id,scriptKey:id,steps:1,group:"incident-rooms",render:({step})=><IncidentStory part={part} step={step}/>})),
  {id:"story-jev",scriptKey:"story-jev",steps:1,render:({step})=><JevStory step={step}/>},
  byId("manifesto-person"),

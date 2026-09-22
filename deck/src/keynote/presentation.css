@@ -1,0 +1,300 @@
+/* Explanatory slides have their own type/grid rules. Event scenes keep theirs. */
+.kn-brief { letter-spacing: -.018em; }
+.kn-brief:not(.demo-slide) .kn-kicker {
+  font-size: 22px;
+  font-weight: 500;
+  margin-bottom: 24px;
+  color: #d8bc88;
+}
+.kn-brief:not(.demo-slide) h1 {
+  font-size: 72px;
+  line-height: 1.24;
+  font-weight: 650;
+  letter-spacing: -.038em;
+}
+.kn-brief:not(.demo-slide) .brief-lead {
+  margin-top: 25px;
+  font-size: 30px;
+  line-height: 1.5;
+  font-weight: 400;
+  color: #b4bec8;
+}
+.kn-brief:not(.demo-slide):not(.kn-closing) .brief-content {
+  top: 265px;
+  padding-top: 32px;
+  border-top-color: #344453;
+}
+.kn-brief .brief-content::before { display: none; }
+.kn-brief .brief-columns {
+  gap: 78px;
+  padding-top: 17px;
+}
+.kn-brief .brief-columns > div:last-child {
+  border-left: 1px solid #334554;
+  padding-left: 68px;
+}
+.kn-brief .brief-columns h2 {
+  font-size: 48px;
+  line-height: 1.4;
+  font-weight: 550;
+  letter-spacing: -.027em;
+}
+.kn-brief .brief-columns p,
+.kn-brief .brief-row p {
+  font-size: 31px;
+  line-height: 1.55;
+  color: #b5c0ca;
+  letter-spacing: -.01em;
+}
+.kn-brief .brief-columns p { margin-top: 31px; }
+.kn-brief .brief-row {
+  grid-template-columns: 54px 570px 1fr;
+  gap: 30px;
+  border-bottom-color: #344453;
+  padding: 28px 0 32px;
+  min-height: 129px;
+}
+.kn-brief .brief-row h2 {
+  font-size: 39px;
+  font-weight: 580;
+  letter-spacing: -.02em;
+}
+.kn-brief .column-label {
+  font-size: 22px;
+  letter-spacing: 0;
+  margin-bottom: 30px;
+}
+.kn-brief .story-source,
+.kn-brief .brief-footnote { color: #94a3af; }
+.kn-brief .story-source a { border-bottom-color: #354554; }
+
+/* The picture is the anchor. Only an explicit navigation cue changes its place. */
+.cat-presentation .kn-body { inset: 162px 100px 125px; }
+.cat-scene { position: absolute; inset: 0; }
+.cat-scene-heading {
+  position: absolute;
+  inset: -5px 0 auto;
+  z-index: 3;
+  text-align: left;
+  animation: cat-copy-in .65s ease both;
+}
+.cat-scene-heading p {
+  color: #b9b6ab;
+  font-size: 22px;
+  margin-bottom: 17px;
+  letter-spacing: .005em;
+}
+.cat-scene-heading h1 {
+  font-size: 74px;
+  line-height: 1.22;
+  font-weight: 610;
+  letter-spacing: -.038em;
+}
+.cat-scene[data-cue="0"] .cat-scene-heading { text-align: center; }
+.cat-scene[data-cue="0"] .cat-scene-heading h1 { font-size: 92px; }
+.cat-subject {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 880px;
+  height: 605px;
+  overflow: hidden;
+  border-radius: 24px;
+  transform-origin: 0 0;
+  transform: translate(40px, 245px) scale(.72);
+  transition: transform 1.1s cubic-bezier(.22, 1, .36, 1);
+  will-change: transform;
+  box-shadow: 0 30px 80px #0003;
+}
+.cat-scene[data-cue="0"] .cat-subject {
+  transform: translate(420px, 155px) scale(1);
+}
+.cat-subject img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.cat-conversation {
+  position: absolute;
+  left: 900px;
+  top: 244px;
+  width: 760px;
+  animation: cat-copy-in .65s ease both;
+  animation-delay: .48s;
+}
+.cat-context {
+  display: block;
+  font-size: 25px;
+  font-weight: 450;
+  color: #b8c2ca;
+  margin-bottom: 23px;
+}
+.cat-conversation h2 {
+  font-size: 75px;
+  font-weight: 550;
+  letter-spacing: -.04em;
+  line-height: 1.28;
+  color: #e9e8e1;
+}
+.cat-scene[data-cue="1"] .cat-conversation h2 { font-size: 132px; color: #e2c590; }
+.cat-conversation p {
+  margin-top: 34px;
+  font-size: 31px;
+  line-height: 1.6;
+  color: #acb8c1;
+}
+.cat-work-sequence { display: flex; gap: 27px; margin-top: 34px; }
+.cat-work-sequence span {
+  font-size: 28px;
+  color: #d8c9aa;
+  padding-top: 16px;
+  border-top: 2px solid #9c8763;
+  min-width: 115px;
+  animation: cat-copy-in .6s ease both;
+}
+@keyframes cat-copy-in {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: none; }
+}
+
+/* A native comparison table, with a presenter-controlled choice and hypothesis. */
+.purchase-request { display: flex; gap: 36px; align-items: baseline; margin: 0 0 22px; }
+.purchase-request > span { font-size: 22px; color: #a2b4c2; min-width: 260px; }
+.purchase-request p { font-size: 31px; color: #e0e4e7; letter-spacing: -.012em; }
+.purchase-comparison table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  text-align: left;
+  font-variant-numeric: tabular-nums;
+}
+.purchase-label-col { width: 296px; }
+.purchase-comparison th { font-weight: 450; }
+.purchase-comparison thead th {
+  position: relative;
+  height: 59px;
+  font-size: 30px;
+  font-weight: 600;
+  border-bottom: 1px solid #5b6c78;
+}
+.purchase-comparison thead th:first-child { font-size: 22px; color: #8d9da9; font-weight: 400; }
+.purchase-comparison td,
+.purchase-comparison tbody th { height: 58px; border-bottom: 1px solid #2d414f; }
+.purchase-comparison tbody th { font-size: 25px; color: #a6b4bd; }
+.purchase-comparison td { font-size: 29px; color: #c7d0d6; }
+.purchase-comparison th:not(:first-child),
+.purchase-comparison td { padding-left: 29px; }
+.purchase-comparison .offer-b {
+  border-left: 1px solid #344754;
+  transition: background-color .7s, color .7s;
+}
+.purchase-comparison .purchase-price td {
+  height: 90px;
+  font-size: 50px;
+  font-weight: 560;
+  color: #e0e5e8;
+  letter-spacing: -.025em;
+}
+.purchase-price td span { font-size: 24px; margin-left: 9px; color: #9eadb7; font-weight: 400; }
+.offer-choice {
+  position: absolute;
+  right: 28px;
+  top: 22px;
+  color: #e2c792;
+  font-size: 20px;
+  font-weight: 450;
+  opacity: 0;
+  transition: none;
+}
+.purchase-comparison:not([data-cue="0"]) .offer-b { background-color: #c4aa6d0d; }
+.purchase-comparison:not([data-cue="0"]) .purchase-price .offer-b { color: #e7cb96; }
+.purchase-comparison:not([data-cue="0"]) .offer-choice { opacity: 1; transition: opacity .65s .1s; }
+.purchase-result {
+  display: flex;
+  align-items: baseline;
+  gap: 35px;
+  padding-top: 19px;
+  opacity: 0;
+}
+.purchase-result > span { color: #a8b4bd; font-size: 23px; }
+.purchase-result strong { font-size: 31px; color: #e4cfaa; font-weight: 500; }
+.purchase-result[data-visible] { opacity: 1; animation: cat-copy-in .55s ease both; }
+.purchase-question { margin-top: 23px; font-size: 31px; color: #e4e7e9; opacity: 0; }
+.purchase-question[data-visible] { opacity: 1; animation: cat-copy-in .65s ease both; }
+
+/* The diagram uses one coordinate system for shapes, connectors and moving packets. */
+.story-incident .brief-content { padding-top: 25px!important; }
+.incident-map { position: relative; height: 360px; }
+.incident-wiring { position: absolute; width: 1720px; height: 360px; left: 0; top: 0; overflow: visible; }
+.incident-wiring path { fill: none; stroke-linecap: round; stroke-linejoin: round; }
+.wire-track { stroke: #344c60; stroke-width: 2; opacity: .52; }
+.wire-lit { stroke: #91bddc; stroke-width: 2; opacity: 0; transition: none; }
+[data-connected] > .wire-lit { opacity: .8; transition: opacity .6s; }
+.wire-packet { stroke: #c5e8ff; stroke-width: 3; stroke-dasharray: 13 360; animation: incident-current 2.4s linear infinite; }
+.outside-wire { opacity: 0; transition: none; }
+.outside-wire[data-connected] { opacity: 1; transition: opacity .7s; }
+.outside-wire .wire-lit { stroke: #d3b786; }
+.outside-wire .wire-packet { stroke: #eed6a9; stroke-dasharray: 15 540; animation-duration: 3s; }
+.wire-arrow { stroke: #d7bd90; stroke-width: 2; }
+.study-room {
+  position: absolute;
+  top: 0;
+  width: 230px;
+  height: 136px;
+  padding: 18px 24px;
+  border: 1px solid #3b4e5d;
+  border-radius: 19px;
+  background: #101b26;
+  transition: border-color .6s, background-color .6s;
+}
+.study-room-number { display: block; color: #8d9fad; font-size: 20px; letter-spacing: .015em; }
+.study-room strong { display: block; font-size: 30px; color: #e0e5e7; font-weight: 550; margin-top: 7px; letter-spacing: -.02em; }
+.study-room-state { display: block; color: #99adbd; font-size: 19px; margin-top: 5px; }
+.study-room[data-connected] { border-color: #6d91ac; background: #132432; }
+.study-room-port { position: absolute; left: 111px; bottom: -4px; width: 7px; height: 7px; border-radius: 50%; background: #5c788e; }
+.study-room[data-connected] .study-room-port { background: #b4d9f3; }
+.shared-board {
+  position: absolute;
+  left: 270px;
+  top: 242px;
+  width: 500px;
+  height: 106px;
+  border: 1px solid #43647e;
+  border-radius: 20px;
+  background: #112435;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 11px;
+  opacity: .32;
+}
+.shared-board[data-visible] { opacity: 1; transition: opacity .65s; }
+.shared-board[data-rebuilt] { animation: board-return .8s ease both; }
+.shared-board > span { font-size: 21px; color: #91b4cf; }
+.shared-board strong { font-size: 26px; font-weight: 530; color: #dae5ed; letter-spacing: -.02em; }
+.outside-system {
+  position: absolute;
+  left: 1300px;
+  top: 240px;
+  width: 370px;
+  height: 112px;
+  border: 1px solid #786647;
+  border-radius: 20px;
+  padding: 18px 24px;
+  background: #24211b;
+  opacity: 0;
+}
+.outside-system[data-visible] { opacity: 1; animation: cat-copy-in .8s ease both; }
+.outside-system span { display: block; color: #b8a888; font-size: 20px; }
+.outside-system strong { display: block; color: #e7d3ac; font-weight: 530; font-size: 34px; margin-top: 10px; }
+.incident-narrative { font-size: 29px; line-height: 1.5; color: #c2cdd5; margin-top: 19px; animation: cat-copy-in .6s ease both; }
+@keyframes incident-current { from { stroke-dashoffset: 380; } to { stroke-dashoffset: 0; } }
+@keyframes board-return { from { opacity: .15; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+
+.deck-keynote[data-motion="off"] .cat-subject,
+.deck-keynote[data-motion="off"] .purchase-comparison *,
+.deck-keynote[data-motion="off"] .incident-map * { transition: none!important; }
+.deck-keynote[data-motion="off"] .cat-scene *,
+.deck-keynote[data-motion="off"] .purchase-comparison *,
+.deck-keynote[data-motion="off"] .incident-map *,
+.deck-keynote[data-motion="off"] .incident-narrative { animation: none!important; }
+@media (prefers-reduced-motion: reduce) {
+  .cat-scene *, .purchase-comparison *, .incident-map *, .incident-narrative { animation: none!important; transition: none!important; }
+}

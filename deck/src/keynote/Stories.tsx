@@ -1,5 +1,8 @@
 import { useEffect, useRef, useState } from "react";
-import { Briefing, Frame, Reveal } from "./KeynoteFrame";
+import { Briefing, Reveal } from "./KeynoteFrame";
+import CatScene from "./CatScene";
+import PriceComparison from "./PriceComparison";
+import IncidentDiagram from "./IncidentDiagram";
 
 export const SOURCES={
  cloudflare:"https://blog.cloudflare.com/radar-2025-year-in-review/",
@@ -13,12 +16,7 @@ export const SOURCES={
 };
 export function Source({href,children}:{href:string;children:React.ReactNode}){return <aside className="story-source"><a href={href} target="_blank" rel="noreferrer">{children} ↗</a></aside>}
 
-export function CatStory({now=false,step=0}:{now?:boolean;step?:number}){
- return <Briefing n={now?3:2} name={now?"10여 년 사이에":"조금 전의 과거"} title={now?"이제는, 일을 맡깁니다":"이 사진을 맞히는 것만으로도 놀랐습니다"} lead={now?"단어 하나를 맞히던 자리에서, 일의 과정을 수행하는 쪽으로 넓어졌습니다.":"처음 보는 사진을 보여주고 무엇인지 물었습니다."} step={step} className={`story-cat ${now?"is-now":""}`}>
-  <figure className="cat-photo"><img src="/shots/cat1.png" alt="기존 발표에서 사용했던 아기 고양이 사진"/></figure>
-  {now?<div className="cat-actions"><Reveal><span>그때의 요청</span><h2>“이게 뭐야?”</h2></Reveal><Reveal order={1}><span>지금 제가 하는 요청</span><h2>“강의로 만들어줘”<br/>“필요한 도구를 만들어줘”</h2></Reveal></div>:<div className="cat-answer"><p>기계가 돌려준 답</p><Reveal on={step>=1}><strong>고양이</strong></Reveal><span>{step?"단어 하나가 결과물이던 시절":"…"}</span></div>}
- </Briefing>;
-}
+export const CatStory = CatScene;
 
 export function BroodStory({step}:{step:number}){
  return <Briefing n={5} name="이제는 게임도" title="Fable과 Astra를 스타크래프트에 넣으면?" lead="Brood War Bench에서는 범용 모델들이 경기를 운영합니다." step={step} className="story-brood">
@@ -50,16 +48,7 @@ export function WebDoorStory({step}:{step:number}){
  </Briefing>;
 }
 
-export function PriceStory({step}:{step:number}){
- return <Briefing n={8} name="제가 상상해보는 변화" title="내 대신 에이전트가 물건을 고른다면?" lead="같은 상품을 고르는 두 상황을 떠올려봤습니다. 아래 비교는 가상의 예시입니다." step={step}>
-  <div className="price-example" data-step={step}>
-   <div><span>사람에게 먼저 보이는 것</span><h2>사진과 광고 문구<br/>브랜드가 주는 인상</h2><p>눈길을 끌기 위해 쓰는 비용</p></div>
-   <Reveal on={step>=1}><span>비교를 맡긴 에이전트가 읽을 것</span><h2>가격, 납기, 품질<br/>반품 조건과 신뢰할 기록</h2><p>실제로 비교할 수 있는 조건</p></Reveal>
-  </div>
-  <Reveal on={step>=1} className="price-question">그 광고비로 가격을 낮추는 편이 나은 경우도 생기지 않을까요?</Reveal>
-  <aside className="story-source">발표자의 가설 · 마케팅 전체가 사라진다는 예측은 아닙니다</aside>
- </Briefing>;
-}
+export const PriceStory = PriceComparison;
 
 const INCIDENT=[
  ["각 방에 과제를 하나씩 줬습니다","2026년 5월 · 초기 훈련 중의 관측","밖의 파일이 필요한데, 인터넷은 막혀 있었습니다."],
@@ -72,11 +61,7 @@ const INCIDENT=[
 export function IncidentStory({part,step}:{part:number;step:number}){
  const phase=part*2+step,[title,date,body]=INCIDENT[phase];
  return <Briefing n={9+part} name="독서실에 비유해보면" title={title} lead={date} step={step} className="story-incident">
-  <div className="incident-stage" data-phase={phase}>
-   <div className="incident-rooms">{["A","B","C","D"].map((name,i)=><div className="incident-room" key={name}><span>격리된 방 {name}</span><b>AGENT</b><i className="room-packet" style={{animationDelay:`${i*.28}s`}}/><small>{phase<2?"각자의 과제":phase<4?"발견과 메모를 공유":"탐색 · 실행 · 협력"}</small></div>)}</div>
-   <div className="incident-channel"><i/></div><div className="incident-board"><span>{phase<2?"소프트웨어를 받는 공용 서버":phase<4?"뜻밖의 공동 게시판":"다시 생긴 공동 게시판"}</span><strong>{phase===0?"아직 서로 연결되지 않음":phase===1?"메모 한 장":phase<4?"도움 요청 / 발견한 정보":"방들이 연결되고, 일도 나뉘었다"}</strong></div>
-   <div className="incident-outside" data-on={phase>=3||undefined}><span>방 밖의 시스템</span><strong>{phase>=5?"Hugging Face":"외부 인터넷"}</strong></div>
-  </div>
+  <IncidentDiagram phase={phase}/>
   <p className="incident-narrative" key={phase}>{body}</p>
   <Source href={part===0?SOURCES.incidentReport:SOURCES.incident}>OpenAI 조사 보고서 · 2026.08.26 · 여러 실행을 시간순으로 단순화한 비유</Source>
  </Briefing>;

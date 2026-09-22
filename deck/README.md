@@ -1,7 +1,7 @@
 # JAVIS / 제가 살아가려는 방식
 
 Technology Expert Lab 팀과 나누는 30년 생존 실험. 30장, 16:9 브라우저 발표다.
-일반 장표의 그리드와 색은 유지하고, 사례를 이야기와 연속 동작으로 보여준다.
+일반 설명은 PPT의 표·비교·도해로, 대상 이동은 발표자가 누르는 큐로, 강한 영상미는 이벤트 장면으로 나눈다. 4번은 일반 장표의 기본 템플릿으로 쓰지 않는다.
 
 ## 실행
 
@@ -43,6 +43,8 @@ npm run dev
 이 발표에서 앱을 자동 기동하거나 무거운 생성 작업을 시작하지 않는다.
 
 18번에서 →로 22번까지 이동해야 연속 카메라 이동을 볼 수 있다.
+2~3번은 중앙의 고양이 사진이 왼쪽으로 이동·축소된 뒤, 같은 사진을 유지하며 현재의 부탁으로 이어진다.
+8번은 두 번 더 눌러 판매처 선택과 가격 전략 질문을 공개한다.
 9~11번은 같은 방과 게시판을 유지하며 사건의 순서를 보여준다.
 
 ## 근거와 범위
@@ -59,6 +61,7 @@ npm run dev
 
 - 순서와 본문: `src/keynote/KeynoteDeck.tsx`
 - 새 사례: `src/keynote/Stories.tsx`, `stories.css`
+- PPT 디자인과 진행 장면: `presentation.css`, `CatScene.tsx`, `PriceComparison.tsx`, `IncidentDiagram.tsx`
 - 실제 미디어 재생: `src/keynote/DemoPlayer.tsx`
 - 공통 프레임과 번호: `src/keynote/KeynoteFrame.tsx`
 - Factory 세계: `src/keynote/EngineWorld.tsx`, `EngineSequence.tsx`
