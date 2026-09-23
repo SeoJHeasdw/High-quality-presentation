@@ -30,7 +30,7 @@ for(let n=1;n<=specs.length;n++){
   report.filmShots.push(await page.locator('.factory-film').evaluate(el=>{const v=el.querySelector('video[data-visible="true"]');return{phase:Number(el.dataset.phase),source:el.dataset.source,status:el.dataset.status,duration:v?.duration,muted:v?.muted}}));
  }else await page.waitForTimeout(1150);
  for(let step=0;step<=specs[n-1].steps;step++){
-  if(step){await page.keyboard.press('ArrowRight');await page.waitForTimeout(1500)}
+  if(step){await page.keyboard.press('ArrowRight');await page.waitForTimeout(1500);if(await page.locator('.nm[data-scroll-page]').count())await page.waitForSelector('.nm[data-settled="true"]',{timeout:15000})}
   report.slides.push(await audit());
  }
  const file=`slide-${String(n).padStart(2,'0')}.png`;await page.screenshot({path:path.join(out,file)});frames.push({file,label:await page.locator('.kn-slide').getAttribute('aria-label')});
@@ -50,7 +50,8 @@ for(let i=0;i<3;i++)await page.keyboard.press('ArrowLeft');await page.waitForTim
 report.cat.reverse=await page.evaluate(()=>Math.abs(document.querySelector('.cat-subject').getBoundingClientRect().x-window.__catStart.x)<1);
 // Incident reconstruction (9~11): one 3D space across three slides. Every beat must render its
 // phase, keep projected labels on screen and clear of the heading/narration, and reverse cleanly.
-await go(slideNumber('story-rooms'));await page.waitForTimeout(1500);
+// 첫 장면은 3.2초의 도입 카메라가 끝나야 라벨이 나타난다(world.ts).
+await go(slideNumber('story-rooms'));await page.waitForTimeout(3600);
 const incidentBeat=()=>page.evaluate(()=>{
  const c=document.querySelector('.iw-canvas'),box=r=>r&&r.getBoundingClientRect();
  const text=[document.querySelector('.i3-heading h1'),document.querySelector('.i3-narrative')].map(box);
@@ -67,6 +68,28 @@ for(let i=0;i<5;i++){await page.keyboard.press('ArrowLeft');await page.waitForTi
 await page.waitForTimeout(2200);
 report.incidentReverse=await incidentBeat();
 const incidentOk=report.incident.every((b,i)=>b.phase===i&&b.frames>0&&b.labels>0&&!b.offscreen.length&&!b.covers.length)&&report.incidentReverse.phase===0;
+// 12 · 스크롤 페이지. 휠로 정지 지점을 넘으면 덱의 단계와 발표자 창이 따라오고, →는 다음 지점에서 멈추며, ←는 되감는다.
+const scrollN=slideNumber('story-next-market');
+const nm=()=>page.evaluate(()=>{const r=document.querySelector('.nm'),v=r.querySelector('video');const shown=[...r.querySelectorAll('.nm-sec')].map(e=>Number(getComputedStyle(e).opacity));
+ return{step:Number(document.querySelector('.kn-slide').dataset.step),p:Number(r.dataset.progress),settled:r.dataset.settled==='true',frame:Math.round(v.currentTime*30-.5),section:shown.findIndex(o=>o>.99),visible:shown.filter(o=>o>.05).length,still:!!r.querySelector('img[data-visible]')}});
+await go(scrollN);await page.waitForSelector('.nm[data-settled="true"]',{timeout:15000});
+const nmPresenter=await context.newPage();await nmPresenter.goto('http://127.0.0.1:5180/#keynote/present');await nmPresenter.waitForFunction(()=>document.querySelector('.pv__label code')?.textContent.includes('story-next-market · 0'));
+report.scrollPage={start:await nm()};
+await page.mouse.move(960,540);for(let i=0;i<10;i++){await page.mouse.wheel(0,120);await page.waitForTimeout(25)}
+await page.waitForSelector('.nm[data-settled="true"]',{timeout:15000});report.scrollPage.wheel=await nm();
+report.scrollPage.presenterFollows=await nmPresenter.waitForFunction(()=>document.querySelector('.pv__label code')?.textContent.includes('story-next-market · 1'),null,{timeout:5000}).then(()=>true,()=>false);
+await nmPresenter.close();
+for(let i=0;i<10;i++){await page.mouse.wheel(0,-120);await page.waitForTimeout(25)}
+await page.waitForSelector('.nm[data-settled="true"]',{timeout:15000});report.scrollPage.wheelBack=await nm();
+await page.keyboard.press('ArrowRight');await page.waitForTimeout(900);report.scrollPage.playing=await nm();
+await page.waitForSelector('.nm[data-settled="true"]',{timeout:15000});await page.waitForTimeout(600);report.scrollPage.held=await nm();
+await page.keyboard.press('ArrowLeft');await page.waitForTimeout(200);await page.waitForSelector('.nm[data-settled="true"]',{timeout:15000});report.scrollPage.rewound=await nm();
+await page.keyboard.press('m');await page.keyboard.press('ArrowRight');await page.waitForTimeout(300);report.scrollPage.motionOff=await nm();await page.keyboard.press('m');
+await go(scrollN+1);await page.keyboard.press('ArrowLeft');await page.waitForSelector('.nm[data-settled="true"]',{timeout:15000});report.scrollPage.enteredBack=await nm();
+const sp=report.scrollPage,anchor=k=>[0,84,168,252,342,420,480,570][k];
+const scrollOk=sp.start.step===0&&sp.start.section===0&&sp.wheel.step===1&&sp.wheel.visible<=1&&sp.presenterFollows&&sp.wheelBack.step===0&&sp.wheelBack.section===0
+ &&sp.playing.p>0&&sp.playing.p<1&&sp.held.step===1&&Math.abs(sp.held.frame-anchor(1))<=1&&sp.held.section===1&&sp.rewound.step===0&&sp.rewound.frame<=1
+ &&sp.motionOff.step===1&&sp.motionOff.p===1&&sp.motionOff.still&&sp.enteredBack.step===7&&sp.enteredBack.section===7&&Math.abs(sp.enteredBack.frame-anchor(7))<=1;
 // Each authored film cue plays once, holds, and stays under presenter control.
 await go(factoryStart);await page.waitForSelector('.factory-film[data-status="held"]',{timeout:15000});
 await page.evaluate(()=>window.__film=document.querySelector('.factory-film'));
@@ -111,4 +134,4 @@ for(const id of ['demo-tts','demo-assets','demo-music']){
 const images=await Promise.all(frames.map(async f=>({...f,data:(await fs.readFile(path.join(out,f.file))).toString('base64')})));
 await page.setViewportSize({width:1920,height:1900});await page.setContent(`<body style="margin:0;background:#15191c;color:#ccc;font:15px sans-serif"><div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;padding:18px">${images.map(x=>`<div><img style="width:100%;display:block" src="data:image/png;base64,${x.data}"><p style="margin:8px 0 6px">${x.label}</p></div>`).join('')}</div></body>`);await page.screenshot({path:path.join(out,'contact-sheet.png'),fullPage:true});
 await fs.writeFile(path.join(out,'report.json'),JSON.stringify(report,null,2));console.log(JSON.stringify(report,null,2));await browser.close();
-if(!Object.values(report.cat).every(Boolean)||!incidentOk||errors.length||external.length||scriptMissing.length||report.slides.some(s=>s.overflow.length||s.overlap.length||s.webgl?.fallback)||report.filmShots.length!==5||new Set(report.filmShots.map(s=>s.source)).size!==5||report.filmShots.some(s=>s.status!=='held'||!(s.duration>1)||!s.muted)||!Object.values(report.film).every(Boolean)||!report.fallback||report.media.some(m=>!m.playing||m.time<=0||!m.muted||!m.pausedByKey||!m.soundEnabled||!m.stoppedOnLeave))process.exitCode=1;
+if(!Object.values(report.cat).every(Boolean)||!incidentOk||!scrollOk||errors.length||external.length||scriptMissing.length||report.slides.some(s=>s.overflow.length||s.overlap.length||s.webgl?.fallback)||report.filmShots.length!==5||new Set(report.filmShots.map(s=>s.source)).size!==5||report.filmShots.some(s=>s.status!=='held'||!(s.duration>1)||!s.muted)||!Object.values(report.film).every(Boolean)||!report.fallback||report.media.some(m=>!m.playing||m.time<=0||!m.muted||!m.pausedByKey||!m.soundEnabled||!m.stoppedOnLeave))process.exitCode=1;

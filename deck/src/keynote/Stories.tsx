@@ -11,7 +11,6 @@ export const SOURCES={
  incident:"https://openai.com/index/hugging-face-incident-and-the-road-ahead/",
  incidentReport:"https://cdn.openai.com/pdf/67869394-cb91-4c12-888c-5cbd85c7814c/OpenAI-Hugging-Face%20Incident-Technical-Report.pdf",
  huggingface:"https://huggingface.co/blog/security-incident-july-2026",
- jev:"https://typesafe.ai/blog/introducing-system-one-models-and-jev",
 };
 export function Source({href,children}:{href:string;children:React.ReactNode}){return <aside className="story-source"><a href={href} target="_blank" rel="noreferrer">{children} ↗</a></aside>}
 
@@ -76,14 +75,5 @@ export function IncidentStory({part,step}:{part:number;step:number}){
   <p className="i3-narrative" key={`n${phase}`}>{body}</p>
   <IncidentTimeline phase={phase}/>
   <Source href={part===0?SOURCES.incidentReport:SOURCES.incident}>OpenAI 조사 보고서 · 2026.08.26 · 여러 실행을 시간순으로 단순화한 재구성</Source>
- </Frame>;
-}
-
-export function JevStory({step}:{step:number}){
- return <Frame n={12} name="프로그램의 응답 속도" step={step} className="story-edit story-jev-revision">
-  <div className="story-heading"><p>TypeSafe AI · Jev</p><h1>AI의 답을 프로그램이 바로 쓴다면</h1></div>
-  <div className="jev-response"><div className="jev-duration"><strong>70–500<small>ms</small></strong><p>응답 시간 · 개발사 측정</p></div><p className="jev-return">프로그램이 쓸<br/><em>판단 값</em>을 돌려줍니다.</p></div>
-  <Reveal on={step>=1} className="jev-action-flow"><div><span>게임 상황</span><small>응용 예시</small></div><i/><div className="jev-action-model"><span>다음 행동 선택</span><small>Jev · 70–500ms</small></div><i/><div><span>게임에 행동 전달</span></div></Reveal>
-  <Source href={SOURCES.jev}>TypeSafe AI · Jev 발표 · 2026.09.15 · 속도는 개발사 측정</Source>
  </Frame>;
 }

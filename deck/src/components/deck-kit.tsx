@@ -309,6 +309,20 @@ export function useDeckNav(slides: SlideDef[], deckId: string) {
     post({ type: "nav", nav });
   }, [nav]);
 
+  /* 장표 안의 스크롤이 단계를 넘었다고 알린다(12번 스크롤 페이지).
+     전환은 장표가 이미 그리고 있으므로 상태만 맞춘다. 발표자 창으로도 전해진다. */
+  useEffect(() => {
+    const onStep = (e: Event) => {
+      const want = (e as CustomEvent<number>).detail;
+      setNav((s) => {
+        const step = Math.max(0, Math.min(slidesRef.current[s.index]?.steps ?? 0, want));
+        return step === s.step ? s : { ...s, step };
+      });
+    };
+    window.addEventListener("deck:step", onStep);
+    return () => window.removeEventListener("deck:step", onStep);
+  }, []);
+
   /* 키보드 */
   useEffect(() => {
     const stepsOf = (i: number) => slidesRef.current[i]?.steps ?? 0;

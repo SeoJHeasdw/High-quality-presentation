@@ -1,7 +1,8 @@
 import type { DeckModule } from "../components/deck-kit";
 import { Frame, Briefing, Reveal, Rows, SlidePosition } from "./KeynoteFrame";
 import EngineSequence from "./EngineSequence";
-import { CatStory, BroodStory, BotStory, WebDoorStory, PriceStory, IncidentStory, JevStory } from "./Stories";
+import { CatStory, BroodStory, BotStory, WebDoorStory, PriceStory, IncidentStory } from "./Stories";
+import NextMarket from "./next-market/NextMarket";
 import DemoPlayer from "./DemoPlayer";
 import { ABUSE_SLIDES } from "./AbuseSlides";
 import { FutureSurface } from "./PerformanceScenes";
@@ -74,7 +75,7 @@ const ordered = [
  {id:"story-web-door",scriptKey:"story-web-door",steps:1,render:({step})=><WebDoorStory step={step}/>},
  {id:"story-price",scriptKey:"story-price",steps:2,render:({step})=><PriceStory step={step}/>},
  ...["story-rooms","story-board","story-boundary"].map((id,part)=>({id,scriptKey:id,steps:1,group:"incident-rooms",render:({step})=><IncidentStory part={part} step={step}/>})),
- {id:"story-jev",scriptKey:"story-jev",steps:1,render:({step})=><JevStory step={step}/>},
+ {id:"story-next-market",scriptKey:"story-next-market",steps:7,render:({step})=><NextMarket step={step}/>},
  byId("manifesto-person"),
  byId("manifesto-compute"),
  byId("manifesto-requirements"),

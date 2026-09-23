@@ -73,19 +73,6 @@
 .story-incident-revision .incident-narrative { position: absolute; top: 665px; left: 0; margin: 0; font-size: 30px; line-height: 1.5; color: #bfcbd3; animation: story-reveal .4s ease both; }
 
 /* Put latency beside the returned value, then connect it to program execution. */
-.story-jev-revision .jev-response { position: absolute; left: 0; right: 0; top: 263px; display: grid; grid-template-columns: 950px 1fr; align-items: center; gap: 52px; }
-.story-jev-revision .jev-duration strong { display: block; color: #a7d8f8; font-size: 149px; font-weight: 530; letter-spacing: -.065em; line-height: 1.05; white-space: nowrap; }
-.story-jev-revision .jev-duration small { font-size: 50px; font-weight: 400; color: #93abbc; margin-left: 21px; letter-spacing: -.03em; }
-.story-jev-revision .jev-duration > p { font-size: 25px; color: #a6b5bf; margin-top: 24px; }
-.story-jev-revision .jev-return { font-size: 46px; line-height: 1.45; color: #d4dce2; }
-.story-jev-revision .jev-return em { color: #a7d8f8; }
-.story-jev-revision .jev-action-flow { position: absolute; top: 588px; left: 0; right: 0; display: grid; grid-template-columns: 330px 1fr 430px 1fr 430px; align-items: center; border-top: 1px solid #425260; padding-top: 31px; }
-.story-jev-revision .jev-action-flow > div { font-size: 34px; line-height: 1.35; }
-.story-jev-revision .jev-action-flow > div:last-child { text-align: right; color: #d7e2e9; }
-.story-jev-revision .jev-action-model { text-align: center; color: #a7d8f8; }
-.story-jev-revision .jev-action-flow small { display: block; font-size: 21px; margin-top: 11px; color: #91abc0; }
-.story-jev-revision .jev-action-flow > i { height: 1px; background: #6a94b1; position: relative; }
-.story-jev-revision .jev-action-flow > i::after { content: ""; position: absolute; right: 0; top: -5px; width: 10px; height: 10px; border-top: 1px solid #6a94b1; border-right: 1px solid #6a94b1; transform: rotate(45deg); }
 
 .deck-keynote[data-motion="off"] .story-edit .kn-reveal,.deck-keynote[data-motion="off"] .story-edit .incident-narrative { animation: none!important; }
 @media (prefers-reduced-motion: reduce) { .story-edit .kn-reveal,.story-edit .incident-narrative { animation: none!important; } }
