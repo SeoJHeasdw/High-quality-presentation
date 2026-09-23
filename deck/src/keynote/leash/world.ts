@@ -3,6 +3,8 @@ import { FONT, GLSL_SAFE, PhaseClock, createStage, easeInOut, easeOut, pixelCame
 
 /*
  * 40번 · 신에게 목줄이 걸릴까요? 2번의 입자 문법을 거꾸로 쓴다. 2번에서는 사진이 단어가 됐고, 여기서는 단어가 모여 몸이 된다.
+ *  -1  (39번에서 이어짐) 휴대전화 자막이 있던 자리에 가짜 아들의 말이 붉은 입자로 떠 있다가, 풀리며 파랑이 되어
+ *      깊이 흩어진다. 그 자리에서 사람을 움직여 온 낱말들이 떠오른다. 가짜였던 말이 빨강을 잃고 말들 사이로 섞인다.
  *   0  어둠 속에 사람을 움직여 온 낱말들(약속·설득·명령·prompt…)이 떠 있다가, 흘러와 사람의 형태를 이룬다(파랑 = 기계).
  *   1  금색 고리(사람이 채우려는 목줄)가 다가와 목을 감으려 하지만 닫히지 않고, 끝에서 금빛이 흩어진다.
  * 실루엣은 외부 이미지 없이 캔버스에 직접 그린 형태를 입자로 샘플링한다. 빨강은 쓰지 않는다(사실이 아님을 뜻하는 색이다).
@@ -10,6 +12,12 @@ import { FONT, GLSL_SAFE, PhaseClock, createStage, easeInOut, easeOut, pixelCame
  */
 
 export const PHASES = 2;
+/** 39번에서 넘어오는 이음새 한 단계. 기존 단계 번호(0, 1)는 그대로 둔다. */
+export const MIN_PHASE = -1;
+/** 39·37번 가상 통화의 자막 가운데 네 줄(NightPhone.tsx의 FAKE_LINES). 39번 휴대전화 자막 자리(화면 오른쪽)에 놓는다. */
+const SCAM = ["엄마… 나야.", "나 사고 났어.", "지금 좀 급해.", "아빠한테는 말하지 마."];
+const SCAM_AT = { x: 1080, y: 372, gap: 104 };
+const RED = new THREE.Color("#ff6259");
 export const LAYOUT = { body: { x: 1300, y: 600, h: 820 }, neckY: 0 };
 const ICE = new THREE.Color("#8fd0ff");
 const GOLD = new THREE.Color("#ffd899");
@@ -42,6 +50,20 @@ function sampleBody(count: number, h: number): { pts: [number, number][]; neck: 
   return { pts, neck: (H / 2 - 262) * s, neckW: 84 * s };
 }
 
+/** 자막 한 줄씩 그려 글자 안의 점을 고른다. 좌표는 줄의 왼쪽 끝·가운데 기준 px, 위가 +y. */
+function sampleLines(lines: string[], perLine: number) {
+  const W = 900, H = 120, c = document.createElement("canvas"); c.width = W; c.height = H;
+  const g = c.getContext("2d", { willReadFrequently: true })!;
+  const r = rand(53), out: { line: number; x: number; y: number }[] = [];
+  lines.forEach((text, li) => {
+    g.clearRect(0, 0, W, H); g.fillStyle = "#fff"; g.font = `700 60px ${FONT}`; g.textBaseline = "middle"; g.fillText(text, 4, 62);
+    const d = g.getImageData(0, 0, W, H).data, px: number[] = [];
+    for (let y = 0; y < H; y += 2) for (let x = 0; x < W; x += 2) if (d[(y * W + x) * 4 + 3] > 140) px.push(x, y);
+    for (let i = 0; i < perLine; i++) { const k = Math.floor(r() * (px.length / 2)) * 2; out.push({ line: li, x: px[k] - 4, y: 60 - px[k + 1] }); }
+  });
+  return out;
+}
+
 /** 낱말을 작은 글자로 그려 글자 안의 점을 고른다(낱말마다 점 무리 하나). */
 function sampleWords(perWord: number) {
   const out: { word: number; x: number; y: number }[] = [];
@@ -61,7 +83,7 @@ export function createLeashWorld(canvas: HTMLCanvasElement, initialPhase: number
   const stage = createStage(canvas, { background: "#030508", fov: 30, bloom: [0.7, 0.6, 0.72], exposure: 1.0, lostEvent: "leash-lost" });
   const { scene, camera, glow } = stage;
   const camD = pixelCamera(camera);
-  const pc = new PhaseClock(Math.max(0, Math.min(PHASES - 1, initialPhase)), initialMotion);
+  const pc = new PhaseClock(Math.max(MIN_PHASE, Math.min(PHASES - 1, initialPhase)), initialMotion);
   const B = LAYOUT.body, center = toWorld(B.x, B.y);
 
   /* 낱말 → 몸 ------------------------------------------------------------------------------ */
@@ -122,6 +144,50 @@ export function createLeashWorld(canvas: HTMLCanvasElement, initialPhase: number
   const bodyGlowMat = new THREE.MeshBasicMaterial({ map: glow, color: new THREE.Color("#3f78a8"), transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending });
   const bodyGlow = new THREE.Mesh(new THREE.PlaneGeometry(1100, 1300), bodyGlowMat); bodyGlow.position.copy(center).setZ(-220); scene.add(bodyGlow);
 
+  /* 이음새(-1): 가짜 아들의 말 → 낱말들 사이로 --------------------------------------------------- */
+  const lines = sampleLines(SCAM, 1500), n = lines.length;
+  const sFrom = new Float32Array(n * 3), sTo = new Float32Array(n * 3), sSeed = new Float32Array(n), sLine = new Float32Array(n);
+  {
+    const r = rand(71);
+    for (let i = 0; i < n; i++) {
+      const L = lines[i], at = toWorld(SCAM_AT.x + L.x, SCAM_AT.y + L.line * SCAM_AT.gap - L.y);
+      sFrom.set([at.x, at.y, 0], i * 3);
+      // 낱말 무리의 한 점으로 흘러간다: 가짜였던 말이 사람을 움직여 온 말들 사이에 섞인다
+      const j = Math.floor(r() * m) * 3;
+      sTo.set([aWord[j] + center.x, aWord[j + 1] + center.y, aWord[j + 2]], i * 3);
+      sSeed[i] = r(); sLine[i] = L.line;
+    }
+  }
+  const scamGeo = new THREE.BufferGeometry();
+  scamGeo.setAttribute("position", new THREE.BufferAttribute(sFrom.slice(), 3));
+  scamGeo.setAttribute("aFrom", new THREE.BufferAttribute(sFrom, 3));
+  scamGeo.setAttribute("aTo", new THREE.BufferAttribute(sTo, 3));
+  scamGeo.setAttribute("aSeed", new THREE.BufferAttribute(sSeed, 1));
+  scamGeo.setAttribute("aLine", new THREE.BufferAttribute(sLine, 1));
+  const scamMat = new THREE.ShaderMaterial({
+    uniforms: { uShow: { value: 0 }, uGo: { value: 0 }, uTime: { value: 0 }, uD: { value: camD }, uRed: { value: RED.clone() }, uIce: { value: ICE.clone() } },
+    vertexShader: `${GLSL_SAFE}
+      attribute vec3 aFrom; attribute vec3 aTo; attribute float aSeed; attribute float aLine;
+      uniform float uShow,uGo,uTime,uD; varying float vA; varying float vG;
+      void main(){
+        float show=clamp(uShow*1.8-aLine*.26,0.,1.);
+        float g=clamp(uGo*1.5-aSeed*.5,0.,1.); g=g*g*(3.-2.*g);
+        vec3 mid=mix(aFrom,aTo,.5)+vec3(-60.+aSeed*120.,50.+aSeed*140.,180.+aSeed*160.);
+        vec3 p=mix(mix(aFrom,mid,g),mix(mid,aTo,g),g);
+        p+=vec3(sin(uTime*1.2+aSeed*40.),cos(uTime*1.05+aSeed*33.),0.)*(1.+5.*g);
+        vA=show*(1.-sstep(.72,1.,g)); vG=g;
+        vec4 mv=modelViewMatrix*vec4(p,1.);
+        gl_PointSize=(2.2+aSeed*1.3)*(uD/-mv.z);
+        gl_Position=projectionMatrix*mv;
+      }`,
+    fragmentShader: `${GLSL_SAFE}uniform vec3 uRed,uIce; varying float vA; varying float vG;
+      void main(){ float d=length(gl_PointCoord-.5); float a=sstep(.5,.05,d); vec3 c=mix(uRed*1.2,uIce*1.15,sstep(.08,.6,vG)); gl_FragColor=vec4(c*a*vA,1.); }`,
+    transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
+  });
+  const scam = new THREE.Points(scamGeo, scamMat); scam.frustumCulled = false; scene.add(scam);
+  const scamGlowMat = new THREE.MeshBasicMaterial({ map: glow, color: RED.clone().multiplyScalar(0.5), transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending });
+  const scamGlow = new THREE.Mesh(new THREE.PlaneGeometry(1200, 700), scamGlowMat); scamGlow.position.copy(toWorld(SCAM_AT.x + 300, SCAM_AT.y + 1.5 * SCAM_AT.gap)).setZ(-200); scene.add(scamGlow);
+
   /* 금색 고리: 닫히지 않는 목줄 --------------------------------------------------------------- */
   const neck = new THREE.Vector3(center.x, center.y + body.neck - 6, 0);
   const R0 = body.neckW * 0.9;
@@ -161,11 +227,21 @@ export function createLeashWorld(canvas: HTMLCanvasElement, initialPhase: number
   const dust = new THREE.Points(dustGeo, new THREE.PointsMaterial({ color: new THREE.Color("#5d86a8"), size: 4, map: glow, transparent: true, opacity: 0.28, depthWrite: false, blending: THREE.AdditiveBlending })); scene.add(dust);
 
   const pointerS = new THREE.Vector2(), q = new THREE.Quaternion(), e = new THREE.Euler(), tmp = new THREE.Vector3();
+  // 이음새에서 이미 떠오른 낱말은 다음 단계에서 다시 사라졌다 나타나지 않는다.
+  let wordsIn = 0;
   function update(dt: number) {
     pc.tick(dt);
     const p = pc.phase, t = pc.t, time = pc.clock, u = (s: number, d: number) => pc.ev(s, d);
-    const fadeIn = p === 0 ? smooth(0.1, 1.6, t) : 1;
-    const form = p === 0 ? easeInOut(u(1.6, 3.6)) : 1;
+
+    // 이음새: 자막이 한 줄씩 서고(0.2~1.4초), 풀려서 흩어지며(2.3초~) 그 자리에서 낱말들이 떠오른다.
+    const show = p === -1 ? smooth(0.2, 1.4, t) : 0;
+    const go = p === -1 ? easeInOut(u(2.3, 2.0)) : 1;
+    scam.visible = p === -1 && go < 0.999;
+    scamMat.uniforms.uShow.value = show; scamMat.uniforms.uGo.value = go; scamMat.uniforms.uTime.value = time;
+    scamGlowMat.opacity = 0.12 * show * (1 - smooth(0, 0.5, go));
+    wordsIn = p === -1 ? smooth(2.8, 4.3, t) : Math.max(wordsIn, p === 0 ? smooth(0.1, 1.6, t) : 1);
+    const fadeIn = wordsIn;
+    const form = p === -1 ? 0 : p === 0 ? easeInOut(u(1.6, 3.6)) : 1;
     mat.uniforms.uIn.value = fadeIn; mat.uniforms.uForm.value = form; mat.uniforms.uTime.value = time;
     bodyGlowMat.opacity = 0.16 * form;
 
@@ -200,7 +276,7 @@ export function createLeashWorld(canvas: HTMLCanvasElement, initialPhase: number
   stage.start(update, () => pc.motion);
 
   return {
-    setPhase(next) { next = Math.max(0, Math.min(PHASES - 1, next)); if (next === pc.phase) return; pc.go(next); stage.kick(); },
+    setPhase(next) { next = Math.max(MIN_PHASE, Math.min(PHASES - 1, next)); if (next === pc.phase) return; pc.go(next); stage.kick(); },
     setMotion(on) { pc.setMotion(on); stage.kick(); },
     setPointer(x, y) { stage.pointer.set(x, y); },
     onFrame: stage.onFrame,

@@ -72,6 +72,13 @@ report.bridge=[];
 for(let i=0;i<3;i++){if(i)await page.keyboard.press('ArrowRight');await page.waitForTimeout(i?3400:3800);report.bridge.push(await bridgeBeat())}
 await page.keyboard.press('ArrowLeft');await page.waitForTimeout(2600);report.bridge.push(await bridgeBeat());
 const bridgeOk=report.bridge.map(b=>b.phase).join(',')==='-2,-1,0,-1'&&report.bridge.every(b=>b.same&&b.labels>0&&!b.covers);
+// 40 · 39번의 가짜 말이 풀려 낱말이 되는 이음새(-1)에서 몸(0)과 목줄(1)까지 같은 캔버스가 세 단계를 지난다.
+await go(slideNumber('abuse-leash'));await page.waitForSelector('.ls-canvas[data-ready]',{timeout:10000});
+await page.evaluate(()=>{window.__leash=document.querySelector('.ls-canvas')});
+const leashBeat=()=>page.evaluate(()=>({step:Number(document.querySelector('.ls').dataset.step),same:document.querySelector('.ls-canvas')===window.__leash,title:document.querySelector('.ls-copy h1').textContent}));
+report.leash=[await leashBeat()];
+for(let i=0;i<2;i++){await page.keyboard.press('ArrowRight');await page.waitForTimeout(1500);report.leash.push(await leashBeat())}
+const leashOk=report.leash.map(b=>b.step).join(',')==='0,1,2'&&report.leash.every(b=>b.same)&&report.leash[0].title.includes('말이었습니다');
 // 7~8, 17~20 · 묶인 3D 공간: 장이 바뀌어도 같은 캔버스가 이어지고, 모든 단계가 그려지며, 뒤로 가면 처음 단계로 돌아온다.
 report.groups={};
 for(const [name,first,beats] of [['agentWeb','story-web-door',5],['oneUser','manifesto-requirements',10]]){
@@ -199,4 +206,4 @@ report.phoneCue.answerButton=await page.locator('.kn-slide').evaluate(el=>el.dat
 const images=await Promise.all(frames.map(async f=>({...f,data:(await fs.readFile(path.join(out,f.file))).toString('base64')})));
 await page.setViewportSize({width:1920,height:1900});await page.setContent(`<body style="margin:0;background:#15191c;color:#ccc;font:15px sans-serif"><div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;padding:18px">${images.map(x=>`<div><img style="width:100%;display:block" src="data:image/png;base64,${x.data}"><p style="margin:8px 0 6px">${x.label}</p></div>`).join('')}</div></body>`);await page.screenshot({path:path.join(out,'contact-sheet.png'),fullPage:true});
 await fs.writeFile(path.join(out,'report.json'),JSON.stringify(report,null,2));console.log(JSON.stringify(report,null,2));await browser.close();
-if(!Object.values(report.cat).every(Boolean)||!bridgeOk||!Object.values(report.bots).every(Boolean)||!groupsOk||!rulerOk||!finaleOk||!incidentOk||!scrollOk||errors.length||external.length||scriptMissing.length||report.slides.some(s=>s.overflow.length||s.overlap.length||s.webgl?.fallback)||report.filmShots.length!==5||new Set(report.filmShots.map(s=>s.source)).size!==5||report.filmShots.some(s=>s.status!=='held'||!(s.duration>1)||!s.muted)||!Object.values(report.film).every(Boolean)||!report.fallback||report.media.some(m=>m.paused||m.muted!==(m.id==='demo-assets')||!m.playing||m.time<=0||!m.pausedByKey||!m.soundToggled||!m.stoppedOnLeave)||!Object.values(report.voiceCue).every(Boolean)||!Object.values(report.phoneCue).every(Boolean))process.exitCode=1;
+if(!Object.values(report.cat).every(Boolean)||!bridgeOk||!leashOk||!Object.values(report.bots).every(Boolean)||!groupsOk||!rulerOk||!finaleOk||!incidentOk||!scrollOk||errors.length||external.length||scriptMissing.length||report.slides.some(s=>s.overflow.length||s.overlap.length||s.webgl?.fallback)||report.filmShots.length!==5||new Set(report.filmShots.map(s=>s.source)).size!==5||report.filmShots.some(s=>s.status!=='held'||!(s.duration>1)||!s.muted)||!Object.values(report.film).every(Boolean)||!report.fallback||report.media.some(m=>m.paused||m.muted!==(m.id==='demo-assets')||!m.playing||m.time<=0||!m.pausedByKey||!m.soundToggled||!m.stoppedOnLeave)||!Object.values(report.voiceCue).every(Boolean)||!Object.values(report.phoneCue).every(Boolean))process.exitCode=1;

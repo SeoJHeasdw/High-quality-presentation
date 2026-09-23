@@ -16,7 +16,11 @@
 .ls-copy .pv-eyebrow { color: #e8b27a; }
 .ls-copy .pv-eyebrow::before { background: #e8b27a; }
 .ls-copy h1 { font-size: 66px; line-height: 1.24; color: #eef2f5; }
-.ls-copy[data-step="1"] h1 { font-size: 96px; line-height: 1.16; }
+.ls-copy[data-step="2"] h1 { font-size: 96px; line-height: 1.16; }
+/* 0 · 이음새: 가짜 아들의 말이 풀린 뒤(world.ts, 약 4초)에 사람을 움직여 온 말 이야기가 이어진다 */
+.ls-copy[data-step="0"] .pv-eyebrow { color: #ff8a82; }
+.ls-copy[data-step="0"] .pv-eyebrow::before { background: #ff8a82; }
+.ls-copy .ls-lead--bridge { animation-delay: 3.9s; }
 .ls-copy h1 em { font-style: normal; color: #ffd899; text-shadow: 0 0 40px #ffb45e44; }
 .ls-lead { margin-top: 40px; font-size: 36px; line-height: 1.5; color: #b9c9d6; letter-spacing: -.025em; opacity: 0; animation: pv-rise 1s cubic-bezier(.16,1,.3,1) 3.4s both; }
 .ls-fact { position: absolute; left: 0; bottom: 36px; z-index: 3; margin: 0; max-width: 900px; padding-left: 18px; border-left: 2px solid #8fd0ff88; font-size: 23px; font-weight: 580; color: #d6e4ee; letter-spacing: -.02em;
