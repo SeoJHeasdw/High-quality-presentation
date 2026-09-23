@@ -34,18 +34,24 @@ const STATS: [string, string, string][] = [
 export default function OwnVoice({ step }: { step: number }) {
   const motion = usePerformanceMotion();
   const video = useRef<HTMLVideoElement>(null);
+  const autoStart = useRef<number | null>(null);
   const root = useRef<HTMLDivElement>(null);
   const [playing, setPlaying] = useState(false);
-  const [muted, setMuted] = useState(true);
+  const [muted, setMuted] = useState(false);
+  const [audioBlocked, setAudioBlocked] = useState(false);
 
-  // P: 이 문장만 재생/정지, A: 소리 켜기/끄기. 처음에는 소리를 끈다(23번과 같은 규칙).
+  const playSentence = () => {
+    const v = video.current; if (!v) return;
+    if (v.currentTime < T0 || v.currentTime >= T1) v.currentTime = T0;
+    void v.play().then(() => setAudioBlocked(false)).catch(() => { if (v.paused) setAudioBlocked(true); });
+  };
+  // 먼저 같은 문장을 들려주고, 발표자가 넘긴 다음에 합성 사실을 드러낸다.
   useEffect(() => {
     const v = video.current!;
-    const toggle = () => { if (v.paused) { if (v.currentTime < T0 || v.currentTime >= T1) v.currentTime = T0; void v.play().catch(() => {}); } else v.pause(); };
     const onKey = (e: KeyboardEvent) => {
       if (e.ctrlKey || e.metaKey || e.altKey) return;
       const k = e.key.toLowerCase();
-      if (k === "p") { e.preventDefault(); toggle(); }
+      if (k === "p" && step === 0) { e.preventDefault(); if (autoStart.current !== null) { window.clearTimeout(autoStart.current); autoStart.current = null; } if (v.paused) playSentence(); else v.pause(); }
       if (k === "a") { e.preventDefault(); v.muted = !v.muted; setMuted(v.muted); }
     };
     let raf = 0;
@@ -53,22 +59,26 @@ export default function OwnVoice({ step }: { step: number }) {
       const t = v.currentTime;
       if (!v.paused && t >= T1) { v.pause(); v.currentTime = T1; }
       const p = Math.max(0, Math.min(1, (t - T0) / (T1 - T0)));
-      root.current?.style.setProperty("--played", String(v.paused && (t <= T0 + .01 || t >= T1) ? 1 : p));
-      root.current?.querySelectorAll<HTMLElement>(".ov-word").forEach((el, i) => el.toggleAttribute("data-said", v.paused ? true : t >= WORDS[i].t0));
+      root.current?.style.setProperty("--played", String(v.paused && t <= T0 + .01 ? 0 : v.paused && t >= T1 ? 1 : p));
+      root.current?.querySelectorAll<HTMLElement>(".ov-word").forEach((el, i) => el.toggleAttribute("data-said", t >= WORDS[i].t0));
       raf = requestAnimationFrame(tick);
     };
-    const onPlay = () => setPlaying(true), onPause = () => setPlaying(false);
+    const onPlay = () => { setPlaying(true); setAudioBlocked(false); }, onPause = () => setPlaying(false);
     v.addEventListener("play", onPlay); v.addEventListener("pause", onPause);
     window.addEventListener("keydown", onKey); raf = requestAnimationFrame(tick);
     return () => { window.removeEventListener("keydown", onKey); cancelAnimationFrame(raf); v.removeEventListener("play", onPlay); v.removeEventListener("pause", onPause); v.pause(); };
-  }, []);
-  useEffect(() => { if (step > 0) video.current?.pause(); }, [step]);
+  }, [step]);
+  useEffect(() => {
+    if (step > 0) { video.current?.pause(); return; }
+    autoStart.current = window.setTimeout(() => { autoStart.current = null; playSentence(); }, 1350);
+    return () => { if (autoStart.current !== null) window.clearTimeout(autoStart.current); autoStart.current = null; };
+  }, [step]);
 
   const head = HEAD[step];
   return <Frame n={27} name="제가 녹음한 적 없는 문장" step={step} className="abuse-slide abuse-v2 abuse-own">
     <div className="abuse-content">
       <div className="ov" ref={root} data-step={step} data-motion={motion || undefined}>
-        <video ref={video} src="/demos/tts-lecture.mp4#t=13.81" preload="auto" muted playsInline aria-hidden="true" className="ov-media"/>
+        <video ref={video} src="/demos/tts-lecture.mp4#t=13.81" preload="auto" muted={muted} playsInline aria-hidden="true" className="ov-media"/>
         <div className="ov-head" key={`h${step}`}>
           <p className="av-eyebrow">{head.kicker}</p>
           <h1>{head.title}</h1>
@@ -84,7 +94,7 @@ export default function OwnVoice({ step }: { step: number }) {
           {STATS.map(([n, u, label], i) => <div key={label} style={{ "--i": i } as CSSProperties}><strong>{n}<small>{u}</small></strong><span>{label}</span></div>)}
           <div className="ov-stat-public" style={{ "--i": 3 } as CSSProperties}><strong>3<small>초</small></strong><span>공개 모델이 밝힌, 목소리 복제에 필요한 음성 길이</span></div>
         </div>
-        <p className="ov-controls" data-playing={playing || undefined}><kbd>P</kbd>{playing ? "정지" : "이 문장 다시 듣기"}<kbd>A</kbd>{muted ? "소리 켜기" : "소리 끄기"}</p>
+        <div className="ov-controls" data-playing={playing || undefined}><button type="button" onClick={() => { const v = video.current; if (!v) return; if (autoStart.current !== null) { window.clearTimeout(autoStart.current); autoStart.current = null; } if (v.paused) playSentence(); else v.pause(); }}><kbd>P</kbd>{audioBlocked ? "소리 재생하기" : playing ? "정지" : "이 문장 다시 듣기"}</button><button type="button" onClick={() => { const v = video.current; if (!v) return; v.muted = !v.muted; setMuted(v.muted); }}><kbd>A</kbd>{muted ? "소리 켜기" : "소리 끄기"}</button></div>
       </div>
       <p className="av-note">{step < 2
         ? <span>23번 실제 강의 영상의 한 문장(원본 00:38.8–00:44.4) · local-tts-engine 제작 기록</span>

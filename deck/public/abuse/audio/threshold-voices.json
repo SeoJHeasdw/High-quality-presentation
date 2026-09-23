@@ -1,0 +1,23 @@
+{
+  "slide": 30,
+  "purpose": "Fictional sound cue before the phone scenario",
+  "line": "엄마, 나야. 제호야.",
+  "maleVoice": {
+    "model": "mlx-community/Qwen3-TTS-12Hz-1.7B-Base-bf16",
+    "reference": "Presenter's own benchmark voice recording",
+    "adapter": "jaeho-ko-r16-v1",
+    "layers": [
+      { "startSeconds": 0, "adapterScale": 0, "seed": 300930, "source": "Base model without adapter" },
+      { "startSeconds": 1, "adapterScale": 0.5, "seed": 300930 },
+      { "startSeconds": 2, "adapterScale": 1, "seed": 300932, "punctuation": "엄마, 나야. 제호야!" }
+    ]
+  },
+  "ending": {
+    "startSeconds": 4.7,
+    "line": "엄마, 나 제호 아니야.",
+    "voice": "macOS Korean Yuna synthetic voice"
+  },
+  "processing": "Stereo alternating layers with short echoes; the layers fade out before the dry final line",
+  "durationSeconds": 6.6,
+  "humanListeningReview": "pending"
+}

@@ -9,3 +9,6 @@ coverage/
 *.log
 *.tsbuildinfo
 react-bits
+# 영수증 원본 캡처(대화 목록이 보임). 덱에는 잘라낸 deck/public/rent/만 쓴다.
+/claude 지출.png
+/codex 지출.png

@@ -28,6 +28,11 @@
 .av-line b.is-red { color: #ff6259; }
 .av-line[data-phase="2"] { font-size: 56px; border-left-width: 5px; }
 .abuse-phone .av-line { max-width: 780px; }
+.phone-audio { position: absolute; left: 0; top: 346px; z-index: 4; display: none; color: #d3b9b7; font-size: 16px; letter-spacing: -.01em; }
+.phone-audio[data-active] { display: grid; gap: 12px; }
+.phone-audio > div { display: flex; gap: 10px; }
+.phone-audio button { border: 1px solid #ff5a5255; border-radius: 7px; background: #17090acb; color: #e8d5d3; padding: 8px 11px; font: 15px "Pretendard Variable", sans-serif; cursor: pointer; }
+.phone-audio kbd { margin-left: 8px; font: 12px ui-monospace, monospace; color: #ff8a82; }
 .av-note { position: absolute; left: 0; right: 0; bottom: 0; z-index: 3; margin: 0; display: flex; justify-content: space-between; gap: 30px; font-size: 17px; line-height: 1.4; color: #8a7475; letter-spacing: -.01em; }
 .av-note a { color: #9a8284; text-decoration: none; white-space: nowrap; border-bottom: 1px solid #4a2c2e; }
 @keyframes av-in { from { opacity: 0; transform: translateY(18px); filter: blur(8px); } to { opacity: 1; transform: none; filter: none; } }
@@ -93,7 +98,9 @@
 .ov-controls { position: absolute; left: 0; bottom: 44px; display: flex; align-items: center; gap: 10px; margin: 0; font-size: 16px; color: #8a7475; }
 .ov-controls kbd { font: 13px ui-monospace, monospace; padding: 2px 6px; border: 1px solid #5a3a3c; border-radius: 4px; color: #c9a3a0; margin-left: 12px; }
 .ov-controls kbd:first-child { margin-left: 0; }
-.ov[data-step="2"] .ov-controls { opacity: 0; }
+.ov-controls button { display: inline-flex; align-items: center; gap: 8px; border: 0; background: transparent; color: inherit; padding: 4px 0; font: inherit; cursor: pointer; }
+.ov-controls button + button { margin-left: 10px; }
+.ov[data-step="1"] .ov-controls, .ov[data-step="2"] .ov-controls { opacity: 0; pointer-events: none; }
 
 /* 30 · 벽이 사라지면 */
 .th { position: absolute; left: -100px; top: -162px; width: 1920px; height: 1080px; overflow: hidden; }
@@ -112,6 +119,10 @@
 .th-after span { display: block; font-size: 30px; color: #cdbdbc; }
 .th-after strong { display: block; margin-top: 12px; font-size: 88px; font-weight: 620; letter-spacing: -.05em; color: #ff6259; text-shadow: 0 0 40px #ff3b3b55; }
 .th-after p { margin-top: 26px; font-size: 30px; line-height: 1.5; color: #efe6e6; font-style: italic; }
+.th-sound { position: absolute; left: 0; bottom: 42px; z-index: 4; display: none; align-items: center; gap: 10px; color: #bca7a6; font-size: 16px; }
+.th-sound[data-active] { display: flex; }
+.th-sound button { border: 1px solid #ff5a5250; border-radius: 7px; background: #17090acb; color: #e8d5d3; padding: 7px 10px; font: 15px "Pretendard Variable", sans-serif; cursor: pointer; }
+.th-sound kbd { margin-left: 8px; font: 12px ui-monospace, monospace; color: #ff8a82; }
 
 /* 33 · 지워도 남는 사본 */
 .md { position: absolute; left: -100px; top: -162px; width: 1920px; height: 1080px; overflow: hidden; }

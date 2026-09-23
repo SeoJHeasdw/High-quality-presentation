@@ -2,6 +2,7 @@ import type { CSSProperties, ReactNode } from "react";
 import { Frame } from "../KeynoteFrame";
 import { Decipher, useInspection } from "../AbuseInteractive";
 import NightPhone, { type PhoneMode } from "./NightPhone";
+import PhoneAudio from "./PhoneAudio";
 import plate from "../../../public/abuse/night-phone.json";
 import { quadPoint } from "./homography";
 import "./night-phone.css";
@@ -41,14 +42,15 @@ export function PhoneStory({ part, step }: { part: 0 | 1; step: number }) {
   return <Frame n={31 + part} name={part === 0 ? "익숙한 목소리를 이용한다면" : "가짜 증거로 관계를 흔든다면"} step={step} className="abuse-slide abuse-v2 abuse-phone">
     <div className="abuse-content">
       <NightPhone mode={MODES[phase]} tone={phase === 2 || phase === 4 ? "red" : "cold"}>{part === 1 && <PhoneEvidence step={step}/>}</NightPhone>
+      <PhoneAudio src={part === 0 ? "/abuse/audio/phone-call.m4a?v=acting-2" : "/abuse/audio/phone-message.m4a?v=acting-2"} active={phase === 1 || phase === 3} delayMs={part === 0 ? 500 : 950} label={part === 0 ? "가상 통화" : "가상 음성 메시지"}/>
       <div className="av-copy" key={`c${part}`}>
         <p className="av-eyebrow"><span className="av-tag">가상 상황 {part === 0 ? "01" : "02"}</span>{part === 0 ? "사칭 전화" : "관계 조작"}</p>
         {part === 0 ? <h1>들어본 목소리라서<br/><em>믿게 된다면</em></h1> : <h1>가짜 ‘증거’로<br/><em>관계를 흔든다면</em></h1>}
       </div>
       <p className="av-line" key={`l${phase}`} data-phase={phase}>{NARRATION[phase]}</p>
       <p className="av-note">{part === 0
-        ? <><span>통화 내용과 번호는 가상입니다. 실제 사칭 음성을 만들거나 재생하지 않습니다.</span><a href="https://consumer.ftc.gov/articles/scammers-use-fake-emergencies-steal-your-money" target="_blank" rel="noreferrer">FTC · 짧은 음성으로 가족 목소리를 흉내 내는 사기 ↗</a></>
-        : <><span>외도 정황처럼 꾸민 음성을 배우자에게 보내는 가상 상황</span><a href="https://www.europol.europa.eu/publications-events/publications/facing-reality-law-enforcement-and-challenge-of-deepfakes" target="_blank" rel="noreferrer">Europol · 딥페이크의 위험 ↗</a></>}</p>
+        ? <><span>통화 내용·번호는 가상 · 발표자 본인 목소리를 Qwen3-TTS로 합성</span><a href="https://consumer.ftc.gov/articles/scammers-use-fake-emergencies-steal-your-money" target="_blank" rel="noreferrer">FTC · 짧은 음성으로 가족 목소리를 흉내 내는 사기 ↗</a></>
+        : <><span>음성 메시지는 가상 · 발표자 본인 목소리를 Qwen3-TTS로 합성</span><a href="https://www.europol.europa.eu/publications-events/publications/facing-reality-law-enforcement-and-challenge-of-deepfakes" target="_blank" rel="noreferrer">Europol · 딥페이크의 위험 ↗</a></>}</p>
     </div>
   </Frame>;
 }

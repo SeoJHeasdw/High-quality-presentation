@@ -79,6 +79,51 @@ function ThresholdCanvas({ open }: { open: boolean }) {
   return <canvas ref={ref} className="th-crowd" width={1920} height={1080} aria-hidden="true"/>;
 }
 
+function ThresholdAudio({ active }: { active: boolean }) {
+  const audio = useRef<HTMLAudioElement>(null);
+  const autoStart = useRef<number | null>(null);
+  const [playing, setPlaying] = useState(false);
+  const [muted, setMuted] = useState(false);
+  const [blocked, setBlocked] = useState(false);
+  const play = () => {
+    const el = audio.current; if (!el) return;
+    if (el.ended) el.currentTime = 0;
+    void el.play().then(() => setBlocked(false)).catch(() => { if (el.paused) setBlocked(true); });
+  };
+  const toggle = () => {
+    if (autoStart.current !== null) { window.clearTimeout(autoStart.current); autoStart.current = null; }
+    const el = audio.current; if (!el) return;
+    if (el.paused) play(); else el.pause();
+  };
+  const toggleSound = () => {
+    const el = audio.current; if (!el) return;
+    el.muted = !el.muted; setMuted(el.muted);
+  };
+  useEffect(() => {
+    const el = audio.current; if (!el) return;
+    el.pause(); el.currentTime = 0;
+    if (!active) return;
+    autoStart.current = window.setTimeout(() => { autoStart.current = null; play(); }, 450);
+    return () => { if (autoStart.current !== null) window.clearTimeout(autoStart.current); autoStart.current = null; el.pause(); };
+  }, [active]);
+  useEffect(() => {
+    if (!active) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.ctrlKey || e.metaKey || e.altKey) return;
+      if (e.key.toLowerCase() === "p") { e.preventDefault(); toggle(); }
+      if (e.key.toLowerCase() === "a") { e.preventDefault(); toggleSound(); }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [active]);
+  return <div className="th-sound" data-active={active || undefined}>
+    <audio ref={audio} src="/abuse/audio/threshold-voices.m4a?v=scene-30-1" preload="auto" muted={muted}
+      onPlay={() => { setPlaying(true); setBlocked(false); }} onPause={() => setPlaying(false)} onEnded={() => setPlaying(false)}/>
+    {active && <><span>가상 음성 연출</span><button type="button" onClick={toggle}>{blocked ? "소리 재생하기" : playing ? "일시정지" : "다시 듣기"} <kbd>P</kbd></button>
+      <button type="button" onClick={toggleSound}>{muted ? "소리 켜기" : "소리 끄기"} <kbd>A</kbd></button></>}
+  </div>;
+}
+
 export function ThresholdScene({ step }: { step: number }) {
   return <Frame n={30} name="그 수고가 줄어든다면" step={step} className="abuse-slide abuse-v2 abuse-threshold-v2">
     <div className="abuse-content">
@@ -95,6 +140,7 @@ export function ThresholdScene({ step }: { step: number }) {
         <span>더 적은 수고로</span><strong>더 많은 사람이</strong>
         <p>“이 정도면 엔지니어가 아니어도<br/>해볼 수 있겠는데?”</p>
       </div>
+      <ThresholdAudio active={step >= 1}/>
       <p className="av-note"><span>Qwen 4·5는 ‘더 발전한 다음 모델’을 가정한 이름입니다 · 사람과 벽은 도식</span></p>
     </div>
   </Frame>;

@@ -10,7 +10,7 @@ import "./opening/opening.css";
  *   0 사진 한 장  1 화소가 단어가 된다  2 지금의 요청  3 실제 강의 영상
  * 3D 공간은 opening/world.ts, 글과 영상은 여기의 DOM이 맡는다.
  */
-const REQUEST = "제 목소리로 강의 영상 만들어줘.";
+const REQUEST = "내 목소리로 강의 영상 만들어줘.";
 const HEAD: [string, string][] = [
   ["10여 년 전", "이게 뭐야?"],
   ["기계가 돌려준 답", "사진에서 이름을 알아내는 일"],
@@ -23,10 +23,14 @@ export default function CatScene({ now = false, step = 0 }: { now?: boolean; ste
   const motion = usePerformanceMotion();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const autoStart = useRef<number | null>(null);
   const world = useRef<OpeningWorld | null>(null);
   const cueRef = useRef(cue); cueRef.current = cue;
   const motionRef = useRef(motion); motionRef.current = motion;
   const [failed, setFailed] = useState(false);
+  const [audioBlocked, setAudioBlocked] = useState(false);
+  const [muted, setMuted] = useState(false);
+  const [playing, setPlaying] = useState(false);
   const [typed, setTyped] = useState(cue >= 2 ? REQUEST.length : 0);
   const prevCue = useRef(cue);
 
@@ -62,12 +66,27 @@ export default function CatScene({ now = false, step = 0 }: { now?: boolean; ste
     return () => window.clearInterval(id);
   }, [cue, motion]);
 
-  // 영상은 결과가 열린 뒤에만, 소리 없이 재생한다. 모션을 끄면 첫 화면에 멈춘다.
+  // 결과가 열리면 실제 강의의 목소리를 한 번 들려준다. 모션을 끄면 첫 화면에 멈춘다.
   useEffect(() => {
     const v = videoRef.current; if (!v) return;
-    if (cue === 3 && motion) { v.currentTime = 0; const id = window.setTimeout(() => { void v.play().catch(() => {}); }, 900); return () => window.clearTimeout(id); }
+    if (cue === 3 && motion) {
+      v.currentTime = 0;
+      autoStart.current = window.setTimeout(() => { autoStart.current = null; void v.play().catch(() => { if (v.paused) setAudioBlocked(true); }); }, 2400);
+      return () => { if (autoStart.current !== null) window.clearTimeout(autoStart.current); autoStart.current = null; };
+    }
     v.pause(); if (cue < 3) v.currentTime = 0;
   }, [cue, motion]);
+  useEffect(() => {
+    if (cue !== 3) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.ctrlKey || e.metaKey || e.altKey) return;
+      const v = videoRef.current; if (!v) return;
+      if (e.key.toLowerCase() === "p") { e.preventDefault(); if (autoStart.current !== null) { window.clearTimeout(autoStart.current); autoStart.current = null; } if (v.paused) { if (v.ended) v.currentTime = 0; void v.play().then(() => setAudioBlocked(false)).catch(() => setAudioBlocked(true)); } else v.pause(); }
+      if (e.key.toLowerCase() === "a") { e.preventDefault(); v.muted = !v.muted; setMuted(v.muted); }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [cue]);
   useEffect(() => () => videoRef.current?.pause(), []);
 
   const [kicker, title] = HEAD[cue];
@@ -102,12 +121,13 @@ export default function CatScene({ now = false, step = 0 }: { now?: boolean; ste
 
     <div className="op-screen" data-on={cue === 3 || undefined}>
       <figure className="op-screen__frame">
-        <video ref={videoRef} src="/demos/tts-lecture.mp4" poster="/demos/tts-lecture.jpg" muted loop playsInline preload="auto" aria-label="TTS Engine으로 제작한 실제 강의 영상의 장표와 자막"/>
+        <video ref={videoRef} src="/demos/tts-lecture.mp4" poster="/demos/tts-lecture.jpg" muted={muted} playsInline preload="auto" onPlay={() => { setPlaying(true); setAudioBlocked(false); }} onPause={() => setPlaying(false)} onEnded={() => setPlaying(false)} aria-label="TTS Engine으로 제작한 실제 강의 영상의 장표와 자막"/>
       </figure>
       <div className="op-screen__meta">
         <LectureWave video={videoRef} bars={140}/>
         <p><b>제 목소리</b>로 읽고, 자막과 장표를 붙인 강의 영상 · 제 엔진으로 제작</p>
       </div>
+      <div className="op-screen__controls"><button type="button" onClick={() => { const v = videoRef.current; if (!v) return; if (autoStart.current !== null) { window.clearTimeout(autoStart.current); autoStart.current = null; } if (v.paused) { if (v.ended) v.currentTime = 0; void v.play().then(() => setAudioBlocked(false)).catch(() => setAudioBlocked(true)); } else v.pause(); }}>{audioBlocked ? "소리 재생하기" : playing ? "일시정지" : "다시 듣기"} <kbd>P</kbd></button><button type="button" onClick={() => { const v = videoRef.current; if (!v) return; v.muted = !v.muted; setMuted(v.muted); }}>{muted ? "소리 켜기" : "소리 끄기"} <kbd>A</kbd></button></div>
     </div>
   </Frame>;
 }

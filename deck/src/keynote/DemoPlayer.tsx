@@ -9,15 +9,17 @@ const DEMOS={
 };
 export default function DemoPlayer({kind}:{kind:keyof typeof DEMOS}){
  const demo=DEMOS[kind],ref=useRef<HTMLMediaElement>(null);
- const [playing,setPlaying]=useState(false),[muted,setMuted]=useState(true),[time,setTime]=useState(0),[error,setError]=useState("");
- const toggle=()=>{const el=ref.current;if(!el)return;if(el.paused){setError("");void el.play().catch(()=>setError("재생 버튼을 눌러주세요."))}else el.pause()};
+ const autoStart=useRef<number|null>(null);
+ const [playing,setPlaying]=useState(false),[muted,setMuted]=useState(kind==='assets'),[time,setTime]=useState(0),[error,setError]=useState("");
+ const toggle=()=>{if(autoStart.current!==null){window.clearTimeout(autoStart.current);autoStart.current=null}const el=ref.current;if(!el)return;if(el.paused){setError("");void el.play().catch(()=>setError("재생 버튼을 눌러주세요."))}else el.pause()};
  const sound=()=>{const el=ref.current;if(!el)return;el.muted=!el.muted;setMuted(el.muted)};
  useEffect(()=>{
   const media=ref.current;
+  autoStart.current=window.setTimeout(()=>{autoStart.current=null;if(media) void media.play().catch(()=>{if(media.paused)setError("자동 재생이 차단되었습니다. 재생을 눌러주세요.")})},kind==='assets'?0:1000);
   const onKey=(e:KeyboardEvent)=>{if(e.ctrlKey||e.metaKey||e.altKey||e.target instanceof HTMLInputElement)return;if(e.key.toLowerCase()==='p'){e.preventDefault();toggle()}if(e.key.toLowerCase()==='a'){e.preventDefault();sound()}};
-  window.addEventListener('keydown',onKey);return()=>{window.removeEventListener('keydown',onKey);media?.pause()};
+  window.addEventListener('keydown',onKey);return()=>{window.removeEventListener('keydown',onKey);if(autoStart.current!==null)window.clearTimeout(autoStart.current);media?.pause()};
  },[]);
- const events={onPlay:()=>setPlaying(true),onPause:()=>setPlaying(false),onEnded:()=>setPlaying(false),onTimeUpdate:()=>setTime(ref.current?.currentTime??0),onError:()=>setError("미디어를 불러오지 못했습니다. 로컬 서버를 확인해주세요.")};
+ const events={onPlay:()=>{setPlaying(true);setError("")},onPause:()=>setPlaying(false),onEnded:()=>setPlaying(false),onTimeUpdate:()=>setTime(ref.current?.currentTime??0),onError:()=>setError("미디어를 불러오지 못했습니다. 로컬 서버를 확인해주세요.")};
  const duration=demo.audio?15:kind==='tts'?24:15;
  return <Briefing n={23} name={demo.name} title={demo.title} lead={demo.lead} className="demo-slide">
   <div className="demo-screen">

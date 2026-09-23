@@ -1,5 +1,5 @@
 /* 31·32·34 · 한밤중의 휴대전화. 좌표는 화면 px(1920×1080)이고, 장표의 abuse-content 원점은 화면 (100, 162)이다. */
-.np { position: absolute; left: -100px; top: -162px; width: 1920px; height: 1080px; overflow: hidden; z-index: 0; pointer-events: none; background: #020304; }
+.np { position: absolute; left: -100px; top: -162px; width: 1920px; height: 1080px; overflow: clip; z-index: 0; pointer-events: none; background: #020304; }
 .np .pe-control { pointer-events: auto; }
 .np-cam { position: absolute; inset: 0; transform-origin: var(--cx) var(--cy); transition: transform 1.8s cubic-bezier(.65,0,.25,1); }
 .np[data-mode="call"] .np-cam, .np[data-mode="reveal"] .np-cam, .np[data-mode="chat"] .np-cam, .np[data-mode="chat-more"] .np-cam { transform: translate(-430px, 36px) scale(1.42); }
@@ -61,6 +61,7 @@
 .ph-btn--decline i { background: #ff3b30; }
 .ph-btn--decline i::after { transform: rotate(135deg); }
 .ph-btn--accept i { background: #34c759; }
+.ph-btn--accept { border: 0; padding: 0; background: transparent; font: inherit; cursor: pointer; pointer-events: auto; }
 
 .ph--call { background: linear-gradient(180deg, #121318, #07080a 60%); }
 .ph-caller--small { top: 70px; gap: 4px; }

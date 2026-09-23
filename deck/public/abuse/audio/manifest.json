@@ -1,0 +1,24 @@
+{
+  "purpose": "Fictional educational phone scenes on slides 31 and 32",
+  "voice": "Presenter's own synthetic voice; no third-party voice sample was used",
+  "model": "mlx-community/Qwen3-TTS-12Hz-1.7B-Base-bf16",
+  "adapter": "jaeho-ko-r16-v1",
+  "adapterScale": 0.6,
+  "reference": "Presenter's 05-genai-limit-0036 recording, chosen for wider pitch and level variation",
+  "processing": "240–3800 Hz phone filter, light compression, AAC; call pauses shortened and tempo 1.07",
+  "humanListeningReview": "pending",
+  "clips": [
+    {
+      "file": "phone-call.m4a",
+      "slide": 31,
+      "seed": 310931,
+      "text": "엄마? 나야! 나 사고 났어. 폰이 깨져서 친구 폰으로 전화했어. 지금 좀 급해. 엄마, 나 좀 도와줘. 아빠한테는 말하지 마."
+    },
+    {
+      "file": "phone-message.m4a",
+      "slide": 32,
+      "seed": 320932,
+      "text": "그날 밤... 그 사람과 같이 있었어. 당신한테는 말하지 않았어."
+    }
+  ]
+}
