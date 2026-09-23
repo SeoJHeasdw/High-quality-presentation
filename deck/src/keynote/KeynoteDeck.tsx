@@ -82,7 +82,7 @@ const ordered = [
  {id:"manifesto-worst-model",scriptKey:"manifesto-worst-model",steps:2,render:({step})=><WorstModelStory step={step}/>},
  byId("tel-this-presentation"),
  ...ABUSE_SLIDES,
- {id:"abuse-leash",scriptKey:"abuse-leash",steps:1,render:({step})=><LeashStory step={step}/>},
+ {id:"abuse-leash",scriptKey:"abuse-leash",steps:2,render:({step})=><LeashStory step={step}/>},
  ...(["manifesto-remains","tel-sharing","tel-unfinished","tel-invitation"] as const).map((id,part)=>({id,scriptKey:id,group:"finale",steps:id==="tel-unfinished"?2:undefined,render:({step}:{step:number})=><FinaleStory part={part as 0|1|2|3} step={step}/>})),
 ];
 const KeynoteDeck:DeckModule={className:"deck-keynote",slides:ordered.map((slide,index)=>({...slide,render:ctx=><SlidePosition.Provider value={{index,total:ordered.length}}>{slide.render(ctx)}</SlidePosition.Provider>}))};
