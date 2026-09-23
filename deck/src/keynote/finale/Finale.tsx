@@ -105,11 +105,13 @@ function Blueprint() {
   </div>;
 }
 
-/** 43번은 세 단계마다 제목이 바뀐다(0 지금, 1 조합, 2 사무직이었다면). */
+/** 43번은 단계마다 제목이 바뀐다(0 지금, 1 조합, 2 사무직이었다면, 3 계속 늘어나는 방, 4 방 하나에서 뻗는 사례). */
 const UNFINISHED: { kicker: string; title: ReactNode; lead: string }[] = [
   { kicker: "아직 남아 있는 문제", title: <>완성된 자비스까지는<br/>갈 길이 있습니다</>, lead: "지금은 방마다 기능을 만들고, 실제로 쓰다 막히는 부분을 고치는 단계입니다." },
   { kicker: "방과 방을 이으면", title: <>조합하면<br/>새 일이 생깁니다</>, lead: "같은 설계가 목소리, 업무, 주식 판단에 들어가 있습니다. 조합은 아직 가능성입니다." },
-  { kicker: "제가 사무직이었다면", title: <>그리고 방은<br/>계속 늘어납니다</>, lead: "엑셀, 브라우저, PDF와 PPT, 문서 방향부터 만들었을 겁니다." },
+  { kicker: "제가 사무직이었다면", title: <>이 방들부터<br/>지었을 겁니다</>, lead: "엑셀, 브라우저, PDF와 PPT, 문서 방향. 전부 제 가정입니다." },
+  { kicker: "방 하나를 더 지으면", title: <>그리고 방은<br/>계속 늘어납니다</>, lead: "방이 하나 늘 때마다, 이을 수 있는 조합은 두 배 넘게 늘어납니다." },
+  { kicker: "Personal CIO 방 하나만 봐도", title: <>조합 하나하나가<br/>일이 됩니다</>, lead: "전부 제 가정입니다. 방 하나에서만 이만큼 뻗습니다." },
 ];
 const HEAD: { name: string; kicker: string; title: ReactNode; lead: string }[] = [
   { name: "30년 동안 쌓을 것", kicker: "30년 동안 쌓을 것", title: <>모델이 바뀌어도<br/>제 작업은 남기고 싶습니다</>, lead: "더 좋은 AI가 나오면, 이미 만든 기반 위에서 받아들일 수 있도록 합니다." },
@@ -124,7 +126,7 @@ const BRIDGE = { name: "30년 동안 쌓을 것", kicker: "제가 할 수 있는
 /** part -1은 40번(신에게 목줄), 0~3은 41~44번. 다섯 장이 같은 틀을 이어 쓰도록 자식의 자리를 맞춘다. */
 export default function FinaleStory({ part, step = 0 }: { part: -1 | 0 | 1 | 2 | 3; step?: number }) {
   const leash = part === -1, bridge = part === 0 && step === 0;
-  const head = leash ? null : bridge ? BRIDGE : part === 2 ? { ...HEAD[2], ...UNFINISHED[Math.min(2, step)] } : HEAD[part];
+  const head = leash ? null : bridge ? BRIDGE : part === 2 ? { ...HEAD[2], ...UNFINISHED[Math.min(4, step)] } : HEAD[part];
   // 40·41번의 3D 단계: 40번 -1~1, 41번 2~3
   const phase = leash ? step - 1 : 2 + step;
   const className = leash ? "personal-v2 leash finale-pre" : `finale finale--${part}${bridge ? " finale--bridge" : ""}${part === 3 ? " kn-closing" : ""}`;

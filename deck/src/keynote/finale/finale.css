@@ -121,7 +121,29 @@
 .fb3-labels .iw-label strong { font-size: 23px; }
 .fb3-labels .iw-label[data-tone="gold"] { --tone: #ffd49a; --tone-dim: #ffd49a66; }
 .fb3-labels .iw-label[data-tone="gold"] strong { color: #fff3dc; }
-.fn-legend { position: absolute; right: 0; top: 4px; z-index: 3; margin: 0; display: flex; gap: 22px; font-size: 17px; color: #aab4be; animation: fn-rise .8s ease 1.2s both; }
+/* 라벨 줄기: --lift만큼 길어진다. down은 점 아래로 라벨을 단다(앞줄 방). */
+.fb3-labels .iw-label:is([data-dir="up"], [data-dir="down"]) .iw-label-dot::after { height: calc(34px + var(--lift, 0px)); }
+.fb3-labels .iw-label[data-dir="up"] .iw-label-box { bottom: calc(46px + var(--lift, 0px)); }
+.fb3-labels .iw-label[data-dir="down"] .iw-label-dot::after { bottom: auto; top: 10px; background: linear-gradient(180deg, var(--tone), #0000); }
+.fb3-labels .iw-label[data-dir="down"] .iw-label-box { bottom: auto; top: calc(46px + var(--lift, 0px)); }
+/* 조합의 수: 제목 아래 왼쪽 단. 3D 장면에 선 방의 수를 그대로 따라간다(Blueprint3D). */
+.fb3-count { position: absolute; left: 100px; top: 548px; width: 660px; z-index: 3; display: grid; gap: 6px; opacity: 0; transform: translateY(14px); transition: opacity .8s ease .5s, transform .8s cubic-bezier(.16,1,.3,1) .5s; }
+.fb3-count[data-on] { opacity: 1; transform: none; }
+.fb3-count__label { display: flex; align-items: center; gap: 14px; font-size: 19px; font-weight: 560; color: #e8c996; letter-spacing: -.01em; }
+.fb3-count__label::before { content: ""; width: 26px; height: 1px; background: #e8c996; opacity: .7; }
+.fb3-count__num { display: flex; align-items: baseline; gap: 14px; font-size: 156px; line-height: 1; font-weight: 640; letter-spacing: -.05em; color: #ffe2b0; font-variant-numeric: tabular-nums; text-shadow: 0 0 60px #ffb45e40, 0 2px 30px #05070c; transform-origin: 0 80%; }
+.fb3-count__num small { font-size: 34px; font-weight: 560; letter-spacing: -.02em; color: #d8bf92; }
+.fb3-count__num.is-bump { animation: fb3-bump .5s cubic-bezier(.2,.9,.3,1.2); }
+@keyframes fb3-bump { 0% { transform: scale(1.06); color: #fff6e6; text-shadow: 0 0 80px #ffc47a90, 0 2px 30px #05070c; } 100% { transform: none; } }
+.fb3-count__rooms { font-size: 20px; color: #aab4be; font-variant-numeric: tabular-nums; }
+.fb3-count__rooms b { color: #eef1f4; font-weight: 620; }
+.fb3-count__rooms sup { font-size: .68em; }
+.fb3-count__exact { min-height: 22px; font-size: 16px; color: #7d8a96; font-variant-numeric: tabular-nums; letter-spacing: .01em; }
+.deck-keynote[data-motion="off"] .fb3-count { transition: none; }
+.deck-keynote[data-motion="off"] .fb3-count__num.is-bump { animation: none; }
+
+/* 범례는 지도처럼 오른쪽 아래에 둔다. 위쪽은 방 라벨이 올라오는 자리다. */
+.fn-legend { position: absolute; right: 0; bottom: 0; z-index: 3; margin: 0; display: flex; gap: 22px; font-size: 17px; color: #aab4be; animation: fn-rise .8s ease 1.2s both; }
 .fn-legend span { display: inline-flex; align-items: center; gap: 10px; }
 .fn-legend i { width: 30px; height: 2px; background: #ffd49a; }
 .fn-legend i[data-dash] { background: repeating-linear-gradient(90deg, #9fd6ff 0 6px, #0000 6px 11px); }

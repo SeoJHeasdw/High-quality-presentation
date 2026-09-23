@@ -3,6 +3,7 @@ import { EffectComposer } from "three/examples/jsm/postprocessing/EffectComposer
 import { RenderPass } from "three/examples/jsm/postprocessing/RenderPass.js";
 import { UnrealBloomPass } from "three/examples/jsm/postprocessing/UnrealBloomPass.js";
 import { OutputPass } from "three/examples/jsm/postprocessing/OutputPass.js";
+import { FullScreenQuad } from "three/examples/jsm/postprocessing/Pass.js";
 
 /*
  * 2~3, 6, 7~8, 16~19, 29, 39, 43번 공간이 함께 쓰는 틀.
@@ -122,7 +123,24 @@ export function createStage(canvas: HTMLCanvasElement, opts: { background: strin
   const listeners: (() => void)[] = [];
   const tmp = new THREE.Vector3();
 
-  const draw = () => { if (opts.transparent) renderer.render(scene, camera); else composer.render(); };
+  // transparent: 더하기로 그린 빛(선·격자·빛점)은 알파를 쓰지 않아 캔버스에 "색은 있고 알파는 0"인 화소가 남는다.
+  // premultiplied 캔버스에서 이런 화소는 정의되지 않은 값이라 Chrome은 더해 보이고 Safari는 버린다(43번이 라벨만 남던 원인).
+  // 다 그린 화면을 텍스처로 복사한 뒤, 알파를 그 화소의 밝기만큼 채워 다시 쓴다. 색은 그대로라 Chrome의 모습과 같다.
+  let seal = () => {};
+  if (opts.transparent) {
+    const size = renderer.getDrawingBufferSize(new THREE.Vector2());
+    const shot = new THREE.FramebufferTexture(size.x, size.y);
+    const quad = new FullScreenQuad(new THREE.ShaderMaterial({
+      uniforms: { tMap: { value: shot } },
+      vertexShader: `varying vec2 vUv; void main(){ vUv=uv; gl_Position=vec4(position.xy,0.,1.); }`,
+      fragmentShader: `uniform sampler2D tMap; varying vec2 vUv;
+        void main(){ vec4 c=texture2D(tMap,vUv); gl_FragColor=vec4(c.rgb,max(c.a,max(c.r,max(c.g,c.b)))); }`,
+      blending: THREE.NoBlending, depthTest: false, depthWrite: false, toneMapped: false,
+    }));
+    disposables.push(shot, quad.material, quad);
+    seal = () => { renderer.copyFramebufferToTexture(shot); quad.render(renderer); };
+  }
+  const draw = () => { if (opts.transparent) { renderer.render(scene, camera); seal(); } else composer.render(); };
   let update: (dt: number) => void = () => {};
   let moving: () => boolean = () => false;
   let raf = 0, last = performance.now(), frames = 0, disposed = false, dirty = 3, hold = false;

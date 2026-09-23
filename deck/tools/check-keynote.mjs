@@ -107,8 +107,8 @@ await page.evaluate(()=>{window.__finaleSky=document.querySelector('.fn-sky')});
 const sunOpacity=()=>page.evaluate(()=>Number(getComputedStyle(document.querySelector('.fn-plate--sun')).opacity));
 report.finale={beforeSun:await sunOpacity()};
 report.finale.bridge=await page.waitForSelector('.ls-canvas[data-ready]',{timeout:10000}).then(()=>true,()=>false);
-// 41번은 두 단계(이음새 → 세 겹)다. 41·0 → 41·1 → 42 → 43·0 → 43·1 → 43·2 → 44
-for(let i=0;i<6;i++){await page.keyboard.press('ArrowRight');await page.waitForTimeout(i===3?1200:500);if(i===3)report.finale.blueprint=await page.evaluate(()=>!!document.querySelector('.fb3-canvas[data-ready]')&&document.querySelector('.fn-sky')===window.__finaleSky)}
+// 41번은 두 단계(이음새 → 세 겹)다. 41·0 → 41·1 → 42 → 43·0 → 43·1 → 43·2 → 43·3 → 43·4 → 44
+for(let i=0;i<8;i++){await page.keyboard.press('ArrowRight');await page.waitForTimeout(i===3?1200:500);if(i===3)report.finale.blueprint=await page.evaluate(()=>!!document.querySelector('.fb3-canvas[data-ready]')&&document.querySelector('.fn-sky')===window.__finaleSky)}
 await page.waitForTimeout(2900);
 Object.assign(report.finale,{same:await page.evaluate(()=>document.querySelector('.fn-sky')===window.__finaleSky),afterSun:await sunOpacity(),choices:await page.locator('.kn-slide .rb-true-focus__item').count()});
 const finaleOk=report.finale.same&&report.finale.bridge&&report.finale.blueprint&&report.finale.beforeSun===0&&report.finale.afterSun>.99&&report.finale.choices===2;
