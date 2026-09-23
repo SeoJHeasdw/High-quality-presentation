@@ -18,7 +18,8 @@ async function go(n){await page.keyboard.type(String(n));await page.keyboard.pre
 async function audit(){return page.evaluate(()=>{
  const root=document.querySelector('.kn-slide');
  const visible=el=>{for(let n=el;n&&n!==root.parentElement;n=n.parentElement){const s=getComputedStyle(n);if(s.display==='none'||s.visibility==='hidden'||Number(s.opacity)<.05)return false}return true};
- const all=[...root.querySelectorAll('h1,h2,p,blockquote,.engine-world-label,.life-timeline strong')].filter(visible);
+ // 사진 속 휴대전화 화면(.np-screen)은 원근으로 기울어 있어 글줄의 직사각형 경계가 서로 겹친다. 실제 글은 겹치지 않으므로 제외한다.
+ const all=[...root.querySelectorAll('h1,h2,p,blockquote,.engine-world-label,.life-timeline strong')].filter(el=>!el.closest('.np-screen')).filter(visible);
  const overflow=all.filter(el=>{const r=el.getBoundingClientRect();return r.left<0||r.right>1921||r.top<0||r.bottom>1000}).map(el=>el.textContent);
  const overlap=[];for(let i=0;i<all.length;i++)for(let j=i+1;j<all.length;j++){if(all[i].contains(all[j])||all[j].contains(all[i]))continue;const a=all[i].getBoundingClientRect(),b=all[j].getBoundingClientRect();if(Math.min(a.right,b.right)-Math.max(a.left,b.left)>4&&Math.min(a.bottom,b.bottom)-Math.max(a.top,b.top)>4)overlap.push([all[i].textContent,all[j].textContent])}
  const canvas=root.querySelector('canvas');return{n:Number(root.dataset.slide),step:Number(root.dataset.step),overflow,overlap,webgl:canvas?{frames:Number(canvas.dataset.frames||0),ready:canvas.dataset.ready,fallback:!!root.querySelector('[data-fallback]')}:null};

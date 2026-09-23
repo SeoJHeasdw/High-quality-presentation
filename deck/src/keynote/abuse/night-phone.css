@@ -1,0 +1,138 @@
+/* 31·32·34 · 한밤중의 휴대전화. 좌표는 화면 px(1920×1080)이고, 장표의 abuse-content 원점은 화면 (100, 162)이다. */
+.np { position: absolute; left: -100px; top: -162px; width: 1920px; height: 1080px; overflow: hidden; z-index: 0; pointer-events: none; background: #020304; }
+.np .pe-control { pointer-events: auto; }
+.np-cam { position: absolute; inset: 0; transform-origin: var(--cx) var(--cy); transition: transform 1.8s cubic-bezier(.65,0,.25,1); }
+.np[data-mode="call"] .np-cam, .np[data-mode="reveal"] .np-cam, .np[data-mode="chat"] .np-cam, .np[data-mode="chat-more"] .np-cam { transform: translate(-430px, 36px) scale(1.42); }
+.np[data-mode="hangup"] .np-cam, .np[data-mode="callback"] .np-cam { transform: translate(-330px, 24px) scale(1.3); }
+.np-stage { position: absolute; inset: 0; transform-origin: var(--cx) var(--cy); }
+.np[data-motion] .np-stage { animation: np-creep 28s cubic-bezier(.3,0,.2,1) both; }
+@keyframes np-creep { from { transform: scale(1); } to { transform: scale(1.075); } }
+.np-plate { position: absolute; inset: 0; width: 1920px; height: 1080px; display: block; filter: saturate(.8) brightness(.92); }
+.np-glow { position: absolute; left: calc(var(--cx) - 620px); top: calc(var(--cy) - 560px); width: 1240px; height: 1120px; border-radius: 50%; mix-blend-mode: screen; opacity: .5; transition: background .8s ease, opacity .8s ease;
+  background: radial-gradient(closest-side, #8fb4ff2e, #8fb4ff0c 55%, #0000); }
+.np[data-mode="call"] .np-glow, .np[data-mode="chat-more"] .np-glow { background: radial-gradient(closest-side, #ff4a4a24, #ff4a4a08 55%, #0000); }
+.np[data-mode="reveal"] .np-glow { background: radial-gradient(closest-side, #ff3b3b40, #ff3b3b10 55%, #0000); opacity: .8; }
+.np[data-mode="callback"] .np-glow { background: radial-gradient(closest-side, #ffd49a26, #ffd49a0a 55%, #0000); }
+.np-ripples { position: absolute; left: var(--cx); top: var(--cy); width: 0; height: 0; }
+.np-ripples i { position: absolute; left: -240px; top: -330px; width: 480px; height: 660px; border-radius: 42%; border: 1px solid #b9d2ff2e; opacity: 0; transform: rotate(-3deg) scale(.8); }
+.np[data-mode="incoming"][data-motion] .np-ripples i { animation: np-ring 2s ease-out infinite; }
+.np[data-mode="incoming"][data-motion] .np-ripples i:nth-child(2) { animation-delay: .25s; }
+.np[data-mode="incoming"][data-motion] .np-ripples i:nth-child(3) { animation-delay: .5s; }
+@keyframes np-ring { 0% { opacity: 0; transform: rotate(-3deg) scale(.82); } 10% { opacity: .55; } 45% { opacity: 0; transform: rotate(-3deg) scale(1.18); } 100% { opacity: 0; } }
+.np-shake { position: absolute; inset: 0; }
+.np[data-mode="incoming"][data-motion] .np-shake { animation: np-buzz 2s linear infinite; }
+@keyframes np-buzz {
+  0% { translate: 0 0; } 3% { translate: 1.6px -1px; } 6% { translate: -1.4px .8px; } 9% { translate: 1.2px 1.1px; } 12% { translate: -1.6px -.6px; } 15% { translate: 1.4px .4px; }
+  18% { translate: -1.1px -1.2px; } 21% { translate: 1.6px .9px; } 24% { translate: -1.3px .5px; } 27% { translate: 1px -1px; } 30% { translate: -1.5px 1px; } 33% { translate: 1.3px -.7px; }
+  36% { translate: -1px 1.1px; } 39% { translate: 1.5px -.4px; } 42% { translate: -1.2px -.9px; } 45% { translate: 0 0; } 100% { translate: 0 0; } }
+.np-screen { position: absolute; left: 0; top: 0; transform-origin: 0 0; border-radius: 46px; overflow: hidden; background: #000; filter: brightness(.94) contrast(1.03); box-shadow: 0 0 0 1px #000; }
+.np-sheen { position: absolute; inset: 0; pointer-events: none; background: linear-gradient(118deg, #ffffff16 0%, #ffffff06 22%, #0000 38%, #0000 70%, #ffffff08 100%); }
+.np-grain { position: absolute; inset: -50%; opacity: .1; mix-blend-mode: overlay; pointer-events: none;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 1.2 -.1'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>"); }
+.np[data-motion] .np-grain { animation: np-grain 1s steps(6) infinite; }
+@keyframes np-grain { 0% { transform: translate(0,0); } 20% { transform: translate(-3%,2%); } 40% { transform: translate(2%,-4%); } 60% { transform: translate(-4%,-2%); } 80% { transform: translate(3%,3%); } 100% { transform: translate(0,0); } }
+.np-vignette { position: absolute; inset: 0; pointer-events: none; background: radial-gradient(ellipse 75% 85% at 62% 52%, #0000 40%, #010203b0 78%, #010203f2 100%), linear-gradient(90deg, #010203f0 0%, #010203c8 30%, #01020300 58%); }
+.np-sound { position: absolute; right: 100px; bottom: 92px; font-size: 14px; letter-spacing: .06em; color: #5d6670; }
+.np-sound[data-on] { color: #ff8a8a; }
+
+/* 휴대전화 화면(390×845). 어두운 방에서 찍힌 화면처럼 조금 눌린 명도. */
+.ph { position: absolute; inset: 0; color: #f3f4f6; font-family: "Pretendard Variable", sans-serif; letter-spacing: -.02em; overflow: hidden; }
+.ph-status { position: absolute; left: 34px; right: 28px; top: 18px; display: flex; justify-content: space-between; align-items: center; font-size: 17px; }
+.ph-status b { font-weight: 650; }
+.ph-status__icons { display: flex; gap: 7px; align-items: center; }
+.ph-signal { width: 18px; height: 11px; background: linear-gradient(90deg, #fff 0 3px, #0000 3px 5px, #fff 5px 8px, #0000 8px 10px, #fff 10px 13px, #0000 13px 15px, #fff5 15px 18px); clip-path: polygon(0 100%, 100% 0, 100% 100%); }
+.ph-wifi { width: 15px; height: 11px; border-radius: 15px 15px 0 0; background: radial-gradient(circle at 50% 100%, #fff 0 2.5px, #0000 3px 4.5px, #fff 5px 7px, #0000 7.5px 9px, #fff 9.5px 12px, #0000 12.5px); clip-path: polygon(0 0, 100% 0, 50% 100%); }
+.ph-battery { width: 25px; height: 12px; border: 1.5px solid #fffc; border-radius: 4px; position: relative; box-sizing: border-box; }
+.ph-battery::after { content: ""; position: absolute; left: 1.5px; top: 1.5px; bottom: 1.5px; width: 34%; background: #ff5b5b; border-radius: 1.5px; }
+
+.ph--incoming { background: radial-gradient(ellipse 120% 70% at 50% 30%, #273042, #0c0f16 70%); }
+.ph-caller { position: absolute; left: 0; right: 0; top: 118px; display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; }
+.ph-caller__kind { font-size: 17px; color: #aeb5c0; }
+.ph-caller strong { font-size: 36px; font-weight: 600; letter-spacing: -.03em; }
+.ph-caller__num { font-size: 18px; color: #aeb5c0; font-variant-numeric: tabular-nums; }
+.ph-avatar { position: absolute; left: 50%; top: 330px; width: 132px; height: 132px; margin-left: -66px; border-radius: 50%; background: #3a4150; overflow: hidden; }
+.ph-avatar i { position: absolute; left: 50%; top: 26px; width: 48px; height: 48px; margin-left: -24px; border-radius: 50%; background: #7d8594; box-shadow: 0 64px 0 26px #7d8594; }
+.np[data-motion] .ph--incoming .ph-avatar { animation: ph-pulse 2s ease-out infinite; }
+@keyframes ph-pulse { 0% { box-shadow: 0 0 0 0 #ffffff30; } 60% { box-shadow: 0 0 0 26px #ffffff00; } 100% { box-shadow: 0 0 0 0 #ffffff00; } }
+.ph-actions { position: absolute; left: 44px; right: 44px; bottom: 96px; display: flex; justify-content: space-between; }
+.ph-btn { display: flex; flex-direction: column; align-items: center; gap: 12px; font-size: 16px; color: #d7dbe1; }
+.ph-btn i { width: 76px; height: 76px; border-radius: 50%; position: relative; }
+.ph-btn i::after { content: ""; position: absolute; inset: 22px; background: #fff; -webkit-mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M6.6 10.8a15.1 15.1 0 0 0 6.6 6.6l2.2-2.2a1 1 0 0 1 1-.25 11.4 11.4 0 0 0 3.6.57 1 1 0 0 1 1 1V20a1 1 0 0 1-1 1A17 17 0 0 1 3 4a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1c0 1.25.2 2.45.57 3.57a1 1 0 0 1-.25 1Z'/></svg>") center/contain no-repeat; mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M6.6 10.8a15.1 15.1 0 0 0 6.6 6.6l2.2-2.2a1 1 0 0 1 1-.25 11.4 11.4 0 0 0 3.6.57 1 1 0 0 1 1 1V20a1 1 0 0 1-1 1A17 17 0 0 1 3 4a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1c0 1.25.2 2.45.57 3.57a1 1 0 0 1-.25 1Z'/></svg>") center/contain no-repeat; }
+.ph-btn--decline i { background: #ff3b30; }
+.ph-btn--decline i::after { transform: rotate(135deg); }
+.ph-btn--accept i { background: #34c759; }
+
+.ph--call { background: linear-gradient(180deg, #121318, #07080a 60%); }
+.ph-caller--small { top: 70px; gap: 4px; }
+.ph-caller--small strong { font-size: 27px; }
+.ph-timer { font-size: 16px; color: #aeb5c0; }
+.ph-wave { position: absolute; left: 40px; right: 40px; top: 188px; height: 84px; display: flex; align-items: center; gap: 4px; }
+.ph-wave i { flex: 1; height: calc(var(--h) * 100%); border-radius: 3px; background: #ff5a52; transform-origin: 50% 50%; }
+.ph-wave:not([data-red]) i { background: #ffd49a; }
+.np[data-motion] .ph-wave i { animation: ph-talk .9s ease-in-out infinite alternate; animation-delay: calc(var(--i) * -73ms); }
+@keyframes ph-talk { from { transform: scaleY(.35); } to { transform: scaleY(1); } }
+.ph-live { position: absolute; left: 26px; right: 26px; top: 306px; padding: 18px 20px 20px; border-radius: 22px; background: #ffffff0d; border: 1px solid #ffffff12; }
+.ph-live__label { display: block; font-size: 14px; color: #8e96a3; margin-bottom: 10px; letter-spacing: .02em; }
+.ph-live p { font-size: 23px; line-height: 1.42; margin: 0 0 8px; color: #eef0f3; font-weight: 520; }
+.np[data-motion] .ph-live p { animation: ph-line .5s ease both; animation-delay: calc(1.2s + var(--i) * 1.7s); }
+@keyframes ph-line { from { opacity: 0; transform: translateY(8px); filter: blur(4px); } to { opacity: 1; transform: none; filter: none; } }
+.ph-controls { position: absolute; left: 44px; right: 44px; bottom: 70px; display: grid; grid-template-columns: repeat(3, 1fr); row-gap: 30px; justify-items: center; }
+.ph-controls > span:not(.ph-btn) { width: 66px; height: 66px; border-radius: 50%; background: #ffffff1a; }
+.ph-btn--end { grid-column: 2; }
+.ph-btn--end i { width: 70px; height: 70px; }
+
+/* 드러남: 같은 자막이 붉게 긁히고, 합성이라는 도장이 찍힌다 */
+.ph--call[data-reveal] .ph-live { border-color: #ff4a4a66; background: #ff3b3b12; }
+.ph--call[data-reveal] .ph-live p { color: #ffb3ad; animation: none; }
+.np[data-motion] .ph--call[data-reveal] .ph-live p { animation: ph-tear .9s steps(8) both; animation-delay: calc(var(--i) * .08s); }
+@keyframes ph-tear { 0% { transform: translateX(0); text-shadow: 3px 0 #ff3b3b, -3px 0 #3bd6ff; clip-path: inset(0 0 0 0); }
+  25% { transform: translateX(-6px); clip-path: inset(10% 0 45% 0); } 50% { transform: translateX(5px); text-shadow: -4px 0 #ff3b3b, 4px 0 #3bd6ff; clip-path: inset(50% 0 5% 0); }
+  75% { transform: translateX(-2px); clip-path: inset(0 0 0 0); } 100% { transform: none; text-shadow: 0 0 12px #ff3b3b66; } }
+.ph-stamp { position: absolute; left: 30px; right: 30px; top: 618px; padding: 14px 16px; border-radius: 14px; border: 2px solid #ff4a4a; color: #ff6b63; background: #1a0707e6; text-align: center; transform: rotate(-4deg); box-shadow: 0 0 40px #ff3b3b55; }
+.np[data-motion] .ph-stamp { animation: ph-stamp .45s cubic-bezier(.2,1.6,.4,1) .9s both; }
+@keyframes ph-stamp { from { opacity: 0; transform: rotate(-4deg) scale(1.6); } to { opacity: 1; transform: rotate(-4deg) scale(1); } }
+.ph-stamp b { display: block; font-size: 28px; font-weight: 800; letter-spacing: .02em; }
+.ph-stamp span { display: block; margin-top: 4px; font-size: 14px; color: #ff9d97; }
+.ph--call[data-reveal] .ph-controls { opacity: .25; }
+
+.ph--chat { background: #0b0c0f; }
+.ph-chat-head { position: absolute; left: 0; right: 0; top: 52px; height: 72px; display: flex; align-items: center; gap: 12px; padding: 0 18px; border-bottom: 1px solid #ffffff10; }
+.ph-back { width: 12px; height: 12px; border-left: 2.5px solid #d7dbe1; border-bottom: 2.5px solid #d7dbe1; transform: rotate(45deg); margin: 0 8px 0 6px; }
+.ph-chat-avatar { width: 44px; height: 44px; border-radius: 16px; background: #3a4150; flex: none; }
+.ph-chat-head strong { display: block; font-size: 19px; font-weight: 620; }
+.ph-chat-head div span { display: block; font-size: 13px; color: #ff8a80; margin-top: 2px; }
+.ph-thread { position: absolute; left: 18px; right: 18px; top: 146px; display: flex; flex-direction: column; align-items: flex-start; gap: 10px; }
+.ph-bubble { max-width: 280px; padding: 12px 16px; border-radius: 6px 20px 20px 20px; background: #2a2c33; font-size: 19px; line-height: 1.42; color: #eef0f3; }
+.ph-bubble--voice { display: flex; align-items: center; gap: 12px; width: 280px; box-sizing: border-box; background: #2e2224; border: 1px solid #ff5a5244; }
+.ph-bubble--voice .ph-wave { position: static; flex: 1; height: 34px; gap: 2px; }
+.ph-bubble--voice span { font-size: 14px; color: #c6a3a0; font-variant-numeric: tabular-nums; }
+.ph-play { width: 34px; height: 34px; border-radius: 50%; background: #ff5a52; position: relative; flex: none; }
+.ph-play::after { content: ""; position: absolute; left: 13px; top: 10px; border-left: 11px solid #fff; border-top: 7px solid transparent; border-bottom: 7px solid transparent; }
+.ph-bubble--hard { background: #3a1417; color: #ffd0cc; font-weight: 620; }
+.np[data-motion] .ph-bubble { animation: ph-line .45s ease both; animation-delay: calc(.8s + var(--i) * 1.1s); }
+.np[data-motion] .ph-bubble--late, .np[data-motion] .ph-typing.ph-bubble--late { animation-delay: calc(.9s + var(--i) * 1.6s); }
+.ph-typing { display: flex; gap: 5px; padding: 14px 16px; border-radius: 6px 20px 20px 20px; background: #2a2c33; }
+.ph-typing i { width: 8px; height: 8px; border-radius: 50%; background: #9aa1ab; }
+.np[data-motion] .ph-typing i { animation: ph-dot 1.2s ease-in-out infinite; }
+.ph-typing i:nth-child(2) { animation-delay: .2s !important; } .ph-typing i:nth-child(3) { animation-delay: .4s !important; }
+@keyframes ph-dot { 0%, 100% { opacity: .3; transform: none; } 50% { opacity: 1; transform: translateY(-3px); } }
+.ph-input { position: absolute; left: 16px; right: 16px; bottom: 34px; height: 46px; border-radius: 23px; background: #1d1e23; display: flex; align-items: center; padding: 0 18px; font-size: 16px; color: #6f7680; }
+
+.ph--hangup { background: linear-gradient(180deg, #121318, #07080a 60%); }
+.ph--hangup .ph-caller__kind { color: #ff7b72; }
+.ph-suggest { position: absolute; left: 22px; right: 22px; top: 380px; }
+.ph-suggest > span { display: block; font-size: 15px; color: #9aa1ab; margin: 0 0 12px 6px; }
+.ph-contact { display: flex; align-items: center; gap: 14px; padding: 16px; border-radius: 20px; background: #ffd49a14; border: 1px solid #ffd49a55; }
+.ph-contact > i { width: 50px; height: 50px; border-radius: 50%; background: #5a5040; flex: none; }
+.ph-contact strong { display: block; font-size: 22px; font-weight: 640; }
+.ph-contact div span { display: block; font-size: 14px; color: #d8bf92; margin-top: 3px; }
+.ph-contact > b { margin-left: auto; width: 46px; height: 46px; border-radius: 50%; background: #34c759; position: relative; flex: none; }
+.np[data-motion] .ph-contact { animation: ph-line .5s ease 1s both; }
+.ph--callback { background: linear-gradient(180deg, #14130f, #080806 60%); }
+.ph-timer--ok { color: #8fe3a0; }
+.ph-live--ok { border-color: #ffd49a33; background: #ffd49a0c; }
+.ph-live--ok p { color: #fff3dc; }
+
+.deck-keynote[data-motion="off"] .np *, .deck-keynote[data-motion="off"] .np { animation: none !important; }
+.deck-keynote[data-motion="off"] .np-cam { transition: none; }
+@media (prefers-reduced-motion: reduce) { .np, .np * { animation: none !important; } }

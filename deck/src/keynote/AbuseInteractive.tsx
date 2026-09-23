@@ -4,14 +4,14 @@ import DecryptedText from "./react-bits/abuse/DecryptedText";
 import { usePerformanceMotion } from "./usePerformanceMotion";
 import "./abuse-interactive.css";
 
-function Decipher({ text, active }: { text: string; active: boolean }) {
+export function Decipher({ text, active }: { text: string; active: boolean }) {
   const motion = usePerformanceMotion();
   return active && motion ? <DecryptedText text={text} speed={60} maxIterations={8} animateOn="view"
     characters="가나다라마바사아자차카타파하01□＋" parentClassName="abuse-decipher" encryptedClassName="abuse-decipher-noise"
     data-react-bits="DecryptedText"/> : <span>{text}</span>;
 }
 
-function useInspection(step: number, onInspect?: (active: boolean) => void) {
+export function useInspection(step: number, onInspect?: (active: boolean) => void) {
   const [hovered, setHovered] = useState(false);
   const [focused, setFocused] = useState(false);
   const [pinned, setPinned] = useState(false);

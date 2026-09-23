@@ -77,12 +77,12 @@ try {
   await page.keyboard.press('m');
   report.preview = 'hover tilt, click/Enter enlarge, Escape restores focus, arrow continues, M resets';
 
-  await go(27);
+  await go(28);
   const face = page.locator('.abuse-face-control');
   const facePoint = await point(face, .65, .35);
   await page.mouse.move(facePoint.x, facePoint.y); await page.waitForTimeout(200);
   assert.equal(await page.locator('.abuse-face-interactive').getAttribute('data-tracking'), 'true');
-  await face.click(); await page.waitForTimeout(220); await shot('27-reconstruction');
+  await face.click(); await page.waitForTimeout(220); await shot('28-reconstruction');
   await page.waitForTimeout(1000);
   assert.equal(await face.getAttribute('aria-pressed'), 'true');
   assert.equal(await page.locator('.kn-slide').getAttribute('data-step'), '0');
@@ -92,30 +92,30 @@ try {
   await page.keyboard.press('m');
   report.face = 'pointer lens, pixel rebuild, does not advance cue, M still allows inspection';
 
-  await go(31);
+  await go(32);
   const evidence = page.getByRole('button', { name: '가상의 음성 메시지 살펴보기' });
   await evidence.hover(); await page.waitForTimeout(900);
   assert.equal(await evidence.getAttribute('aria-expanded'), 'true');
   await evidence.click(); await page.mouse.move(80, 100); await evidence.blur();
-  assert.equal(await evidence.getAttribute('aria-pressed'), 'true'); await shot('31-inspected');
+  assert.equal(await evidence.getAttribute('aria-pressed'), 'true'); await shot('32-inspected');
   await page.keyboard.press('ArrowRight');
   await page.waitForSelector('.kn-slide[data-step="1"] .abuse-inspection-control[aria-pressed="false"]');
   assert.equal(await evidence.getAttribute('aria-pressed'), 'false');
   assert.equal(await page.locator('.kn-slide').getAttribute('data-step'), '1');
-  await go(32); await page.keyboard.press('ArrowRight');
+  await go(33); await page.keyboard.press('ArrowRight');
   const media = page.getByRole('button', { name: '이미지의 출처와 동의 살펴보기' });
   await media.hover(); await page.waitForTimeout(1000); await media.click();
-  assert.equal(await media.getAttribute('aria-pressed'), 'true'); await shot('32-inspected');
+  assert.equal(await media.getAttribute('aria-pressed'), 'true'); await shot('33-inspected');
   report.inspection = 'message/media reveal, click pin, keyboard cue resets inspection';
 
-  await go(37);
+  await go(38);
   const choices = page.locator('.rb-true-focus__item');
   await choices.nth(1).hover(); await page.waitForTimeout(500);
   assert.equal(await page.locator('.rb-true-focus').getAttribute('data-active'), '1');
   await choices.nth(1).click(); assert.equal(await choices.nth(1).getAttribute('aria-pressed'), 'true');
   await page.mouse.move(10, 10); await choices.first().focus(); await page.keyboard.press('Enter');
   assert.equal(await choices.first().getAttribute('aria-pressed'), 'true');
-  await page.waitForTimeout(500); await shot('37-focus');
+  await page.waitForTimeout(500); await shot('38-focus');
   const frameError = await page.locator('.rb-true-focus').evaluate(host => {
     const frame = host.querySelector('.rb-true-focus__frame').getBoundingClientRect();
     const item = host.querySelector('[data-active="true"]').getBoundingClientRect();
