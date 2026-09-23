@@ -8,7 +8,7 @@ import NextMarket from "./next-market/NextMarket";
 import DemoPlayer from "./DemoPlayer";
 import { ABUSE_SLIDES } from "./AbuseSlides";
 import { FutureSurface } from "./PerformanceScenes";
-import ClosingChoices from "./ClosingChoices";
+import FinaleStory from "./finale/Finale";
 import { PersonalIntro, PersonalCompute, PersonalEngines } from "./PersonalSlides";
 import "./keynote.css";
 import "./stories.css";
@@ -49,18 +49,6 @@ const OriginalDeck: DeckModule = {
   {id:"tel-this-presentation",scriptKey:"tel-this-presentation",steps:1,render:({step})=> <Briefing n={18} name="지금 보고 계신 것도" title="이 발표도 AI와 함께 만들었습니다" lead="원하는 경험을 말하고, Astra와 구현하고, 실제로 보며 다시 고쳤습니다." step={step}>
    <Reveal className="actual-request"><span className="column-label">제가 요청한 것</span><blockquote>“→를 누르면 안으로 빨려 들어가면서<br/>실제 엔진들이 나타나면 좋겠어요.”</blockquote></Reveal><Reveal on={step>=1} className="request-result"><span>방금 지나온 장면</span><p>그 요청을 코드와 움직임으로 만들고,<br/>보이는 결과를 기준으로 수정했습니다.</p></Reveal>
   </Briefing>},
-  {id:"manifesto-remains",scriptKey:"manifesto-remains",render:()=> <Briefing n={19} name="30년 동안 쌓을 것" title="모델이 바뀌어도 제 작업은 남기고 싶습니다" lead="더 좋은 AI가 나오면, 이미 만든 기반 위에서 받아들일 수 있도록 합니다.">
-   <Rows items={[["작업 방식","반복해서 잘 된 일은 다음에도 꺼내 쓸 수 있게 만듭니다."],["판단의 기록","무엇을 골랐고 왜 고쳤는지 남깁니다."],["결과물","다음 강의와 콘텐츠에 다시 쓸 자산을 쌓습니다."]]}/>
-  </Briefing>},
-  {id:"tel-sharing",scriptKey:"tel-sharing",render:()=> <Briefing n={20} name="밖으로도 이어갈 계획" title="만드는 과정도 공개하려고 합니다" lead="새로운 일이 생겼을 때, 제가 무엇을 할 수 있는 사람인지 알 수 있도록 합니다.">
-   <div className="brief-columns"><Reveal><span className="column-label">보여줄 것</span><h2>실제로 만든 결과와<br/>잘 안됐던 과정</h2><p>직접 해보고 얻은 경험을 나누려고 합니다.</p></Reveal><Reveal order={1}><span className="column-label">기대하는 것</span><h2>함께할 사람과<br/>다음에 해볼 일</h2><p>예측하기 어려운 미래에 선택지를 늘리고 싶습니다.</p></Reveal></div>
-  </Briefing>},
-  {id:"tel-unfinished",scriptKey:"tel-unfinished",render:()=> <Briefing n={21} name="아직 남아 있는 문제" title="완성된 자비스까지는 갈 길이 있습니다" lead="지금은 엔진별 기능을 만들고, 실제 사용에서 막히는 부분을 고치는 단계입니다.">
-   <Rows items={[["연결","각 엔진을 제 맥락으로 운영하는 전체 흐름은 계속 만들어야 합니다."],["품질","만드는 것만큼 고르고 수정하는 데에도 제 시간이 듭니다."],["생활","시스템을 만드는 시간이 실제로 쓸모 있는 결과로 이어져야 합니다."]]}/>
-  </Briefing>},
-  {id:"tel-invitation",scriptKey:"tel-invitation",render:()=> <Briefing n={22} name="팀과 나누고 싶은 질문" className="kn-closing" title={<>내 일 하나를 맡겨본다면,<br/>무엇부터 바꿔볼 수 있을까요?</>} lead="저는 앞으로 30년을 준비하는 방법으로, 제 자비스를 만들고 있습니다.">
-   <ClosingChoices/>
-  </Briefing>},
  ],
 };
 const byId=(id:string)=>OriginalDeck.slides.find(slide=>slide.id===id)!;
@@ -84,10 +72,7 @@ const ordered = [
  ...(["tts","assets","music"] as const).map(kind=>({id:`demo-${kind}`,scriptKey:`demo-${kind}`,render:()=> <DemoPlayer kind={kind}/>})),
  byId("tel-this-presentation"),
  ...ABUSE_SLIDES,
- byId("manifesto-remains"),
- byId("tel-sharing"),
- byId("tel-unfinished"),
- byId("tel-invitation"),
+ ...(["manifesto-remains","tel-sharing","tel-unfinished","tel-invitation"] as const).map((id,part)=>({id,scriptKey:id,group:"finale",render:()=><FinaleStory part={part as 0|1|2|3}/>})),
 ];
 const KeynoteDeck:DeckModule={className:"deck-keynote",slides:ordered.map((slide,index)=>({...slide,render:ctx=><SlidePosition.Provider value={{index,total:ordered.length}}>{slide.render(ctx)}</SlidePosition.Provider>}))};
 export default KeynoteDeck;

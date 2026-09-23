@@ -9,6 +9,8 @@
   blender -b --python deck/tools/render-house-scroll.py -- --mode still --frames 0,84,168 --scale 50
   blender -b --python deck/tools/render-house-scroll.py -- --mode final
   blender -b --python deck/tools/render-house-scroll.py -- --mode track   # 라벨 좌표만 다시 계산
+  blender -b --python deck/tools/render-house-scroll.py -- --mode still --frames 570 --time sunrise --scale 100 --samples 160 --out render/house-dawn
+      # 35~38번: 마지막 정지 지점(집)을 같은 카메라로, 하늘과 불빛만 새벽으로 바꿔 한 장 렌더
 
 결과 프레임은 render/house-scroll/frames/, 라벨 좌표는 src/keynote/next-market/track.json.
 인코딩은 tools/encode-house-scroll.sh.
@@ -31,6 +33,7 @@ ap.add_argument("--scale", type=int, default=0, help="resolution percentage")
 ap.add_argument("--out", default="")
 ap.add_argument("--save", action="store_true")
 ap.add_argument("--shots", default="", help='구도 실험: {"5": {"eye": [x, y, z]}}')
+ap.add_argument("--time", choices=["night", "blue", "sunrise"], default="night", help="마지막 정지 지점의 시간대(35~38번 배경)")
 A = ap.parse_args(ARGS)
 
 FPS = 30
@@ -1280,6 +1283,39 @@ bake_parts()
 add_haze()
 add_bloom()
 print(f"BUILD {time.time() - t0:.1f}s objects={len(bpy.data.objects)}")
+
+
+def set_time_of_day(kind):
+    """마지막 정지 지점(LAST)의 값만 바꾼다. 카메라·부품은 그대로라 13번의 밤 장면과 같은 구도다."""
+    if kind == "night": return
+    sky = dict(blue=(-3.4, 1.1, .2, 1.05), sunrise=(1.1, 1.0, 0.0, -.25))[kind]
+    lit = dict(blue=(.7, 1.0), sunrise=(.1, .55))[kind]   # (도시 창문, 집 안의 불)
+
+    def at_last(idb, path, value):
+        ad = idb.animation_data
+        if not ad or not ad.action: return
+        fc = ad.action.fcurve_ensure_for_datablock(idb, path)
+        for k in fc.keyframe_points:
+            if k.co.x >= LAST - .5: k.co.y = value
+        fc.update()
+    nt = S.world.node_tree
+    if kind == "sunrise":  # 해가 도시 뒤, 화면 안쪽 지평선에서 떠오른다. 공기를 조금 짙게 해 주황빛을 살린다.
+        nt.nodes["Sky"].sun_rotation = math.radians(118); nt.nodes["Sky"].aerosol_density = 3.2; nt.nodes["Sky"].air_density = 1.5
+    at_last(nt, 'nodes["Sky"].sun_elevation', math.radians(sky[0]))
+    at_last(nt, 'nodes["Background"].inputs[1].default_value', sky[1])
+    at_last(nt, 'nodes["Stars"].outputs[0].default_value', sky[2])
+    at_last(S, "view_settings.exposure", sky[3])
+    rng = random.Random(7)
+    for ob in S.objects:
+        if "lit" not in ob.keys(): continue
+        city = ob.name.startswith("bldg")
+        # 해가 뜨면 도시의 창문은 대부분 꺼지고, 몇 곳만 남는다.
+        v = (lit[0] if rng.random() < .35 else lit[0] * .15) if city else lit[1]
+        at_last(ob, '["lit"]', v)
+    print("TIME", kind, sky, lit)
+
+
+set_time_of_day(A.time)
 export_track()
 
 def verify_holds():

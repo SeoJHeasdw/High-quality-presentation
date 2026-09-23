@@ -1,0 +1,116 @@
+/* 35~38 · 새벽. kn-body의 원점은 화면 (100, 162), 크기 1720×793. */
+.finale { background: #05070c; letter-spacing: -.025em; }
+.finale .kn-body { z-index: 2; }
+.finale .kn-chrome, .finale .kn-footer { z-index: 6; }
+.deck-keynote.deck-keynote:has(.finale) { --progress-fill: #ffd49a; }
+
+/* 배경: 35~37은 흐린 푸른 새벽, 38은 해 뜨는 아침으로 밝아진다 */
+.fn-sky { position: absolute; left: -100px; top: -162px; width: 1920px; height: 1080px; overflow: hidden; z-index: 0; pointer-events: none; }
+.fn-plate { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; transition: opacity 2.6s ease, filter 2.6s ease, transform 2.6s ease; }
+.fn-plate--blue { filter: blur(10px) brightness(.36) saturate(.95); transform: scale(1.06); }
+.fn-plate--sun { opacity: 0; filter: blur(10px) brightness(.4); transform: scale(1.06); }
+.finale--3 .fn-plate--blue { opacity: 0; }
+.finale--3 .fn-plate--sun { opacity: 1; filter: none; transform: scale(1); animation: fn-push 30s cubic-bezier(.3,0,.2,1) 1s both; transform-origin: 68% 58%; }
+@keyframes fn-push { to { transform: scale(1.06); } }
+.fn-tint { position: absolute; inset: 0; transition: background 1s ease; }
+.finale--3:has(.rb-true-focus[data-active="0"]) .fn-tint { background: radial-gradient(ellipse 60% 55% at 64% 60%, #ffb45e26, #0000 70%); }
+.finale--3:has(.rb-true-focus[data-active="1"]) .fn-tint { background: radial-gradient(ellipse 60% 55% at 30% 45%, #6fd6ff1f, #0000 70%); }
+/* 38 · 해가 뜨는 쪽(오른쪽 지평선)에 번지는 아침빛 */
+.fn-tint::before { content: ""; position: absolute; inset: 0; opacity: 0; transition: opacity 3.2s ease 1.2s; background: radial-gradient(ellipse 62% 34% at 92% 46%, #ffb86a66, #ff9d5a1c 48%, #0000 76%); mix-blend-mode: screen; }
+.finale--3 .fn-tint::before { opacity: 1; }
+.fn-shade { position: absolute; inset: 0; background: linear-gradient(180deg, #05070cc0 0%, #05070c30 40%, #05070c70 100%); transition: background 2s ease; }
+.finale--3 .fn-shade { background: linear-gradient(180deg, #05070ca8 0%, #05070c00 17%), radial-gradient(ellipse 55% 45% at 0% 0%, #05070cd8 20%, #05070c00 100%), linear-gradient(0deg, #05070cf0 0%, #05070cb0 30%, #05070c00 60%); }
+
+.fn-head { position: absolute; left: 0; top: 0; z-index: 3; animation: fn-rise 1s cubic-bezier(.16,1,.3,1) both; }
+.fn-kicker { display: flex; align-items: center; gap: 16px; font-size: 23px; font-weight: 520; color: #e8c996; margin: 0 0 22px; }
+.fn-kicker::before { content: ""; width: 34px; height: 1px; background: #e8c996; opacity: .8; }
+.finale h1 { font-size: 62px; line-height: 1.2; font-weight: 650; letter-spacing: -.045em; color: #f7f3ec; text-shadow: 0 2px 30px #05070c; }
+.fn-lead { margin-top: 20px; font-size: 25px; line-height: 1.5; color: #bfc6cf; }
+@keyframes fn-rise { from { opacity: 0; transform: translateY(18px); filter: blur(8px); } to { opacity: 1; transform: none; filter: none; } }
+
+/* 35 · 바뀌는 것과 남는 것 */
+.fs { position: absolute; left: 0; right: 0; top: 318px; bottom: 0; z-index: 2; }
+.fs-lane-label { position: absolute; left: 0; top: 50%; transform: translateY(-50%); width: 190px; font-size: 17px; color: #8a97a4; line-height: 1.35; }
+.fs-lane-label b { display: block; font-size: 24px; font-weight: 620; color: #eef1f4; letter-spacing: -.02em; }
+.fs-models { position: relative; height: 66px; }
+.fs-model-track { position: absolute; left: 220px; right: 0; top: 0; bottom: 0; overflow: hidden; -webkit-mask-image: linear-gradient(90deg, #0000, #000 8%, #000 80%, #0000); mask-image: linear-gradient(90deg, #0000, #000 8%, #000 80%, #0000); }
+.fs-model { position: absolute; left: 0; top: 6px; display: flex; align-items: baseline; gap: 12px; padding: 13px 20px; border-radius: 12px; background: #8fd0ff12; border: 1px solid #8fd0ff44; white-space: nowrap; transform: translateX(calc(var(--i) * 440px)); opacity: calc(1 - var(--i) * .3); }
+.fs-model b { font-size: 22px; font-weight: 600; color: #cfeaff; }
+.fs-model small { font-size: 15px; color: #7fa6c2; }
+.deck-keynote[data-motion="on"] .fs-model { animation: fs-flow 13.5s linear infinite; animation-delay: calc(var(--i) * -4.5s); }
+@keyframes fs-flow { 0% { transform: translateX(1480px); opacity: 0; filter: blur(4px); } 12% { opacity: 1; filter: none; } 62% { opacity: 1; filter: none; } 80% { transform: translateX(-60px); opacity: 0; filter: blur(8px); } 100% { transform: translateX(-60px); opacity: 0; } }
+.fs-axis { position: relative; height: 34px; margin-left: 220px; display: flex; align-items: center; gap: 14px; font-size: 16px; color: #8a97a4; font-variant-numeric: tabular-nums; }
+.fs-axis span:first-child { color: #ffd899; font-weight: 600; }
+.fs-axis i { flex: 1; height: 2px; background: linear-gradient(90deg, #ffd899, #9fd6ff 30%, #5a718455 70%, #5a718400); transform-origin: 0 50%; animation: fs-draw 1.6s cubic-bezier(.65,0,.35,1) .4s both; }
+@keyframes fs-draw { from { transform: scaleX(0); } }
+.fs-layers { position: relative; margin-top: 10px; display: grid; gap: 10px; }
+.fs-layer { position: relative; height: 114px; border-radius: 10px; background: linear-gradient(90deg, #ffd49a1c, #ffd49a0d 55%, #ffd49a00 82%); border-top: 1px solid #ffd49a55; clip-path: inset(0 100% 0 0); animation: fs-wipe 1.2s cubic-bezier(.65,0,.35,1) both; animation-delay: calc(.9s + var(--i) * .35s); }
+@keyframes fs-wipe { to { clip-path: inset(0 0 0 0); } }
+.fs-layer .fs-lane-label { left: 18px; }
+.fs-layer .fs-lane-label b { color: #ffe2b0; }
+.fs-items { position: absolute; left: 220px; right: 270px; top: 0; bottom: 0; display: flex; align-items: center; gap: 12px; }
+.fs-chip { flex: none; padding: 10px 16px; border-radius: 10px; font-size: 18px; color: #f3ebdc; background: #140f09cc; border: 1px solid #ffd49a3a; white-space: nowrap; }
+.fs-chip--log time { font-size: 15px; font-weight: 650; color: #ffd899; margin-right: 10px; font-variant-numeric: tabular-nums; }
+.fs-thumb { flex: none; margin: 0; width: 160px; }
+.fs-thumb img { width: 160px; height: 72px; object-fit: cover; display: block; border-radius: 6px; box-shadow: 0 0 0 1px #ffd49a44; }
+.fs-thumb figcaption { margin-top: 6px; font-size: 14px; color: #d8cdbb; }
+.fs-future { position: absolute; right: 0; top: 0; bottom: 0; width: 240px; display: grid; place-items: center; text-align: center; font-size: 18px; color: #8a97a4; border: 1px dashed #ffd49a3a; border-radius: 10px; background: repeating-linear-gradient(135deg, #ffd49a06 0 10px, #0000 10px 20px); opacity: 0; animation: fn-rise .8s ease 2.3s both; }
+
+/* 36 · 공개하는 기록 */
+.fo { position: absolute; left: 0; right: 0; top: 304px; bottom: 0; z-index: 2; display: grid; grid-template-columns: 1040px 1fr; gap: 50px; }
+.fo-log { border-radius: 14px; background: #0a0d12d8; border: 1px solid #ffffff16; padding: 18px 24px; box-shadow: 0 30px 80px #0008; }
+.fo-log header { display: flex; justify-content: space-between; align-items: baseline; padding-bottom: 12px; border-bottom: 1px solid #ffffff14; }
+.fo-log header span { font-size: 20px; font-weight: 600; color: #eef1f4; }
+.fo-log header small { font-size: 14px; color: #7d8a96; }
+.fo-log ol { list-style: none; margin: 0; padding: 0; }
+.fo-log li { display: grid; grid-template-columns: 72px 1fr auto; align-items: center; gap: 18px; padding: 10px 0; border-bottom: 1px solid #ffffff0c; opacity: 0; animation: fn-rise .6s ease both; animation-delay: calc(.8s + var(--i) * .32s); }
+.fo-log time { font-size: 17px; font-weight: 600; color: #8a97a4; font-variant-numeric: tabular-nums; }
+.fo-log strong { display: block; font-size: 20px; font-weight: 600; color: #f1f2f4; letter-spacing: -.02em; }
+.fo-log li span { display: block; margin-top: 3px; font-size: 17px; color: #aab4be; }
+.fo-log li b { font-size: 14px; font-weight: 650; letter-spacing: .06em; padding: 5px 10px; border-radius: 6px; }
+.fo-log li[data-tone="no"] b { color: #ff8a82; border: 1px solid #ff5a5266; background: #ff5a5212; }
+.fo-log li[data-tone="fix"] b { color: #a8e0ff; border: 1px solid #8fd0ff55; background: #8fd0ff10; }
+.fo-log li[data-tone="yes"] b { color: #ffd899; border: 1px solid #ffd49a66; background: #ffd49a12; }
+.fo-reach { position: relative; }
+.fo-reach__label { display: block; font-size: 20px; font-weight: 600; color: #ffe2b0; }
+.fo-net { display: block; width: 100%; height: 300px; margin-top: 8px; overflow: visible; }
+.fo-net line { stroke: #ffd49a55; stroke-width: 1.5; stroke-dasharray: 520; stroke-dashoffset: 520; animation: fo-draw 1.4s ease both; animation-delay: calc(1.4s + var(--i) * .22s); }
+.fo-net circle { fill: #ffd49a; opacity: 0; animation: fo-on .6s ease both; animation-delay: calc(2.2s + var(--i) * .22s); filter: drop-shadow(0 0 8px #ffb45e); }
+.fo-net .fo-me { opacity: 1; animation: none; fill: #ffe2b0; filter: drop-shadow(0 0 16px #ffb45e); }
+@keyframes fo-draw { to { stroke-dashoffset: 0; } }
+@keyframes fo-on { from { opacity: 0; transform: scale(.4); } to { opacity: 1; transform: none; } }
+.fo-net g { transform-box: fill-box; }
+.fo-pledge { margin-top: 16px; padding: 18px 20px; border-radius: 12px; border: 1px solid #ffd49a55; background: #140f09cc; font-size: 20px; line-height: 1.5; color: #f3ebdc; animation: fn-rise .8s ease 3.4s both; }
+.fo-pledge b { display: block; margin-bottom: 4px; font-size: 15px; letter-spacing: .12em; color: #ffd899; }
+
+/* 37 · 짓다 만 설계도 */
+.fb { position: absolute; inset: 0; z-index: 2; }
+.fb-plan { position: absolute; right: 0; top: 100px; width: 900px; height: 551px; overflow: visible; }
+.fb-plan text { font-family: "Pretendard Variable", sans-serif; font-size: 30px; font-weight: 650; fill: #f3ebdc; letter-spacing: -.02em; }
+.fb-plan .fb-sub { font-size: 20px; font-weight: 500; fill: #d8bf92; }
+.fb-wall { fill: none; stroke: #6fb6e6aa; stroke-width: 2; stroke-dasharray: 2800; stroke-dashoffset: 2800; animation: fb-draw 2.2s cubic-bezier(.65,0,.35,1) .4s both; }
+@keyframes fb-draw { to { stroke-dashoffset: 0; } }
+.fb-room--built rect { fill: #ffd49a18; stroke: #ffd49a; stroke-width: 2; opacity: 0; animation: fb-fill .9s ease both; animation-delay: calc(1.6s + var(--i) * .3s); }
+.fb-room--built text { opacity: 0; animation: fn-rise .6s ease both; animation-delay: calc(1.9s + var(--i) * .3s); }
+@keyframes fb-fill { from { opacity: 0; fill: #ffd49a00; } to { opacity: 1; } }
+.fb-room--plan rect { fill: #6fb6e608; stroke: #9fd6ff; stroke-width: 2; stroke-dasharray: 12 10; }
+.fb-room--plan text { fill: #cfeaff; }
+.fb-room--plan .fb-sub { fill: #8fb8d6; }
+.fb-link { fill: none; stroke: #9fd6ff; stroke-width: 3; stroke-dasharray: 10 12; animation: fb-flow 1.6s linear infinite; }
+@keyframes fb-flow { to { stroke-dashoffset: -44; } }
+.fb-door path { stroke: #ffd899; stroke-width: 3; }
+.fb-door circle { fill: #ffd899; filter: drop-shadow(0 0 10px #ffb45e); }
+.fb-notes { position: absolute; left: 0; top: 330px; width: 700px; list-style: none; margin: 0; padding: 0; display: grid; gap: 16px; }
+.fb-notes li { padding: 16px 20px; border-left: 3px solid #9fd6ff; background: #0a0d12c8; font-size: 22px; line-height: 1.5; color: #d8dde2; opacity: 0; animation: fn-rise .7s ease both; animation-delay: calc(2.4s + var(--i) * .35s); }
+.fb-notes li b { display: block; font-size: 17px; letter-spacing: .08em; color: #9fd6ff; margin-bottom: 4px; }
+
+/* 38 · 해 뜨는 아침의 질문 */
+.finale--3 .fn-head h1 { font-size: 54px; }
+.finale--3 .closing-choices { position: absolute; left: -26px; right: -26px; bottom: 96px; z-index: 3; }
+.fn-final { position: absolute; left: 0; bottom: 0; z-index: 3; margin: 0; font-size: 25px; line-height: 1.5; color: #e9dfcf; text-shadow: 0 2px 20px #05070c; animation: fn-rise 1s ease 1.4s both; }
+.fn-final b { color: #ffd899; font-weight: 620; }
+
+.deck-keynote[data-motion="off"] .finale *, .deck-keynote[data-motion="off"] .finale *::before, .deck-keynote[data-motion="off"] .finale *::after { animation-delay: 0s !important; animation-duration: 0s !important; animation-iteration-count: 1 !important; transition: none !important; }
+.deck-keynote[data-motion="off"] .fs-model { animation: none !important; }
+@media (prefers-reduced-motion: reduce) { .finale *, .finale *::before, .finale *::after { animation-delay: 0s !important; animation-duration: 0s !important; animation-iteration-count: 1 !important; transition: none !important; } .fs-model { animation: none !important; } }
+.finale--3 .kn-chrome > span:last-child { color: #d5d9de; }

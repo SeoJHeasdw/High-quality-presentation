@@ -1,42 +1,23 @@
+/* 38번 · 새벽의 두 갈래. 왼쪽은 넓고 낮게, 오른쪽은 좁고 높게: 초점 틀이 멀리, 모양을 바꿔 움직인다. */
 .closing-choices {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  gap: 115px;
+  grid-template-columns: minmax(0, 1.25fr) minmax(0, .85fr);
+  gap: 90px;
+  align-items: end;
   width: 100%;
-  padding-top: 8px;
 }
-.closing-choices__title {
-  display: block;
-  font-size: 47px;
-  line-height: 1.4;
-  font-weight: 500;
-  letter-spacing: -.035em;
-  word-break: keep-all;
-  transition: color .2s ease;
-}
-.closing-choices__description {
-  display: block;
-  font-size: 30px;
-  line-height: 1.65;
-  font-weight: 400;
-  letter-spacing: inherit;
-  color: var(--muted);
-  margin-top: 23px;
-  word-break: keep-all;
-}
-.closing-choices .rb-true-focus__item::after {
-  content: "";
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: -22px;
-  height: 2px;
-  background: var(--accent);
-  opacity: 0;
-  transition: opacity .2s ease;
-}
-.closing-choices .rb-true-focus__item[aria-pressed="true"] .closing-choices__title { color: var(--accent); }
-.closing-choices .rb-true-focus__item[aria-pressed="true"]::after { opacity: .65; }
+.closing-choices .rb-true-focus__item { padding: 20px 26px 24px; border-radius: 4px; transition: background .35s ease; }
+.closing-choices__num { display: block; font-size: 20px; font-weight: 600; letter-spacing: .12em; color: #ffe2b0; opacity: .8; }
+.closing-choices__word { display: block; margin-top: 4px; font-size: 150px; line-height: 1; font-weight: 700; letter-spacing: -.06em; color: #fff6e8; text-shadow: 0 6px 60px #0009; transition: color .3s ease, text-shadow .3s ease; }
+.closing-choices .rb-true-focus__item:nth-child(2) .closing-choices__word { font-size: 124px; }
+.closing-choices__title { display: block; margin-top: 22px; font-size: 36px; line-height: 1.3; font-weight: 600; letter-spacing: -.035em; color: #fff0da; word-break: keep-all; }
+.closing-choices__description { display: block; margin-top: 12px; font-size: 25px; line-height: 1.55; color: #e4d6c3; word-break: keep-all; text-shadow: 0 2px 20px #0008; }
+.closing-choices .rb-true-focus__item[data-active] { background: #0c070566; }
+.closing-choices .rb-true-focus__item:nth-child(1)[data-active] .closing-choices__word { color: #ffd899; text-shadow: 0 0 60px #ffb45e66, 0 6px 60px #0009; }
+.closing-choices .rb-true-focus__item:nth-child(2)[data-active] .closing-choices__word { color: #a8ecff; text-shadow: 0 0 60px #6fd6ff66, 0 6px 60px #0009; }
+.closing-choices .rb-true-focus__item::after { content: ""; position: absolute; left: 26px; right: 26px; bottom: 0; height: 2px; background: #ffd899; opacity: 0; transition: opacity .2s ease; }
+.closing-choices .rb-true-focus__item[aria-pressed="true"]::after { opacity: .75; }
+.closing-choices .rb-true-focus__corner { border-color: #fff0da; width: 30px; height: 30px; }
 .closing-choices[data-motion="off"] *,
 .deck-keynote[data-motion="off"] .closing-choices * { transition: none; }
 @media (prefers-reduced-motion: reduce) { .closing-choices * { transition: none; } }

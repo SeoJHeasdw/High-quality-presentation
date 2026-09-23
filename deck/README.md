@@ -36,7 +36,7 @@ npm run dev
 | 23~25 | 저장된 실제 강의 영상, 프리비즈, 음악 후보 재생 |
 | 26 | 이 발표의 제작 과정 |
 | 27~34 | 제가 녹음한 적 없는 제 목소리, 수고가 줄어들 때, 새벽의 사칭 전화·관계 조작·동의 없는 합성, 확인하는 방법 |
-| 35~38 | 남길 자산, 공개와 미완성 과제, 팀에 던지는 질문 |
+| 35~38 | 같은 집의 새벽과 아침: 바뀌는 모델과 남는 기록, 잘 안됐던 과정의 공개, 아직 설계인 부분, 만들기·맡기기 질문 |
 
 ## 서비스 시연 방식
 
@@ -68,6 +68,10 @@ Blender 원본 렌더 도구는 `tools/render-factory-film.py`, 배포용 영상
 31번 수신 중에 A를 누르면 진동음(WebAudio)이 난다. 기본은 꺼져 있다. 33번은 모자이크한 사진 한 장이 두 배씩 늘어 화면을 채우고, 원본을 지워도 사본이 남는다.
 34번은 같은 휴대전화에서 끊고 저장된 번호로 다시 거는 확인 방법(FTC 권고)으로 끝난다. 모든 통화·메시지·사진은 가상 상황이며 실제 사칭 음성은 만들지 않았다.
 배경 이미지의 생성 기록은 `../docs/abuse-art.md`에 있다.
+35~38번은 한 묶음(finale)이다(`src/keynote/finale/`). 12번의 집을 시간대만 바꿔 다시 렌더한 푸른 새벽(35~37, 흐리게)과 해 뜨는 아침(38)이 뒤에 깔리고,
+38번에서 배경이 선명해지며 아침으로 밝아진다. 35번은 위로 지나가는 모델(지금 Qwen3-TTS, 이후는 가정)과 아래에 쌓이는 작업 방식·판단의 기록·결과물의 세 겹,
+36번은 local-tts-engine 결정 기록에서 뽑은 실제로 잘 안됐던 과정 여섯 줄과 동의 확인 약속, 37번은 개발 중인 방(TTS·ASSETS·MUSIC)과 점선의 구상(Agent OS·연결)으로 된 설계도,
+38번은 "만들기"와 "맡기기" 두 낱말에 초점 틀이 옮겨 다니는 질문이다. 초점이 가는 쪽에 따라 아침빛의 색이 바뀐다.
 
 2~3번은 three.js 공간 하나를 두 장 동안 유지한다(`src/keynote/opening/`). 사진이 어둠 속에 떠 있다가(2-0), 주사선이 지나가며 화소의 부조로 바뀌고
 왼쪽으로 물러나며, 얼굴 쪽 화소가 흘러가 금색 입자의 "고양이"가 된다(2-1). 3번에서는 부조와 단어가 흩어지고 요청 문장이 한 글자씩 적히며(3-0),
@@ -126,6 +130,8 @@ M 또는 모션 줄이기 설정에서는 정지 지점 이미지만 보여주�
 - 새로 생성한 이미지와 출처: `public/engines/factory-assets/`
 - 악용 사례 구간: `src/keynote/AbuseSlides.tsx`(순서), `src/keynote/abuse/`(27 OwnVoice, 30·33 AbuseScenes, 31·32·34 PhoneStories·NightPhone, `abuse-v2.css`, `night-phone.css`), `abuse-slides.css`, `public/abuse/`
 - 한밤중 휴대전화 렌더: `tools/render-night-phone.py`(`--mode final`은 2880×1620과 화면 네 모서리 JSON)
+- 마무리 구간 35~38번: `src/keynote/finale/Finale.tsx`(네 장의 글·기록·설계도), `finale.css`, 38번의 선택지 `src/keynote/ClosingChoices.tsx`
+- 새벽·아침 배경: `blender --background --python tools/render-house-scroll.py -- --mode still --frames 570 --time blue|sunrise --scale 100 --samples 160 --out render/house-dawn`, 결과는 `public/house-dawn/`
 - 대본: `script/keynote/manifesto.md`, `stories.md`, `abuse.md`
 
 ## 검사

@@ -62,6 +62,15 @@ for(const [name,first,beats] of [['agentWeb','story-web-door',5],['oneUser','man
  report.groups[name]={phases:phases.join(','),same,reverse:await page.evaluate(()=>Number(document.querySelector('.iw').dataset.phase))===0,fallback:await page.locator('.iw[data-fallback]').count()===0};
 }
 const groupsOk=Object.values(report.groups).every(g=>g.phases==='0,1,2,3,4'&&g.same&&g.reverse&&g.fallback);
+// 35~38 · 같은 집의 새벽과 아침: 네 장 동안 배경을 다시 그리지 않고, 38번에서만 아침 배경이 드러난다.
+await go(slideNumber('manifesto-remains'));await page.waitForTimeout(600);
+await page.evaluate(()=>{window.__finaleSky=document.querySelector('.fn-sky')});
+const sunOpacity=()=>page.evaluate(()=>Number(getComputedStyle(document.querySelector('.fn-plate--sun')).opacity));
+report.finale={beforeSun:await sunOpacity()};
+for(let i=0;i<3;i++){await page.keyboard.press('ArrowRight');await page.waitForTimeout(500)}
+await page.waitForTimeout(2900);
+Object.assign(report.finale,{same:await page.evaluate(()=>document.querySelector('.fn-sky')===window.__finaleSky),afterSun:await sunOpacity(),choices:await page.locator('.kn-slide .rb-true-focus__item').count()});
+const finaleOk=report.finale.same&&report.finale.beforeSun===0&&report.finale.afterSun>.99&&report.finale.choices===2;
 // Incident reconstruction (9~11): one 3D space across three slides. Every beat must render its
 // phase, keep projected labels on screen and clear of the heading/narration, and reverse cleanly.
 // 첫 장면은 3.2초의 도입 카메라가 끝나야 라벨이 나타난다(world.ts).
@@ -148,4 +157,4 @@ for(const id of ['demo-tts','demo-assets','demo-music']){
 const images=await Promise.all(frames.map(async f=>({...f,data:(await fs.readFile(path.join(out,f.file))).toString('base64')})));
 await page.setViewportSize({width:1920,height:1900});await page.setContent(`<body style="margin:0;background:#15191c;color:#ccc;font:15px sans-serif"><div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;padding:18px">${images.map(x=>`<div><img style="width:100%;display:block" src="data:image/png;base64,${x.data}"><p style="margin:8px 0 6px">${x.label}</p></div>`).join('')}</div></body>`);await page.screenshot({path:path.join(out,'contact-sheet.png'),fullPage:true});
 await fs.writeFile(path.join(out,'report.json'),JSON.stringify(report,null,2));console.log(JSON.stringify(report,null,2));await browser.close();
-if(!Object.values(report.cat).every(Boolean)||!groupsOk||!incidentOk||!scrollOk||errors.length||external.length||scriptMissing.length||report.slides.some(s=>s.overflow.length||s.overlap.length||s.webgl?.fallback)||report.filmShots.length!==5||new Set(report.filmShots.map(s=>s.source)).size!==5||report.filmShots.some(s=>s.status!=='held'||!(s.duration>1)||!s.muted)||!Object.values(report.film).every(Boolean)||!report.fallback||report.media.some(m=>!m.playing||m.time<=0||!m.muted||!m.pausedByKey||!m.soundEnabled||!m.stoppedOnLeave))process.exitCode=1;
+if(!Object.values(report.cat).every(Boolean)||!groupsOk||!finaleOk||!incidentOk||!scrollOk||errors.length||external.length||scriptMissing.length||report.slides.some(s=>s.overflow.length||s.overlap.length||s.webgl?.fallback)||report.filmShots.length!==5||new Set(report.filmShots.map(s=>s.source)).size!==5||report.filmShots.some(s=>s.status!=='held'||!(s.duration>1)||!s.muted)||!Object.values(report.film).every(Boolean)||!report.fallback||report.media.some(m=>!m.playing||m.time<=0||!m.muted||!m.pausedByKey||!m.soundEnabled||!m.stoppedOnLeave))process.exitCode=1;
