@@ -1,0 +1,70 @@
+/* 6 · 웹에 오는 요청. 3D 공간이 화면 전체를 채우고, 글은 같은 화면 좌표(layout.ts) 위에 놓는다.
+   kn-body의 원점은 화면 (100, 162)이다. */
+.bots { background: #05080d; }
+.bots .kn-chrome, .bots .kn-footer { z-index: 6; }
+.bots .kn-body { z-index: 3; }
+
+.bt { position: absolute; left: -100px; top: -162px; width: 1920px; height: 1080px; z-index: 0; pointer-events: none; }
+.bt-canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; opacity: 0; transition: opacity .8s ease; }
+.bt-canvas[data-ready] { opacity: 1; }
+.bt-shade { position: absolute; inset: 0; pointer-events: none;
+  background:
+    radial-gradient(ellipse 1000px 340px at 0% 0%, #05080dee 25%, #05080d90 60%, #05080d00 100%),
+    linear-gradient(0deg, #05080dd8 0%, #05080d00 16%); }
+.bt[data-fallback] { background: radial-gradient(ellipse at 50% 55%, #0f1e2c, #05080d 70%); }
+.bt[data-fallback] .bt-canvas { display: none; }
+
+/* 제목: 7~8번과 같은 모양 */
+.bt-heading { position: absolute; left: 0; top: 0; z-index: 3; animation: bt-heading-in .9s cubic-bezier(.16,1,.3,1) both; }
+.bt-heading > p { display: flex; align-items: center; gap: 16px; font-size: 23px; font-weight: 520; color: #e2c795; letter-spacing: -.005em; margin: 0 0 20px; }
+.bt-heading > p::before { content: ""; width: 34px; height: 1px; background: #e2c795; opacity: .8; }
+.bots .bt-heading h1 { font-size: 72px; line-height: 1.2; font-weight: 650; letter-spacing: -.045em; color: #f5f3ee; text-shadow: 0 2px 30px #05080d; }
+@keyframes bt-heading-in { from { opacity: 0; transform: translateY(18px); filter: blur(8px); } to { opacity: 1; transform: none; filter: none; } }
+
+/* 0 · 흐름이 지나는 동안만 보이는 관측 지점 표시. 3D의 시간표(world.ts의 T)와 맞춘다. */
+.bt-gate { position: absolute; z-index: 3; display: flex; align-items: center; gap: 22px; white-space: nowrap; transform: translate(-50%, calc(-100% - 18px));
+  font-size: 22px; color: #b7c8d6; letter-spacing: -.01em; opacity: 0; animation: bt-gate 2.05s ease .75s both; }
+.bt-gate b { font-weight: 600; color: #dff1ff; padding-right: 22px; border-right: 1px solid #8fd0ff55; }
+.bt-gate span { display: inline-flex; align-items: center; gap: 10px; }
+.bt-gate i { width: 11px; height: 11px; border-radius: 50%; }
+.bt-gate .is-human i { background: #ffd49a; box-shadow: 0 0 12px #ffd49a; }
+.bt-gate .is-auto i { background: #8fd0ff; box-shadow: 0 0 12px #8fd0ff; }
+@keyframes bt-gate { 0% { opacity: 0; transform: translate(-50%, calc(-100% - 8px)); } 14%, 80% { opacity: 1; transform: translate(-50%, calc(-100% - 18px)); } 100% { opacity: 0; transform: translate(-50%, calc(-100% - 18px)); } }
+
+/* 0·1 · 자동화와 사람. 숫자는 3D의 점이 그리고, 1단계에서는 글자가 숫자를 넘겨받는다. */
+.bt-share { margin: 0; }
+.bt-group { position: absolute; z-index: 3; display: flex; align-items: baseline; gap: 16px; white-space: nowrap; }
+.bt-group span { font-size: 31px; font-weight: 520; letter-spacing: -.02em; }
+.bt-group b { font-size: 31px; font-weight: 600; letter-spacing: -.02em; opacity: 0; transition: opacity .4s; }
+.bt-group.is-auto { color: #8fd0ff; }
+.bt-group.is-human { color: #e9c98f; }
+.bt-group::after { content: ""; position: absolute; left: 0; right: 0; top: 54px; height: 10px; border: 1px solid currentColor; border-bottom: 0; opacity: 0; transform: scaleX(.2); transform-origin: 0 0; transition: opacity .3s, transform .3s; }
+.bt-share[data-intro] .bt-group { animation: bt-rise .8s cubic-bezier(.16,1,.3,1) 3.7s both; }
+.bt-share[data-cue="1"] .bt-group b { opacity: 1; transition: opacity .7s ease 1.5s; }
+.bt-share[data-cue="1"] .bt-group::after { opacity: .5; transform: none; transition: opacity .7s ease 1.3s, transform 1s cubic-bezier(.16,1,.3,1) 1.3s; }
+
+/* 1 · 자동화 53의 세 칸 */
+.bt-part { position: absolute; z-index: 3; white-space: nowrap; }
+.bt-part span { display: block; font-size: 23px; color: #9fb3c3; letter-spacing: -.015em; }
+.bt-part b { display: block; font-size: 42px; line-height: 1.1; font-weight: 560; letter-spacing: -.03em; }
+.bt-part > i { position: absolute; left: 0; top: 0; width: 1px; transform-origin: 0 0; }
+.bt-part.is-bot { animation: bt-rise .8s cubic-bezier(.16,1,.3,1) 1.9s both; }
+.bt-part.is-bot b { color: #8fb3cf; }
+.bt-part.is-google > i { height: 76px; background: linear-gradient(180deg, #8fc4e8, #8fc4e800); animation: bt-line .6s ease 2.0s both; }
+.bt-part.is-google > div { position: absolute; right: 16px; top: 30px; text-align: right; animation: bt-rise .8s cubic-bezier(.16,1,.3,1) 2.1s both; }
+.bt-part.is-google b { color: #a9d6f3; }
+.bt-part.is-agent > i { height: 150px; background: linear-gradient(180deg, #e6f6ff, #e6f6ff00); box-shadow: 0 0 8px #bfe6ff; animation: bt-line .7s ease 2.5s both; }
+.bt-part.is-agent > div { position: absolute; left: 18px; top: 38px; animation: bt-rise .8s cubic-bezier(.16,1,.3,1) 2.6s both; }
+.bt-part.is-agent span { color: #d4ecfb; font-weight: 520; }
+.bt-part.is-agent b { font-size: 60px; font-weight: 620; color: #f2faff; text-shadow: 0 0 26px #8fd0ff99; }
+.bots .bt-question { position: absolute; z-index: 3; margin: 0; white-space: nowrap; font-size: 50px; font-weight: 600; line-height: 1.3; letter-spacing: -.04em; color: #f5f3ee; text-shadow: 0 2px 24px #05080d;
+  animation: bt-rise .9s cubic-bezier(.16,1,.3,1) 3.3s both; }
+@keyframes bt-rise { from { opacity: 0; transform: translateY(14px); filter: blur(6px); } to { opacity: 1; transform: none; filter: none; } }
+@keyframes bt-line { from { transform: scaleY(0); } to { transform: none; } }
+
+.bots .bt-scope { animation: bt-fade .6s ease both; }
+@keyframes bt-fade { from { opacity: 0; } to { opacity: 1; } }
+
+.deck-keynote[data-motion="off"] .bots *, .deck-keynote[data-motion="off"] .bots *::after { animation: none!important; transition: none!important; }
+.deck-keynote[data-motion="off"] .bots .bt-gate { display: none; }
+@media (prefers-reduced-motion: reduce) { .bots *, .bots *::after { animation: none!important; transition: none!important; } .bots .bt-gate { display: none; } }

@@ -2,7 +2,7 @@ import * as THREE from "three";
 import { GLSL_SAFE, PhaseClock, clamp01, createStage, easeInOut, easeOut, fitShot, smooth, type Pose, type Shot } from "../stage3d/runtime";
 
 /*
- * 42번 · 공장은 계속 늘어난다. 12번 집의 청사진 격자 위에서 방이 솟아오른다.
+ * 43번 · 공장은 계속 늘어난다. 13번 집의 청사진 격자 위에서 방이 솟아오른다.
  *   0  지어진 방: TTS · ASSETS · MUSIC(개발 중), RICE와 Personal CIO(만듦). Agent OS와 복도는 점선(구상).
  *      RICE 방의 벽에는 실제 RICE 소개 영상이 소리 없이 재생된다.
  *   1  방과 방 사이로 빛이 흐르며 조합이 생긴다(가능성).
@@ -61,7 +61,7 @@ export function createBlueprintWorld(canvas: HTMLCanvasElement, video: HTMLVideo
   const POSES: Pose[] = SHOTS.map((s) => fitShot(s, camera));
   const keep = <T extends { dispose: () => void }>(t: T) => { stage.keep(t); return t; };
 
-  /* 청사진 격자: 12번 집의 평면선과 같은 파란 선 */
+  /* 청사진 격자: 13번 집의 평면선과 같은 파란 선 */
   const grid = new THREE.Mesh(new THREE.PlaneGeometry(260, 260), new THREE.ShaderMaterial({
     uniforms: { uLit: { value: 0 }, uReach: { value: 0 } },
     vertexShader: `varying vec3 vW; void main(){ vec4 w=modelMatrix*vec4(position,1.); vW=w.xyz; gl_Position=projectionMatrix*viewMatrix*w; }`,

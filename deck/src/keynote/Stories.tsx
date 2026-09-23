@@ -22,21 +22,6 @@ export function BroodStory({step}:{step:number}){
  </Briefing>;
 }
 
-export function BotStory({step}:{step:number}){
- return <Frame n={6} name="웹 요청의 변화" step={step} className="story-edit story-bots-revision">
-  <div className="story-heading"><p>Cloudflare · 2025년 12월 2일 HTML 요청</p><h1>웹에는 사람만 오는 게 아닙니다</h1></div>
-  <figure className="request-share" aria-label="HTML 요청 중 자동화 53%, 사람 47%">
-   <div className="request-share-labels"><div><span>자동화</span><strong>53<small>%</small></strong></div><div><span>사람</span><strong>47<small>%</small></strong></div></div>
-   <div className="request-share-bar" aria-hidden="true"><i/><i/></div>
-  </figure>
-  <Reveal on={step>=1} className="request-share-question"><h2>에이전트도 웹사이트를 쓴다면?</h2></Reveal>
-  <p className="story-scope">자동화 비율은 사람 47%의 나머지로 계산했습니다. 모든 봇이 AI 에이전트인 것은 아닙니다.</p>
-  <Source href={SOURCES.cloudflare}>Cloudflare · 2025 Year in Review</Source>
- </Frame>;
-}
-
-
-
 const INCIDENT=[
  ["에이전트들은 따로 과제를 풀고 있었습니다","2026년 5월 · 초기 훈련","외부 파일이 필요했지만 인터넷은 막혀 있었습니다."],
  ["공용 서버에 파일을 쓸 수 있었습니다","5월 8일 · 외부 연결 시도 실패","Google Drive 자료를 찾다가 공용 소프트웨어 서버에 파일을 썼습니다."],
@@ -53,13 +38,20 @@ function IncidentTimeline({phase}:{phase:number}){
   <ol>{TIMELINE.map(([date,label],i)=><li key={i} data-state={i<phase?"past":i===phase?"now":"next"}><i/><b>{date}</b><span>{label}</span></li>)}</ol>
  </div>;
 }
+/** 9번 · 8번과 사건(10~12번) 사이의 연결 장면. 7~8번의 "열어준 문"을 다시 보여주고, 사건의 "닫아둔 문"으로 넘어간다. */
+const BRIDGE=[
+ ["지금까지는 문을 열어준 이야기였습니다","지금까지","에이전트가 쓰는 웹","사이트가 기능을 열어주면, 에이전트는 그 문으로 일합니다."],
+ ["문을 닫아두면, 에이전트는 멈출까요?","다음 사례","OpenAI 조사 보고서","인터넷을 막아둔 훈련 환경에서 실제로 있었던 일입니다."],
+];
+/** part -1은 연결 장면, 0~2는 사건. 네 장이 같은 공간(IncidentWorld)을 이어 쓰도록 모양을 맞춘다. */
 export function IncidentStory({part,step}:{part:number;step:number}){
- const phase=part*2+step,[title,date,body]=INCIDENT[phase];
- return <Frame n={9+part} name="OpenAI 보안 사고" step={step} className="story-edit story-incident-3d">
+ const bridge=part<0,phase=bridge?-2+step:part*2+step;
+ const [title,chip,date,body]=bridge?BRIDGE[step]:[INCIDENT[phase][0],"사건 재구성",INCIDENT[phase][1],INCIDENT[phase][2]];
+ return <Frame n={9+part} name={bridge?"열어준 문, 닫아둔 문":"OpenAI 보안 사고"} step={step} className="story-edit story-incident-3d">
   <IncidentWorld phase={phase}/>
-  <div className="i3-heading" key={`h${phase}`}><p><span className="i3-case">사건 재구성</span>{date}</p><h1>{title}</h1></div>
+  <div className="i3-heading" key={`h${phase}`}><p><span className="i3-case">{chip}</span>{date}</p><h1>{title}</h1></div>
   <p className="i3-narrative" key={`n${phase}`}>{body}</p>
-  <IncidentTimeline phase={phase}/>
-  <Source href={part===0?SOURCES.incidentReport:SOURCES.incident}>OpenAI 조사 보고서 · 2026.08.26 · 여러 실행을 시간순으로 단순화한 재구성</Source>
+  {!bridge&&<IncidentTimeline phase={phase}/>}
+  {(!bridge||step===1)&&<Source href={part<=0?SOURCES.incidentReport:SOURCES.incident}>OpenAI 조사 보고서 · 2026.08.26{bridge?"":" · 여러 실행을 시간순으로 단순화한 재구성"}</Source>}
  </Frame>;
 }

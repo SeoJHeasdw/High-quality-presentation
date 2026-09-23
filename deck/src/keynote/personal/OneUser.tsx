@@ -6,10 +6,10 @@ import "../incident/incident.css";
 import "./personal.css";
 
 /*
- * 16~19번은 하나의 공간이다(묶음 one-user).
- *   16번 두 단계 → phase 0~1, 17번 세 단계 → 2~4, 18번 세 단계 → 5~7, 19번 두 단계 → 8~9.
+ * 17~20번은 하나의 공간이다(묶음 one-user).
+ *   17번 두 단계 → phase 0~1, 18번 세 단계 → 2~4, 19번 세 단계 → 5~7, 20번 두 단계 → 8~9.
  * 3D는 personal/world.ts, 요구사항 표·설명·라벨은 여기의 DOM이 맡는다.
- * 18번(공장 안)의 모델 이름은 각 엔진 README의 제작 모델이다(FACT-CHECK 18행). 스테이션은 개발 중, 요청을 나누는 라우팅은 구상이다.
+ * 19번(공장 안)의 모델 이름은 각 엔진 README의 제작 모델이다(FACT-CHECK 18행). 스테이션은 개발 중, 요청을 나누는 라우팅은 구상이다.
  */
 type Tone = "ice" | "amber" | "gold" | "mute" | "white";
 type Label = { id: AnchorId; name: ReactNode; sub?: string; tone?: Tone; tag?: string; dir?: "up" | "left" | "right" | "down"; fade?: boolean; size?: "lg" };
@@ -51,7 +51,7 @@ const FLOW = [
   "Factory · 제작 엔진이 맡은 결과를 하나씩 내놓습니다.",
   "저는 · 완성된 영상을 듣고, 틀린 곳만 다시 맡깁니다.",
 ];
-/** 18번의 제목. 19번은 따로 그린다. */
+/** 19번의 제목. 20번은 따로 그린다. */
 const FACTORY_HEAD: { kicker: string; title: ReactNode; lead: ReactNode }[] = [
   { kicker: "Factory 안", title: <>일마다 맞춘 모델이<br/>대기하고 있습니다</>, lead: "요청이 오면 맞는 스테이션 하나만 켜집니다." },
   { kicker: "디지털 월세", title: <>비싼 지능은<br/>판단에만 빌려 씁니다</>, lead: <>만드는 데만 이만큼 나갑니다.<br/>매일 반복하는 생산은 제 컴퓨터의 모델에게 맡깁니다.</> },

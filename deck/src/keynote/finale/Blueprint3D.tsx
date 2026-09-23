@@ -4,7 +4,7 @@ import type { BlueprintWorld, RoomId } from "./blueprint";
 import "../incident/incident.css";
 
 /*
- * 42번 · 공장은 계속 늘어난다(세 단계). 3D는 finale/blueprint.ts, 방 이름·상태 라벨은 여기의 DOM이 맡는다.
+ * 43번 · 공장은 계속 늘어난다(세 단계). 3D는 finale/blueprint.ts, 방 이름·상태 라벨은 여기의 DOM이 맡는다.
  * RICE 방 벽의 영상은 실제 RICE 소개 영상이며 소리 없이 재생한다. P는 재생·일시정지, A는 소리다.
  * WebGL을 쓸 수 없으면 기존 평면 설계도(fallback)를 그린다.
  */

@@ -1,4 +1,4 @@
-/* 31·32·34 · 한밤중의 휴대전화. 좌표는 화면 px(1920×1080)이고, 장표의 abuse-content 원점은 화면 (100, 162)이다. */
+/* 36·37·39 · 한밤중의 휴대전화. 좌표는 화면 px(1920×1080)이고, 장표의 abuse-content 원점은 화면 (100, 162)이다. */
 .np { position: absolute; left: -100px; top: -162px; width: 1920px; height: 1080px; overflow: clip; z-index: 0; pointer-events: none; background: #020304; }
 .np .pe-control { pointer-events: auto; }
 .np-cam { position: absolute; inset: 0; transform-origin: var(--cx) var(--cy); transition: transform 1.8s cubic-bezier(.65,0,.25,1); }

@@ -1,4 +1,4 @@
-/* 7~8 · 에이전트가 쓰는 웹. 공간과 라벨은 9~11번(incident.css)의 규칙을 그대로 쓴다. */
+/* 7~8 · 에이전트가 쓰는 웹. 공간과 라벨은 9~12번(incident.css)의 규칙을 그대로 쓴다. */
 .story-agent-web { background: #060a11; }
 .story-agent-web .kn-body { z-index: 2; }
 .story-agent-web .kn-chrome, .story-agent-web .kn-footer { z-index: 6; }

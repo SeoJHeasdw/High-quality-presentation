@@ -1,4 +1,4 @@
-/* 27~34 · 같은 능력, 다른 의도. 초록 화면 대신 어두운 방과 붉은색: 덱의 색 규칙에서 빨강은 "사실이 아님"이다. */
+/* 32~39 · 같은 능력, 다른 의도. 초록 화면 대신 어두운 방과 붉은색: 덱의 색 규칙에서 빨강은 "사실이 아님"이다. */
 .deck-keynote.deck-keynote:has(.abuse-slide) { --progress-fill: #ff5a52; }
 .deck-keynote .kn-slide.abuse-slide { --abuse-green: #ff6259; --abuse-dim: #8c7072; --abuse-line: #4a2124; --abuse-white: #f2eeee; --accent: #ff6259; --ink: #f2eeee; background: #030203; }
 .abuse-slide .kn-chrome, .abuse-slide .kn-footer { color: #7d6a6b; }
@@ -9,7 +9,7 @@
 .abuse-slide:not(.abuse-turn):not(.abuse-question)::before { filter: grayscale(1) brightness(.6); }
 .abuse-v2::before { display: none; }
 .abuse-slide .abuse-note, .abuse-slide .abuse-note a { color: #8a7475; }
-/* 32번 얼굴: 초록 형광 대신 핏기 없는 붉은 빛 */
+/* 33번 얼굴: 초록 형광 대신 핏기 없는 붉은 빛 */
 /* 얼굴 이미지의 등장 애니메이션이 img의 filter를 쓰므로 색은 감싸는 판에 준다. */
 .abuse-turn .abuse-face-plane { filter: grayscale(1) sepia(1) saturate(3.4) hue-rotate(-44deg) brightness(.8) contrast(1.2); }
 .abuse-turn .abuse-face::before { background: linear-gradient(0deg, transparent, #ff8c860d 44%, #ffb3ad22 48%, transparent 52%) !important; }
@@ -38,7 +38,7 @@
 @keyframes av-in { from { opacity: 0; transform: translateY(18px); filter: blur(8px); } to { opacity: 1; transform: none; filter: none; } }
 @keyframes av-line { from { opacity: 0; transform: translateX(-16px); } to { opacity: 1; transform: none; } }
 
-/* 32 · 음성 메시지 살펴보기 (휴대전화 화면의 말풍선 옆) */
+/* 37 · 음성 메시지 살펴보기 (휴대전화 화면의 말풍선 옆) */
 .pe { position: absolute; left: var(--x); top: var(--y); z-index: 5; width: 0; height: 0; }
 .pe-control { position: absolute; right: 18px; top: -26px; white-space: nowrap; padding: 10px 16px; border-radius: 10px; border: 1px solid #ff5a5266; background: #140607e6; color: #ffc8c3; font: inherit; font-size: 17px; cursor: zoom-in; pointer-events: auto; animation: av-line .8s ease 2.6s both; }
 .pe-control b { color: #ff6259; margin-left: 6px; }
@@ -51,7 +51,7 @@
 .pe-card ul { margin: 16px 0 0; padding: 0; list-style: none; display: grid; gap: 6px; font-size: 18px; color: #c9b8b8; }
 .pe-card li::before { content: "— "; color: #ff6259; }
 
-/* 34 · 확인하는 방법 */
+/* 39 · 확인하는 방법 */
 .av-copy--verify .av-premise { font-size: 32px; line-height: 1.5; color: #c9c1b4; margin: 0 0 26px; }
 .deck-keynote .kn-slide.abuse-verify .av-copy h1 em { color: #ffd49a; }
 .abuse-verify .av-eyebrow { color: #d8bf92; }
@@ -60,7 +60,7 @@
 .av-checks li[data-on] { opacity: 1; transform: none; transition: opacity .6s ease, transform .6s ease; transition-delay: calc(.8s + var(--i) * .25s); }
 .av-checks b { font-size: 17px; font-weight: 600; color: #ffd49a; letter-spacing: .04em; }
 
-/* 27 · 제가 녹음한 적 없는 문장 */
+/* 32 · 제가 녹음한 적 없는 문장 */
 .ov { position: absolute; inset: 0; }
 .ov-media { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
 .ov-head { position: absolute; left: 0; top: 0; z-index: 3; animation: av-in 1s cubic-bezier(.16,1,.3,1) both; }
@@ -102,7 +102,7 @@
 .ov-controls button + button { margin-left: 10px; }
 .ov[data-step="1"] .ov-controls, .ov[data-step="2"] .ov-controls { opacity: 0; pointer-events: none; }
 
-/* 30 · 벽이 사라지면 */
+/* 35 · 벽이 사라지면 */
 .th { position: absolute; left: -100px; top: -162px; width: 1920px; height: 1080px; overflow: hidden; }
 .th-crowd { position: absolute; inset: 0; width: 100%; height: 100%; }
 .th-shade { position: absolute; inset: 0; background: linear-gradient(90deg, #030203f0 0%, #030203a8 26%, #03020300 46%), linear-gradient(0deg, #030203c8 0%, #03020300 22%), linear-gradient(180deg, #030203c0 0%, #03020300 20%); }
@@ -124,7 +124,7 @@
 .th-sound button { border: 1px solid #ff5a5250; border-radius: 7px; background: #17090acb; color: #e8d5d3; padding: 7px 10px; font: 15px "Pretendard Variable", sans-serif; cursor: pointer; }
 .th-sound kbd { margin-left: 8px; font: 12px ui-monospace, monospace; color: #ff8a82; }
 
-/* 33 · 지워도 남는 사본 */
+/* 38 · 지워도 남는 사본 */
 .md { position: absolute; left: -100px; top: -162px; width: 1920px; height: 1080px; overflow: hidden; }
 .md-copies { position: absolute; inset: 0; width: 100%; height: 100%; filter: saturate(.7) brightness(.8); }
 .md-shade { position: absolute; inset: 0; background: linear-gradient(270deg, #030203f8 0%, #030203e0 30%, #03020360 52%, #03020320 70%), radial-gradient(ellipse at 36% 50%, #0000 30%, #030203a0 100%); }

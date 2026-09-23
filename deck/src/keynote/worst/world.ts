@@ -2,7 +2,7 @@ import * as THREE from "three";
 import { GLSL_SAFE, PhaseClock, createStage, easeInOut, easeOut, pixelCamera, rand, smooth, toWorld } from "../stage3d/runtime";
 
 /*
- * 29번 · 지금 쓰는 모델이 앞으로 쓸 모델 중 가장 구린 모델이다. 2~3번 고양이의 입자 문법을 다시 부른다(회수).
+ * 30번 · 지금 쓰는 모델이 앞으로 쓸 모델 중 가장 구린 모델이다. 2~3번 고양이의 입자 문법을 다시 부른다(회수).
  *   0  어둠 속에 먼지만 떠 있다. 청중의 속마음과 "지금은 그럴 수 있습니다"는 DOM이 맡는다.
  *   1  왼쪽에 2번의 화소 부조 고양이가 다시 떠오르고, 금색 입자가 "고양이"가 된다(한때: 사진 한 장 → 단어 하나).
  *      입자가 가운데의 화면 테두리로 모이고(지금: 요청 한 문장 → 강의 한 편), 일부가 오른쪽 어둠으로 흘러가며

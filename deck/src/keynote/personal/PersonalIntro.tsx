@@ -3,9 +3,9 @@ import { Frame } from "../KeynoteFrame";
 import "./personal.css";
 
 /*
- * 13번 · 12번 스크롤 페이지가 멈춘 마지막 화면(불 켜진 집)에서 이어진다.
+ * 14번 · 13번 스크롤 페이지가 멈춘 마지막 화면(불 켜진 집)에서 이어진다.
  * 도시의 이야기에서 집 한 채, 한 사람의 이야기로 내려온다.
- * 14번 · 같은 집과 같은 30년 눈금 위에서 과도기를 말한다(묶음 person-ruler, 세 단계).
+ * 15번 · 같은 집과 같은 30년 눈금 위에서 과도기를 말한다(묶음 person-ruler, 세 단계).
  *   0  "일이 선택이 된다"는 예측과 그 시점(2035~2045?)
  *   1  지금부터 그 구간까지가 과도기. 다 할 수 있다(금색) · 대체될 수 있다(파랑)
  *   2  일이 선택이 되면 생각도 선택이 된다. 근거 카드와 "판단은 제가 쥡니다"
@@ -22,7 +22,7 @@ const HEAD: { kicker: string; title: ReactNode; lead?: string; gold?: boolean }[
 ];
 
 export default function PersonalIntro({ part = 0, step = 0 }: { part?: 0 | 1; step?: number }) {
-  // 13번은 -1, 14번은 단계 그대로 0~2
+  // 14번은 -1, 15번은 단계 그대로 0~2
   const beat = part === 0 ? -1 : Math.min(2, step);
   const head = beat >= 0 ? HEAD[beat] : null;
   return <Frame n={13 + part} name={part === 0 ? "서제호의 30년" : "과도기"} step={step} className={`personal-v2 p13 p13--${part}`}>

@@ -1,4 +1,4 @@
-/* 29 · 가장 구린 모델. 2~3번(opening.css)과 같은 규칙: 3D가 화면을 채우고 글은 빈 가장자리에 둔다.
+/* 30 · 가장 구린 모델. 2~3번(opening.css)과 같은 규칙: 3D가 화면을 채우고 글은 빈 가장자리에 둔다.
    좌표는 worst/world.ts의 LAYOUT과 같다(화면 px). kn-body의 원점은 화면 (100, 162)이다. */
 .worst { background: #05080d; }
 .worst .kn-chrome, .worst .kn-footer { z-index: 6; }

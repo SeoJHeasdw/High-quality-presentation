@@ -6,9 +6,9 @@ import "../personal/personal.css";
 import "./leash.css";
 
 /*
- * 39번 · 확인하는 방법(38번) 뒤, 새벽(40번) 직전의 마지막 공포. 발표자의 질문이며 출처를 붙이지 않는다.
+ * 40번 · 확인하는 방법(39번) 뒤, 새벽(41번) 직전의 마지막 공포. 발표자의 질문이며 출처를 붙이지 않는다.
  * 3D는 leash/world.ts(낱말이 모여 몸이 되고, 금색 고리가 닫히지 않는다), 글은 여기의 DOM이 맡는다.
- * 31~38번의 붉은 방이 아니라 검정·파랑·금색만 쓴다.
+ * 32~39번의 붉은 방이 아니라 검정·파랑·금색만 쓴다.
  */
 export default function LeashStory({ step }: { step: number }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);

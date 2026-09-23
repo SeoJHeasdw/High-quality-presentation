@@ -1,7 +1,8 @@
 import type { DeckModule } from "../components/deck-kit";
 import { Frame, Briefing, Reveal, Rows, SlidePosition } from "./KeynoteFrame";
 import EngineSequence from "./EngineSequence";
-import { CatStory, BroodStory, BotStory, IncidentStory } from "./Stories";
+import { CatStory, BroodStory, IncidentStory } from "./Stories";
+import BotStory from "./bots/Bots";
 import AgentWebStory from "./agent-web/AgentWeb";
 import OneUserStory from "./personal/OneUser";
 import NextMarket from "./next-market/NextMarket";
@@ -63,13 +64,14 @@ const ordered = [
  {id:"story-bots",scriptKey:"story-bots",steps:1,render:({step})=><BotStory step={step}/>},
  {id:"story-web-door",scriptKey:"story-web-door",steps:1,group:"agent-web",render:({step})=><AgentWebStory part={0} step={step}/>},
  {id:"story-price",scriptKey:"story-price",steps:2,group:"agent-web",render:({step})=><AgentWebStory part={1} step={step}/>},
- ...["story-rooms","story-board","story-boundary"].map((id,part)=>({id,scriptKey:id,steps:1,group:"incident-rooms",render:({step})=><IncidentStory part={part} step={step}/>})),
+ // 9~12 · 열어준 문에서 닫아둔 문으로 넘어와, 같은 공간에서 사건을 재구성한다(묶음 incident-rooms).
+ ...["story-closed-door","story-rooms","story-board","story-boundary"].map((id,i)=>({id,scriptKey:id,steps:1,group:"incident-rooms",render:({step})=><IncidentStory part={i-1} step={step}/>})),
  {id:"story-next-market",scriptKey:"story-next-market",steps:7,render:({step})=><NextMarket step={step}/>},
- // 13·14 · 같은 집과 30년 눈금 위에서 이어진다(묶음 person-ruler).
+ // 14·15 · 같은 집과 30년 눈금 위에서 이어진다(묶음 person-ruler).
  byId("manifesto-person"),
  {id:"manifesto-transition",scriptKey:"manifesto-transition",steps:2,group:"person-ruler",render:({step})=><PersonalIntro part={1} step={step}/>},
  byId("manifesto-compute"),
- // 16~19 · 한 사람을 둘러싼 흐름에서 Factory 안으로 들어가 제 베팅까지 한 공간이다(묶음 one-user).
+ // 17~20 · 한 사람을 둘러싼 흐름에서 Factory 안으로 들어가 제 베팅까지 한 공간이다(묶음 one-user).
  {id:"manifesto-requirements",scriptKey:"manifesto-requirements",steps:1,group:"one-user",render:({step})=><OneUserStory part={0} step={step}/>},
  {id:"manifesto-system",scriptKey:"manifesto-system",steps:2,group:"one-user",render:({step})=><OneUserStory part={1} step={step}/>},
  {id:"manifesto-factory",scriptKey:"manifesto-factory",steps:2,group:"one-user",render:({step})=><OneUserStory part={2} step={step}/>},

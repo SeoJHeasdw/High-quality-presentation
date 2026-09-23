@@ -9,8 +9,8 @@ import "./night-phone.css";
 import "./abuse-v2.css";
 
 /*
- * 35·36번은 같은 휴대전화 한 대에서 이어진다(묶음 night-phone). 35번은 새벽의 전화, 36번은 같은 밤에 온 메시지.
- * 38번은 같은 휴대전화에서 확인하는 방법으로 끝난다. 모두 가상 상황이다.
+ * 36·37번은 같은 휴대전화 한 대에서 이어진다(묶음 night-phone). 36번은 새벽의 전화, 37번은 같은 밤에 온 메시지.
+ * 39번은 같은 휴대전화에서 확인하는 방법으로 끝난다. 모두 가상 상황이다.
  */
 const NARRATION: ReactNode[] = [
   <>새벽 2시 47분. <b>모르는 번호</b>로 전화가 옵니다.</>,
@@ -21,7 +21,7 @@ const NARRATION: ReactNode[] = [
 ];
 const MODES: PhoneMode[] = ["incoming", "call", "reveal", "chat", "chat-more"];
 
-/** 36번 · 음성 메시지 옆의 살펴보기. 휴대전화 화면 위 말풍선 자리에 붙는다. */
+/** 37번 · 음성 메시지 옆의 살펴보기. 휴대전화 화면 위 말풍선 자리에 붙는다. */
 function PhoneEvidence({ step }: { step: number }) {
   const inspection = useInspection(step);
   const [x, y] = quadPoint(390, 845, plate.screen.corners, 18, 170);

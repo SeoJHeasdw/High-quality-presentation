@@ -2,18 +2,18 @@ import * as THREE from "three";
 import { FONT, GLSL_SAFE, PhaseClock, canvasTexture, clamp01, createStage, easeInOut, easeOut, fitShot, rand, roundRect, smooth, type Pose, type Shot } from "../stage3d/runtime";
 
 /*
- * 16~19번 · 사용자는 저 한 명, 그 한 사람을 둘러싼 흐름, 그리고 Factory 안.
- *   0  (16) 많은 사용자의 점들이 가라앉고, 금색 점 하나(저)만 남는다.
- *   1  (16) 저를 둘러싼 조건의 고리들이 느슨해진다. 가장 안쪽의 금색 고리(원본과 작업 기록)만 그대로다.
- *   2  (17) 카메라가 물러나며 고리 위의 흐름이 드러난다. 요청이 Agent OS(구상)로 간다.
- *   3  (17) Agent OS가 Factory의 엔진으로 일을 넘기고, 강의 영상이 나온다.
- *   4  (17) 결과가 저에게 돌아오고, "이 페이지 발음만 다시" 요청이 TTS로 되돌아간다.
- *   5  (18) 카메라가 Factory 안으로 들어간다. 엔진이 호를 따라 스테이션으로 늘어서고, 요청이 오면 맞는 스테이션 하나만 켜진다.
+ * 17~20번 · 사용자는 저 한 명, 그 한 사람을 둘러싼 흐름, 그리고 Factory 안.
+ *   0  (17) 많은 사용자의 점들이 가라앉고, 금색 점 하나(저)만 남는다.
+ *   1  (17) 저를 둘러싼 조건의 고리들이 느슨해진다. 가장 안쪽의 금색 고리(원본과 작업 기록)만 그대로다.
+ *   2  (18) 카메라가 물러나며 고리 위의 흐름이 드러난다. 요청이 Agent OS(구상)로 간다.
+ *   3  (18) Agent OS가 Factory의 엔진으로 일을 넘기고, 강의 영상이 나온다.
+ *   4  (18) 결과가 저에게 돌아오고, "이 페이지 발음만 다시" 요청이 TTS로 되돌아간다.
+ *   5  (19) 카메라가 Factory 안으로 들어간다. 엔진이 호를 따라 스테이션으로 늘어서고, 요청이 오면 맞는 스테이션 하나만 켜진다.
  *          위에 따로 떨어진 문(프론티어 모델)에는 어려운 판단만 올라간다.
- *   6  (18) 문 양옆으로 실제 영수증 두 장이 내려온다(디지털 월세).
- *   7  (18) 물러나면 모든 스테이션이 각자 자기 일을 한다.
- *   8  (19) 공간 전체가 어두워지고 청중의 질문이 뜬다(DOM).
- *   9  (19) 세 가지 베팅: 결과물이 빛나고, 저에게서 금색 고리가 퍼지고, 목소리 스테이션의 모델이 새것으로 바뀐다.
+ *   6  (19) 문 양옆으로 실제 영수증 두 장이 내려온다(디지털 월세).
+ *   7  (19) 물러나면 모든 스테이션이 각자 자기 일을 한다.
+ *   8  (20) 공간 전체가 어두워지고 청중의 질문이 뜬다(DOM).
+ *   9  (20) 세 가지 베팅: 결과물이 빛나고, 저에게서 금색 고리가 퍼지고, 목소리 스테이션의 모델이 새것으로 바뀐다.
  * Agent OS, 전체 연결, 요청을 나누는 라우팅은 구상이다. 스테이션(엔진)들은 따로 개발 중이다(대본·화면에 표시).
  */
 
@@ -114,7 +114,7 @@ export type OneUserWorld = {
 
 export type OneUserImages = { lecture: HTMLImageElement; codex: HTMLImageElement; claude: HTMLImageElement; image: HTMLImageElement; music: HTMLImageElement };
 
-/** 18-0에서 되풀이하는 요청. 스테이션 번호(ST_IDS 순서), -1은 프론티어 문. */
+/** 19-0에서 되풀이하는 요청. 스테이션 번호(ST_IDS 순서), -1은 프론티어 문. */
 const REQUESTS = [4, 3, 2, -1, 1, 0];
 const REQ_START = 3.1, REQ_GAP = 1.55, DOOR_GAP = 3.6;
 const REQ_AT: number[] = []; let REQ_CYCLE = 0;
@@ -214,7 +214,7 @@ export function createOneUserWorld(canvas: HTMLCanvasElement, images: OneUserIma
     return { m, mat, a: (i / 4) * Math.PI * 2 };
   });
 
-  /* 스테이션: 유리 상자, 받침, 가운데 핵. 17번의 엔진 세 개도 같은 모양이다. */
+  /* 스테이션: 유리 상자, 받침, 가운데 핵. 18번의 엔진 세 개도 같은 모양이다. */
   const makeStation = (pos: THREE.Vector3, color: THREE.Color) => {
     const g = new THREE.Group(); g.position.copy(pos); scene.add(g);
     const glassMat = new THREE.ShaderMaterial({
@@ -306,7 +306,7 @@ export function createOneUserWorld(canvas: HTMLCanvasElement, images: OneUserIma
   /* 요청의 빛 */
   const packets = Array.from({ length: 4 }, () => { const s = glowSprite(ICE.clone().multiplyScalar(2.4), 0.8); scene.add(s); return s; });
 
-  /* 결과: 실제 강의 화면 (+19번에서 새 이미지·음악 카드) */
+  /* 결과: 실제 강의 화면 (+20번에서 새 이미지·음악 카드) */
   const lectureTex = imageTexture(lecture);
   const outG = new THREE.Group(); outG.position.copy(OUT); scene.add(outG);
   const outMat = new THREE.MeshBasicMaterial({ map: lectureTex, transparent: true, opacity: 0, toneMapped: false });
@@ -347,7 +347,7 @@ export function createOneUserWorld(canvas: HTMLCanvasElement, images: OneUserIma
   const tmp = new THREE.Vector3();
   const hit = (x: number) => (x < 0 ? 0 : x < 0.12 ? x / 0.12 : Math.exp(-(x - 0.12) * 0.9));
 
-  /** 18-0 · 되풀이하는 요청의 빛과 스테이션의 반응. 모션을 끄면 목소리 스테이션 하나만 켜진 장면으로 멈춘다. */
+  /** 19-0 · 되풀이하는 요청의 빛과 스테이션의 반응. 모션을 끄면 목소리 스테이션 하나만 켜진 장면으로 멈춘다. */
   function requests(loopT: number | null) {
     const act = [0, 0, 0, 0, 0]; let flare = 0, judgeLit = 0, used = 0;
     if (loopT === null) { act[4] = 1; return { act, flare, judgeLit }; }
@@ -452,7 +452,7 @@ export function createOneUserWorld(canvas: HTMLCanvasElement, images: OneUserIma
     const newCoreIn = p === 9 ? easeInOut(ev(2.9, 1.3)) : 0;
     const oldCoreOut = p === 9 ? easeInOut(ev(2.5, 1.0)) : 0;
     const stationLevel = (st: number, i: number) => {
-      if (p < 5) return -1; // 17번까지의 엔진 규칙을 쓴다
+      if (p < 5) return -1; // 18번까지의 엔진 규칙을 쓴다
       if (p === 5) return 0.05 + 0.95 * (req?.act[st] ?? 0);
       if (p === 6) return 0.06;
       if (p === 7) return 0.62 + 0.38 * (pc.motion ? 0.5 + 0.5 * Math.sin(time * 1.5 + i * 1.3) : 1);
@@ -524,7 +524,7 @@ export function createOneUserWorld(canvas: HTMLCanvasElement, images: OneUserIma
       r.mat.opacity = a; r.frameMat.opacity = a * 0.7; r.halo.opacity = a * 0.35; r.g.visible = a > 0.001;
     });
 
-    // 결과와 19번의 결과물 카드
+    // 결과와 20번의 결과물 카드
     const outOn = follow("out", p === 3 ? smooth(3.0, 3.6, t) : p === 4 || p >= 8 ? 1 : p >= 5 ? 0 : p > 3 ? 1 : 0, dt, 4);
     outMat.opacity = outOn; outFrameMat.opacity = outOn; (outGlow.material as THREE.SpriteMaterial).opacity = outOn * 0.35;
     outG.quaternion.copy(camera.quaternion); outG.visible = outOn > 0.01;

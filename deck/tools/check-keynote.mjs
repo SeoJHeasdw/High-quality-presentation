@@ -51,7 +51,28 @@ report.cat.lecturePlays=await page.evaluate(()=>{const v=document.querySelector(
 report.cat.singleHeading=await page.locator('.op-heading').count()===1;
 for(let i=0;i<3;i++)await page.keyboard.press('ArrowLeft');await page.waitForTimeout(1300);
 report.cat.reverse=await cue()===0&&await page.evaluate(()=>document.querySelector('.op-canvas')===window.__opening&&document.querySelector('.op-screen video').paused);
-// 7~8, 16~19 · 묶인 3D 공간: 장이 바뀌어도 같은 캔버스가 이어지고, 모든 단계가 그려지며, 뒤로 가면 처음 단계로 돌아온다.
+// 6 · 요청의 흐름이 숫자가 되고, 다음 큐에서 자동화가 세 칸으로 나뉜다. 같은 캔버스가 두 큐를 지나고 뒤로 가면 숫자로 돌아온다.
+await go(slideNumber('story-bots'));await page.waitForSelector('.bt-canvas[data-ready]',{timeout:10000});
+await page.evaluate(()=>{window.__bots=document.querySelector('.bt-canvas')});
+await page.waitForTimeout(5000);
+report.bots={numbers:await page.evaluate(()=>document.querySelector('.bt').dataset.cue==='0'&&Number(getComputedStyle(document.querySelector('.bt-group')).opacity)>.99)};
+// 질문은 칸이 나뉜 뒤 3.3초에 떠올라 4.2초에 다 선다(bots.css).
+await page.keyboard.press('ArrowRight');await page.waitForTimeout(4600);
+report.bots.parts=await page.evaluate(()=>document.querySelector('.bt').dataset.cue==='1'&&document.querySelectorAll('.bt-part').length===3&&Number(getComputedStyle(document.querySelector('.bt-question')).opacity)>.99);
+await page.keyboard.press('ArrowLeft');await page.waitForTimeout(600);
+report.bots.reverse=await page.evaluate(()=>document.querySelector('.bt-canvas')===window.__bots&&document.querySelector('.bt').dataset.cue==='0'&&!document.querySelector('.bt-part')&&!document.querySelector('.bt[data-fallback]'));
+// 9 → 10 · 연결 장면에서 사건 공간으로. 같은 캔버스가 이어지고(-2 → -1 → 0), 라벨이 제목을 덮지 않으며, 뒤로 가면 연결 장면으로 돌아온다.
+await go(slideNumber('story-closed-door'));await page.waitForSelector('.iw-canvas[data-ready]',{timeout:10000});
+await page.evaluate(()=>{window.__bridge=document.querySelector('.iw-canvas')});
+const bridgeBeat=()=>page.evaluate(()=>{const c=document.querySelector('.iw-canvas'),h=document.querySelector('.i3-heading h1').getBoundingClientRect(),n=document.querySelector('.i3-narrative').getBoundingClientRect();
+ const hit=(a,b)=>Math.min(a.right,b.right)-Math.max(a.left,b.left)>4&&Math.min(a.bottom,b.bottom)-Math.max(a.top,b.top)>4;
+ const boxes=[...document.querySelectorAll('.iw-label[data-on] .iw-label-box')].map(el=>el.getBoundingClientRect());
+ return{phase:Number(c.dataset.phase),same:c===window.__bridge,labels:boxes.length,covers:boxes.filter(b=>hit(b,h)||hit(b,n)).length}});
+report.bridge=[];
+for(let i=0;i<3;i++){if(i)await page.keyboard.press('ArrowRight');await page.waitForTimeout(i?3400:3800);report.bridge.push(await bridgeBeat())}
+await page.keyboard.press('ArrowLeft');await page.waitForTimeout(2600);report.bridge.push(await bridgeBeat());
+const bridgeOk=report.bridge.map(b=>b.phase).join(',')==='-2,-1,0,-1'&&report.bridge.every(b=>b.same&&b.labels>0&&!b.covers);
+// 7~8, 17~20 · 묶인 3D 공간: 장이 바뀌어도 같은 캔버스가 이어지고, 모든 단계가 그려지며, 뒤로 가면 처음 단계로 돌아온다.
 report.groups={};
 for(const [name,first,beats] of [['agentWeb','story-web-door',5],['oneUser','manifesto-requirements',10]]){
  await go(slideNumber(first));await page.waitForSelector('.iw-canvas[data-ready]',{timeout:10000});await page.waitForTimeout(400);
@@ -178,4 +199,4 @@ report.phoneCue.answerButton=await page.locator('.kn-slide').evaluate(el=>el.dat
 const images=await Promise.all(frames.map(async f=>({...f,data:(await fs.readFile(path.join(out,f.file))).toString('base64')})));
 await page.setViewportSize({width:1920,height:1900});await page.setContent(`<body style="margin:0;background:#15191c;color:#ccc;font:15px sans-serif"><div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;padding:18px">${images.map(x=>`<div><img style="width:100%;display:block" src="data:image/png;base64,${x.data}"><p style="margin:8px 0 6px">${x.label}</p></div>`).join('')}</div></body>`);await page.screenshot({path:path.join(out,'contact-sheet.png'),fullPage:true});
 await fs.writeFile(path.join(out,'report.json'),JSON.stringify(report,null,2));console.log(JSON.stringify(report,null,2));await browser.close();
-if(!Object.values(report.cat).every(Boolean)||!groupsOk||!rulerOk||!finaleOk||!incidentOk||!scrollOk||errors.length||external.length||scriptMissing.length||report.slides.some(s=>s.overflow.length||s.overlap.length||s.webgl?.fallback)||report.filmShots.length!==5||new Set(report.filmShots.map(s=>s.source)).size!==5||report.filmShots.some(s=>s.status!=='held'||!(s.duration>1)||!s.muted)||!Object.values(report.film).every(Boolean)||!report.fallback||report.media.some(m=>m.paused||m.muted!==(m.id==='demo-assets')||!m.playing||m.time<=0||!m.pausedByKey||!m.soundToggled||!m.stoppedOnLeave)||!Object.values(report.voiceCue).every(Boolean)||!Object.values(report.phoneCue).every(Boolean))process.exitCode=1;
+if(!Object.values(report.cat).every(Boolean)||!bridgeOk||!Object.values(report.bots).every(Boolean)||!groupsOk||!rulerOk||!finaleOk||!incidentOk||!scrollOk||errors.length||external.length||scriptMissing.length||report.slides.some(s=>s.overflow.length||s.overlap.length||s.webgl?.fallback)||report.filmShots.length!==5||new Set(report.filmShots.map(s=>s.source)).size!==5||report.filmShots.some(s=>s.status!=='held'||!(s.duration>1)||!s.muted)||!Object.values(report.film).every(Boolean)||!report.fallback||report.media.some(m=>m.paused||m.muted!==(m.id==='demo-assets')||!m.playing||m.time<=0||!m.pausedByKey||!m.soundToggled||!m.stoppedOnLeave)||!Object.values(report.voiceCue).every(Boolean)||!Object.values(report.phoneCue).every(Boolean))process.exitCode=1;

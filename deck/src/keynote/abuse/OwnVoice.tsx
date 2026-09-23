@@ -6,8 +6,8 @@ import align from "../data/tts-alignment.json";
 import "./abuse-v2.css";
 
 /*
- * 31번 · 제가 녹음한 적 없는 문장.
- * 26번에서 들은 실제 강의 영상(원본 00:25–00:49) 가운데 한 문장을 다시 보여준다.
+ * 32번 · 제가 녹음한 적 없는 문장.
+ * 27번에서 들은 실제 강의 영상(원본 00:25–00:49) 가운데 한 문장을 다시 보여준다.
  * 이 문장은 제가 녹음한 것이 아니라, 대본을 제 목소리 어댑터로 읽힌 결과다(local-tts-engine 타임라인).
  * 숫자는 local-tts-engine/docs/DECISIONS.md(학습 기록)와 Qwen3-TTS 공개 README에서 가져왔다.
  */
@@ -21,7 +21,7 @@ const BARS = (() => {
   return out;
 })();
 const HEAD = [
-  { kicker: "26번에서 들으신 목소리", title: <>제 목소리입니다.</>, sub: "강의의 한 문장을 다시 보겠습니다." },
+  { kicker: "27번에서 들으신 목소리", title: <>제 목소리입니다.</>, sub: "강의의 한 문장을 다시 보겠습니다." },
   { kicker: "그런데", title: <>저는 이 문장을<br/><em>녹음한 적이 없습니다.</em></>, sub: "대본을 넣었더니, 제 목소리로 나왔습니다." },
   { kicker: "제 목소리를 흉내 내는 데 든 것", title: <>제 목소리는 이제<br/><em>파일 하나</em>입니다.</>, sub: "" },
 ];
@@ -97,7 +97,7 @@ export default function OwnVoice({ step }: { step: number }) {
         <div className="ov-controls" data-playing={playing || undefined}><button type="button" onClick={() => { const v = video.current; if (!v) return; if (autoStart.current !== null) { window.clearTimeout(autoStart.current); autoStart.current = null; } if (v.paused) playSentence(); else v.pause(); }}><kbd>P</kbd>{audioBlocked ? "소리 재생하기" : playing ? "정지" : "이 문장 다시 듣기"}</button><button type="button" onClick={() => { const v = video.current; if (!v) return; v.muted = !v.muted; setMuted(v.muted); }}><kbd>A</kbd>{muted ? "소리 켜기" : "소리 끄기"}</button></div>
       </div>
       <p className="av-note">{step < 2
-        ? <span>26번 실제 강의 영상의 한 문장(원본 00:38.8–00:44.4) · local-tts-engine 제작 기록</span>
+        ? <span>27번 실제 강의 영상의 한 문장(원본 00:38.8–00:44.4) · local-tts-engine 제작 기록</span>
         : <><span>학습 기록: local-tts-engine DECISIONS · 과거 한 번의 실행이며 녹음·정리 시간은 따로 들었습니다</span><a href="https://github.com/QwenLM/Qwen3-TTS" target="_blank" rel="noreferrer">Qwen3-TTS · “3-second rapid voice clone” · 2026.1.22 · Apache-2.0 ↗</a></>}</p>
     </div>
   </Frame>;

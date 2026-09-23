@@ -6,7 +6,7 @@ import wave from "../data/tts-waveform.json";
 import "./personal.css";
 
 /*
- * 15번 · 강의 한 편이 만들어지는 실제 기록.
+ * 16번 · 강의 한 편이 만들어지는 실제 기록.
  * 대본·목소리·자막·영상 네 줄은 모두 실제 강의의 같은 24초(원본 00:25–00:49)에서 가져왔다.
  *   대본  local-tts-engine 타임라인의 원문 문장과 시각
  *   목소리 실제 음성의 파형 (data/tts-waveform.json)

@@ -1,12 +1,12 @@
-import type { CSSProperties, ReactNode } from "react";
-import { Frame } from "../KeynoteFrame";
+import { useContext, type CSSProperties, type ReactNode } from "react";
+import { Frame, SlidePosition } from "../KeynoteFrame";
 import ClosingChoices from "../ClosingChoices";
 import Blueprint3D from "./Blueprint3D";
 import "./finale.css";
 
 /*
- * 40~43번 · 새벽. 13번의 밤, 35~38번의 새벽 2시 47분 뒤에 같은 집이 푸른 새벽(40~42)을 지나 해 뜨는 아침(43)이 된다.
- * 배경은 12번 Blender 장면의 마지막 구도를 시간대만 바꿔 다시 렌더한 것(tools/render-house-scroll.py --time).
+ * 41~44번 · 새벽. 14번의 밤, 36~39번의 새벽 2시 47분 뒤에 같은 집이 푸른 새벽(41~43)을 지나 해 뜨는 아침(44)이 된다.
+ * 배경은 13번 Blender 장면의 마지막 구도를 시간대만 바꿔 다시 렌더한 것(tools/render-house-scroll.py --time).
  * 네 장이 한 묶음(finale)이라 배경은 다시 그리지 않고 밝아진다.
  * 판단·실패 기록은 local-tts-engine/docs/DECISIONS.md의 실제 기록이다.
  */
@@ -22,11 +22,13 @@ const RESULTS: [string, string][] = [
   ["/demos/tts-lecture.jpg", "제 목소리 강의"],
   ["/factory-film/03-image.jpg", "새로 만든 이미지"],
   ["/factory-film/04-music.jpg", "음악 후보"],
-  ["/house-scroll/a4.jpg", "이 발표 · 43장"],
+  ["/house-scroll/a4.jpg", "이 발표"],
 ];
 const MODELS = ["Qwen3-TTS 1.7B", "다음 모델", "그다음 모델"];
 
 function Strata() {
+  // 이 발표의 장표 수는 덱에서 읽는다. 장을 끼워도 숫자가 어긋나지 않는다.
+  const total = useContext(SlidePosition)?.total ?? 44;
   return <div className="fs">
     <div className="fs-models" aria-label="바뀌는 것: 모델">
       <span className="fs-lane-label">바뀌는 것 <b>모델</b></span>
@@ -39,7 +41,7 @@ function Strata() {
       <div className="fs-layer" style={{ "--i": 1 } as CSSProperties}><span className="fs-lane-label"><b>판단의 기록</b></span>
         <div className="fs-items">{DECISIONS.map(([d, t]) => <span key={d} className="fs-chip fs-chip--log"><time>{d}</time>{t}</span>)}</div></div>
       <div className="fs-layer" style={{ "--i": 2 } as CSSProperties}><span className="fs-lane-label"><b>결과물</b></span>
-        <div className="fs-items">{RESULTS.map(([src, t]) => <figure key={t} className="fs-thumb"><img src={src} alt=""/><figcaption>{t}</figcaption></figure>)}</div></div>
+        <div className="fs-items">{RESULTS.map(([src, t]) => <figure key={t} className="fs-thumb"><img src={src} alt=""/><figcaption>{t === "이 발표" ? `이 발표 · ${total}장` : t}</figcaption></figure>)}</div></div>
       <span className="fs-future">앞으로 30년 동안 쌓을 자리</span>
     </div>
   </div>;
@@ -76,7 +78,7 @@ function OpenLog() {
 }
 
 function Blueprint() {
-  // 방 = 만들고 있는 것, 점선 = 아직 그리기만 한 것. 12번 청사진 선의 언어를 이어 쓴다.
+  // 방 = 만들고 있는 것, 점선 = 아직 그리기만 한 것. 13번 청사진 선의 언어를 이어 쓴다.
   return <div className="fb">
     <svg className="fb-plan" viewBox="0 0 980 600" aria-label="자비스 설계도: 세 엔진은 개발 중, Agent OS와 연결은 아직 설계">
       <defs><pattern id="fb-grid" width="28" height="28" patternUnits="userSpaceOnUse"><path d="M28 0H0V28" fill="none" stroke="#6fb6e61a" strokeWidth="1"/></pattern></defs>
@@ -100,7 +102,7 @@ function Blueprint() {
   </div>;
 }
 
-/** 42번은 세 단계마다 제목이 바뀐다(0 지금, 1 조합, 2 사무직이었다면). */
+/** 43번은 세 단계마다 제목이 바뀐다(0 지금, 1 조합, 2 사무직이었다면). */
 const UNFINISHED: { kicker: string; title: ReactNode; lead: string }[] = [
   { kicker: "아직 남아 있는 문제", title: <>완성된 자비스까지는<br/>갈 길이 있습니다</>, lead: "지금은 방마다 기능을 만들고, 실제로 쓰다 막히는 부분을 고치는 단계입니다." },
   { kicker: "방과 방을 이으면", title: <>조합하면<br/>새 일이 생깁니다</>, lead: "같은 설계가 목소리, 업무, 주식 판단에 들어가 있습니다. 조합은 아직 가능성입니다." },

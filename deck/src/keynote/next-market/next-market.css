@@ -1,4 +1,4 @@
-/* 12 · 다음 시장. 영상이 뒤에 고정되고, 글이 스크롤을 따라 올라가는 한 장짜리 페이지. */
+/* 13 · 다음 시장. 영상이 뒤에 고정되고, 글이 스크롤을 따라 올라가는 한 장짜리 페이지. */
 .story-next-market { background: #05080e; }
 .story-next-market .kn-chrome, .story-next-market .kn-footer { z-index: 7; }
 .story-next-market .kn-footer { color: #93a3b1; }

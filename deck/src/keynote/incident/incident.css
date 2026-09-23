@@ -1,4 +1,4 @@
-/* 9~11 · 사건 재구성 공간. The 3D space fills the slide; text sits on its quiet edges. */
+/* 9~12 · 사건 재구성 공간(9번은 연결 장면). The 3D space fills the slide; text sits on its quiet edges. */
 .story-incident-3d { background: #060a11; }
 .story-incident-3d .kn-body { z-index: 2; }
 .story-incident-3d .kn-chrome, .story-incident-3d .kn-footer { z-index: 6; }

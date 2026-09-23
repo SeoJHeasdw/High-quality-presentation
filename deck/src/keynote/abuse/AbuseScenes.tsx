@@ -4,7 +4,7 @@ import { MediaInspection } from "../AbuseInteractive";
 import { usePerformanceMotion } from "../usePerformanceMotion";
 import "./abuse-v2.css";
 
-/* 34·37번의 캔버스 장면. 점과 사진 칸은 도식이며 사람 수·공유 수 같은 데이터가 아니다. */
+/* 35·38번의 캔버스 장면. 점과 사진 칸은 도식이며 사람 수·공유 수 같은 데이터가 아니다. */
 const rand = (seed: number) => { let s = seed >>> 0; return () => { s = (s * 1664525 + 1013904223) >>> 0; return s / 4294967296; }; };
 
 function useCanvasLoop(draw: (g: CanvasRenderingContext2D, t: number) => void, deps: unknown[], motion: boolean) {
@@ -20,7 +20,7 @@ function useCanvasLoop(draw: (g: CanvasRenderingContext2D, t: number) => void, d
   return ref;
 }
 
-/* 30 · 벽 너머의 사람들 ---------------------------------------------------
+/* 35 · 벽 너머의 사람들 ---------------------------------------------------
  * 사람과 벽을 같은 원근(눈높이 1.6m, 초점 900px)으로 그린다. 먼 것부터 그려 벽이 뒤의 사람을 가린다.
  * 벽이 무너지면 사람들이 이쪽으로 걸어 나온다. 점과 벽은 도식이다. */
 type Person = { x: number; z: number; red: boolean; s: number; phase: number };
@@ -146,7 +146,7 @@ export function ThresholdScene({ step }: { step: number }) {
   </Frame>;
 }
 
-/* 33 · 지워도 남는 사본 ---------------------------------------------------- */
+/* 38 · 지워도 남는 사본 ---------------------------------------------------- */
 function portrait(seed: number) {
   const c = document.createElement("canvas"); c.width = 160; c.height = 210;
   const g = c.getContext("2d")!, r = rand(seed);

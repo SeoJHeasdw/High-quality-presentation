@@ -5,8 +5,8 @@ import { UnrealBloomPass } from "three/examples/jsm/postprocessing/UnrealBloomPa
 import { OutputPass } from "three/examples/jsm/postprocessing/OutputPass.js";
 
 /*
- * 2~3, 7~8, 16~19, 29, 39, 42번 공간이 함께 쓰는 틀.
- * 9~11번 사건 공간(incident/world.ts)과 같은 규칙을 따른다.
+ * 2~3, 6, 7~8, 16~19, 29, 39, 43번 공간이 함께 쓰는 틀.
+ * 9~12번 사건 공간(incident/world.ts)과 같은 규칙을 따른다.
  *   · 1920×1080 한 장을 렌더하고, 무대 배율은 CSS가 맞춘다.
  *   · 앞으로 넘길 때만 장면의 움직임을 재생하고, 뒤로 가거나 건너뛰면 그 단계의 마지막 상태를 보여준다.
  *   · 모션을 끄면 시계를 멈추고 마지막 상태를 한 번만 그린다.
@@ -91,7 +91,7 @@ export type Stage = {
 };
 
 export function createStage(canvas: HTMLCanvasElement, opts: { background: string; fog?: number; fov?: number; bloom?: [number, number, number]; exposure?: number; lostEvent: string; transparent?: boolean }): Stage {
-  // transparent: 뒤의 DOM 배경(42번 새벽 하늘)이 비치도록 배경 없이 그린다. 후처리(bloom)는 알파를 지키지 못해 건너뛴다.
+  // transparent: 뒤의 DOM 배경(43번 새벽 하늘)이 비치도록 배경 없이 그린다. 후처리(bloom)는 알파를 지키지 못해 건너뛴다.
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: !!opts.transparent, powerPreference: "high-performance" });
   const ratio = () => Math.min(1.6, Math.max(1, (window.devicePixelRatio || 1) * (canvas.getBoundingClientRect().width / W || 1)));
   renderer.setPixelRatio(ratio());

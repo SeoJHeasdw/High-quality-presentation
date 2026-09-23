@@ -1,4 +1,4 @@
-/* 39 · 신에게 목줄. 완전한 검정 위에 파랑(낱말·몸)과 금색(목줄)만 둔다. kn-body의 원점은 화면 (100, 162)이다. */
+/* 40 · 신에게 목줄. 완전한 검정 위에 파랑(낱말·몸)과 금색(목줄)만 둔다. kn-body의 원점은 화면 (100, 162)이다. */
 .leash { background: #030508; }
 .leash .kn-chrome, .leash .kn-footer { z-index: 6; }
 .leash .kn-body { z-index: 3; }

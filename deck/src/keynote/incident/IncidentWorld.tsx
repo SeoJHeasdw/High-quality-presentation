@@ -12,6 +12,9 @@ const ROLE = ["정보 수집", "정보 수집", "실행", "실행"];
 
 /** What the space names at each beat. Kept short: the heading and narration carry the story. */
 function labelsFor(p: number): Label[] {
+  // 9번 연결 장면: 방 A의 에이전트 하나만 이름을 붙인다.
+  if (p === -2) return [{ id: "room0", name: "에이전트", sub: "사이트가 열어준 기능을 부른다", dir: "left" }];
+  if (p === -1) return [{ id: "room0", name: "에이전트", sub: "문이 닫힌 방" }, { id: "wall", name: "인터넷 차단", tone: "mute", dir: "left" }];
   const rooms = ROOM_NAMES.map((name, i): Label | null => {
     const id = `room${i}` as AnchorId;
     if (p === 0) return { id, name, sub: "각자의 과제" };
@@ -88,6 +91,6 @@ export default function IncidentWorld({ phase }: { phase: number }) {
         })}
       </div>
     </div>
-    {failed && <div className="iw-fallback story-incident-revision"><IncidentDiagram phase={phase}/></div>}
+    {failed && phase >= 0 && <div className="iw-fallback story-incident-revision"><IncidentDiagram phase={phase}/></div>}
   </>;
 }

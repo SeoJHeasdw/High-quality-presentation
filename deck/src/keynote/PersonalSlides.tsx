@@ -5,7 +5,7 @@ export { default as PersonalIntro } from "./personal/PersonalIntro";
 export { default as PersonalCompute } from "./personal/ProductionTimeline";
 
 export function PersonalEngines() {
- // 21번 Blender 갤러리와 같은 배치: 가운데 01 VOICE, 왼쪽 02 IMAGE, 오른쪽 03 MUSIC.
+ // 22번 Blender 갤러리와 같은 배치: 가운데 01 VOICE, 왼쪽 02 IMAGE, 오른쪽 03 MUSIC.
  const panels = [
   { key: "image", engine: "02 / IMAGE", title: "설명으로 만든 이미지", image: "/factory-film/03-image.jpg", alt: "현재 Local Assets Engine으로 생성한 청록색 유리 깃털의 새 이미지", description: "이 발표를 준비하며 새로 생성한 이미지" },
   { key: "voice", engine: "01 / VOICE", title: "제 목소리로 만든 강의", image: "/demos/tts-lecture.jpg", alt: "TTS Engine으로 만든 실제 강의 영상의 장표와 자막", description: "대본에 음성과 자막을 붙인 결과" },
