@@ -9,8 +9,8 @@ import "./night-phone.css";
 import "./abuse-v2.css";
 
 /*
- * 31·32번은 같은 휴대전화 한 대에서 이어진다(묶음 night-phone). 31번은 새벽의 전화, 32번은 같은 밤에 온 메시지.
- * 34번은 같은 휴대전화에서 확인하는 방법으로 끝난다. 모두 가상 상황이다.
+ * 35·36번은 같은 휴대전화 한 대에서 이어진다(묶음 night-phone). 35번은 새벽의 전화, 36번은 같은 밤에 온 메시지.
+ * 38번은 같은 휴대전화에서 확인하는 방법으로 끝난다. 모두 가상 상황이다.
  */
 const NARRATION: ReactNode[] = [
   <>새벽 2시 47분. <b>모르는 번호</b>로 전화가 옵니다.</>,
@@ -21,7 +21,7 @@ const NARRATION: ReactNode[] = [
 ];
 const MODES: PhoneMode[] = ["incoming", "call", "reveal", "chat", "chat-more"];
 
-/** 32번 · 음성 메시지 옆의 살펴보기. 휴대전화 화면 위 말풍선 자리에 붙는다. */
+/** 36번 · 음성 메시지 옆의 살펴보기. 휴대전화 화면 위 말풍선 자리에 붙는다. */
 function PhoneEvidence({ step }: { step: number }) {
   const inspection = useInspection(step);
   const [x, y] = quadPoint(390, 845, plate.screen.corners, 18, 170);
@@ -39,7 +39,7 @@ function PhoneEvidence({ step }: { step: number }) {
 
 export function PhoneStory({ part, step }: { part: 0 | 1; step: number }) {
   const phase = part === 0 ? step : 3 + step;
-  return <Frame n={31 + part} name={part === 0 ? "익숙한 목소리를 이용한다면" : "가짜 증거로 관계를 흔든다면"} step={step} className="abuse-slide abuse-v2 abuse-phone">
+  return <Frame n={35 + part} name={part === 0 ? "익숙한 목소리를 이용한다면" : "가짜 증거로 관계를 흔든다면"} step={step} className="abuse-slide abuse-v2 abuse-phone">
     <div className="abuse-content">
       <NightPhone mode={MODES[phase]} tone={phase === 2 || phase === 4 ? "red" : "cold"}>{part === 1 && <PhoneEvidence step={step}/>}</NightPhone>
       <PhoneAudio src={part === 0 ? "/abuse/audio/phone-call.m4a?v=acting-2" : "/abuse/audio/phone-message.m4a?v=acting-2"} active={phase === 1 || phase === 3} delayMs={part === 0 ? 500 : 950} label={part === 0 ? "가상 통화" : "가상 음성 메시지"}/>
@@ -57,7 +57,7 @@ export function PhoneStory({ part, step }: { part: 0 | 1; step: number }) {
 
 const CHECKS = ["급하다는 말에 바로 보내지 않기", "끊고, 알고 있던 번호로 다시 걸기", "다른 가족에게도 확인하기"];
 export function VerifyStory({ step }: { step: number }) {
-  return <Frame n={34} name="무엇으로 확인할까요" step={step} className="abuse-slide abuse-v2 abuse-phone abuse-verify">
+  return <Frame n={38} name="무엇으로 확인할까요" step={step} className="abuse-slide abuse-v2 abuse-phone abuse-verify">
     <div className="abuse-content">
       <NightPhone mode={step === 0 ? "hangup" : "callback"} tone="warm"/>
       <div className="av-copy av-copy--verify">

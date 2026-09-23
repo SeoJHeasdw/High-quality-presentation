@@ -12,5 +12,14 @@
     "source": "/Users/jaehoseo/Desktop/vswrk/javis/local-music-engine/projects/p0-cli/artifacts/candidates/job_657d9d3181014a5ca3e7bd7cce1ad5eb-seed-22092603.wav",
     "kind": "15-second development candidate",
     "humanReview": "unreviewed"
+  },
+  "rice": {
+    "source": "/Users/jaehoseo/Desktop/vswrk/javis/local-tts-engine/output/edits/2026-09-21/rice-first-run/rice-first-run-high.mp4",
+    "kind": "app demo (Local TTS Engine app-demo pipeline: screen capture, script, presenter voice)",
+    "excerptStart": 0,
+    "excerptDuration": 29.16,
+    "encode": "1280x720 h264 crf23 + aac 128k; poster rice-demo.jpg at 6.0s",
+    "voiceApproved": "2026-09-21 (local-tts-engine/docs/DECISIONS.md)",
+    "modelOnScreen": "qwen3.6:35b-a3b-q4_K_M · 로컬 · Ollama"
   }
 }

@@ -1,4 +1,4 @@
-/* 13~17 · 제 이야기. kn-body의 원점은 화면 (100, 162), 크기 1720×793. */
+/* 13~20 · 제 이야기. kn-body의 원점은 화면 (100, 162), 크기 1720×793. */
 .personal-v2 { background: #05080d; letter-spacing: -.025em; }
 .personal-v2 .kn-chrome, .personal-v2 .kn-footer { z-index: 6; }
 .personal-v2 .kn-body { z-index: 3; }
@@ -48,7 +48,80 @@
 .p13-age--end { right: 0; flex-direction: row-reverse; animation-delay: 3.4s; }
 .p13-age--end b { color: #6f8494; }
 
-/* 14 · 강의 한 편이 만들어지는 실제 기록 -------------------------------------- */
+/* 14 · 과도기. 13번의 집과 눈금을 그대로 두고(묶음 person-ruler) 글과 눈금 위의 표시만 바뀐다. ---------- */
+.p13-copy-fade { position: absolute; left: 0; top: 0; right: 0; z-index: 2; transition: opacity .6s ease, transform .7s ease, filter .6s ease; }
+.p13-copy-fade[data-off] { opacity: 0; transform: translateY(-14px); filter: blur(6px); pointer-events: none; }
+.p13-age--mark[data-off] { opacity: 0 !important; transition: opacity .4s ease; }
+.tr-shade { position: absolute; left: -100px; top: -162px; width: 1920px; height: 1080px; z-index: 1; pointer-events: none; opacity: 0; transition: opacity 1.2s ease;
+  background: linear-gradient(90deg, #05080de0 0%, #05080db0 40%, #05080d60 70%, #05080d30 100%); }
+.tr-shade[data-on] { opacity: 1; }
+.tr-shade[data-beat="2"] { background: linear-gradient(90deg, #05080de6 0%, #05080dc0 44%, #05080d90 70%, #05080d70 100%); }
+
+.tr-head { position: absolute; left: 0; top: 18px; z-index: 3; width: 900px; animation: pv-rise 1s cubic-bezier(.16,1,.3,1) .25s both; }
+.tr-head h1 { font-size: 66px; line-height: 1.22; }
+.tr-lead { margin-top: 24px; font-size: 28px; line-height: 1.45; color: #b9c5cf; letter-spacing: -.02em; }
+.tr-lead[data-gold] { color: #ffd899; font-weight: 600; font-size: 34px; text-shadow: 0 0 30px #ffb45e44; }
+
+/* 0 · 원문 인용 한 줄. 게시물 화면을 흉내 내지 않고 글자로만 둔다. */
+.tr-quote { position: absolute; left: 0; top: 292px; width: 900px; margin: 0; z-index: 3; padding: 4px 0 0 26px; border-left: 2px solid #8fd0ff88;
+  opacity: 0; transform: translateY(18px); transition: opacity .5s ease, transform .6s ease; }
+.tr-quote[data-beat="0"] { opacity: 1; transform: none; transition: opacity .9s ease .8s, transform 1.1s cubic-bezier(.16,1,.3,1) .8s; }
+.tr-quote blockquote { margin: 0; font-size: 34px; line-height: 1.38; font-weight: 520; color: #e8f2fa; letter-spacing: -.012em; }
+.tr-quote p { margin-top: 18px; font-size: 25px; line-height: 1.5; color: #a9bac7; letter-spacing: -.02em; }
+.tr-quote figcaption { margin-top: 16px; font-size: 19px; color: #7f95a6; letter-spacing: -.005em; }
+
+/* 눈금 위의 구간: 예측의 시점(파랑)과 지금부터 그때까지(금색) */
+.tr-span, .tr-fill { position: absolute; left: calc(var(--a) / 30 * 100%); width: calc((var(--b) - var(--a)) / 30 * 100%); pointer-events: none; }
+.tr-span { top: 0; height: 74px; }
+.tr-span__bar { position: absolute; left: 0; right: 0; top: 44px; height: 30px; border: 2px solid #8fd0ff; border-bottom: 0; border-radius: 6px 6px 0 0; box-shadow: 0 -6px 26px #8fd0ff33;
+  background: linear-gradient(180deg, #8fd0ff26, #8fd0ff05); transform-origin: 0 100%; transform: scaleX(0); opacity: 0; transition: transform .5s ease, opacity .4s ease; }
+.tr-span[data-on] .tr-span__bar { transform: none; opacity: 1; transition: transform 1s cubic-bezier(.65,0,.35,1) 1.5s, opacity .3s ease 1.5s; }
+.tr-span__label { position: absolute; left: 50%; bottom: 40px; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 6px; white-space: nowrap; opacity: 0; transition: opacity .4s ease; }
+.tr-span[data-on] .tr-span__label { opacity: 1; transition: opacity .8s ease 2.3s; }
+.tr-span__label b { font-size: 34px; font-weight: 620; color: #cfeaff; letter-spacing: -.02em; text-shadow: 0 0 22px #8fd0ff66; font-variant-numeric: tabular-nums; }
+.tr-span__label small { font-size: 16px; color: #8aa3b5; letter-spacing: -.005em; }
+.tr-fill { top: 64px; height: 22px; }
+.tr-fill i { position: absolute; left: 0; right: 0; top: 7px; height: 8px; border-radius: 4px; background: linear-gradient(90deg, #ffe7b8, #ffd899 70%, #ffd89955); box-shadow: 0 0 22px #ffd899aa, 0 0 60px #ffb45e55;
+  transform-origin: 0 50%; transform: scaleX(0); transition: transform .4s ease; }
+.tr-fill[data-on] i { transform: none; transition: transform 1.4s cubic-bezier(.65,0,.35,1) .9s; }
+.tr-fill span { position: absolute; left: 50%; top: -40px; transform: translateX(-50%); font-size: 23px; font-weight: 620; color: #ffe3b4; white-space: nowrap; letter-spacing: -.01em; text-shadow: 0 0 18px #05080d, 0 0 26px #ffb45e55; opacity: 0; transition: opacity .3s; }
+.tr-fill[data-on] span { opacity: 1; transition: opacity .8s ease 1.9s; }
+
+/* 1 · 같은 시기의 두 마음 */
+.tr-feel { position: absolute; left: 0; right: 0; top: 368px; z-index: 3; display: flex; align-items: flex-end; justify-content: space-between; gap: 40px; pointer-events: none; }
+.tr-feel__word { position: relative; margin: 0; display: flex; flex-direction: column; gap: 14px; opacity: 0; transform: translateY(20px); transition: opacity .4s ease, transform .5s ease; }
+/* 집의 밝은 창 위에서도 읽히도록 낱말 뒤에만 어둠을 깐다 */
+.tr-feel__word::before { content: ""; position: absolute; inset: -60px -90px -50px; z-index: -1; background: radial-gradient(closest-side, #05080de8 40%, #05080d9a 70%, #05080d00 100%); pointer-events: none; }
+.tr-feel__word small { text-shadow: 0 1px 12px #05080d, 0 0 2px #05080d; }
+.tr-feel__word b { font-size: 92px; line-height: 1; font-weight: 680; letter-spacing: -.05em; }
+.tr-feel__word small { font-size: 22px; color: #9fb0bd; letter-spacing: -.015em; }
+.tr-feel__word--gold b { color: #ffd899; text-shadow: 0 0 50px #ffb45e66, 0 4px 40px #05080d; }
+.tr-feel__word--ice { text-align: right; align-items: flex-end; }
+.tr-feel__word--ice b { color: #a8dcff; text-shadow: 0 0 50px #5fb6ff55, 0 4px 40px #05080d; }
+.tr-feel__and { flex: 1; align-self: center; margin-bottom: 44px; height: 1px; position: relative; opacity: 0; transition: opacity .4s;
+  background: linear-gradient(90deg, #ffd89900, #ffd899aa 30%, #a8dcffaa 70%, #a8dcff00); }
+.tr-feel__and::after { content: "동시에"; position: absolute; left: 50%; top: -34px; transform: translateX(-50%); font-size: 20px; color: #c9d3da; letter-spacing: .08em; }
+.tr-feel[data-on] .tr-feel__word { opacity: 1; transform: none; transition: opacity .9s ease, transform 1s cubic-bezier(.16,1,.3,1); }
+.tr-feel[data-on] .tr-feel__word--gold { transition-delay: 1.2s; }
+.tr-feel[data-on] .tr-feel__word--ice { transition-delay: 1.9s; }
+.tr-feel[data-on] .tr-feel__and { opacity: 1; transition: opacity 1s ease 2.6s; }
+
+/* 2 · 근거 카드 */
+.tr-evidence { position: absolute; right: 0; top: 40px; width: 760px; z-index: 3; box-sizing: border-box; padding: 30px 36px 26px; border-radius: 20px;
+  background: linear-gradient(180deg, #0f1a26ee, #0a121cf0); border: 1px solid #a8cbe533; box-shadow: 0 40px 100px #000c, inset 0 1px 0 #ffffff10;
+  opacity: 0; transform: translateX(28px); transition: opacity .4s ease, transform .5s ease; pointer-events: none; }
+.tr-evidence[data-on] { opacity: 1; transform: none; transition: opacity .9s ease .9s, transform 1.1s cubic-bezier(.16,1,.3,1) .9s; }
+.tr-evidence header { display: flex; align-items: baseline; justify-content: space-between; gap: 20px; padding-bottom: 16px; border-bottom: 1px solid #ffffff14; }
+.tr-evidence header span { font-size: 21px; font-weight: 600; color: #cfe6f6; letter-spacing: -.01em; }
+.tr-evidence header small { font-size: 16px; color: #e8b27a; padding: 4px 10px; border-radius: 7px; border: 1px solid #e8b27a55; background: #e8b27a12; }
+.tr-evidence__stat { display: grid; grid-template-columns: auto 1fr; align-items: center; gap: 28px; padding: 22px 0 18px; }
+.tr-evidence__stat b { font-size: 108px; line-height: 1; font-weight: 560; letter-spacing: -.05em; color: #eef4f8; font-variant-numeric: tabular-nums; }
+.tr-evidence__stat p { font-size: 25px; line-height: 1.45; color: #d7e1e8; letter-spacing: -.025em; }
+.tr-evidence__stat small { display: block; margin-top: 8px; font-size: 17px; color: #8aa0b0; letter-spacing: -.01em; }
+.tr-evidence__line { font-size: 23px; color: #b9c8d3; letter-spacing: -.02em; padding: 14px 0 16px; border-top: 1px solid #ffffff0f; }
+.tr-evidence footer { font-size: 16px; color: #7d92a2; letter-spacing: 0; }
+
+/* 15 · 강의 한 편이 만들어지는 실제 기록 -------------------------------------- */
 .p14-copy { position: absolute; left: 0; top: 0; width: 860px; z-index: 2; animation: pv-rise 1s cubic-bezier(.16,1,.3,1) both; }
 .p14 h1 { font-size: 64px; line-height: 1.22; }
 .p14-lead { margin-top: 26px; font-size: 28px; line-height: 1.5; color: #b9c5cf; letter-spacing: -.02em; }
@@ -117,7 +190,7 @@
 .deck-keynote[data-motion="off"] .p13-comet { display: none; }
 @media (prefers-reduced-motion: reduce) { .personal-v2 *, .personal-v2 *::before, .personal-v2 *::after { animation-delay: 0s!important; animation-duration: 0s!important; transition: none!important; } .p13-comet { display: none; } }
 
-/* 15~16 · 사용자는 저 한 명, 그리고 흐름 --------------------------------------- */
+/* 16~19 · 사용자는 저 한 명, 그리고 흐름 --------------------------------------- */
 .one-user .kn-body { z-index: 2; }
 .ou-shade { background:
   radial-gradient(ellipse 1100px 400px at 0% 0%, #05080df0 30%, #05080da8 60%, #05080d00 100%),
@@ -128,7 +201,7 @@
 .one-user h1 { font-size: 68px; line-height: 1.2; }
 .ou-heading--quote h1 { color: #f3dfb8; }
 
-/* 15-0 · 당장 필요한 기능 */
+/* 16-0 · 당장 필요한 기능 */
 .ou-brief { position: absolute; right: 0; top: 250px; width: 700px; z-index: 3; padding: 40px 48px 44px; box-sizing: border-box; border-radius: 22px;
   background: linear-gradient(180deg, #0f1a26e6, #0a121ce8); border: 1px solid #a8cbe530; box-shadow: 0 40px 100px #000b, inset 0 1px 0 #ffffff10;
   opacity: 0; transform: translateX(30px); pointer-events: none; transition: opacity .35s ease, transform .35s ease; }
@@ -138,7 +211,7 @@
 .ou-brief h2 em { color: #ffd899; }
 .ou-brief p { margin-top: 26px; font-size: 26px; color: #9fb0bd; }
 
-/* 15-1 · 조건이 느슨해진다 */
+/* 16-1 · 조건이 느슨해진다 */
 .ou-spec { position: absolute; right: 0; top: 196px; width: 900px; z-index: 3; padding: 26px 34px 20px; box-sizing: border-box; border-radius: 22px;
   background: linear-gradient(180deg, #0f1a26ea, #0a121cee); border: 1px solid #a8cbe530; box-shadow: 0 40px 100px #000b, inset 0 1px 0 #ffffff10;
   opacity: 0; transform: translateX(30px); pointer-events: none; transition: opacity .3s, transform .3s; }
@@ -164,7 +237,7 @@
 .ou-spec[data-on] .ou-spec__row--lock .ou-spec__track b, .ou-spec__row--lock .ou-spec__track b { left: 0; width: 18px; height: 18px; margin-left: -2px; border-radius: 4px; background: #ffd899; box-shadow: 0 0 0 4px #ffd89933, 0 0 18px #ffd899; transition: none; }
 .ou-spec__row--lock .ou-spec__to strong { color: #ffe3b4; }
 
-/* 16 · 흐름 설명과 현재 상태 */
+/* 17 · 흐름 설명과 현재 상태 */
 .ou-flow { position: absolute; left: 0; bottom: 38px; margin: 0; z-index: 3; max-width: 1000px; padding-left: 22px; border-left: 3px solid #8fd0ff;
   font-size: 30px; line-height: 1.45; color: #e3e9ee; letter-spacing: -.025em; text-shadow: 0 2px 18px #05080d; animation: i3-line-in .8s cubic-bezier(.16,1,.3,1) .4s both; }
 .ou-flow[data-step="2"] { border-left-color: #ffd899; }
@@ -174,7 +247,47 @@
 .ou-fallback b { font-weight: 500; }
 .one-user--1 .ou-fallback b { font-size: 60px; }
 
-/* 17 · Factory의 입구. 18번 Blender 갤러리와 같은 배치·재질(어두운 판, 금색 테, 청록 가장자리 빛) --------- */
+/* 18 · 공장 안. 스테이션 라벨은 3D에서 투영한 DOM이다. ---------------------------------- */
+.iw-label[data-tone="white"] { --tone: #e9f1ff; --tone-dim: #e9f1ff55; }
+.iw-label[data-tone="white"] strong { color: #ffffff; }
+.iw-label[data-dir="down"] .iw-label-dot::after { top: 10px; bottom: auto; height: 34px; background: linear-gradient(180deg, var(--tone), #0000); }
+.iw-label[data-dir="down"] .iw-label-box { bottom: auto; top: 46px; }
+/* 19-0 · 공간 전체를 가라앉히고 질문만 남긴다 */
+.ou-shade::after { content: ""; position: absolute; inset: 0; background: radial-gradient(ellipse 1300px 700px at 50% 42%, #05080dd8 20%, #05080df2 70%); opacity: 0; transition: opacity 1s ease; pointer-events: none; }
+.ou-shade[data-phase="8"]::after { opacity: 1; }
+.iw-label[data-size="lg"] strong { font-size: 54px; font-weight: 600; letter-spacing: -.04em; font-variant-numeric: tabular-nums; }
+.iw-label[data-size="lg"] strong small { font-size: 26px; font-weight: 500; margin-left: 4px; color: #c9d6e2; }
+.iw-label[data-size="lg"] .iw-label-sub { font-size: 20px; color: #b9c9d6; }
+.iw-label[data-size="lg"] .iw-label-box { padding: 14px 22px 16px; background: #07101ae6; }
+.of-heading h1 { font-size: 62px; line-height: 1.2; }
+.of-lead { margin-top: 22px; font-size: 26px; line-height: 1.5; color: #b9c5cf; letter-spacing: -.02em; }
+.of-heading[data-phase="6"] h1 { color: #f8f4ea; }
+.of-note { position: absolute; left: 0; bottom: 36px; z-index: 3; margin: 0; padding-left: 22px; border-left: 3px solid #ffd899; font-size: 28px; color: #eef1f3; letter-spacing: -.02em; line-height: 1.4;
+  opacity: 0; transform: translateY(12px); transition: opacity .3s ease, transform .3s ease; }
+.of-note b { color: #ffd899; font-weight: 620; }
+.of-note span { display: block; margin-top: 6px; font-size: 19px; color: #8fa3b3; }
+.of-note[data-on] { opacity: 1; transform: none; transition: opacity .9s ease 2.4s, transform 1s cubic-bezier(.16,1,.3,1) 2.4s; }
+.of-status[data-phase="6"] { color: #c9d6e2; }
+
+/* 19 · 결국 영상 만드는 거 아닌가요? */
+.ob-question { position: absolute; left: 50%; top: 300px; z-index: 3; margin: 0; transform: translateX(-50%); white-space: nowrap; font-size: 104px; font-weight: 620; letter-spacing: -.05em; color: #aab6c0;
+  text-shadow: 0 4px 60px #05080d, 0 0 2px #05080d; opacity: 0; transition: opacity .6s ease, transform .9s cubic-bezier(.16,1,.3,1), font-size .9s cubic-bezier(.16,1,.3,1), top .9s cubic-bezier(.16,1,.3,1), left .9s cubic-bezier(.16,1,.3,1); }
+.ob-question[data-on] { opacity: 1; transition: opacity 1.2s ease 1.2s; }
+.ob-question[data-small] { opacity: .8; left: 0; top: 0; transform: none; font-size: 30px; color: #8d9aa6; }
+.ob-heading { top: 64px; opacity: 0; }
+.ob-heading[data-on] { opacity: 1; }
+.ob-heading h1 { font-size: 64px; line-height: 1.2; color: #fff3dc; }
+.ob-heading .pv-eyebrow { color: #e8b27a; }
+.ob-heading .pv-eyebrow::before { background: #e8b27a; }
+.ob-next { position: absolute; right: 0; bottom: 30px; z-index: 3; margin: 0; font-size: 26px; color: #ffd899; font-weight: 520; opacity: 0; transition: opacity .3s; }
+.ob-next[data-on] { opacity: 1; transition: opacity .9s ease 4.2s; }
+.ob-next b { display: inline-block; margin-left: 14px; font-weight: 400; animation: p17-nudge 1.6s ease-in-out 5s infinite; }
+.deck-keynote[data-motion="off"] .ob-next b { animation: none; }
+.ob-fallback { position: absolute; left: 0; top: 300px; z-index: 3; margin: 0; padding: 0; list-style: none; display: grid; gap: 22px; }
+.ob-fallback li { font-size: 34px; color: #fff3dc; }
+.ob-fallback li span { display: block; font-size: 22px; color: #9fb0bd; margin-top: 4px; }
+
+/* 20 · Factory의 입구. 21번 Blender 갤러리와 같은 배치·재질(어두운 판, 금색 테, 청록 가장자리 빛) --------- */
 .p17 { background: radial-gradient(ellipse 1400px 700px at 50% 62%, #0d1a22 0%, #070c12 55%, #04070b 100%); }
 .p17-hall { position: absolute; left: -100px; top: -162px; width: 1920px; height: 1080px; z-index: 0; overflow: hidden; pointer-events: none; perspective: 900px; }
 .p17-floor { position: absolute; left: -40%; right: -40%; top: 64%; height: 110%; transform-origin: 50% 0; transform: rotateX(78deg);
@@ -221,6 +334,6 @@
 .p17-next b { display: inline-block; font-size: 36px; font-weight: 400; margin-left: 20px; animation: p17-nudge 1.6s ease-in-out 2s infinite; }
 @keyframes p17-nudge { 50% { transform: translateX(10px); } }
 .deck-keynote[data-motion="off"] .p17-next b { animation: none; }
-/* 움직임이 없으면 사라지는 라벨(15번 많은 사용자)은 처음부터 보이지 않는다. */
+/* 움직임이 없으면 사라지는 라벨(16번 많은 사용자)은 처음부터 보이지 않는다. */
 .deck-keynote[data-motion="off"] .iw-label[data-fade] { opacity: 0 !important; }
 @media (prefers-reduced-motion: reduce) { .iw-label[data-fade] { opacity: 0 !important; } }

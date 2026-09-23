@@ -51,9 +51,9 @@ report.cat.lecturePlays=await page.evaluate(()=>{const v=document.querySelector(
 report.cat.singleHeading=await page.locator('.op-heading').count()===1;
 for(let i=0;i<3;i++)await page.keyboard.press('ArrowLeft');await page.waitForTimeout(1300);
 report.cat.reverse=await cue()===0&&await page.evaluate(()=>document.querySelector('.op-canvas')===window.__opening&&document.querySelector('.op-screen video').paused);
-// 7~8, 15~16 · 묶인 3D 공간: 장이 바뀌어도 같은 캔버스가 이어지고, 모든 단계가 그려지며, 뒤로 가면 처음 단계로 돌아온다.
+// 7~8, 16~19 · 묶인 3D 공간: 장이 바뀌어도 같은 캔버스가 이어지고, 모든 단계가 그려지며, 뒤로 가면 처음 단계로 돌아온다.
 report.groups={};
-for(const [name,first,beats] of [['agentWeb','story-web-door',5],['oneUser','manifesto-requirements',5]]){
+for(const [name,first,beats] of [['agentWeb','story-web-door',5],['oneUser','manifesto-requirements',10]]){
  await go(slideNumber(first));await page.waitForSelector('.iw-canvas[data-ready]',{timeout:10000});await page.waitForTimeout(400);
  await page.evaluate(()=>{window.__groupCanvas=document.querySelector('.iw-canvas')});
  const phases=[];for(let i=0;i<beats;i++){if(i){await page.keyboard.press('ArrowRight');await page.waitForTimeout(1800)}phases.push(await page.evaluate(()=>Number(document.querySelector('.iw').dataset.phase)))}
@@ -61,16 +61,25 @@ for(const [name,first,beats] of [['agentWeb','story-web-door',5],['oneUser','man
  for(let i=1;i<beats;i++)await page.keyboard.press('ArrowLeft');await page.waitForTimeout(900);
  report.groups[name]={phases:phases.join(','),same,reverse:await page.evaluate(()=>Number(document.querySelector('.iw').dataset.phase))===0,fallback:await page.locator('.iw[data-fallback]').count()===0};
 }
-const groupsOk=Object.values(report.groups).every(g=>g.phases==='0,1,2,3,4'&&g.same&&g.reverse&&g.fallback);
-// 35~38 · 같은 집의 새벽과 아침: 네 장 동안 배경을 다시 그리지 않고, 38번에서만 아침 배경이 드러난다.
+const groupsOk=Object.values(report.groups).every(g=>g.phases===Array.from({length:g.phases.split(',').length},(_,i)=>i).join(',')&&g.same&&g.reverse&&g.fallback)&&report.groups.oneUser.phases.split(',').length===10;
+// 13·14 · 같은 집과 30년 눈금: 14번 세 단계 동안 배경과 눈금을 다시 그리지 않고, 뒤로 가면 13번 글이 돌아온다.
+await go(slideNumber('manifesto-person'));await page.waitForTimeout(500);
+await page.evaluate(()=>{window.__ruler=document.querySelector('.p13-years')});
+for(let i=0;i<3;i++){await page.keyboard.press('ArrowRight');await page.waitForTimeout(700)}
+report.ruler={same:await page.evaluate(()=>document.querySelector('.p13-years')===window.__ruler),beat:await page.evaluate(()=>document.querySelector('.p13-years').dataset.beat)};
+for(let i=0;i<3;i++)await page.keyboard.press('ArrowLeft');await page.waitForTimeout(900);
+report.ruler.back=await page.evaluate(()=>document.querySelector('.p13-years')===window.__ruler&&Number(getComputedStyle(document.querySelector('.p13-copy-fade')).opacity)>.99);
+const rulerOk=report.ruler.same&&report.ruler.beat==='2'&&report.ruler.back;
+// 40~43 · 같은 집의 새벽과 아침: 네 장 동안 배경을 다시 그리지 않고, 43번에서만 아침 배경이 드러난다.
 await go(slideNumber('manifesto-remains'));await page.waitForTimeout(600);
 await page.evaluate(()=>{window.__finaleSky=document.querySelector('.fn-sky')});
 const sunOpacity=()=>page.evaluate(()=>Number(getComputedStyle(document.querySelector('.fn-plate--sun')).opacity));
 report.finale={beforeSun:await sunOpacity()};
-for(let i=0;i<3;i++){await page.keyboard.press('ArrowRight');await page.waitForTimeout(500)}
+// 42번은 세 단계(3D 설계도)다. 40 → 41 → 42·0 → 42·1 → 42·2 → 43
+for(let i=0;i<5;i++){await page.keyboard.press('ArrowRight');await page.waitForTimeout(i===2?1200:500);if(i===2)report.finale.blueprint=await page.evaluate(()=>!!document.querySelector('.fb3-canvas[data-ready]')&&document.querySelector('.fn-sky')===window.__finaleSky)}
 await page.waitForTimeout(2900);
 Object.assign(report.finale,{same:await page.evaluate(()=>document.querySelector('.fn-sky')===window.__finaleSky),afterSun:await sunOpacity(),choices:await page.locator('.kn-slide .rb-true-focus__item').count()});
-const finaleOk=report.finale.same&&report.finale.beforeSun===0&&report.finale.afterSun>.99&&report.finale.choices===2;
+const finaleOk=report.finale.same&&report.finale.blueprint&&report.finale.beforeSun===0&&report.finale.afterSun>.99&&report.finale.choices===2;
 // Incident reconstruction (9~11): one 3D space across three slides. Every beat must render its
 // phase, keep projected labels on screen and clear of the heading/narration, and reverse cleanly.
 // 첫 장면은 3.2초의 도입 카메라가 끝나야 라벨이 나타난다(world.ts).
@@ -132,7 +141,7 @@ report.film.motionOff=await page.locator('.factory-film').evaluate(el=>[...el.qu
 await page.keyboard.press('m');await page.waitForSelector('.factory-film[data-status="held"]');await page.waitForTimeout(350);
 report.film.resumeHolds=await page.locator('.factory-film').getAttribute('data-status')==='held';
 const presenter=await context.newPage();await presenter.goto('http://127.0.0.1:5180/#keynote/present');await presenter.waitForFunction(()=>document.querySelector('.pv__label code')?.textContent.includes('factory-music'));
-report.presenter={synced:true};await presenter.keyboard.press('ArrowRight');await page.waitForSelector('.kn-slide[data-slide="22"]');report.presenter.controlsAudience=true;await presenter.close();
+report.presenter={synced:true};await presenter.keyboard.press('ArrowRight');await page.waitForSelector(`.kn-slide[data-slide="${factoryStart+4}"]`);report.presenter.controlsAudience=true;await presenter.close();
 await page.waitForSelector('.factory-film[data-status="held"]',{timeout:15000});
 await page.evaluate(()=>window.__filmMedia=[...document.querySelectorAll('.factory-film video')]);
 await page.keyboard.press('ArrowRight');report.film.stopsOnLeave=await page.evaluate(()=>window.__filmMedia.every(v=>v.paused&&!v.hasAttribute('src')));
@@ -169,4 +178,4 @@ report.phoneCue.answerButton=await page.locator('.kn-slide').evaluate(el=>el.dat
 const images=await Promise.all(frames.map(async f=>({...f,data:(await fs.readFile(path.join(out,f.file))).toString('base64')})));
 await page.setViewportSize({width:1920,height:1900});await page.setContent(`<body style="margin:0;background:#15191c;color:#ccc;font:15px sans-serif"><div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;padding:18px">${images.map(x=>`<div><img style="width:100%;display:block" src="data:image/png;base64,${x.data}"><p style="margin:8px 0 6px">${x.label}</p></div>`).join('')}</div></body>`);await page.screenshot({path:path.join(out,'contact-sheet.png'),fullPage:true});
 await fs.writeFile(path.join(out,'report.json'),JSON.stringify(report,null,2));console.log(JSON.stringify(report,null,2));await browser.close();
-if(!Object.values(report.cat).every(Boolean)||!groupsOk||!finaleOk||!incidentOk||!scrollOk||errors.length||external.length||scriptMissing.length||report.slides.some(s=>s.overflow.length||s.overlap.length||s.webgl?.fallback)||report.filmShots.length!==5||new Set(report.filmShots.map(s=>s.source)).size!==5||report.filmShots.some(s=>s.status!=='held'||!(s.duration>1)||!s.muted)||!Object.values(report.film).every(Boolean)||!report.fallback||report.media.some(m=>m.paused||m.muted!==(m.id==='demo-assets')||!m.playing||m.time<=0||!m.pausedByKey||!m.soundToggled||!m.stoppedOnLeave)||!Object.values(report.voiceCue).every(Boolean)||!Object.values(report.phoneCue).every(Boolean))process.exitCode=1;
+if(!Object.values(report.cat).every(Boolean)||!groupsOk||!rulerOk||!finaleOk||!incidentOk||!scrollOk||errors.length||external.length||scriptMissing.length||report.slides.some(s=>s.overflow.length||s.overlap.length||s.webgl?.fallback)||report.filmShots.length!==5||new Set(report.filmShots.map(s=>s.source)).size!==5||report.filmShots.some(s=>s.status!=='held'||!(s.duration>1)||!s.muted)||!Object.values(report.film).every(Boolean)||!report.fallback||report.media.some(m=>m.paused||m.muted!==(m.id==='demo-assets')||!m.playing||m.time<=0||!m.pausedByKey||!m.soundToggled||!m.stoppedOnLeave)||!Object.values(report.voiceCue).every(Boolean)||!Object.values(report.phoneCue).every(Boolean))process.exitCode=1;

@@ -6,7 +6,8 @@ import { usePerformanceMotion } from "./usePerformanceMotion";
 export const SlidePosition = createContext<{index:number;total:number}|null>(null);
 export function Frame({children,n,name,scene,className="",step=0}:{children:ReactNode;n:number;name:string;scene?:FieldScene;className?:string;step?:number}){
  const position=useContext(SlidePosition),number=position?position.index+1:n,total=position?.total??22;
- const interactive=usePerformanceMotion() && !className.includes("kn-cover") && (number<18 || number>22);
+ // Blender 영상 장면(kn-factory-film)은 클릭 효과를 얹지 않는다. 번호가 아니라 장면으로 가려야 장표를 끼워도 어긋나지 않는다.
+ const interactive=usePerformanceMotion() && !className.includes("kn-cover") && !className.includes("kn-factory-film");
  return <section className={`kn-slide ${className}`} data-slide={number} data-step={step} data-scene={scene} data-course-motion="custom" aria-label={`${number}. ${name}`}>
   {scene&&<CinematicField scene={scene}/>}
   <header className="kn-chrome"><span>TEL <i>/</i> JAVIS</span><span>TECHNOLOGY EXPERT LAB</span></header>

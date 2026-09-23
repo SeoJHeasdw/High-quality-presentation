@@ -21,7 +21,7 @@ export default function DemoPlayer({kind}:{kind:keyof typeof DEMOS}){
  },[]);
  const events={onPlay:()=>{setPlaying(true);setError("")},onPause:()=>setPlaying(false),onEnded:()=>setPlaying(false),onTimeUpdate:()=>setTime(ref.current?.currentTime??0),onError:()=>setError("미디어를 불러오지 못했습니다. 로컬 서버를 확인해주세요.")};
  const duration=demo.audio?15:kind==='tts'?24:15;
- return <Briefing n={23} name={demo.name} title={demo.title} lead={demo.lead} className="demo-slide">
+ return <Briefing n={26} name={demo.name} title={demo.title} lead={demo.lead} className="demo-slide">
   <div className="demo-screen">
    {demo.audio?<><audio ref={ref as React.RefObject<HTMLAudioElement>} src={demo.src} preload="auto" muted={muted} {...events}/><div className="music-wave" aria-label="실제 음원의 파형">{musicWave.peaks.map((height,i)=><i key={i} data-played={time/duration>=i/musicWave.peaks.length||undefined} style={{height:`${Math.max(5,height*220)}px`}}/>)}</div><span className="music-time">{time.toFixed(1)}<small> / 15.0 s</small></span></>:<video ref={ref as React.RefObject<HTMLVideoElement>} src={demo.src} poster={demo.poster} preload="auto" playsInline muted={muted} {...events}/>}
    <span className="demo-caption">{demo.caption}</span>

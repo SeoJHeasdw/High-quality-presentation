@@ -6,7 +6,7 @@ import wave from "../data/tts-waveform.json";
 import "./personal.css";
 
 /*
- * 14번 · 강의 한 편이 만들어지는 실제 기록.
+ * 15번 · 강의 한 편이 만들어지는 실제 기록.
  * 대본·목소리·자막·영상 네 줄은 모두 실제 강의의 같은 24초(원본 00:25–00:49)에서 가져왔다.
  *   대본  local-tts-engine 타임라인의 원문 문장과 시각
  *   목소리 실제 음성의 파형 (data/tts-waveform.json)
@@ -61,7 +61,7 @@ export default function ProductionTimeline() {
   const bars = 240, step = wave.peaks.length / bars;
   const peaks = Array.from({ length: bars }, (_, i) => { let m = 0; for (let k = Math.floor(i * step); k < Math.floor((i + 1) * step); k++) m = Math.max(m, wave.peaks[k] ?? 0); return m; });
 
-  return <Frame n={14} name="제가 쓸 도구부터" className="personal-v2 p14">
+  return <Frame n={15} name="제가 쓸 도구부터" className="personal-v2 p14">
     <div className="p14-copy">
       <p className="pv-eyebrow">제가 고른 일 · 예를 들면 강의 한 편</p>
       <h1>저는 쓸 일이 있는 도구부터<br/>만들고 있습니다</h1>

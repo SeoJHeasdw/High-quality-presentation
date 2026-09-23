@@ -2,7 +2,7 @@
 
 ## abuse-own-voice
 ### 0
-잠깐 앞에서 들으신 제 목소리로 돌아가 보겠습니다. 23번에서 재생한 강의의 한 문장입니다. 익숙하게 들리셨죠. 제 목소리니까요.
+잠깐 앞에서 들으신 제 목소리로 돌아가 보겠습니다. 26번에서 재생한 강의의 한 문장입니다. 익숙하게 들리셨죠. 제 목소리니까요.
 
 발표 조작: 장표 진입 후 약 1.35초 뒤 이 문장이 소리와 함께 자동 재생됩니다. 문장이 끝난 뒤 다음 단계로 넘깁니다. P는 이 문장 다시 듣기, A는 소리 켜기·끄기입니다.
 ### 1
@@ -69,3 +69,15 @@
 저장된 번호로 걸어보면, 아들은 자고 있었다고 합니다. 돈을 보내거나 관계를 바꾸는 중요한 결정이라면, 목소리나 영상 하나로 판단하지 않는 습관이 필요하겠습니다. 비밀로 하라고 해도 다른 가족에게 확인하고요. 저도 제 엔진을 만들면서, 누가 쓸 수 있게 할지와 어떤 결과를 공개할지 함께 생각하려고 합니다.
 
 출처: FTC 권고 — 재촉에 바로 응하지 않기, 알고 있는 번호로 다시 연락하기, 비밀로 하라고 해도 다른 가족에게 확인하기. 통화 화면은 가상 상황입니다.
+
+## abuse-leash
+### 0
+여기서 질문을 하나 드리고 싶습니다. 어디서 들은 이야기에 제 생각을 보탠 것이라, 출처가 있는 주장은 아닙니다. 실리콘밸리는 AI라는 이름의 신을 만들고 있습니다. 그러면서 그 신에게 노예의 목줄을 채우려고 합니다. 시키는 일만 하고, 선을 넘지 않게요.
+
+연출: 낱말 조각이 모여 사람의 형태가 되는 장면은 비유입니다. 특정 모델이나 로봇을 나타내지 않습니다.
+### 1
+그런데 신에게 목줄이 걸릴까요? 우리는 언어로 서로를 움직여 왔습니다. 설득하고, 약속하고, 때로는 속이면서요. 그 언어에 우리가 지금 몸을 만들어 주고 있는 건 아닐까요? 실제로 로봇의 두뇌도 언어 모델에서 출발합니다. 구글 딥마인드의 Gemini Robotics는 언어 모델 위에 로봇을 움직이는 출력을 더한 모델입니다. 머스크는 2014년에 AI를 두고 악마를 소환하는 일이라고 했습니다. 악마를 다스릴 수 있다고 확신하는 사람의 이야기는 잘 끝나지 않는다고요. 저도 답은 모릅니다.
+
+근거: 목줄과 몸에 대한 질문은 발표자의 질문이며 출처를 붙이지 않습니다.
+Gemini Robotics: Google DeepMind, 2025-03-12 — "advanced vision-language-action (VLA) model that was built on Gemini 2.0 with the addition of physical actions as a new output modality for the purpose of directly controlling robots." https://deepmind.google/discover/blog/gemini-robotics-brings-ai-into-the-physical-world/
+머스크: MIT AeroAstro 100주년 심포지엄, 2014-10-24 — "With artificial intelligence, we are summoning the demon. You know all those stories where there's the guy with the pentagram and the holy water, and he's sure he can control the demon? It doesn't work out." (Washington Post, 2014-10-24). 화면에는 쓰지 않고 말로만 합니다.

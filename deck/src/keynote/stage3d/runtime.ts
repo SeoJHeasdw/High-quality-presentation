@@ -5,7 +5,7 @@ import { UnrealBloomPass } from "three/examples/jsm/postprocessing/UnrealBloomPa
 import { OutputPass } from "three/examples/jsm/postprocessing/OutputPass.js";
 
 /*
- * 2~3, 7~8, 15~16번 공간이 함께 쓰는 틀.
+ * 2~3, 7~8, 16~19, 29, 39, 42번 공간이 함께 쓰는 틀.
  * 9~11번 사건 공간(incident/world.ts)과 같은 규칙을 따른다.
  *   · 1920×1080 한 장을 렌더하고, 무대 배율은 CSS가 맞춘다.
  *   · 앞으로 넘길 때만 장면의 움직임을 재생하고, 뒤로 가거나 건너뛰면 그 단계의 마지막 상태를 보여준다.
@@ -90,8 +90,9 @@ export type Stage = {
   dispose: () => void;
 };
 
-export function createStage(canvas: HTMLCanvasElement, opts: { background: string; fog?: number; fov?: number; bloom?: [number, number, number]; exposure?: number; lostEvent: string }): Stage {
-  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: "high-performance" });
+export function createStage(canvas: HTMLCanvasElement, opts: { background: string; fog?: number; fov?: number; bloom?: [number, number, number]; exposure?: number; lostEvent: string; transparent?: boolean }): Stage {
+  // transparent: 뒤의 DOM 배경(42번 새벽 하늘)이 비치도록 배경 없이 그린다. 후처리(bloom)는 알파를 지키지 못해 건너뛴다.
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: !!opts.transparent, powerPreference: "high-performance" });
   const ratio = () => Math.min(1.6, Math.max(1, (window.devicePixelRatio || 1) * (canvas.getBoundingClientRect().width / W || 1)));
   renderer.setPixelRatio(ratio());
   renderer.setSize(W, H, false);
@@ -100,7 +101,7 @@ export function createStage(canvas: HTMLCanvasElement, opts: { background: strin
   renderer.outputColorSpace = THREE.SRGBColorSpace;
 
   const scene = new THREE.Scene();
-  scene.background = new THREE.Color(opts.background);
+  if (opts.transparent) renderer.setClearColor(0x000000, 0); else scene.background = new THREE.Color(opts.background);
   if (opts.fog) scene.fog = new THREE.FogExp2(opts.background, opts.fog);
   const camera = new THREE.PerspectiveCamera(opts.fov ?? 34, W / H, 1, 20000);
 
@@ -121,6 +122,7 @@ export function createStage(canvas: HTMLCanvasElement, opts: { background: strin
   const listeners: (() => void)[] = [];
   const tmp = new THREE.Vector3();
 
+  const draw = () => { if (opts.transparent) renderer.render(scene, camera); else composer.render(); };
   let update: (dt: number) => void = () => {};
   let moving: () => boolean = () => false;
   let raf = 0, last = performance.now(), frames = 0, disposed = false, dirty = 3, hold = false;
@@ -129,7 +131,7 @@ export function createStage(canvas: HTMLCanvasElement, opts: { background: strin
     if (disposed || hold) return;
     const now = performance.now(); const dt = Math.min(0.1, (now - last) / 1000); last = now;
     update(dt);
-    composer.render();
+    draw();
     canvas.dataset.frames = String(++frames);
     if (frames === 1) canvas.dataset.ready = "true";
     listeners.forEach((l) => l());
@@ -146,7 +148,7 @@ export function createStage(canvas: HTMLCanvasElement, opts: { background: strin
     // 렌더 검수용: 시계를 멈추고 원하는 만큼 진행한다.
     const w = window as unknown as Record<string, unknown>;
     w[`__${opts.lostEvent}Pause`] = () => { hold = true; if (raf) cancelAnimationFrame(raf); raf = 0; };
-    w[`__${opts.lostEvent}Advance`] = (sec: number) => { for (let i = 0; i < Math.round(sec * 30); i++) update(1 / 30); composer.render(); listeners.forEach((l) => l()); };
+    w[`__${opts.lostEvent}Advance`] = (sec: number) => { for (let i = 0; i < Math.round(sec * 30); i++) update(1 / 30); draw(); listeners.forEach((l) => l()); };
   }
 
   return {

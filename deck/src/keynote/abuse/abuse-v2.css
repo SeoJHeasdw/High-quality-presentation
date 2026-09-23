@@ -9,7 +9,7 @@
 .abuse-slide:not(.abuse-turn):not(.abuse-question)::before { filter: grayscale(1) brightness(.6); }
 .abuse-v2::before { display: none; }
 .abuse-slide .abuse-note, .abuse-slide .abuse-note a { color: #8a7475; }
-/* 28번 얼굴: 초록 형광 대신 핏기 없는 붉은 빛 */
+/* 32번 얼굴: 초록 형광 대신 핏기 없는 붉은 빛 */
 /* 얼굴 이미지의 등장 애니메이션이 img의 filter를 쓰므로 색은 감싸는 판에 준다. */
 .abuse-turn .abuse-face-plane { filter: grayscale(1) sepia(1) saturate(3.4) hue-rotate(-44deg) brightness(.8) contrast(1.2); }
 .abuse-turn .abuse-face::before { background: linear-gradient(0deg, transparent, #ff8c860d 44%, #ffb3ad22 48%, transparent 52%) !important; }

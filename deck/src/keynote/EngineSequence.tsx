@@ -14,7 +14,7 @@ export default function EngineSequence({phase}:{phase:number}) {
  const cue=CUES[phase];
  const [film,setFilm]=useState<FactoryFilmState|null>(null);
  const settled=film?.phase===phase&&film.settled;
- return <Frame n={18+phase} name={cue.name} className={`kn-engine-sequence kn-factory-film factory-film-phase-${phase}`}>
+ return <Frame n={21+phase} name={cue.name} className={`kn-engine-sequence kn-factory-film factory-film-phase-${phase}`}>
   <FactoryFilm phase={phase} onStateChange={setFilm}/>
   <div className="factory-film-caption" data-ready={settled||undefined} data-shot={cue.shot} key={phase}>
    <span className="factory-film-label">{cue.label}</span>

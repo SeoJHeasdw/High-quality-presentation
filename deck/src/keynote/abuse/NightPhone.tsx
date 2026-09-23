@@ -4,7 +4,7 @@ import { quadMatrix3d } from "./homography";
 import { usePerformanceMotion } from "../usePerformanceMotion";
 
 /*
- * 31·32·34번의 무대. Blender로 렌더한 한밤중 협탁(public/abuse/night-phone.jpg) 위에서
+ * 35·36·38번의 무대. Blender로 렌더한 한밤중 협탁(public/abuse/night-phone.jpg) 위에서
  * 휴대전화 화면만 DOM으로 바꾼다. 화면의 네 모서리는 렌더 스크립트가 내보낸 값(night-phone.json)을 쓴다.
  * 모든 통화·메시지는 가상 상황이다. 들리는 목소리는 발표자 본인의 합성 음성이다.
  */
@@ -103,7 +103,7 @@ export default function NightPhone({ mode, tone = "cold", children }: { mode: Ph
     window.addEventListener("keydown", onKey); return () => window.removeEventListener("keydown", onKey);
   }, [mode]);
   useBuzz(mode === "incoming" && motion, sound);
-  // 장식 층만 숨긴다. 32번의 살펴보기 버튼(children)은 보조 기술에서도 누를 수 있어야 한다.
+  // 장식 층만 숨긴다. 36번의 살펴보기 버튼(children)은 보조 기술에서도 누를 수 있어야 한다.
   return <div ref={root} className="np" data-mode={mode} data-tone={tone} data-motion={motion || undefined}
     style={{ "--cx": `${cx}px`, "--cy": `${cy}px` } as CSSProperties}>
     {/* np-cam: 통화가 연결되면 휴대전화 쪽으로 다가간다. np-stage: 장면 내내 아주 느리게 조여 온다. */}

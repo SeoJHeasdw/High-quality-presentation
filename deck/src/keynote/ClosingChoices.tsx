@@ -2,7 +2,7 @@ import TrueFocus, { type TrueFocusItem } from "../reactbits/TrueFocus/TrueFocus"
 import { usePerformanceMotion } from "./usePerformanceMotion";
 import "./ClosingChoices.css";
 
-// 38번 · 두 갈래의 답. 큰 낱말(만들기·맡기기)이 주인공이고, 원래의 뜻은 그 아래에 둔다.
+// 43번 · 두 갈래의 답. 큰 낱말(만들기·맡기기)이 주인공이고, 원래의 뜻은 그 아래에 둔다.
 const CHOICES: readonly TrueFocusItem[] = [
   {
     id: "creation", label: "만들기 · 계속 미루던 제작",

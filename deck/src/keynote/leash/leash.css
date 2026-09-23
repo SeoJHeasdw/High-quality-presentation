@@ -1,0 +1,28 @@
+/* 39 · 신에게 목줄. 완전한 검정 위에 파랑(낱말·몸)과 금색(목줄)만 둔다. kn-body의 원점은 화면 (100, 162)이다. */
+.leash { background: #030508; }
+.leash .kn-chrome, .leash .kn-footer { z-index: 6; }
+.leash .kn-body { z-index: 3; }
+.ls { position: absolute; left: -100px; top: -162px; width: 1920px; height: 1080px; z-index: 0; pointer-events: none; }
+.ls-canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; opacity: 0; transition: opacity 1.2s ease; }
+.ls-canvas[data-ready] { opacity: 1; }
+.ls-shade { position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(90deg, #030508f0 0%, #030508c0 30%, #03050800 52%), linear-gradient(0deg, #030508d8 0%, #03050800 18%); }
+.ls-fallback { display: none; }
+.ls[data-fallback] .ls-canvas { display: none; }
+.ls[data-fallback] .ls-fallback { display: block; position: absolute; left: 1000px; top: 190px; width: 600px; height: 800px; fill: #8fd0ff22; stroke: #8fd0ff88; stroke-width: 2; }
+.ls-fallback__ring { fill: none; stroke: #ffd899 !important; stroke-width: 6 !important; }
+
+.ls-copy { position: absolute; left: 0; top: 30px; z-index: 3; width: 900px; animation: pv-rise 1.1s cubic-bezier(.16,1,.3,1) .4s both; }
+.ls-copy .pv-eyebrow { color: #e8b27a; }
+.ls-copy .pv-eyebrow::before { background: #e8b27a; }
+.ls-copy h1 { font-size: 66px; line-height: 1.24; color: #eef2f5; }
+.ls-copy[data-step="1"] h1 { font-size: 96px; line-height: 1.16; }
+.ls-copy h1 em { font-style: normal; color: #ffd899; text-shadow: 0 0 40px #ffb45e44; }
+.ls-lead { margin-top: 40px; font-size: 36px; line-height: 1.5; color: #b9c9d6; letter-spacing: -.025em; opacity: 0; animation: pv-rise 1s cubic-bezier(.16,1,.3,1) 3.4s both; }
+.ls-fact { position: absolute; left: 0; bottom: 36px; z-index: 3; margin: 0; max-width: 900px; padding-left: 18px; border-left: 2px solid #8fd0ff88; font-size: 23px; font-weight: 580; color: #d6e4ee; letter-spacing: -.02em;
+  opacity: 0; transform: translateY(10px); transition: opacity .3s, transform .3s; }
+.ls-fact span { display: block; margin-top: 6px; font-size: 16px; font-weight: 400; color: #7f95a6; letter-spacing: -.005em; }
+.ls-fact[data-on] { opacity: 1; transform: none; transition: opacity .9s ease 5s, transform 1s cubic-bezier(.16,1,.3,1) 5s; }
+
+.deck-keynote[data-motion="off"] .leash *, .deck-keynote[data-motion="off"] .leash *::before, .deck-keynote[data-motion="off"] .leash *::after { animation-delay: 0s!important; animation-duration: 0s!important; transition: none!important; }
+@media (prefers-reduced-motion: reduce) { .leash *, .leash *::before, .leash *::after { animation-delay: 0s!important; animation-duration: 0s!important; transition: none!important; } }

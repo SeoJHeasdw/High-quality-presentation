@@ -13,7 +13,7 @@ const CH01: ChapterSpec = {
     {
       id: "open-who",
       layout: "chapter",
-      eyebrow: "서울 · 32세 서제호 · 발표 60분",
+      eyebrow: "서울 · 31세 서제호 · 발표 60분",
       title: "나는 자비스를 만들고 있다",
       subtitle: "직함 얘기가 아니라, 30년 생존 얘기다.",
       metric: "00",

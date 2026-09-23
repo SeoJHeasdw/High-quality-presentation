@@ -9,6 +9,8 @@ import DemoPlayer from "./DemoPlayer";
 import { ABUSE_SLIDES } from "./AbuseSlides";
 import { FutureSurface } from "./PerformanceScenes";
 import FinaleStory from "./finale/Finale";
+import WorstModelStory from "./worst/WorstModel";
+import LeashStory from "./leash/Leash";
 import { PersonalIntro, PersonalCompute, PersonalEngines } from "./PersonalSlides";
 import "./keynote.css";
 import "./stories.css";
@@ -23,7 +25,7 @@ const OriginalDeck: DeckModule = {
   {id:"manifesto-cover",scriptKey:"manifesto-cover",render:()=> <Frame n={1} name="제가 살아가려는 방식" scene="uncertain" className="kn-cover">
    <p className="kn-kicker">AI Engineer의 개인 실험</p><h1>나는 자비스를<br/>만들고 있다</h1><p className="hero-note">앞으로 30년, 제 일과 삶을 어떻게 바꿔갈 것인가</p>
   </Frame>},
-  {id:"manifesto-person",scriptKey:"manifesto-person",render:()=> <PersonalIntro/>},
+  {id:"manifesto-person",scriptKey:"manifesto-person",group:"person-ruler",render:()=> <PersonalIntro part={0}/>},
   {id:"manifesto-thirty",scriptKey:"manifesto-thirty",render:()=> <Briefing n={3} name="시간의 범위" title="앞으로 30년을 생각했습니다" lead="지금의 직업과 도구가 그대로일 것이라고 가정하기 어렵습니다.">
    <div className="life-timeline">{[["2026","지금 만드는 것"],["2031","5년 뒤의 일"],["2056","30년 뒤의 삶"]].map(([year,label],i)=><Reveal key={year} order={i}><strong>{year}</strong><span>{label}</span></Reveal>)}</div><p className="brief-takeaway">일이 바뀔 때마다, 처음부터 다시 시작하고 싶지는 않습니다.</p>
   </Briefing>},
@@ -46,7 +48,7 @@ const OriginalDeck: DeckModule = {
    <div className="evidence-copy"><Reveal><h2>후보를 비교하고<br/>필요한 곳을 다시 만든다</h2><p>원본과 선택 기록을 남깁니다.</p></Reveal><Reveal order={1} on={step>=1}><h2>최종 판단은 직접 한다</h2><p>발음, 음악성, 에셋 품질을<br/>자동 검사만으로 승인하지 않습니다.</p></Reveal></div>
    <figure className="evidence-shot" data-focus={step}><img src="/engines/tts-editing.png" alt="Local TTS Engine의 페이지 범위 음성 재생성 화면"/><figcaption>Local TTS Engine 개발 중 화면</figcaption></figure>
   </Briefing>},
-  {id:"tel-this-presentation",scriptKey:"tel-this-presentation",steps:1,render:({step})=> <Briefing n={18} name="지금 보고 계신 것도" title="이 발표도 AI와 함께 만들었습니다" lead="원하는 경험을 말하고, Astra와 구현하고, 실제로 보며 다시 고쳤습니다." step={step}>
+  {id:"tel-this-presentation",scriptKey:"tel-this-presentation",steps:1,render:({step})=> <Briefing n={30} name="지금 보고 계신 것도" title="이 발표도 AI와 함께 만들었습니다" lead="원하는 경험을 말하고, Astra와 구현하고, 실제로 보며 다시 고쳤습니다." step={step}>
    <Reveal className="actual-request"><span className="column-label">제가 요청한 것</span><blockquote>“→를 누르면 안으로 빨려 들어가면서<br/>실제 엔진들이 나타나면 좋겠어요.”</blockquote></Reveal><Reveal on={step>=1} className="request-result"><span>방금 지나온 장면</span><p>그 요청을 코드와 움직임으로 만들고,<br/>보이는 결과를 기준으로 수정했습니다.</p></Reveal>
   </Briefing>},
  ],
@@ -63,16 +65,23 @@ const ordered = [
  {id:"story-price",scriptKey:"story-price",steps:2,group:"agent-web",render:({step})=><AgentWebStory part={1} step={step}/>},
  ...["story-rooms","story-board","story-boundary"].map((id,part)=>({id,scriptKey:id,steps:1,group:"incident-rooms",render:({step})=><IncidentStory part={part} step={step}/>})),
  {id:"story-next-market",scriptKey:"story-next-market",steps:7,render:({step})=><NextMarket step={step}/>},
+ // 13·14 · 같은 집과 30년 눈금 위에서 이어진다(묶음 person-ruler).
  byId("manifesto-person"),
+ {id:"manifesto-transition",scriptKey:"manifesto-transition",steps:2,group:"person-ruler",render:({step})=><PersonalIntro part={1} step={step}/>},
  byId("manifesto-compute"),
+ // 16~19 · 한 사람을 둘러싼 흐름에서 Factory 안으로 들어가 제 베팅까지 한 공간이다(묶음 one-user).
  {id:"manifesto-requirements",scriptKey:"manifesto-requirements",steps:1,group:"one-user",render:({step})=><OneUserStory part={0} step={step}/>},
  {id:"manifesto-system",scriptKey:"manifesto-system",steps:2,group:"one-user",render:({step})=><OneUserStory part={1} step={step}/>},
+ {id:"manifesto-factory",scriptKey:"manifesto-factory",steps:2,group:"one-user",render:({step})=><OneUserStory part={2} step={step}/>},
+ {id:"manifesto-bets",scriptKey:"manifesto-bets",steps:1,group:"one-user",render:({step})=><OneUserStory part={3} step={step}/>},
  byId("factory-repositories"),
  ...OriginalDeck.slides.filter(slide=>slide.group==="factory-flight"),
  ...(["tts","assets","music"] as const).map(kind=>({id:`demo-${kind}`,scriptKey:`demo-${kind}`,render:()=> <DemoPlayer kind={kind}/>})),
+ {id:"manifesto-worst-model",scriptKey:"manifesto-worst-model",steps:2,render:({step})=><WorstModelStory step={step}/>},
  byId("tel-this-presentation"),
  ...ABUSE_SLIDES,
- ...(["manifesto-remains","tel-sharing","tel-unfinished","tel-invitation"] as const).map((id,part)=>({id,scriptKey:id,group:"finale",render:()=><FinaleStory part={part as 0|1|2|3}/>})),
+ {id:"abuse-leash",scriptKey:"abuse-leash",steps:1,render:({step})=><LeashStory step={step}/>},
+ ...(["manifesto-remains","tel-sharing","tel-unfinished","tel-invitation"] as const).map((id,part)=>({id,scriptKey:id,group:"finale",steps:id==="tel-unfinished"?2:undefined,render:({step}:{step:number})=><FinaleStory part={part as 0|1|2|3} step={step}/>})),
 ];
 const KeynoteDeck:DeckModule={className:"deck-keynote",slides:ordered.map((slide,index)=>({...slide,render:ctx=><SlidePosition.Provider value={{index,total:ordered.length}}>{slide.render(ctx)}</SlidePosition.Provider>}))};
 export default KeynoteDeck;

@@ -4,7 +4,7 @@ import { MediaInspection } from "../AbuseInteractive";
 import { usePerformanceMotion } from "../usePerformanceMotion";
 import "./abuse-v2.css";
 
-/* 30·33번의 캔버스 장면. 점과 사진 칸은 도식이며 사람 수·공유 수 같은 데이터가 아니다. */
+/* 34·37번의 캔버스 장면. 점과 사진 칸은 도식이며 사람 수·공유 수 같은 데이터가 아니다. */
 const rand = (seed: number) => { let s = seed >>> 0; return () => { s = (s * 1664525 + 1013904223) >>> 0; return s / 4294967296; }; };
 
 function useCanvasLoop(draw: (g: CanvasRenderingContext2D, t: number) => void, deps: unknown[], motion: boolean) {
@@ -125,7 +125,7 @@ function ThresholdAudio({ active }: { active: boolean }) {
 }
 
 export function ThresholdScene({ step }: { step: number }) {
-  return <Frame n={30} name="그 수고가 줄어든다면" step={step} className="abuse-slide abuse-v2 abuse-threshold-v2">
+  return <Frame n={34} name="그 수고가 줄어든다면" step={step} className="abuse-slide abuse-v2 abuse-threshold-v2">
     <div className="abuse-content">
       <div className="th" data-open={step >= 1 || undefined} aria-label={step ? "제가 메우던 수고가 사라지고 더 많은 사람이 들어오는 도식" : "생성, 확인, 수정, 연결에 손이 드는 지금"}>
         <ThresholdCanvas open={step >= 1}/>
@@ -207,7 +207,7 @@ export function MediaScene({ step }: { step: number }) {
   const original = useRef<HTMLCanvasElement | null>(null);
   const [src, setSrc] = useState("");
   useEffect(() => { original.current = portrait(101); setSrc(original.current.toDataURL()); }, []);
-  return <Frame n={33} name="당사자에게 남는 피해" step={step} className="abuse-slide abuse-v2 abuse-media-v2">
+  return <Frame n={37} name="당사자에게 남는 피해" step={step} className="abuse-slide abuse-v2 abuse-media-v2">
     <div className="abuse-content">
       <div className="md" data-deleted={step >= 1 || undefined} data-inspecting={inspecting || undefined}>
         <Copies run={0}/>

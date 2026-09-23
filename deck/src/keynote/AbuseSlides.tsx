@@ -31,7 +31,7 @@ function Wave({ small = false }: { small?: boolean }) {
 }
 
 export function AbuseTurn() {
-  return <AbuseFrame n={27} name="같은 능력, 다른 의도" variant="turn">
+  return <AbuseFrame n={32} name="같은 능력, 다른 의도" variant="turn">
     <InteractivePixelFace/>
     <div className="abuse-turn-copy">
       <p className="abuse-eyebrow">같은 능력, 다른 의도</p>
@@ -43,7 +43,7 @@ export function AbuseTurn() {
 }
 
 export function AbuseWorkbench({ step }: { step: number }) {
-  return <AbuseFrame n={28} name="지금은 제가 메우는 일" variant="workbench" step={step}>
+  return <AbuseFrame n={33} name="지금은 제가 메우는 일" variant="workbench" step={step}>
     <p className="abuse-eyebrow">제 TTS 작업에서 겪는 과정</p>
     <h1>지금은, 제가 사이를 메우고 있습니다</h1>
     <div className="abuse-pipeline" data-focus={step}>

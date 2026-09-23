@@ -17,7 +17,11 @@ await context.route('**/*', route => {
   return route.continue();
 });
 const page = await context.newPage();
-async function go(number) {
+// 장표 번호는 id로 찾는다. 장표를 끼우거나 빼도 검사가 같은 장면을 가리킨다.
+let ids = [];
+const slideNumber = id => { const n = ids.indexOf(id) + 1; assert(n > 0, `missing slide ${id}`); return n; };
+async function go(target) {
+  const number = typeof target === 'number' ? target : slideNumber(target);
   await page.keyboard.type(String(number)); await page.keyboard.press('Enter');
   await page.waitForSelector(`.kn-slide[data-slide="${number}"]`);
   await page.waitForTimeout(850);
@@ -30,6 +34,7 @@ async function point(locator, x = .5, y = .5) {
 try {
   await page.goto('http://127.0.0.1:5180/#keynote');
   await page.waitForSelector('.kn-slide'); await page.evaluate(() => document.fonts.ready);
+  ids = await page.evaluate(async () => (await import('/src/keynote/KeynoteDeck.tsx')).default.slides.map(s => s.id));
   await page.waitForTimeout(1000);
   await page.mouse.move(1150, 360); await page.mouse.move(920, 250, { steps: 18 });
   await page.mouse.click(920, 250); await page.waitForTimeout(100); await shot('01-cover-restored');
@@ -37,7 +42,7 @@ try {
   assert.equal(await page.locator('.kn-field canvas').count(), 1);
   report.cover = 'original cover restored; no React Bits overlay, cue, or click effect';
 
-  await go(4);
+  await go('manifesto-unknown');
   const ripple = page.locator('.ripple-distortion canvas');
   await ripple.waitFor();
   await page.mouse.move(1040, 320); await page.mouse.move(880, 275, { steps: 12 });
@@ -57,32 +62,32 @@ try {
   await page.keyboard.press('m');
   report.ripple = 'scaled pointer, click, keyboard pulse, idle RAF stops, M fallback';
 
-  await go(17);
+  await go('factory-repositories');
   const preview = page.locator('.rb-tilted-card').nth(1);
   const tiltPoint = await point(preview, .85, .2);
   await page.mouse.move(tiltPoint.x, tiltPoint.y); await page.waitForTimeout(500);
   assert.match(await preview.locator('.rb-tilted-card__inner').evaluate(el => getComputedStyle(el).transform), /matrix3d/);
-  await shot('17-hover'); await preview.click();
-  await page.waitForSelector('dialog[open]'); await shot('17-enlarged');
+  await shot('20-hover'); await preview.click();
+  await page.waitForSelector('dialog[open]'); await shot('20-enlarged');
   await page.keyboard.type('5'); await page.keyboard.press('Escape');
   assert.equal(await page.locator('dialog[open]').count(), 0);
   assert.equal(await page.locator('.goto').count(), 0);
   assert(await preview.evaluate(el => el === document.activeElement));
   await page.keyboard.press('Enter'); await page.waitForSelector('dialog[open]');
-  await page.keyboard.press('ArrowRight'); await page.waitForSelector('.kn-slide[data-slide="18"]');
+  await page.keyboard.press('ArrowRight'); await page.waitForSelector(`.kn-slide[data-slide="${slideNumber('factory-enter')}"]`);
   assert.equal(await page.locator('dialog[open]').count(), 0);
   assert.equal(await page.locator('.performance-click-spark').count(), 0);
-  await go(17); await page.keyboard.press('m');
+  await go('factory-repositories'); await page.keyboard.press('m');
   assert.equal(await page.locator('.rb-tilted-card__inner').first().evaluate(el => getComputedStyle(el).transform), 'none');
   await page.keyboard.press('m');
   report.preview = 'hover tilt, click/Enter enlarge, Escape restores focus, arrow continues, M resets';
 
-  await go(28);
+  await go('abuse-turn');
   const face = page.locator('.abuse-face-control');
   const facePoint = await point(face, .65, .35);
   await page.mouse.move(facePoint.x, facePoint.y); await page.waitForTimeout(200);
   assert.equal(await page.locator('.abuse-face-interactive').getAttribute('data-tracking'), 'true');
-  await face.click(); await page.waitForTimeout(220); await shot('28-reconstruction');
+  await face.click(); await page.waitForTimeout(220); await shot('32-reconstruction');
   await page.waitForTimeout(1000);
   assert.equal(await face.getAttribute('aria-pressed'), 'true');
   assert.equal(await page.locator('.kn-slide').getAttribute('data-step'), '0');
@@ -92,30 +97,30 @@ try {
   await page.keyboard.press('m');
   report.face = 'pointer lens, pixel rebuild, does not advance cue, M still allows inspection';
 
-  await go(32);
+  await go('abuse-trust');
   const evidence = page.getByRole('button', { name: '가상의 음성 메시지 살펴보기' });
   await evidence.hover(); await page.waitForTimeout(900);
   assert.equal(await evidence.getAttribute('aria-expanded'), 'true');
   await evidence.click(); await page.mouse.move(80, 100); await evidence.blur();
-  assert.equal(await evidence.getAttribute('aria-pressed'), 'true'); await shot('32-inspected');
+  assert.equal(await evidence.getAttribute('aria-pressed'), 'true'); await shot('36-inspected');
   await page.keyboard.press('ArrowRight');
   await page.waitForSelector('.kn-slide[data-step="1"] .abuse-inspection-control[aria-pressed="false"]');
   assert.equal(await evidence.getAttribute('aria-pressed'), 'false');
   assert.equal(await page.locator('.kn-slide').getAttribute('data-step'), '1');
-  await go(33); await page.keyboard.press('ArrowRight');
+  await go('abuse-media'); await page.keyboard.press('ArrowRight');
   const media = page.getByRole('button', { name: '이미지의 출처와 동의 살펴보기' });
   await media.hover(); await page.waitForTimeout(1000); await media.click();
-  assert.equal(await media.getAttribute('aria-pressed'), 'true'); await shot('33-inspected');
+  assert.equal(await media.getAttribute('aria-pressed'), 'true'); await shot('37-inspected');
   report.inspection = 'message/media reveal, click pin, keyboard cue resets inspection';
 
-  await go(38);
+  await go('tel-invitation');
   const choices = page.locator('.rb-true-focus__item');
   await choices.nth(1).hover(); await page.waitForTimeout(500);
   assert.equal(await page.locator('.rb-true-focus').getAttribute('data-active'), '1');
   await choices.nth(1).click(); assert.equal(await choices.nth(1).getAttribute('aria-pressed'), 'true');
   await page.mouse.move(10, 10); await choices.first().focus(); await page.keyboard.press('Enter');
   assert.equal(await choices.first().getAttribute('aria-pressed'), 'true');
-  await page.waitForTimeout(500); await shot('38-focus');
+  await page.waitForTimeout(500); await shot('43-focus');
   const frameError = await page.locator('.rb-true-focus').evaluate(host => {
     const frame = host.querySelector('.rb-true-focus__frame').getBoundingClientRect();
     const item = host.querySelector('[data-active="true"]').getBoundingClientRect();

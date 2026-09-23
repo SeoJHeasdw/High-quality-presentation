@@ -1,0 +1,55 @@
+/* 29 · 가장 구린 모델. 2~3번(opening.css)과 같은 규칙: 3D가 화면을 채우고 글은 빈 가장자리에 둔다.
+   좌표는 worst/world.ts의 LAYOUT과 같다(화면 px). kn-body의 원점은 화면 (100, 162)이다. */
+.worst { background: #05080d; }
+.worst .kn-chrome, .worst .kn-footer { z-index: 6; }
+.worst .kn-body { z-index: 3; }
+.wm { position: absolute; left: -100px; top: -162px; width: 1920px; height: 1080px; z-index: 0; pointer-events: none; }
+.wm-canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; opacity: 0; transition: opacity 1s ease; }
+.wm-canvas[data-ready] { opacity: 1; }
+.wm-shade { position: absolute; inset: 0; pointer-events: none;
+  background: radial-gradient(ellipse 1100px 360px at 0% 0%, #05080de6 25%, #05080d8c 60%, #05080d00 100%), linear-gradient(0deg, #05080dd0 0%, #05080d00 16%); }
+.wm-fallback { display: none; }
+.wm[data-fallback] .wm-canvas { display: none; }
+.wm[data-fallback] .wm-fallback { display: flex; position: absolute; left: 160px; top: 520px; align-items: center; gap: 40px; margin: 0; }
+.wm-fallback img { width: 340px; border-radius: 6px; opacity: .8; }
+.wm-fallback span { font-size: 110px; font-weight: 800; color: #ffd899; letter-spacing: -.05em; }
+
+/* 0 · 청중의 속마음을 먼저 인정한다 */
+.wm-thought { position: absolute; left: 0; right: 0; top: 190px; z-index: 3; text-align: center; opacity: 0; transition: opacity .5s ease; pointer-events: none; }
+.wm-thought[data-on] { opacity: 1; transition: opacity 1.2s ease .5s; }
+.wm-thought blockquote { margin: 0; font-size: 86px; line-height: 1.22; font-weight: 620; letter-spacing: -.05em; color: #aab6c0; text-shadow: 0 4px 60px #05080d; }
+.wm-thought p { margin-top: 56px; font-size: 44px; font-weight: 600; color: #f5f3ee; letter-spacing: -.03em; opacity: 0; transform: translateY(14px); transition: opacity .3s, transform .3s; }
+.wm-thought[data-on] p { opacity: 1; transform: none; transition: opacity .9s ease 2.4s, transform 1s cubic-bezier(.16,1,.3,1) 2.4s; }
+
+/* 제목: 1단계는 입자가 미래로 흘러간 뒤에 선다 */
+.wm-heading { position: absolute; left: 0; top: 0; z-index: 4; width: 1500px; animation: pv-rise 1s cubic-bezier(.16,1,.3,1) 7.2s both; }
+.wm-heading[data-step="2"] { animation-delay: .3s; }
+.wm-heading[data-back] { animation-delay: 0s; }
+.wm-heading h1 { font-size: 58px; line-height: 1.22; }
+.wm-heading[data-step="2"] h1 { color: #fff3dc; }
+.wm-source { margin-top: 22px; max-width: 1180px; font-size: 17px; line-height: 1.5; color: #8599a8; letter-spacing: -.005em; }
+
+/* 한때 → 지금 → 1년 뒤? 2년 뒤? */
+.wm-screen { position: absolute; left: 770px; top: 358px; width: 460px; height: 259px; z-index: 2; border-radius: 6px; overflow: hidden; opacity: 0; transition: opacity .4s ease; }
+.wm-screen img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.wm-screen[data-on] { opacity: .82; transition: opacity 1.2s ease 5.6s; }
+.wm-cap { position: absolute; top: 640px; z-index: 3; margin: 0; transform: translateX(-50%); text-align: center; white-space: nowrap; font-size: 22px; color: #c9d3da; letter-spacing: -.02em; opacity: 0; transition: opacity .3s; }
+.wm-cap b { display: block; margin-bottom: 6px; font-size: 18px; font-weight: 600; letter-spacing: .14em; color: #ffd899; }
+.wm-cap--past { left: 415px; }
+.wm-cap--now { left: 1000px; }
+.wm-cap--past[data-on] { opacity: 1; transition: opacity .9s ease 2.9s; }
+.wm-cap--now[data-on] { opacity: 1; transition: opacity .9s ease 5.6s; }
+.wm-tick { position: absolute; z-index: 3; margin: 0; transform: translateX(-50%); white-space: nowrap; font-size: 32px; font-weight: 620; color: #a8dcff; letter-spacing: -.02em; text-shadow: 0 0 24px #5fb6ff66; opacity: 0; transition: opacity .3s;
+  left: calc(1430px + var(--i) * 240px); top: calc(270px - var(--i) * 36px); }
+.wm-tick[data-on] { opacity: 1; transition: opacity .9s ease; transition-delay: calc(6.4s + var(--i) * .5s); }
+
+/* 2 · 근거 두 줄. 캡션은 한 걸음 물러난다 */
+.wm[data-step="2"] ~ .wm-cap { opacity: .45; transition: opacity .8s ease; }
+.wm-evidence { position: absolute; left: 0; right: 0; bottom: 34px; z-index: 3; display: flex; gap: 56px; opacity: 0; transform: translateY(12px); transition: opacity .3s, transform .3s; }
+.wm-evidence[data-on] { opacity: 1; transform: none; transition: opacity .9s ease 1.8s, transform 1s cubic-bezier(.16,1,.3,1) 1.8s; }
+.wm-evidence p { margin: 0; padding-left: 18px; border-left: 2px solid #a8dcff88; display: flex; flex-direction: column; gap: 6px; }
+.wm-evidence b { font-size: 23px; font-weight: 600; color: #e6f1f8; letter-spacing: -.02em; }
+.wm-evidence span { font-size: 16px; color: #8599a8; letter-spacing: -.005em; }
+
+.deck-keynote[data-motion="off"] .worst *, .deck-keynote[data-motion="off"] .worst *::before, .deck-keynote[data-motion="off"] .worst *::after { animation-delay: 0s!important; animation-duration: 0s!important; transition: none!important; }
+@media (prefers-reduced-motion: reduce) { .worst *, .worst *::before, .worst *::after { animation-delay: 0s!important; animation-duration: 0s!important; transition: none!important; } }

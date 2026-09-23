@@ -1,4 +1,4 @@
-/* 38번 · 새벽의 두 갈래. 왼쪽은 넓고 낮게, 오른쪽은 좁고 높게: 초점 틀이 멀리, 모양을 바꿔 움직인다. */
+/* 43번 · 새벽의 두 갈래. 왼쪽은 넓고 낮게, 오른쪽은 좁고 높게: 초점 틀이 멀리, 모양을 바꿔 움직인다. */
 .closing-choices {
   display: grid;
   grid-template-columns: minmax(0, 1.25fr) minmax(0, .85fr);

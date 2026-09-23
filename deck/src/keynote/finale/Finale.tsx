@@ -1,10 +1,11 @@
 import type { CSSProperties, ReactNode } from "react";
 import { Frame } from "../KeynoteFrame";
 import ClosingChoices from "../ClosingChoices";
+import Blueprint3D from "./Blueprint3D";
 import "./finale.css";
 
 /*
- * 35~38번 · 새벽. 13번의 밤, 31~34번의 새벽 2시 47분 뒤에 같은 집이 푸른 새벽(35~37)을 지나 해 뜨는 아침(38)이 된다.
+ * 40~43번 · 새벽. 13번의 밤, 35~38번의 새벽 2시 47분 뒤에 같은 집이 푸른 새벽(40~42)을 지나 해 뜨는 아침(43)이 된다.
  * 배경은 12번 Blender 장면의 마지막 구도를 시간대만 바꿔 다시 렌더한 것(tools/render-house-scroll.py --time).
  * 네 장이 한 묶음(finale)이라 배경은 다시 그리지 않고 밝아진다.
  * 판단·실패 기록은 local-tts-engine/docs/DECISIONS.md의 실제 기록이다.
@@ -21,7 +22,7 @@ const RESULTS: [string, string][] = [
   ["/demos/tts-lecture.jpg", "제 목소리 강의"],
   ["/factory-film/03-image.jpg", "새로 만든 이미지"],
   ["/factory-film/04-music.jpg", "음악 후보"],
-  ["/house-scroll/a4.jpg", "이 발표 · 38장"],
+  ["/house-scroll/a4.jpg", "이 발표 · 43장"],
 ];
 const MODELS = ["Qwen3-TTS 1.7B", "다음 모델", "그다음 모델"];
 
@@ -99,30 +100,36 @@ function Blueprint() {
   </div>;
 }
 
+/** 42번은 세 단계마다 제목이 바뀐다(0 지금, 1 조합, 2 사무직이었다면). */
+const UNFINISHED: { kicker: string; title: ReactNode; lead: string }[] = [
+  { kicker: "아직 남아 있는 문제", title: <>완성된 자비스까지는<br/>갈 길이 있습니다</>, lead: "지금은 방마다 기능을 만들고, 실제로 쓰다 막히는 부분을 고치는 단계입니다." },
+  { kicker: "방과 방을 이으면", title: <>조합하면<br/>새 일이 생깁니다</>, lead: "같은 설계가 목소리, 업무, 주식 판단에 들어가 있습니다. 조합은 아직 가능성입니다." },
+  { kicker: "제가 사무직이었다면", title: <>그리고 방은<br/>계속 늘어납니다</>, lead: "엑셀, 브라우저, PDF와 PPT, 문서 방향부터 만들었을 겁니다." },
+];
 const HEAD: { name: string; kicker: string; title: ReactNode; lead: string }[] = [
   { name: "30년 동안 쌓을 것", kicker: "30년 동안 쌓을 것", title: <>모델이 바뀌어도<br/>제 작업은 남기고 싶습니다</>, lead: "더 좋은 AI가 나오면, 이미 만든 기반 위에서 받아들일 수 있도록 합니다." },
   { name: "밖으로도 이어갈 계획", kicker: "밖으로도 이어갈 계획", title: <>만드는 과정도<br/>공개하려고 합니다</>, lead: "새로운 일이 생겼을 때, 제가 무엇을 할 수 있는 사람인지 알 수 있도록 합니다." },
-  { name: "아직 남아 있는 문제", kicker: "아직 남아 있는 문제", title: <>완성된 자비스까지는<br/>갈 길이 있습니다</>, lead: "지금은 엔진별 기능을 만들고, 실제 사용에서 막히는 부분을 고치는 단계입니다." },
+  { name: "아직 남아 있는 문제", kicker: "아직 남아 있는 문제", title: <>완성된 자비스까지는<br/>갈 길이 있습니다</>, lead: "지금은 방마다 기능을 만들고, 실제로 쓰다 막히는 부분을 고치는 단계입니다." },
   { name: "팀과 나누고 싶은 질문", kicker: "팀과 나누고 싶은 질문", title: <>내 일 하나를 맡겨본다면,<br/>무엇부터 바꿔볼 수 있을까요?</>, lead: "" },
 ];
 
-export default function FinaleStory({ part }: { part: 0 | 1 | 2 | 3 }) {
-  const head = HEAD[part];
-  return <Frame n={35 + part} name={head.name} className={`finale finale--${part}${part === 3 ? " kn-closing" : ""}`}>
+export default function FinaleStory({ part, step = 0 }: { part: 0 | 1 | 2 | 3; step?: number }) {
+  const head = part === 2 ? { ...HEAD[2], ...UNFINISHED[Math.min(2, step)] } : HEAD[part];
+  return <Frame n={40 + part} name={head.name} className={`finale finale--${part}${part === 3 ? " kn-closing" : ""}`}>
     <div className="fn-sky" aria-hidden="true">
       <img className="fn-plate fn-plate--blue" src="/house-dawn/blue.jpg" alt=""/>
       <img className="fn-plate fn-plate--sun" src="/house-dawn/sunrise.jpg" alt=""/>
       <div className="fn-tint"/>
       <div className="fn-shade"/>
     </div>
-    <div className="fn-head" key={`h${part}`}>
+    <div className="fn-head" key={`h${part}-${part === 2 ? step : 0}`}>
       <p className="fn-kicker">{head.kicker}</p>
       <h1>{head.title}</h1>
       {head.lead && <p className="fn-lead">{head.lead}</p>}
     </div>
     {part === 0 && <Strata/>}
     {part === 1 && <OpenLog/>}
-    {part === 2 && <Blueprint/>}
+    {part === 2 && <><Blueprint3D step={step} fallback={<Blueprint/>}/><p className="fn-legend"><span><i/>실선 · 만든 방</span><span><i data-dash/>점선 · 구상·가정</span></p></>}
     {part === 3 && <>
       <ClosingChoices/>
       <p className="fn-final">저는 앞으로 30년을 준비하는 방법으로,<br/><b>제 자비스를 만들고 있습니다.</b></p>
