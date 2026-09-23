@@ -11,7 +11,6 @@ import { ABUSE_SLIDES } from "./AbuseSlides";
 import { FutureSurface } from "./PerformanceScenes";
 import FinaleStory from "./finale/Finale";
 import WorstModelStory from "./worst/WorstModel";
-import LeashStory from "./leash/Leash";
 import { PersonalIntro, PersonalCompute, PersonalEngines } from "./PersonalSlides";
 import "./keynote.css";
 import "./stories.css";
@@ -49,7 +48,7 @@ const OriginalDeck: DeckModule = {
    <div className="evidence-copy"><Reveal><h2>후보를 비교하고<br/>필요한 곳을 다시 만든다</h2><p>원본과 선택 기록을 남깁니다.</p></Reveal><Reveal order={1} on={step>=1}><h2>최종 판단은 직접 한다</h2><p>발음, 음악성, 에셋 품질을<br/>자동 검사만으로 승인하지 않습니다.</p></Reveal></div>
    <figure className="evidence-shot" data-focus={step}><img src="/engines/tts-editing.png" alt="Local TTS Engine의 페이지 범위 음성 재생성 화면"/><figcaption>Local TTS Engine 개발 중 화면</figcaption></figure>
   </Briefing>},
-  {id:"tel-this-presentation",scriptKey:"tel-this-presentation",steps:1,render:({step})=> <Briefing n={30} name="지금 보고 계신 것도" title="이 발표도 AI와 함께 만들었습니다" lead="원하는 경험을 말하고, Astra와 구현하고, 실제로 보며 다시 고쳤습니다." step={step}>
+  {id:"tel-this-presentation",scriptKey:"tel-this-presentation",steps:1,render:({step})=> <Briefing n={30} name="지금 보고 계신 것도" title="이 발표도 AI와 함께 만들었습니다" lead="원하는 경험을 말하고, Opus 5.5·Astra와 구현하고, 실제로 보며 다시 고쳤습니다." step={step}>
    <Reveal className="actual-request"><span className="column-label">제가 요청한 것</span><blockquote>“→를 누르면 안으로 빨려 들어가면서<br/>실제 엔진들이 나타나면 좋겠어요.”</blockquote></Reveal><Reveal on={step>=1} className="request-result"><span>방금 지나온 장면</span><p>그 요청을 코드와 움직임으로 만들고,<br/>보이는 결과를 기준으로 수정했습니다.</p></Reveal>
   </Briefing>},
  ],
@@ -82,8 +81,9 @@ const ordered = [
  {id:"manifesto-worst-model",scriptKey:"manifesto-worst-model",steps:2,render:({step})=><WorstModelStory step={step}/>},
  byId("tel-this-presentation"),
  ...ABUSE_SLIDES,
- {id:"abuse-leash",scriptKey:"abuse-leash",steps:2,render:({step})=><LeashStory step={step}/>},
- ...(["manifesto-remains","tel-sharing","tel-unfinished","tel-invitation"] as const).map((id,part)=>({id,scriptKey:id,group:"finale",steps:id==="tel-unfinished"?2:undefined,render:({step}:{step:number})=><FinaleStory part={part as 0|1|2|3} step={step}/>})),
+ // 40~44 · 목줄에서 새벽으로. 40번의 3D 장면이 41번 첫 단계까지 이어지고, 배경은 다섯 장 동안 다시 그리지 않는다(묶음 finale).
+ {id:"abuse-leash",scriptKey:"abuse-leash",group:"finale",steps:2,render:({step})=><FinaleStory part={-1} step={step}/>},
+ ...(["manifesto-remains","tel-sharing","tel-unfinished","tel-invitation"] as const).map((id,part)=>({id,scriptKey:id,group:"finale",steps:id==="tel-unfinished"?2:id==="manifesto-remains"?1:undefined,render:({step}:{step:number})=><FinaleStory part={part as 0|1|2|3} step={step}/>})),
 ];
 const KeynoteDeck:DeckModule={className:"deck-keynote",slides:ordered.map((slide,index)=>({...slide,render:ctx=><SlidePosition.Provider value={{index,total:ordered.length}}>{slide.render(ctx)}</SlidePosition.Provider>}))};
 export default KeynoteDeck;

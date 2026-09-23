@@ -28,6 +28,13 @@
 .fn-lead { margin-top: 20px; font-size: 25px; line-height: 1.5; color: #bfc6cf; }
 @keyframes fn-rise { from { opacity: 0; transform: translateY(18px); filter: blur(8px); } to { opacity: 1; transform: none; filter: none; } }
 
+/* 40 · 목줄(묶음의 첫 장). 마무리의 새벽 배경은 아직 보이지 않는다. */
+.finale-pre .fn-sky { opacity: 0; }
+/* 41-0 · 40번의 캔버스가 이어서 새벽 집을 그린다(leash/world.ts). WebGL을 쓸 수 없을 때만 선명한 배경 사진을 보인다. */
+.finale--bridge:has(.ls[data-fallback]) .fn-plate--blue { filter: brightness(.72); transform: none; }
+.finale--bridge h1 em { font-style: normal; color: #ffd899; text-shadow: 0 0 36px #ffb45e44; }
+.finale--bridge .fn-lead { color: #e1d5c2; animation: fn-rise 1s cubic-bezier(.16,1,.3,1) 3.9s both; }
+
 /* 41 · 바뀌는 것과 남는 것 */
 .fs { position: absolute; left: 0; right: 0; top: 318px; bottom: 0; z-index: 2; }
 .fs-lane-label { position: absolute; left: 0; top: 50%; transform: translateY(-50%); width: 190px; font-size: 17px; color: #8a97a4; line-height: 1.35; }

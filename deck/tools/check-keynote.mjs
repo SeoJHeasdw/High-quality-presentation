@@ -75,10 +75,13 @@ const bridgeOk=report.bridge.map(b=>b.phase).join(',')==='-2,-1,0,-1'&&report.br
 // 40 · 39번의 가짜 말이 풀려 낱말이 되는 이음새(-1)에서 몸(0)과 목줄(1)까지 같은 캔버스가 세 단계를 지난다.
 await go(slideNumber('abuse-leash'));await page.waitForSelector('.ls-canvas[data-ready]',{timeout:10000});
 await page.evaluate(()=>{window.__leash=document.querySelector('.ls-canvas')});
-const leashBeat=()=>page.evaluate(()=>({step:Number(document.querySelector('.ls').dataset.step),same:document.querySelector('.ls-canvas')===window.__leash,title:document.querySelector('.ls-copy h1').textContent}));
+const leashBeat=()=>page.evaluate(()=>({step:Number(document.querySelector('.ls-copy').dataset.step),same:document.querySelector('.ls-canvas')===window.__leash,title:document.querySelector('.ls-copy h1').textContent}));
 report.leash=[await leashBeat()];
 for(let i=0;i<2;i++){await page.keyboard.press('ArrowRight');await page.waitForTimeout(1500);report.leash.push(await leashBeat())}
-const leashOk=report.leash.map(b=>b.step).join(',')==='0,1,2'&&report.leash.every(b=>b.same)&&report.leash[0].title.includes('말이었습니다');
+// 41번 첫 단계는 40번의 캔버스가 이어서 그린다(묶음 finale). 장이 바뀌어도 캔버스가 새로 생기지 않아 화면이 깜빡이지 않는다.
+await page.keyboard.press('ArrowRight');await page.waitForTimeout(400);
+report.leashTo41=await page.evaluate(n=>document.querySelector('.kn-slide').dataset.slide===String(n)&&document.querySelector('.ls-canvas')===window.__leash&&document.querySelector('.ls').dataset.phase==='2',slideNumber('manifesto-remains'));
+const leashOk=report.leash.map(b=>b.step).join(',')==='0,1,2'&&report.leash.every(b=>b.same)&&report.leash[0].title.includes('말이었습니다')&&report.leashTo41;
 // 7~8, 17~20 · 묶인 3D 공간: 장이 바뀌어도 같은 캔버스가 이어지고, 모든 단계가 그려지며, 뒤로 가면 처음 단계로 돌아온다.
 report.groups={};
 for(const [name,first,beats] of [['agentWeb','story-web-door',5],['oneUser','manifesto-requirements',10]]){
@@ -98,17 +101,18 @@ report.ruler={same:await page.evaluate(()=>document.querySelector('.p13-years')=
 for(let i=0;i<3;i++)await page.keyboard.press('ArrowLeft');await page.waitForTimeout(900);
 report.ruler.back=await page.evaluate(()=>document.querySelector('.p13-years')===window.__ruler&&Number(getComputedStyle(document.querySelector('.p13-copy-fade')).opacity)>.99);
 const rulerOk=report.ruler.same&&report.ruler.beat==='2'&&report.ruler.back;
-// 40~43 · 같은 집의 새벽과 아침: 네 장 동안 배경을 다시 그리지 않고, 43번에서만 아침 배경이 드러난다.
+// 41~44 · 같은 집의 새벽과 아침: 네 장 동안 배경을 다시 그리지 않고, 44번에서만 아침 배경이 드러난다.
 await go(slideNumber('manifesto-remains'));await page.waitForTimeout(600);
 await page.evaluate(()=>{window.__finaleSky=document.querySelector('.fn-sky')});
 const sunOpacity=()=>page.evaluate(()=>Number(getComputedStyle(document.querySelector('.fn-plate--sun')).opacity));
 report.finale={beforeSun:await sunOpacity()};
-// 42번은 세 단계(3D 설계도)다. 40 → 41 → 42·0 → 42·1 → 42·2 → 43
-for(let i=0;i<5;i++){await page.keyboard.press('ArrowRight');await page.waitForTimeout(i===2?1200:500);if(i===2)report.finale.blueprint=await page.evaluate(()=>!!document.querySelector('.fb3-canvas[data-ready]')&&document.querySelector('.fn-sky')===window.__finaleSky)}
+report.finale.bridge=await page.waitForSelector('.ls-canvas[data-ready]',{timeout:10000}).then(()=>true,()=>false);
+// 41번은 두 단계(이음새 → 세 겹)다. 41·0 → 41·1 → 42 → 43·0 → 43·1 → 43·2 → 44
+for(let i=0;i<6;i++){await page.keyboard.press('ArrowRight');await page.waitForTimeout(i===3?1200:500);if(i===3)report.finale.blueprint=await page.evaluate(()=>!!document.querySelector('.fb3-canvas[data-ready]')&&document.querySelector('.fn-sky')===window.__finaleSky)}
 await page.waitForTimeout(2900);
 Object.assign(report.finale,{same:await page.evaluate(()=>document.querySelector('.fn-sky')===window.__finaleSky),afterSun:await sunOpacity(),choices:await page.locator('.kn-slide .rb-true-focus__item').count()});
-const finaleOk=report.finale.same&&report.finale.blueprint&&report.finale.beforeSun===0&&report.finale.afterSun>.99&&report.finale.choices===2;
-// Incident reconstruction (9~11): one 3D space across three slides. Every beat must render its
+const finaleOk=report.finale.same&&report.finale.bridge&&report.finale.blueprint&&report.finale.beforeSun===0&&report.finale.afterSun>.99&&report.finale.choices===2;
+// Incident reconstruction (10~12): one 3D space across three slides. Every beat must render its
 // phase, keep projected labels on screen and clear of the heading/narration, and reverse cleanly.
 // 첫 장면은 3.2초의 도입 카메라가 끝나야 라벨이 나타난다(world.ts).
 await go(slideNumber('story-rooms'));await page.waitForTimeout(3600);

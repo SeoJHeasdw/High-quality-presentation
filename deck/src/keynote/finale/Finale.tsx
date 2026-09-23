@@ -1,5 +1,6 @@
 import { useContext, type CSSProperties, type ReactNode } from "react";
 import { Frame, SlidePosition } from "../KeynoteFrame";
+import { LeashCopy, LeashLayer } from "../leash/Leash";
 import ClosingChoices from "../ClosingChoices";
 import Blueprint3D from "./Blueprint3D";
 import "./finale.css";
@@ -8,6 +9,8 @@ import "./finale.css";
  * 41~44번 · 새벽. 14번의 밤, 36~39번의 새벽 2시 47분 뒤에 같은 집이 푸른 새벽(41~43)을 지나 해 뜨는 아침(44)이 된다.
  * 배경은 13번 Blender 장면의 마지막 구도를 시간대만 바꿔 다시 렌더한 것(tools/render-house-scroll.py --time).
  * 네 장이 한 묶음(finale)이라 배경은 다시 그리지 않고 밝아진다.
+ * 40번(신에게 목줄)도 이 묶음의 첫 장이다(part -1). 40번의 3D 장면(leash/)이 41번 첫 단계까지 같은 캔버스로 이어져,
+ * 입자 몸과 목줄이 풀려 집이 되고 그 집이 새벽 사진이 된다. 장이 바뀌어도 화면이 깜빡이지 않는다.
  * 판단·실패 기록은 local-tts-engine/docs/DECISIONS.md의 실제 기록이다.
  */
 
@@ -115,21 +118,30 @@ const HEAD: { name: string; kicker: string; title: ReactNode; lead: string }[] =
   { name: "팀과 나누고 싶은 질문", kicker: "팀과 나누고 싶은 질문", title: <>내 일 하나를 맡겨본다면,<br/>무엇부터 바꿔볼 수 있을까요?</>, lead: "" },
 ];
 
-export default function FinaleStory({ part, step = 0 }: { part: 0 | 1 | 2 | 3; step?: number }) {
-  const head = part === 2 ? { ...HEAD[2], ...UNFINISHED[Math.min(2, step)] } : HEAD[part];
-  return <Frame n={40 + part} name={head.name} className={`finale finale--${part}${part === 3 ? " kn-closing" : ""}`}>
+/** 41-0 · 40번에서 넘어오는 이음새의 제목 */
+const BRIDGE = { name: "30년 동안 쌓을 것", kicker: "제가 할 수 있는 것", title: <>목줄이 걸릴지는 모릅니다.<br/>제가 할 수 있는 건<br/><em>제 집</em>을 짓는 일입니다</>, lead: "비싼 신은 꼭 필요할 때만 부르고요." };
+
+/** part -1은 40번(신에게 목줄), 0~3은 41~44번. 다섯 장이 같은 틀을 이어 쓰도록 자식의 자리를 맞춘다. */
+export default function FinaleStory({ part, step = 0 }: { part: -1 | 0 | 1 | 2 | 3; step?: number }) {
+  const leash = part === -1, bridge = part === 0 && step === 0;
+  const head = leash ? null : bridge ? BRIDGE : part === 2 ? { ...HEAD[2], ...UNFINISHED[Math.min(2, step)] } : HEAD[part];
+  // 40·41번의 3D 단계: 40번 -1~1, 41번 2~3
+  const phase = leash ? step - 1 : 2 + step;
+  const className = leash ? "personal-v2 leash finale-pre" : `finale finale--${part}${bridge ? " finale--bridge" : ""}${part === 3 ? " kn-closing" : ""}`;
+  return <Frame n={41 + part} name={head?.name ?? "신에게 목줄"} step={step} className={className}>
     <div className="fn-sky" aria-hidden="true">
       <img className="fn-plate fn-plate--blue" src="/house-dawn/blue.jpg" alt=""/>
       <img className="fn-plate fn-plate--sun" src="/house-dawn/sunrise.jpg" alt=""/>
       <div className="fn-tint"/>
       <div className="fn-shade"/>
     </div>
-    <div className="fn-head" key={`h${part}-${part === 2 ? step : 0}`}>
+    {part <= 0 && <LeashLayer phase={phase}/>}
+    {head ? <div className="fn-head" key={`h${part}-${part === 0 || part === 2 ? step : 0}`}>
       <p className="fn-kicker">{head.kicker}</p>
       <h1>{head.title}</h1>
       {head.lead && <p className="fn-lead">{head.lead}</p>}
-    </div>
-    {part === 0 && <Strata/>}
+    </div> : <LeashCopy step={step}/>}
+    {part === 0 && step === 1 && <Strata/>}
     {part === 1 && <OpenLog/>}
     {part === 2 && <><Blueprint3D step={step} fallback={<Blueprint/>}/><p className="fn-legend"><span><i/>실선 · 만든 방</span><span><i data-dash/>점선 · 구상·가정</span></p></>}
     {part === 3 && <>
