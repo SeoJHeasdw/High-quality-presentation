@@ -63,8 +63,20 @@ Blender 원본 렌더 도구는 `tools/render-factory-film.py`, 배포용 영상
 33번에서는 다른 경로로 확인하는 질문으로 마무리하고, 기존 결론으로 돌아간다.
 배경 이미지의 생성 기록은 `../docs/abuse-art.md`에 있다.
 
-2번은 중앙의 고양이 사진이 왼쪽으로 이동·축소된다. 3번에서는 강의 제작 요청을 보여주고, 다음 단계에서 실제 강의 영상 캡처를 공개한다. 사진 DOM은 돌아갈 때를 위해 유지한다.
-8번은 두 번 더 눌러 판매처 선택과 가격 전략 질문을 공개한다.
+2~3번은 three.js 공간 하나를 두 장 동안 유지한다(`src/keynote/opening/`). 사진이 어둠 속에 떠 있다가(2-0), 주사선이 지나가며 화소의 부조로 바뀌고
+왼쪽으로 물러나며, 얼굴 쪽 화소가 흘러가 금색 입자의 "고양이"가 된다(2-1). 3번에서는 부조와 단어가 흩어지고 요청 문장이 한 글자씩 적히며(3-0),
+빛이 화면의 테두리로 모인 자리에 실제 강의 영상이 소리 없이 재생되고 아래에 제 목소리의 파형이 재생 위치를 따라 채워진다(3-1).
+7~8번은 three.js 공간 하나를 두 장 동안 유지한다(`src/keynote/agent-web/`). 판매처 화면 앞의 "나는 로봇이 아닙니다"(7-0) → 화면 뒤에서 사이트가 내놓은 기능(WebMCP)을
+에이전트가 부른다(7-1) → 같은 화면이 판매처 A가 되고 B와 광고판이 선다(8-0) → 에이전트가 화면 대신 조건을 읽고 B를 고른다(8-1) → A의 광고판이 가격표로 흘러내린다(8-2, 발표자의 가설).
+13번은 12번이 멈춘 마지막 이미지(불 켜진 집)에서 이어지고, 아래에 2026~2056년의 30년 눈금을 긋는다. 2031년 눈금은 4번의 질문을 다시 가리킨다.
+14번은 실제 강의 24초의 제작 기록이다. 대본 문장·제 목소리 파형·단어 단위 자막·영상 프레임을 같은 시간축에 놓고, 오른쪽 위 영상의 재생 위치를 재생 헤드가 따라간다.
+값은 local-tts-engine의 타임라인에서 뽑은 `src/keynote/data/tts-alignment.json`을 쓴다. M에서는 2.4초('AI가') 지점에 멈춘 화면을 보여준다.
+15~16번은 three.js 공간 하나를 두 장 동안 유지한다(`src/keynote/personal/world.ts`). 많은 사용자의 점이 가라앉고 금색 점(저) 하나가 남는다(15-0) →
+조건의 고리가 느슨해지고 요구사항 표가 "사용자가 저 한 명일 때"로 옮겨간다. 원본과 작업 기록만 잠겨 있다(15-1) → 카메라가 물러나며 저 → Agent OS(구상, 점선) →
+Factory(개발 중) → 강의 영상 → 저의 고리가 차례로 켜지고, 마지막에 "이 페이지 발음만 다시" 요청이 TTS로 되돌아간다(16-0~2).
+17번은 18번 Blender 갤러리와 같은 배치(가운데 01 VOICE, 왼쪽 02 IMAGE, 오른쪽 03 MUSIC)의 전시 공간이다. 카드의 기울기·확대 보기는 그대로 쓴다.
+세 공간 모두 앞으로 넘길 때만 움직임을 재생하고, ←와 번호 이동은 그 단계의 마지막 상태를 보여준다. M 또는 모션 줄이기 설정에서도 마지막 상태를 표시한다.
+WebGL을 쓸 수 없으면 같은 내용을 평면으로 보여준다. 공통 렌더 틀은 `src/keynote/stage3d/runtime.ts`에 있다.
 9~11번은 three.js로 만든 사건 재구성 공간 하나를 세 장 동안 유지한다. →를 누를 때마다 카메라가 이동하며 격리된 실행 4개, 공용 서버, 방화벽, 게시판, 외부 인터넷, Hugging Face 침해를 차례로 보여준다.
 앞으로 갈 때만 해당 단계의 움직임(연결 시도, 메모 이동, 게시판 재구성, 외부 연결)이 재생되고, ←는 이전 단계의 마지막 상태로 돌아간다. 아래 타임라인은 5월 초기 훈련과 7월 보안 평가를 서로 다른 구간으로 표시한다.
 M 또는 모션 줄이기 설정에서는 각 단계의 마지막 상태를 바로 표시한다. WebGL을 쓸 수 없으면 기존 2D 도해(`IncidentDiagram.tsx`)를 표시한다.
@@ -91,11 +103,17 @@ M 또는 모션 줄이기 설정에서는 정지 지점 이미지만 보여주�
 
 - 순서와 본문: `src/keynote/KeynoteDeck.tsx`
 - 새 사례: `src/keynote/Stories.tsx`, `stories.css`
-- PPT 디자인과 진행 장면: `presentation.css`, `CatScene.tsx`, `PriceComparison.tsx`, `IncidentDiagram.tsx`(9~11번 WebGL 대체 화면)
+- PPT 디자인과 진행 장면: `presentation.css`, `IncidentDiagram.tsx`(9~11번 WebGL 대체 화면)
+- 2~3번 공간: `src/keynote/CatScene.tsx`(글·요청·영상), `opening/world.ts`(사진·부조·입자), `opening/LectureWave.tsx`, `opening/opening.css`
+- 7~8번 공간: `src/keynote/agent-web/AgentWeb.tsx`(제목·설명·라벨), `agent-web/world.ts`(판매처·도구·광고판·카메라 샷), `agent-web.css`
+- 13·14번: `src/keynote/personal/PersonalIntro.tsx`, `ProductionTimeline.tsx`, `personal.css`, 제작 기록 `src/keynote/data/tts-alignment.json`, 프레임 띠 `public/demos/tts-strip.jpg`
+- 15~16번 공간: `src/keynote/personal/OneUser.tsx`(요구사항 표·라벨), `personal/world.ts`
+- 17번 전시 공간: `src/keynote/PersonalSlides.tsx`, `personal/personal.css`, `EnginePreview.tsx`
+- 세 공간의 공통 렌더 틀(bloom·MSAA·단계 시계·샷 맞춤): `src/keynote/stage3d/runtime.ts`
 - 9~11번 사건 재구성 공간: `src/keynote/incident/world.ts`(장면·카메라 샷), `IncidentWorld.tsx`(라벨), `incident.css`
 - 12번 스크롤 페이지: `src/keynote/next-market/NextMarket.tsx`(글·스크롤·단계 동기화), `film.ts`(영상 좌표와 스크럽), `pulses.ts`(판단의 빛), `next-market.css`
 - 12번 영상: `tools/render-house-scroll.py`(Blender 장면·카메라·라벨 좌표, `--mode layout`으로 글 단과 겹치는지 확인), `tools/encode-house-scroll.sh`(MP4와 정지 지점 이미지), 결과는 `public/house-scroll/`
-- 1~17번 리뷰 반영: `opening-revision.css`, `story-revision.css`, `PersonalSlides.tsx`, `personal-slides.css`
+- 4~6·9~11번 리뷰 반영: `opening-revision.css`, `story-revision.css`
 - 실제 미디어 재생: `src/keynote/DemoPlayer.tsx`
 - 공통 프레임과 번호: `src/keynote/KeynoteFrame.tsx`
 - Factory 촬영·재생: `tools/render-factory-film.py`, `src/keynote/FactoryFilm.tsx`, `EngineSequence.tsx`, `factory-film.css`, `factory-artifacts.css`

@@ -24,37 +24,6 @@
 .story-bots-revision .request-share-question h2 { font-size: 48px; font-weight: 520; line-height: 1.35; }
 .story-bots-revision .story-scope { position: absolute; bottom: 46px; left: 0; color: #97a8b6; font-size: 21px; line-height: 1.45; }
 
-/* Show the familiar human check beside the site's explicit agent interface. */
-.story-web-revision .web-access-comparison { position: absolute; top: 257px; left: 0; right: 0; display: grid; grid-template-columns: 745px 1fr; gap: 100px; }
-.story-web-revision .access-label { display: block; font-size: 28px; color: #d7bf93; margin-bottom: 39px; }
-.story-web-revision .captcha-example { width: 655px; max-width: none; height: 125px; padding: 30px; margin: 0; background: transparent; border-color: #6c7c88; gap: 27px; }
-.story-web-revision .captcha-example i { width: 55px; height: 55px; color: #ddbd84; border-color: #8c928f; }
-.story-web-revision .captcha-example b { font-size: 36px; color: #e1e4e6; }
-.story-web-revision .web-agent-access { border-left: 1px solid #394b59; padding-left: 82px; min-height: 380px; }
-.story-web-revision .web-agent-access .access-label { color: #8bc9f3; margin-bottom: 25px; }
-.story-web-revision .web-agent-access h2 { font-size: 85px; font-weight: 570; color: #a7d8f8; line-height: 1.1; letter-spacing: -.045em; }
-.story-web-revision .web-agent-access > p { color: #d4dde3; font-size: 37px; line-height: 1.5; margin-top: 29px; }
-.story-web-revision .web-aside { border-top: 1px solid #34434e; padding-top: 22px; margin-top: 42px; display: flex; gap: 26px; align-items: baseline; }
-.story-web-revision .web-aside strong { color: #b9d9ed; font-size: 28px; font-weight: 520; }
-.story-web-revision .web-aside span { color: #a4b2bd; font-size: 24px; }
-.story-web-revision .secondary-source { font-size: 18px; color: #91a9bc; }
-
-/* The common conditions are stated once; the price difference carries the comparison. */
-.story-price-revision .price-request { position: absolute; top: 183px; left: 0; }
-.story-price-revision .price-request p { font-size: 38px; color: #e0c99f; line-height: 1.4; }
-.story-price-revision .price-offers { position: absolute; top: 304px; left: 0; right: 0; }
-.story-price-revision .price-common { font-size: 25px; color: #a7b5bf; padding-bottom: 25px; border-bottom: 1px solid #4d5b66; }
-.story-price-revision .price-offers table { width: 100%; table-layout: fixed; border-collapse: collapse; text-align: left; font-variant-numeric: tabular-nums; }
-.story-price-revision .price-offers th { color: #b7c3cb; font-size: 30px; font-weight: 450; padding-top: 31px; }
-.story-price-revision .price-offers td { font-size: 91px; font-weight: 540; line-height: 1.1; letter-spacing: -.035em; padding-top: 20px; color: #e6e8e8; }
-.story-price-revision .price-offers th:last-child,.story-price-revision .price-offers td:last-child { padding-left: 80px; }
-.story-price-revision .price-offers td small { font-size: 32px; color: #a3b0ba; font-weight: 400; margin-left: 13px; }
-.story-price-revision .price-offers[data-cue="1"] td:last-child,.story-price-revision .price-offers[data-cue="2"] td:last-child { color: #9ed5fa; }
-.story-price-revision .price-choice { position: absolute; left: 940px; top: 263px; font-size: 31px; color: #9ed5fa; font-weight: 550; }
-.story-price-revision .price-choice span { color: #d2dbe0; font-weight: 430; }
-.story-price-revision .price-hypothesis { position: absolute; left: 0; top: 655px; }
-.story-price-revision .price-hypothesis h2 { font-size: 41px; font-weight: 500; line-height: 1.4; color: #e3c998; }
-
 /* Existing geometry and port positions are unchanged throughout the incident. */
 .kn-slide.story-incident-revision .story-heading h1 { font-size: 68px; }
 .story-incident-revision .story-heading > p { color: #d3bb91; }

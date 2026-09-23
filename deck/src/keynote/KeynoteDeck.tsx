@@ -1,19 +1,20 @@
 import type { DeckModule } from "../components/deck-kit";
 import { Frame, Briefing, Reveal, Rows, SlidePosition } from "./KeynoteFrame";
 import EngineSequence from "./EngineSequence";
-import { CatStory, BroodStory, BotStory, WebDoorStory, PriceStory, IncidentStory } from "./Stories";
+import { CatStory, BroodStory, BotStory, IncidentStory } from "./Stories";
+import AgentWebStory from "./agent-web/AgentWeb";
+import OneUserStory from "./personal/OneUser";
 import NextMarket from "./next-market/NextMarket";
 import DemoPlayer from "./DemoPlayer";
 import { ABUSE_SLIDES } from "./AbuseSlides";
 import { FutureSurface } from "./PerformanceScenes";
 import ClosingChoices from "./ClosingChoices";
-import { PersonalIntro, PersonalCompute, PersonalRequirements, PersonalSystem, PersonalEngines } from "./PersonalSlides";
+import { PersonalIntro, PersonalCompute, PersonalEngines } from "./PersonalSlides";
 import "./keynote.css";
 import "./stories.css";
 import "./presentation.css";
 import "./opening-revision.css";
 import "./story-revision.css";
-import "./personal-slides.css";
 import "./factory-artifacts.css";
 
 const OriginalDeck: DeckModule = {
@@ -33,11 +34,9 @@ const OriginalDeck: DeckModule = {
    <div className="brief-columns"><Reveal><span className="column-label">업무에서 보는 변화</span><h2>기업에 미치는 영향<br/>기술과 산업의 방향</h2><p>우리 팀이 계속 살피고 있는 문제입니다.</p></Reveal><Reveal order={1} on={step>=1}><span className="column-label">제가 직접 바꿔볼 것</span><h2>시간을 쓰는 방식<br/>혼자 만들 수 있는 범위</h2><p>그래서 제 일을 하나씩 맡겨보기 시작했습니다.</p></Reveal></div>
   </Briefing>},
   {id:"manifesto-compute",scriptKey:"manifesto-compute",render:()=> <PersonalCompute/>},
-  {id:"manifesto-requirements",scriptKey:"manifesto-requirements",steps:1,render:({step})=> <PersonalRequirements step={step}/>},
   {id:"manifesto-possible",scriptKey:"manifesto-possible",render:()=> <Briefing n={8} name="실제로 달라진 점" title="생각을 도구로 만드는 일이 가까워졌습니다" lead="에이전트와 함께 만들고, 직접 써보고, 필요한 부분을 고칩니다.">
    <Rows items={[["시작","혼자 구현할 양 때문에 미루던 일을 작게 만들어봅니다."],["사용","제 작업에 넣어보면 필요한 것이 더 구체적으로 보입니다."],["수정","불편한 부분을 설명하고, 고친 결과를 다시 확인합니다."]]}/>
   </Briefing>},
-  {id:"manifesto-system",scriptKey:"manifesto-system",steps:2,render:({step})=> <PersonalSystem step={step}/>},
   {id:"manifesto-day",scriptKey:"manifesto-day",render:()=> <Briefing n={10} name="제 생활에 대입하면" title="만들고 싶은 것은 구체적입니다" lead="직업 밖에서도 제 아이디어를 결과물로 만들어보고 싶습니다.">
    <Rows items={[["강의 한 편","제 대본을 제 목소리로 읽고, 자막과 화면을 붙입니다."],["게임과 콘텐츠","필요한 이미지와 3D 소품을 직접 만들고 고칩니다."],["음악 한 곡","가사와 방향을 주고, 후보를 들으며 마음에 드는 곡을 고릅니다."]]}/>
   </Briefing>},
@@ -72,14 +71,14 @@ const ordered = [
  byId("manifesto-unknown"),
  {id:"story-brood",scriptKey:"story-brood",steps:1,render:({step})=><BroodStory step={step}/>},
  {id:"story-bots",scriptKey:"story-bots",steps:1,render:({step})=><BotStory step={step}/>},
- {id:"story-web-door",scriptKey:"story-web-door",steps:1,render:({step})=><WebDoorStory step={step}/>},
- {id:"story-price",scriptKey:"story-price",steps:2,render:({step})=><PriceStory step={step}/>},
+ {id:"story-web-door",scriptKey:"story-web-door",steps:1,group:"agent-web",render:({step})=><AgentWebStory part={0} step={step}/>},
+ {id:"story-price",scriptKey:"story-price",steps:2,group:"agent-web",render:({step})=><AgentWebStory part={1} step={step}/>},
  ...["story-rooms","story-board","story-boundary"].map((id,part)=>({id,scriptKey:id,steps:1,group:"incident-rooms",render:({step})=><IncidentStory part={part} step={step}/>})),
  {id:"story-next-market",scriptKey:"story-next-market",steps:7,render:({step})=><NextMarket step={step}/>},
  byId("manifesto-person"),
  byId("manifesto-compute"),
- byId("manifesto-requirements"),
- byId("manifesto-system"),
+ {id:"manifesto-requirements",scriptKey:"manifesto-requirements",steps:1,group:"one-user",render:({step})=><OneUserStory part={0} step={step}/>},
+ {id:"manifesto-system",scriptKey:"manifesto-system",steps:2,group:"one-user",render:({step})=><OneUserStory part={1} step={step}/>},
  byId("factory-repositories"),
  ...OriginalDeck.slides.filter(slide=>slide.group==="factory-flight"),
  ...(["tts","assets","music"] as const).map(kind=>({id:`demo-${kind}`,scriptKey:`demo-${kind}`,render:()=> <DemoPlayer kind={kind}/>})),

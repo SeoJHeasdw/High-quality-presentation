@@ -1,0 +1,51 @@
+/* 7~8 · 에이전트가 쓰는 웹. 공간과 라벨은 9~11번(incident.css)의 규칙을 그대로 쓴다. */
+.story-agent-web { background: #060a11; }
+.story-agent-web .kn-body { z-index: 2; }
+.story-agent-web .kn-chrome, .story-agent-web .kn-footer { z-index: 6; }
+.aw-shade {
+  background:
+    radial-gradient(ellipse 1100px 420px at 0% 0%, #060a11f0 30%, #060a11a8 60%, #060a1100 100%),
+    linear-gradient(180deg, #060a1100 70%, #060a11b0 84%, #060a11f0 100%) !important;
+}
+.iw-label[data-tone="gold"] { --tone: #ffd49a; --tone-dim: #ffd49a66; }
+.iw-label[data-tone="gold"] strong { font-size: 30px; color: #fff3dc; }
+
+.aw-heading { position: absolute; left: 0; top: 0; z-index: 3; max-width: 1150px; animation: i3-heading-in .9s cubic-bezier(.16,1,.3,1) both; }
+.aw-heading > p { display: flex; align-items: center; gap: 16px; font-size: 23px; font-weight: 520; color: #e2c795; letter-spacing: -.005em; margin: 0 0 20px; }
+.aw-heading > p::before { content: ""; width: 34px; height: 1px; background: #e2c795; opacity: .8; }
+.story-agent-web .aw-heading h1 { font-size: 68px; line-height: 1.2; font-weight: 650; letter-spacing: -.045em; text-shadow: 0 2px 30px #060a11; }
+
+/* 8번 · 구매 요청. 3번의 요청 입력과 같은 모양 */
+.aw-request { position: absolute; left: 0; top: 172px; z-index: 3; display: inline-flex; align-items: center; gap: 18px; padding: 16px 28px 16px 22px; border-radius: 20px;
+  font-size: 30px; font-weight: 540; letter-spacing: -.03em; color: #f3efe4;
+  background: linear-gradient(180deg, #111c28e0, #0a121ce0); border: 1px solid #a8cbe53a; box-shadow: 0 24px 60px #0009, inset 0 1px 0 #ffffff12; backdrop-filter: blur(8px);
+  animation: i3-line-in .8s cubic-bezier(.16,1,.3,1) .35s both; }
+.aw-request i { width: 12px; height: 12px; border-radius: 50%; background: #ffd899; box-shadow: 0 0 0 5px #ffd89924, 0 0 18px #ffcf7f; }
+
+/* 설명 한 줄: 왼쪽 아래 */
+.story-agent-web .aw-narrative { position: absolute; left: 0; bottom: 36px; margin: 0; z-index: 3; max-width: 1180px; padding-left: 22px; border-left: 3px solid #e2c795;
+  font-size: 32px; line-height: 1.45; color: #e3e9ee; letter-spacing: -.025em; text-shadow: 0 2px 18px #060a11; animation: i3-line-in .8s cubic-bezier(.16,1,.3,1) .3s both; display: flex; align-items: center; gap: 18px; }
+.story-agent-web .aw-narrative[data-phase="1"] { border-left-color: #8fd0ff; }
+.story-agent-web .aw-narrative[data-phase="4"] { font-size: 38px; color: #ffe3b8; font-weight: 560; }
+.aw-tag { flex: none; font-size: 16px; letter-spacing: .08em; font-weight: 600; color: #ffc27a; padding: 6px 11px 5px; border: 1px solid #ffc27a66; border-radius: 6px; background: #1d140ab0; }
+.story-agent-web .aw-aside { position: absolute; right: 0; bottom: 44px; margin: 0; z-index: 3; display: flex; align-items: baseline; gap: 16px; font-size: 21px; color: #9fb3c3; letter-spacing: -.015em; animation: i3-line-in .8s cubic-bezier(.16,1,.3,1) 3.6s both; }
+.story-agent-web .aw-aside b { font-size: 25px; color: #bfe6ff; font-weight: 620; }
+
+/* 출처: 오른쪽 아래. 위쪽은 공간의 라벨이 쓴다. */
+.story-agent-web .aw-source { top: auto; bottom: -6px; left: auto; right: 0; display: flex; gap: 22px; align-items: baseline; font-size: 16px; z-index: 4; }
+.story-agent-web .aw-source span { color: #7d91a1; }
+
+/* WebGL을 쓸 수 없을 때 */
+.aw-fallback { position: absolute; left: 0; right: 0; top: 330px; display: flex; gap: 60px; z-index: 2; }
+.aw-fb-card { flex: 1; padding: 34px 40px; border: 1px solid #3d5262; border-radius: 16px; background: #0d1823; }
+.aw-fb-card span { display: block; font-size: 24px; color: #9db0bd; margin-bottom: 14px; }
+.aw-fb-card b { font-size: 60px; font-weight: 600; color: #eef2f5; }
+.aw-fb-card em { display: block; margin-top: 16px; font-style: normal; font-size: 28px; color: #ffd49a; }
+.aw-fb-card.is-ice b { color: #a7d8f8; font-size: 40px; }
+.aw-fb-card[data-pick] { border-color: #ffd49a; }
+
+.deck-keynote[data-motion="off"] .story-agent-web .aw-heading,
+.deck-keynote[data-motion="off"] .story-agent-web .aw-narrative,
+.deck-keynote[data-motion="off"] .story-agent-web .aw-request,
+.deck-keynote[data-motion="off"] .story-agent-web .aw-aside { animation: none!important; }
+@media (prefers-reduced-motion: reduce) { .story-agent-web .aw-heading, .story-agent-web .aw-narrative, .story-agent-web .aw-request, .story-agent-web .aw-aside { animation: none!important; } }

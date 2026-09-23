@@ -68,86 +68,6 @@
 .kn-brief .brief-footnote { color: #94a3af; }
 .kn-brief .story-source a { border-bottom-color: #354554; }
 
-/* The picture is the anchor. Only an explicit navigation cue changes its place. */
-.cat-presentation .kn-body { inset: 162px 100px 125px; }
-.cat-scene { position: absolute; inset: 0; }
-.cat-scene-heading {
-  position: absolute;
-  inset: -5px 0 auto;
-  z-index: 3;
-  text-align: left;
-  animation: cat-copy-in .65s ease both;
-}
-.cat-scene-heading p {
-  color: #b9b6ab;
-  font-size: 22px;
-  margin-bottom: 17px;
-  letter-spacing: .005em;
-}
-.cat-scene-heading h1 {
-  font-size: 74px;
-  line-height: 1.22;
-  font-weight: 610;
-  letter-spacing: -.038em;
-}
-.cat-scene[data-cue="0"] .cat-scene-heading { text-align: center; }
-.cat-scene[data-cue="0"] .cat-scene-heading h1 { font-size: 92px; }
-.cat-subject {
-  position: absolute;
-  left: 0;
-  top: 0;
-  width: 880px;
-  height: 605px;
-  overflow: hidden;
-  border-radius: 24px;
-  transform-origin: 0 0;
-  transform: translate(40px, 245px) scale(.72);
-  transition: transform 1.1s cubic-bezier(.22, 1, .36, 1);
-  will-change: transform;
-  box-shadow: 0 30px 80px #0003;
-}
-.cat-scene[data-cue="0"] .cat-subject {
-  transform: translate(420px, 155px) scale(1);
-}
-.cat-subject img { display: block; width: 100%; height: 100%; object-fit: cover; }
-.cat-conversation {
-  position: absolute;
-  left: 900px;
-  top: 244px;
-  width: 760px;
-  animation: cat-copy-in .65s ease both;
-  animation-delay: .48s;
-}
-.cat-context {
-  display: block;
-  font-size: 25px;
-  font-weight: 450;
-  color: #b8c2ca;
-  margin-bottom: 23px;
-}
-.cat-conversation h2 {
-  font-size: 75px;
-  font-weight: 550;
-  letter-spacing: -.04em;
-  line-height: 1.28;
-  color: #e9e8e1;
-}
-.cat-scene[data-cue="1"] .cat-conversation h2 { font-size: 132px; color: #e2c590; }
-.cat-conversation p {
-  margin-top: 34px;
-  font-size: 31px;
-  line-height: 1.6;
-  color: #acb8c1;
-}
-.cat-work-sequence { display: flex; gap: 27px; margin-top: 34px; }
-.cat-work-sequence span {
-  font-size: 28px;
-  color: #d8c9aa;
-  padding-top: 16px;
-  border-top: 2px solid #9c8763;
-  min-width: 115px;
-  animation: cat-copy-in .6s ease both;
-}
 @keyframes cat-copy-in {
   from { opacity: 0; transform: translateY(16px); }
   to { opacity: 1; transform: none; }
@@ -288,13 +208,11 @@
 @keyframes incident-current { from { stroke-dashoffset: 380; } to { stroke-dashoffset: 0; } }
 @keyframes board-return { from { opacity: .15; transform: translateY(14px); } to { opacity: 1; transform: none; } }
 
-.deck-keynote[data-motion="off"] .cat-subject,
 .deck-keynote[data-motion="off"] .purchase-comparison *,
 .deck-keynote[data-motion="off"] .incident-map * { transition: none!important; }
-.deck-keynote[data-motion="off"] .cat-scene *,
 .deck-keynote[data-motion="off"] .purchase-comparison *,
 .deck-keynote[data-motion="off"] .incident-map *,
 .deck-keynote[data-motion="off"] .incident-narrative { animation: none!important; }
 @media (prefers-reduced-motion: reduce) {
-  .cat-scene *, .purchase-comparison *, .incident-map *, .incident-narrative { animation: none!important; transition: none!important; }
+  .purchase-comparison *, .incident-map *, .incident-narrative { animation: none!important; transition: none!important; }
 }

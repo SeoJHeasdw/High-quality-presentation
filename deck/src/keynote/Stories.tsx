@@ -1,12 +1,9 @@
 import { Frame, Briefing, Reveal } from "./KeynoteFrame";
 import CatScene from "./CatScene";
-import PriceComparison from "./PriceComparison";
 import IncidentWorld from "./incident/IncidentWorld";
 
 export const SOURCES={
  cloudflare:"https://blog.cloudflare.com/radar-2025-year-in-review/",
- webmcp:"https://developer.chrome.com/blog/webmcp-epp",
- aside:"https://aside.com/",
  brood:"https://bw.swerdlow.dev/report",
  incident:"https://openai.com/index/hugging-face-incident-and-the-road-ahead/",
  incidentReport:"https://cdn.openai.com/pdf/67869394-cb91-4c12-888c-5cbd85c7814c/OpenAI-Hugging-Face%20Incident-Technical-Report.pdf",
@@ -38,18 +35,7 @@ export function BotStory({step}:{step:number}){
  </Frame>;
 }
 
-export function WebDoorStory({step}:{step:number}){
- return <Frame n={7} name="에이전트가 쓰는 웹" step={step} className="story-edit story-web-revision">
-  <div className="story-heading"><p>웹사이트와 에이전트</p><h1>에이전트용 웹 기능이 생기고 있습니다</h1></div>
-  <div className="web-access-comparison">
-   <div className="web-human-check"><span className="access-label">사람인지 확인</span><div className="captcha-example"><i>✓</i><b>나는 로봇이 아닙니다</b></div></div>
-   <Reveal on={step>=1} className="web-agent-access"><span className="access-label">에이전트에게 기능 제공</span><h2>WebMCP</h2><p>사이트가 제공하는 기능을<br/>에이전트가 호출합니다.</p><div className="web-aside"><strong>Aside</strong><span>사람과 에이전트가 함께 쓰는 브라우저</span></div></Reveal>
-  </div>
-  <Source href={SOURCES.webmcp}>Chrome · WebMCP early preview · 2026.02.10</Source><a className="secondary-source" href={SOURCES.aside} target="_blank" rel="noreferrer">Aside 공식 소개 ↗</a>
- </Frame>;
-}
 
-export const PriceStory = PriceComparison;
 
 const INCIDENT=[
  ["에이전트들은 따로 과제를 풀고 있었습니다","2026년 5월 · 초기 훈련","외부 파일이 필요했지만 인터넷은 막혀 있었습니다."],

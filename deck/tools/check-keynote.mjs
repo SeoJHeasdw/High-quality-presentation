@@ -35,19 +35,32 @@ for(let n=1;n<=specs.length;n++){
  }
  const file=`slide-${String(n).padStart(2,'0')}.png`;await page.screenshot({path:path.join(out,file)});frames.push({file,label:await page.locator('.kn-slide').getAttribute('aria-label')});
 }
-// Verify lecturer-controlled image continuity, movement and reverse navigation.
-await go(slideNumber('story-cat'));await page.waitForTimeout(1300);
-await page.evaluate(()=>{window.__cat=document.querySelector('.cat-subject img');window.__catStart=document.querySelector('.cat-subject').getBoundingClientRect().toJSON()});
-await page.keyboard.press('ArrowRight');await page.waitForTimeout(350);
-const catMiddle=await page.locator('.cat-subject').evaluate(el=>el.getBoundingClientRect().toJSON());
-await page.screenshot({path:path.join(out,'cat-midpoint.png')});
-await page.waitForTimeout(1000);
-report.cat=await page.evaluate(mid=>{const end=document.querySelector('.cat-subject').getBoundingClientRect(),start=window.__catStart;return{sameImage:document.querySelector('.cat-subject img')===window.__cat,movesLeft:end.x<start.x-200,shrinks:end.width<start.width*.8,interpolates:mid.x> end.x+1&&mid.x<start.x-1}},catMiddle);
-await page.keyboard.press('ArrowRight');await page.keyboard.press('ArrowRight');await page.waitForTimeout(1300);
-report.cat.nextSlideSameImage=await page.evaluate(()=>document.querySelector('.cat-subject img')===window.__cat);
-report.cat.singleHeading=await page.locator('.cat-scene-heading').count()===1;
+// 2~3 · 사진에서 강의 영상까지: 하나의 3D 공간이 두 장 동안 유지되고, 네 큐를 앞뒤로 오가며, 마지막 큐에서 실제 영상이 재생된다.
+await go(slideNumber('story-cat'));await page.waitForSelector('.op-canvas[data-ready]',{timeout:10000});await page.waitForTimeout(600);
+await page.evaluate(()=>{window.__opening=document.querySelector('.op-canvas')});
+const cue=()=>page.evaluate(()=>Number(document.querySelector('.op').dataset.cue));
+report.cat={start:await cue()===0};
+await page.keyboard.press('ArrowRight');await page.waitForTimeout(700);await page.screenshot({path:path.join(out,'cat-midpoint.png')});
+await page.waitForTimeout(5200);report.cat.word=await cue()===1;
+await page.keyboard.press('ArrowRight');await page.waitForTimeout(2600);
+report.cat.nextSlideSameSpace=await page.evaluate(()=>document.querySelector('.op-canvas')===window.__opening);
+report.cat.request=await cue()===2&&await page.locator('.op-request[data-on]').count()===1;
+await page.keyboard.press('ArrowRight');await page.waitForTimeout(3200);
+report.cat.lecturePlays=await page.evaluate(()=>{const v=document.querySelector('.op-screen video');return !!v&&!v.paused&&v.muted&&v.currentTime>0});
+report.cat.singleHeading=await page.locator('.op-heading').count()===1;
 for(let i=0;i<3;i++)await page.keyboard.press('ArrowLeft');await page.waitForTimeout(1300);
-report.cat.reverse=await page.evaluate(()=>Math.abs(document.querySelector('.cat-subject').getBoundingClientRect().x-window.__catStart.x)<1);
+report.cat.reverse=await cue()===0&&await page.evaluate(()=>document.querySelector('.op-canvas')===window.__opening&&document.querySelector('.op-screen video').paused);
+// 7~8, 15~16 · 묶인 3D 공간: 장이 바뀌어도 같은 캔버스가 이어지고, 모든 단계가 그려지며, 뒤로 가면 처음 단계로 돌아온다.
+report.groups={};
+for(const [name,first,beats] of [['agentWeb','story-web-door',5],['oneUser','manifesto-requirements',5]]){
+ await go(slideNumber(first));await page.waitForSelector('.iw-canvas[data-ready]',{timeout:10000});await page.waitForTimeout(400);
+ await page.evaluate(()=>{window.__groupCanvas=document.querySelector('.iw-canvas')});
+ const phases=[];for(let i=0;i<beats;i++){if(i){await page.keyboard.press('ArrowRight');await page.waitForTimeout(1800)}phases.push(await page.evaluate(()=>Number(document.querySelector('.iw').dataset.phase)))}
+ const same=await page.evaluate(()=>document.querySelector('.iw-canvas')===window.__groupCanvas);
+ for(let i=1;i<beats;i++)await page.keyboard.press('ArrowLeft');await page.waitForTimeout(900);
+ report.groups[name]={phases:phases.join(','),same,reverse:await page.evaluate(()=>Number(document.querySelector('.iw').dataset.phase))===0,fallback:await page.locator('.iw[data-fallback]').count()===0};
+}
+const groupsOk=Object.values(report.groups).every(g=>g.phases==='0,1,2,3,4'&&g.same&&g.reverse&&g.fallback);
 // Incident reconstruction (9~11): one 3D space across three slides. Every beat must render its
 // phase, keep projected labels on screen and clear of the heading/narration, and reverse cleanly.
 // 첫 장면은 3.2초의 도입 카메라가 끝나야 라벨이 나타난다(world.ts).
@@ -134,4 +147,4 @@ for(const id of ['demo-tts','demo-assets','demo-music']){
 const images=await Promise.all(frames.map(async f=>({...f,data:(await fs.readFile(path.join(out,f.file))).toString('base64')})));
 await page.setViewportSize({width:1920,height:1900});await page.setContent(`<body style="margin:0;background:#15191c;color:#ccc;font:15px sans-serif"><div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;padding:18px">${images.map(x=>`<div><img style="width:100%;display:block" src="data:image/png;base64,${x.data}"><p style="margin:8px 0 6px">${x.label}</p></div>`).join('')}</div></body>`);await page.screenshot({path:path.join(out,'contact-sheet.png'),fullPage:true});
 await fs.writeFile(path.join(out,'report.json'),JSON.stringify(report,null,2));console.log(JSON.stringify(report,null,2));await browser.close();
-if(!Object.values(report.cat).every(Boolean)||!incidentOk||!scrollOk||errors.length||external.length||scriptMissing.length||report.slides.some(s=>s.overflow.length||s.overlap.length||s.webgl?.fallback)||report.filmShots.length!==5||new Set(report.filmShots.map(s=>s.source)).size!==5||report.filmShots.some(s=>s.status!=='held'||!(s.duration>1)||!s.muted)||!Object.values(report.film).every(Boolean)||!report.fallback||report.media.some(m=>!m.playing||m.time<=0||!m.muted||!m.pausedByKey||!m.soundEnabled||!m.stoppedOnLeave))process.exitCode=1;
+if(!Object.values(report.cat).every(Boolean)||!groupsOk||!incidentOk||!scrollOk||errors.length||external.length||scriptMissing.length||report.slides.some(s=>s.overflow.length||s.overlap.length||s.webgl?.fallback)||report.filmShots.length!==5||new Set(report.filmShots.map(s=>s.source)).size!==5||report.filmShots.some(s=>s.status!=='held'||!(s.duration>1)||!s.muted)||!Object.values(report.film).every(Boolean)||!report.fallback||report.media.some(m=>!m.playing||m.time<=0||!m.muted||!m.pausedByKey||!m.soundEnabled||!m.stoppedOnLeave))process.exitCode=1;
