@@ -1,7 +1,7 @@
 import { Frame, Briefing, Reveal } from "./KeynoteFrame";
 import CatScene from "./CatScene";
 import PriceComparison from "./PriceComparison";
-import IncidentDiagram from "./IncidentDiagram";
+import IncidentWorld from "./incident/IncidentWorld";
 
 export const SOURCES={
  cloudflare:"https://blog.cloudflare.com/radar-2025-year-in-review/",
@@ -60,13 +60,22 @@ const INCIDENT=[
  ["게시판을 지워도, 새로 만들었습니다","7월 · 보안 평가 재개","별도로 진행되던 평가 실행들이 다시 게시판을 만들고 작업을 나눴습니다."],
  ["평가 중이던 AI가 실제 서비스를 침해했습니다","7월 · Hugging Face 침해","평가 과제를 풀던 행동이 제삼자 시스템에 대한 접근으로 이어졌습니다."],
 ];
+const TIMELINE:[string,string][]=[["5월","격리된 과제"],["5.8","파일 쓰기"],["5.12~","게시판"],["5.26","외부 연결"],["7월","게시판 재구성"],["7월","외부 서비스 침해"]];
+function IncidentTimeline({phase}:{phase:number}){
+ return <div className="i3-timeline" data-phase={phase}>
+  <div className="i3-era" data-on={phase<4||undefined}><span>초기 훈련</span></div>
+  <div className="i3-era i3-era--late" data-on={phase>=4||undefined}><span>보안 평가 재개</span></div>
+  <ol>{TIMELINE.map(([date,label],i)=><li key={i} data-state={i<phase?"past":i===phase?"now":"next"}><i/><b>{date}</b><span>{label}</span></li>)}</ol>
+ </div>;
+}
 export function IncidentStory({part,step}:{part:number;step:number}){
  const phase=part*2+step,[title,date,body]=INCIDENT[phase];
- return <Frame n={9+part} name="OpenAI 보안 사고" step={step} className="story-edit story-incident-revision">
-  <div className="story-heading"><p>{date}</p><h1>{title}</h1></div>
-  <IncidentDiagram phase={phase}/>
-  <p className="incident-narrative" key={phase}>{body}</p>
-  <Source href={part===0?SOURCES.incidentReport:SOURCES.incident}>OpenAI 조사 보고서 · 2026.08.26 · 여러 실행을 시간순으로 단순화한 도해</Source>
+ return <Frame n={9+part} name="OpenAI 보안 사고" step={step} className="story-edit story-incident-3d">
+  <IncidentWorld phase={phase}/>
+  <div className="i3-heading" key={`h${phase}`}><p><span className="i3-case">사건 재구성</span>{date}</p><h1>{title}</h1></div>
+  <p className="i3-narrative" key={`n${phase}`}>{body}</p>
+  <IncidentTimeline phase={phase}/>
+  <Source href={part===0?SOURCES.incidentReport:SOURCES.incident}>OpenAI 조사 보고서 · 2026.08.26 · 여러 실행을 시간순으로 단순화한 재구성</Source>
  </Frame>;
 }
 

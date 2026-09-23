@@ -48,13 +48,25 @@ report.cat.nextSlideSameImage=await page.evaluate(()=>document.querySelector('.c
 report.cat.singleHeading=await page.locator('.cat-scene-heading').count()===1;
 for(let i=0;i<3;i++)await page.keyboard.press('ArrowLeft');await page.waitForTimeout(1300);
 report.cat.reverse=await page.evaluate(()=>Math.abs(document.querySelector('.cat-subject').getBoundingClientRect().x-window.__catStart.x)<1);
-// Measure rendered connector endpoints against the actual HTML node ports.
-await go(slideNumber('story-board'));await page.waitForTimeout(1000);
-report.connections=await page.evaluate(()=>{
- const svg=document.querySelector('.incident-wiring'),paths=[...svg.querySelectorAll(':scope > g:not(.outside-wire) .wire-track')];
- const ports=[...document.querySelectorAll('.study-room-port')],board=document.querySelector('.shared-board').getBoundingClientRect();
- return paths.map((path,i)=>{const m=svg.getScreenCTM(),a=path.getPointAtLength(0).matrixTransform(m),b=path.getPointAtLength(path.getTotalLength()).matrixTransform(m),p=ports[i].getBoundingClientRect();return{roomError:Math.hypot(a.x-(p.x+p.width/2),a.y-(p.y+p.height/2)),boardError:Math.hypot(b.x-(board.x+board.width/2),b.y-board.y)}});
+// Incident reconstruction (9~11): one 3D space across three slides. Every beat must render its
+// phase, keep projected labels on screen and clear of the heading/narration, and reverse cleanly.
+await go(slideNumber('story-rooms'));await page.waitForTimeout(1500);
+const incidentBeat=()=>page.evaluate(()=>{
+ const c=document.querySelector('.iw-canvas'),box=r=>r&&r.getBoundingClientRect();
+ const text=[document.querySelector('.i3-heading h1'),document.querySelector('.i3-narrative')].map(box);
+ const hit=(a,b)=>Math.min(a.right,b.right)-Math.max(a.left,b.left)>4&&Math.min(a.bottom,b.bottom)-Math.max(a.top,b.top)>4;
+ const shown=Number(getComputedStyle(document.querySelector('.iw-labels')).opacity)>.5;
+ const labels=[...document.querySelectorAll('.iw-label[data-on] .iw-label-box')].filter(()=>shown).map(el=>({text:el.textContent,r:el.getBoundingClientRect()}));
+ return{phase:Number(c?.dataset.phase),frames:Number(c?.dataset.frames||0),labels:labels.length,
+  offscreen:labels.filter(l=>l.r.left<0||l.r.right>1920||l.r.top<0||l.r.bottom>1000).map(l=>l.text),
+  covers:labels.filter(l=>text.some(t=>t&&hit(l.r,t))).map(l=>l.text)};
 });
+report.incident=[];
+for(let i=0;i<6;i++){if(i){await page.keyboard.press('ArrowRight');await page.waitForTimeout(2900)}report.incident.push(await incidentBeat())}
+for(let i=0;i<5;i++){await page.keyboard.press('ArrowLeft');await page.waitForTimeout(400)}
+await page.waitForTimeout(2200);
+report.incidentReverse=await incidentBeat();
+const incidentOk=report.incident.every((b,i)=>b.phase===i&&b.frames>0&&b.labels>0&&!b.offscreen.length&&!b.covers.length)&&report.incidentReverse.phase===0;
 // Each authored film cue plays once, holds, and stays under presenter control.
 await go(factoryStart);await page.waitForSelector('.factory-film[data-status="held"]',{timeout:15000});
 await page.evaluate(()=>window.__film=document.querySelector('.factory-film'));
@@ -99,4 +111,4 @@ for(const id of ['demo-tts','demo-assets','demo-music']){
 const images=await Promise.all(frames.map(async f=>({...f,data:(await fs.readFile(path.join(out,f.file))).toString('base64')})));
 await page.setViewportSize({width:1920,height:1900});await page.setContent(`<body style="margin:0;background:#15191c;color:#ccc;font:15px sans-serif"><div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;padding:18px">${images.map(x=>`<div><img style="width:100%;display:block" src="data:image/png;base64,${x.data}"><p style="margin:8px 0 6px">${x.label}</p></div>`).join('')}</div></body>`);await page.screenshot({path:path.join(out,'contact-sheet.png'),fullPage:true});
 await fs.writeFile(path.join(out,'report.json'),JSON.stringify(report,null,2));console.log(JSON.stringify(report,null,2));await browser.close();
-if(!Object.values(report.cat).every(Boolean)||report.connections.some(c=>c.roomError>2||c.boardError>2)||errors.length||external.length||scriptMissing.length||report.slides.some(s=>s.overflow.length||s.overlap.length||s.webgl?.fallback)||report.filmShots.length!==5||new Set(report.filmShots.map(s=>s.source)).size!==5||report.filmShots.some(s=>s.status!=='held'||!(s.duration>1)||!s.muted)||!Object.values(report.film).every(Boolean)||!report.fallback||report.media.some(m=>!m.playing||m.time<=0||!m.muted||!m.pausedByKey||!m.soundEnabled||!m.stoppedOnLeave))process.exitCode=1;
+if(!Object.values(report.cat).every(Boolean)||!incidentOk||errors.length||external.length||scriptMissing.length||report.slides.some(s=>s.overflow.length||s.overlap.length||s.webgl?.fallback)||report.filmShots.length!==5||new Set(report.filmShots.map(s=>s.source)).size!==5||report.filmShots.some(s=>s.status!=='held'||!(s.duration>1)||!s.muted)||!Object.values(report.film).every(Boolean)||!report.fallback||report.media.some(m=>!m.playing||m.time<=0||!m.muted||!m.pausedByKey||!m.soundEnabled||!m.stoppedOnLeave))process.exitCode=1;

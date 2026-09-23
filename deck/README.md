@@ -65,7 +65,9 @@ Blender 원본 렌더 도구는 `tools/render-factory-film.py`, 배포용 영상
 
 2번은 중앙의 고양이 사진이 왼쪽으로 이동·축소된다. 3번에서는 강의 제작 요청을 보여주고, 다음 단계에서 실제 강의 영상 캡처를 공개한다. 사진 DOM은 돌아갈 때를 위해 유지한다.
 8번은 두 번 더 눌러 판매처 선택과 가격 전략 질문을 공개한다.
-9~11번은 같은 에이전트와 공유 서버 도해를 유지하며 사건의 순서를 보여준다.
+9~11번은 three.js로 만든 사건 재구성 공간 하나를 세 장 동안 유지한다. →를 누를 때마다 카메라가 이동하며 격리된 실행 4개, 공용 서버, 방화벽, 게시판, 외부 인터넷, Hugging Face 침해를 차례로 보여준다.
+앞으로 갈 때만 해당 단계의 움직임(연결 시도, 메모 이동, 게시판 재구성, 외부 연결)이 재생되고, ←는 이전 단계의 마지막 상태로 돌아간다. 아래 타임라인은 5월 초기 훈련과 7월 보안 평가를 서로 다른 구간으로 표시한다.
+M 또는 모션 줄이기 설정에서는 각 단계의 마지막 상태를 바로 표시한다. WebGL을 쓸 수 없으면 기존 2D 도해(`IncidentDiagram.tsx`)를 표시한다.
 
 ## 근거와 범위
 
@@ -81,7 +83,8 @@ Blender 원본 렌더 도구는 `tools/render-factory-film.py`, 배포용 영상
 
 - 순서와 본문: `src/keynote/KeynoteDeck.tsx`
 - 새 사례: `src/keynote/Stories.tsx`, `stories.css`
-- PPT 디자인과 진행 장면: `presentation.css`, `CatScene.tsx`, `PriceComparison.tsx`, `IncidentDiagram.tsx`
+- PPT 디자인과 진행 장면: `presentation.css`, `CatScene.tsx`, `PriceComparison.tsx`, `IncidentDiagram.tsx`(9~11번 WebGL 대체 화면)
+- 9~11번 사건 재구성 공간: `src/keynote/incident/world.ts`(장면·카메라 샷), `IncidentWorld.tsx`(라벨), `incident.css`
 - 1~17번 리뷰 반영: `opening-revision.css`, `story-revision.css`, `PersonalSlides.tsx`, `personal-slides.css`
 - 실제 미디어 재생: `src/keynote/DemoPlayer.tsx`
 - 공통 프레임과 번호: `src/keynote/KeynoteFrame.tsx`
