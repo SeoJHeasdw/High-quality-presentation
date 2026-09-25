@@ -48,6 +48,7 @@ function readHash(): Route {
 /* ── 슬라이드 창 ─────────────────────────────────────── */
 
 function DeckView({ id }: { id: DeckKey }) {
+  const [fullscreenHint, setFullscreenHint] = useState("");
   const mod = MODULES[id];
   const {
     index,
@@ -62,6 +63,21 @@ function DeckView({ id }: { id: DeckKey }) {
     jump,
   } = useDeckNav(mod.slides, id);
   const slide = mod.slides[index];
+
+  useEffect(() => {
+    let timeout: number | undefined;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key.toLowerCase() !== "f" || e.ctrlKey || e.metaKey || e.altKey) return;
+      setFullscreenHint(document.fullscreenElement ? "전체화면 종료" : "전체화면: F · 나가기: Esc");
+      window.clearTimeout(timeout);
+      timeout = window.setTimeout(() => setFullscreenHint(""), 2400);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      window.clearTimeout(timeout);
+    };
+  }, []);
 
   return (
     <>
@@ -109,6 +125,8 @@ function DeckView({ id }: { id: DeckKey }) {
         captionGuide={captionGuide}
         jump={jump}
       />
+
+      {fullscreenHint && <div className="fullscreen-hint" role="status">{fullscreenHint}</div>}
 
       {/* 숫자를 누르는 즉시 화면 한가운데 크게 뜬다. 하단 바를 숨기고(H)
           녹화 중일 때도 어디로 가는지 보여야 하므로 HUD 밖에 둔다. */}
@@ -206,8 +224,8 @@ function Hud({
       </button>
       <span className="hud__sep" />
       <span style={{ opacity: 0.6 }}>
-        <kbd>숫자</kbd>+<kbd>Enter</kbd> 이동 <kbd>H</kbd> 숨기기 <kbd>F</kbd>{" "}
-        전체화면
+        <kbd>숫자</kbd>+<kbd>Enter</kbd> 이동 <kbd>H</kbd> 조작 바{" "}
+        <kbd>F</kbd> 전체화면 <kbd>Esc</kbd> 종료
         {deckId === "course" && (
           <>
             {" "}<kbd>S</kbd> 자막영역
@@ -229,11 +247,11 @@ export default function App() {
     return () => window.removeEventListener("hashchange", onHash);
   }, []);
 
-  /* 전역 단축키는 F 전체화면 하나뿐이다.
-     숫자키는 "장표 번호 이동"에 쓴다 (deck-kit.tsx 의 useDeckNav). */
+  /* 전체화면은 F. H는 deck-kit.tsx에서 조작 바를 토글한다. */
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "f" || e.key === "F") {
+      if (e.key.toLowerCase() === "f" && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        e.preventDefault();
         if (document.fullscreenElement) document.exitFullscreen();
         else document.documentElement.requestFullscreen?.();
       }

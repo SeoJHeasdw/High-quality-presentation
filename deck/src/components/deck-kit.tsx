@@ -443,7 +443,7 @@ export function useDeckNav(slides: SlideDef[], deckId: string) {
 
         case "h":
         case "H": {
-          // 노트북(발표자 창)에서 눌러도 녹화되는 창의 HUD 가 같이 숨어야 한다
+          // H로 조작 바를 토글한다. 발표자 창에서도 녹화 화면과 상태를 맞춘다.
           e.preventDefault();
           setHudHidden((v) => {
             post({ type: "hud", hidden: !v });

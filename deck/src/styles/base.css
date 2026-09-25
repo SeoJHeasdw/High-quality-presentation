@@ -135,6 +135,29 @@ button {
   pointer-events: none;
 }
 
+.fullscreen-hint {
+  position: fixed;
+  z-index: 80;
+  left: 50%;
+  bottom: 72px;
+  transform: translateX(-50%);
+  padding: 9px 16px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 999px;
+  background: rgba(14, 16, 24, 0.88);
+  backdrop-filter: blur(14px);
+  color: #e8ecf6;
+  font-size: 13px;
+  letter-spacing: 0.02em;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.24);
+  animation: fullscreen-hint-in 0.18s ease-out both;
+}
+
+@keyframes fullscreen-hint-in {
+  from { opacity: 0; transform: translate(-50%, 6px); }
+  to { opacity: 1; transform: translate(-50%, 0); }
+}
+
 .hud__pill {
   padding: 3px 9px;
   border-radius: 999px;
