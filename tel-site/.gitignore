@@ -1,0 +1,4 @@
+# 영상 프레임 묶음(해상도별 약 38 MB·23 MB)은 저장소에 넣지 않는다.
+# tools/render-film.py로 렌더한 뒤 tools/encode-film.sh로 다시 만든다. 없으면 페이지는 장마다의 정지 이미지를 보여 준다.
+public/film/1920/
+public/film/1280/
