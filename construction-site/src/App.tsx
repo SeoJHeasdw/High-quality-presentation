@@ -54,19 +54,19 @@ const content = {
     navContact: 'Start a conversation',
     menu: 'Menu',
     close: 'Close',
-    pageTitle: 'AUREL — Building what lasts',
-    heroDisciplines: 'ARCHITECTURE · INFRASTRUCTURE · ENGINEERING',
-    heroTopline: 'AUREL / 2026',
-    mobileTagline: 'AUREL / BUILT ENVIRONMENTS',
-    heroEyebrow: 'A GLOBAL BUILT ENVIRONMENTS PRACTICE',
-    heroTitle1: 'Built for',
+    pageTitle: 'Technology Expert Lab — Building tomorrow with insight',
+    heroDisciplines: 'ARCHITECTURE · ENGINEERING · CONSTRUCTION TECHNOLOGY',
+    heroTopline: 'TECHNOLOGY EXPERT LAB / 2026',
+    mobileTagline: 'Technology Expert Lab / BUILT ENVIRONMENTS',
+    heroEyebrow: 'TECHNOLOGY EXPERT LAB / BUILT ENVIRONMENTS',
+    heroTitle1: 'Technology builds',
     heroTitle2: 'what comes next.',
-    heroBody: 'Places for people. Architecture for cities. A new perspective on what we can build.',
+    heroBody: 'From the first line of design to the finished place. Technology Expert Lab explores what better building can become.',
     explore: 'DISCOVER MORE',
     introEyebrow: '01 / OUR PERSPECTIVE',
     introA: 'The bigger picture.',
     introB: 'In every detail.',
-    introBody: 'A line, the grain of a material, the way light enters a room. Every decision we make in architecture finds its way into someone’s everyday life.',
+    introBody: 'A line of design, the grain of a material, the way light enters a room. Technology Expert Lab brings engineering and human experience into every choice.',
     introFoot: 'Where material meets light.',
     workEyebrow: '02 / SELECTED VISIONS',
     workTitleA: 'Perspectives',
@@ -74,8 +74,8 @@ const content = {
     workBody: 'From connections across water to places worth staying. A collection of architectural possibilities.',
     viewProject: 'Explore concept',
     modalKicker: 'CONCEPT STUDY',
-    modelEyebrow: 'THE MAKING / AUREL HOUSE',
-    modelNote: 'A STUDY IN SPACE, MATERIAL & LIGHT',
+    modelEyebrow: 'THE MAKING / TEL HOUSE',
+    modelNote: 'A STUDY IN STRUCTURE, MATERIAL & LIGHT',
     modelStories: [
       { label: 'FOUNDATION & FRAME', titleA: 'Set the ground.', titleB: 'Find the order.', body: 'The foundation meets the core. Column by column, beam by beam, the house finds its structure.' },
       { label: 'GLASS & STRUCTURE', titleA: 'A structure', titleB: 'opens to light.', body: 'Glass and fine frames connect interior life to the world outside. A precise slab gives the upper level its footing.' },
@@ -103,10 +103,10 @@ const content = {
     formNotice: 'This is a concept website. This form previews an inquiry and does not send data.',
     formDone: 'Inquiry preview complete. No message was sent.',
     footerTop: 'BACK TO TOP',
-    footerNote: 'AUREL and its projects are fictional concepts created for this experience.',
-    footerCredit: '© 2026 AUREL / CONCEPT EXPERIENCE',
+    footerNote: 'The projects and images on this site are fictional concepts created for this experience.',
+    footerCredit: '© 2026 Technology Expert Lab / CONCEPT EXPERIENCE',
     footerExplore: 'THE NEXT POSSIBILITY OF PLACE',
-    contactLabel: 'AUREL / CONTACT',
+    contactLabel: 'TECHNOLOGY EXPERT LAB / CONTACT',
   },
   ko: {
     navWork: '프로젝트',
@@ -115,19 +115,19 @@ const content = {
     navContact: '문의하기',
     menu: '메뉴',
     close: '닫기',
-    pageTitle: 'AUREL — 공간의 내일을 짓다',
-    heroDisciplines: '건축 · 인프라 · 엔지니어링',
-    heroTopline: 'AUREL / 2026',
-    mobileTagline: 'AUREL / 공간을 짓다',
-    heroEyebrow: '사람을 위한 공간, 도시를 위한 건축',
-    heroTitle1: '공간의 내일을',
-    heroTitle2: '짓습니다.',
-    heroBody: '사람과 도시를 잇는 건축.\nAUREL이 생각하는 다음 풍경.',
+    pageTitle: 'Technology Expert Lab — 기술로 짓는 공간의 내일',
+    heroDisciplines: '건축 · 엔지니어링 · 건설 기술',
+    heroTopline: 'TECHNOLOGY EXPERT LAB / 2026',
+    mobileTagline: 'Technology Expert Lab / 기술로 짓는 공간',
+    heroEyebrow: 'TECHNOLOGY EXPERT LAB / 건축 기술 연구',
+    heroTitle1: '기술이 짓는',
+    heroTitle2: '공간의 내일.',
+    heroBody: '설계의 선에서 완성의 순간까지.\nTechnology Expert Lab이 공간의 가능성을 탐구합니다.',
     explore: '더 알아보기',
-    introEyebrow: '01 / 공간을 바라보는 시선',
+    introEyebrow: '01 / 기술과 공간을 바라보는 시선',
     introA: '큰 변화는',
     introB: '작은 디테일에서.',
-    introBody: '하나의 선과 재료의 결, 빛이 닿는 방식까지. AUREL은 건축의 모든 선택이 사람의 일상으로 이어진다고 믿습니다.',
+    introBody: '설계의 한 선과 재료의 결, 빛이 닿는 방식까지. Technology Expert Lab은 기술로 세부를 검증하고 사람의 일상에 맞는 공간을 연구합니다.',
     introFoot: '재료와 빛이 만나는 순간',
     workEyebrow: '02 / 상상한 프로젝트',
     workTitleA: '우리가 그리는',
@@ -135,8 +135,8 @@ const content = {
     workBody: '도시를 잇는 다리부터 오래 머무는 건축까지. 공간의 가능성을 탐구합니다.',
     viewProject: '콘셉트 살펴보기',
     modalKicker: '가상 콘셉트 프로젝트',
-    modelEyebrow: '공간의 탄생 / AUREL HOUSE',
-    modelNote: '재료와 빛, 공간에 관한 연구',
+    modelEyebrow: '공간의 탄생 / TEL HOUSE',
+    modelNote: '구조와 재료, 빛에 관한 연구',
     modelStories: [
       { label: '기초와 골조', titleA: '터를 놓고', titleB: '기준을 세웁니다.', body: '기초 위에 기둥이 서고, 보가 그 사이를 잇습니다. 하나의 부재에서 공간의 질서가 시작됩니다.' },
       { label: '유리와 구조', titleA: '구조 사이로', titleB: '빛이 들어옵니다.', body: '유리와 가느다란 프레임이 안과 밖을 잇습니다. 정교한 슬래브가 위층의 바탕이 됩니다.' },
@@ -164,10 +164,10 @@ const content = {
     formNotice: '이 사이트는 콘셉트 데모입니다. 입력한 내용은 전송되지 않습니다.',
     formDone: '문의 화면을 확인했습니다. 메시지는 전송되지 않았습니다.',
     footerTop: '맨 위로',
-    footerNote: 'AUREL과 프로젝트는 이 웹 경험을 위해 만든 가상 브랜드와 콘셉트입니다.',
-    footerCredit: '© 2026 AUREL / 콘셉트 웹사이트',
+    footerNote: '이 웹사이트의 프로젝트와 이미지는 시연을 위해 만든 가상 콘셉트입니다.',
+    footerCredit: '© 2026 Technology Expert Lab / 콘셉트 웹사이트',
     footerExplore: '공간의 다음 가능성',
-    contactLabel: 'AUREL / 문의',
+    contactLabel: 'TECHNOLOGY EXPERT LAB / 문의',
   },
 } as const;
 
@@ -187,9 +187,10 @@ function Wordmark({ light = false }: { light?: boolean }) {
   return (
     <span className={`wordmark${light ? ' wordmark--light' : ''}`}>
       <svg className="wordmark__symbol" viewBox="0 0 42 42" fill="none" aria-hidden="true">
-        <path d="M4 35L20.5 6L37 35M11 24H30M20.5 6V35" stroke="currentColor" strokeWidth="1.7" />
+        <path d="M4 7H38M21 7V35M4 35H38M21 21H36" stroke="currentColor" strokeWidth="1.7" />
       </svg>
-      <span>AUREL</span>
+      <span className="wordmark__initials">TEL</span>
+      <span className="wordmark__full">Technology Expert Lab</span>
     </span>
   );
 }
@@ -274,7 +275,7 @@ function StructuralExperience({ lang }: { lang: Lang }) {
             <p>{story.body}</p>
           </div>
         </div>
-        <div className="structure-identity"><span>AUREL HOUSE</span><small>{t.modelNote}</small></div>
+        <div className="structure-identity"><span>TEL HOUSE</span><small>{t.modelNote}</small></div>
         <Suspense fallback={<div className="structure-visual"><div className="structure-visual__fallback" /></div>}>
           {loadModel && <StructuralModel progress={progress} lang={lang} />}
         </Suspense>
@@ -366,7 +367,7 @@ export default function App() {
     <>
       <div className="page-rail" aria-hidden="true"><span /></div>
       <header className={`site-header${scrolled || menuOpen ? ' site-header--solid' : ''}`}>
-        <a className="site-header__brand" href="#top" aria-label={lang === 'ko' ? 'AUREL 첫 화면' : 'AUREL home'} onClick={closeMenu}><Wordmark light /></a>
+        <a className="site-header__brand" href="#top" aria-label={lang === 'ko' ? 'Technology Expert Lab 첫 화면' : 'Technology Expert Lab home'} onClick={closeMenu}><Wordmark light /></a>
         <nav className="site-header__nav" aria-label={lang === 'ko' ? '주 메뉴' : 'Main navigation'}>
           <a href="#work">{t.navWork}</a>
           <a href="#approach">{t.navProcess}</a>
@@ -457,7 +458,7 @@ export default function App() {
 
       <footer className="site-footer">
         <div className="site-footer__main"><span>{t.footerExplore}</span><a href="#top">{t.footerTop} ↑</a></div>
-        <div className="footer-wordmark" aria-hidden="true">AUREL</div>
+        <div className="footer-wordmark" aria-hidden="true">Technology<br />Expert Lab</div>
         <div className="site-footer__bottom"><span>{t.footerCredit}</span><p>{t.footerNote}</p><span>{t.footerExplore}</span></div>
       </footer>
 

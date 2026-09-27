@@ -1,4 +1,4 @@
-# AUREL — construction concept site
+# Technology Expert Lab — construction concept site
 
 13번 장표의 Blender 집을 출발점으로 만든 **독립형 건설사 콘셉트 웹사이트**입니다. 기존 발표 앱을 수정하거나 실행하지 않아도 됩니다.
 
@@ -31,6 +31,6 @@ npm run dev
 - `src/houseAssembly.ts`, `src/assemblyGeometry.ts`: 원본 부재를 분리하고, 큰 표면을 패널로 나누어 개별 조립 순서와 궤적을 계산합니다. 여러 부재가 하나의 메시를 공유해 렌더링 비용을 억제합니다.
 - `public/fonts/`: 발표 덱의 Pretendard 로컬 폰트와 라이선스 파일입니다.
 
-AUREL은 가상의 브랜드입니다. 소개된 프로젝트와 이미지는 실제 시공 실적이 아닙니다. 문의 양식은 입력과 완료 상태만 보여주며 데이터를 전송하지 않습니다.
+소개된 프로젝트와 이미지는 실제 시공 실적이 아닌 가상 콘셉트입니다. 문의 양식은 입력과 완료 상태만 보여주며 데이터를 전송하지 않습니다.
 
 배포용 파일은 `npm run build`로 `dist/`에 생성됩니다.
