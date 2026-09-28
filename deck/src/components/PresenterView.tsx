@@ -44,6 +44,7 @@ export default function PresenterView({
     t0,
     motion,
     captionGuide,
+    annotationMode,
     goto,
     jump,
   } = useDeckNav(mod.slides, deckId);
@@ -98,6 +99,7 @@ export default function PresenterView({
           <span className="pv__pill" data-off={!motion}>
             모션 {motion ? "ON" : "OFF"}
           </span>
+          {annotationMode && <span className="pv__pill" data-warn="true">드로잉 중 · W로 종료</span>}
           {deckId === "course" && (
             <span className="pv__pill" data-off={!captionGuide}>
               자막영역 {captionGuide ? "ON" : "OFF"}
@@ -152,6 +154,7 @@ export default function PresenterView({
               <button
                 key={mod.slides[item].id}
                 data-active={item === index}
+                disabled={annotationMode}
                 onClick={() => goto(item)}
               >
                 {item + 1}
@@ -180,6 +183,9 @@ export default function PresenterView({
           </span>
           <span>
             <kbd>M</kbd> 모션 토글
+          </span>
+          <span>
+            <kbd>W</kbd> 드로잉 토글
           </span>
           {deckId === "course" && (
             <span>

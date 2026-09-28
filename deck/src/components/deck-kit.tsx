@@ -225,6 +225,7 @@ export function useDeckNav(slides: SlideDef[], deckId: string) {
   const [motion, setMotion] = useState(true);
   const [hudHidden, setHudHidden] = useState(deckId === "keynote");
   const [captionGuide, setCaptionGuide] = useState(false);
+  const [annotationMode, setAnnotationMode] = useState(false);
   /** 숫자로 입력 중인 이동 대상. 확정 전까지의 버퍼라 화면에만 보이고 전송하지 않는다. */
   const [jump, setJump] = useState("");
 
@@ -236,6 +237,9 @@ export function useDeckNav(slides: SlideDef[], deckId: string) {
   t0Ref.current = t0;
   const jumpRef = useRef(jump);
   jumpRef.current = jump;
+  const annotationModeRef = useRef(annotationMode);
+  annotationModeRef.current = annotationMode;
+  const annotationRevisionRef = useRef(0);
 
   const chanRef = useRef<BroadcastChannel | null>(null);
   const selfId = useRef(Math.random().toString(36).slice(2));
@@ -278,6 +282,13 @@ export function useDeckNav(slides: SlideDef[], deckId: string) {
             deck: deckId,
             from: selfId.current,
           });
+          ch.postMessage({
+            type: "annotation-mode",
+            on: annotationModeRef.current,
+            revision: annotationRevisionRef.current,
+            deck: deckId,
+            from: selfId.current,
+          });
           break;
         case "timer":
           setT0(m.t0);
@@ -290,6 +301,12 @@ export function useDeckNav(slides: SlideDef[], deckId: string) {
           break;
         case "caption-guide":
           setCaptionGuide(m.on);
+          break;
+        case "annotation-mode":
+          if (!Number.isFinite(m.revision) || m.revision <= annotationRevisionRef.current) break;
+          annotationRevisionRef.current = m.revision;
+          annotationModeRef.current = m.on;
+          setAnnotationMode(m.on);
           break;
       }
     };
@@ -313,6 +330,7 @@ export function useDeckNav(slides: SlideDef[], deckId: string) {
      전환은 장표가 이미 그리고 있으므로 상태만 맞춘다. 발표자 창으로도 전해진다. */
   useEffect(() => {
     const onStep = (e: Event) => {
+      if (annotationModeRef.current) return;
       const want = (e as CustomEvent<number>).detail;
       setNav((s) => {
         const step = Math.max(0, Math.min(slidesRef.current[s.index]?.steps ?? 0, want));
@@ -322,6 +340,37 @@ export function useDeckNav(slides: SlideDef[], deckId: string) {
     window.addEventListener("deck:step", onStep);
     return () => window.removeEventListener("deck:step", onStep);
   }, []);
+
+  /* 주석 모드에서는 덱과 씬의 모든 단축키를 캡처 단계에서 막는다.
+     W만 모드를 전환하며, 발표자 창에도 같은 상태를 전송한다. */
+  useEffect(() => {
+    const onAnnotationKey = (e: KeyboardEvent) => {
+      const toggle = e.key.toLowerCase() === "w" && !e.ctrlKey && !e.metaKey && !e.altKey;
+      if (!toggle && !annotationModeRef.current) return;
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      if (toggle && !e.repeat) {
+        const next = !annotationModeRef.current;
+        const revision = Math.max(Date.now(), annotationRevisionRef.current + 1);
+        annotationRevisionRef.current = revision;
+        annotationModeRef.current = next;
+        setAnnotationMode(next);
+        setJump("");
+        post({ type: "annotation-mode", on: next, revision });
+      }
+    };
+    const onAnnotationWheel = (e: WheelEvent) => {
+      if (!annotationModeRef.current) return;
+      e.preventDefault();
+      e.stopImmediatePropagation();
+    };
+    window.addEventListener("keydown", onAnnotationKey, true);
+    window.addEventListener("wheel", onAnnotationWheel, { capture: true, passive: false });
+    return () => {
+      window.removeEventListener("keydown", onAnnotationKey, true);
+      window.removeEventListener("wheel", onAnnotationWheel, true);
+    };
+  }, [deckId]);
 
   /* 키보드 */
   useEffect(() => {
@@ -470,7 +519,7 @@ export function useDeckNav(slides: SlideDef[], deckId: string) {
   }, [deckId]);
 
   const goto = (i: number) =>
-    setNav((s) => ({
+    !annotationModeRef.current && setNav((s) => ({
       index: Math.max(0, Math.min(slidesRef.current.length - 1, i)),
       step: 0,
       runKey: s.runKey + 1,
@@ -489,6 +538,7 @@ export function useDeckNav(slides: SlideDef[], deckId: string) {
     motion,
     hudHidden,
     captionGuide,
+    annotationMode,
   };
 }
 

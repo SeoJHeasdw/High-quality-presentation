@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import Stage from "./components/Stage";
+import AnnotationLayer from "./components/AnnotationLayer";
 import PresenterView from "./components/PresenterView";
 import {
   useDeckNav,
@@ -60,6 +61,7 @@ function DeckView({ id }: { id: DeckKey }) {
     t0,
     hudHidden,
     captionGuide,
+    annotationMode,
     jump,
   } = useDeckNav(mod.slides, id);
   const slide = mod.slides[index];
@@ -111,6 +113,7 @@ function DeckView({ id }: { id: DeckKey }) {
             SUBTITLE SAFE AREA · 2 LINES
           </div>
         )}
+        <AnnotationLayer active={annotationMode} slideIndex={index} />
       </Stage>
 
       <Hud
@@ -123,6 +126,7 @@ function DeckView({ id }: { id: DeckKey }) {
         motion={motion}
         hidden={hudHidden}
         captionGuide={captionGuide}
+        annotationMode={annotationMode}
         jump={jump}
       />
 
@@ -156,6 +160,7 @@ function Hud({
   motion,
   hidden,
   captionGuide,
+  annotationMode,
   jump,
 }: {
   deckId: DeckKey;
@@ -167,6 +172,7 @@ function Hud({
   motion: boolean;
   hidden: boolean;
   captionGuide: boolean;
+  annotationMode: boolean;
   jump: string;
 }) {
   const [now, setNow] = useState(Date.now());
@@ -206,6 +212,7 @@ function Hud({
       )}
       <span className="hud__pill">{fmtTime((now - t0) / 1000)}</span>
       {!motion && <span className="hud__pill">모션 OFF</span>}
+      {annotationMode && <span className="hud__pill">드로잉 중</span>}
       {deckId === "course" && (
         <span className="hud__pill">자막 가이드 {captionGuide ? "ON" : "OFF"}</span>
       )}
@@ -225,7 +232,7 @@ function Hud({
       <span className="hud__sep" />
       <span style={{ opacity: 0.6 }}>
         <kbd>숫자</kbd>+<kbd>Enter</kbd> 이동 <kbd>H</kbd> 조작 바{" "}
-        <kbd>F</kbd> 전체화면 <kbd>Esc</kbd> 종료
+        <kbd>F</kbd> 전체화면 <kbd>W</kbd> 드로잉 <kbd>Esc</kbd> 종료
         {deckId === "course" && (
           <>
             {" "}<kbd>S</kbd> 자막영역
