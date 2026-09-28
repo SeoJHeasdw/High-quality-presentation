@@ -4,6 +4,7 @@ import { RenderPass } from "three/examples/jsm/postprocessing/RenderPass.js";
 import { UnrealBloomPass } from "three/examples/jsm/postprocessing/UnrealBloomPass.js";
 import { OutputPass } from "three/examples/jsm/postprocessing/OutputPass.js";
 import { FullScreenQuad } from "three/examples/jsm/postprocessing/Pass.js";
+import { frameGate } from "./frame-gate";
 
 /*
  * 2~3, 6, 7~8, 16~19, 29, 39, 43번 공간이 함께 쓰는 틀.
@@ -144,9 +145,11 @@ export function createStage(canvas: HTMLCanvasElement, opts: { background: strin
   let update: (dt: number) => void = () => {};
   let moving: () => boolean = () => false;
   let raf = 0, last = performance.now(), frames = 0, disposed = false, dirty = 3, hold = false;
-  const frame = () => {
+  const gate = frameGate();
+  const frame = (at: number) => {
     raf = 0;
     if (disposed || hold) return;
+    if (!gate(at)) { raf = requestAnimationFrame(frame); return; }
     const now = performance.now(); const dt = Math.min(0.1, (now - last) / 1000); last = now;
     update(dt);
     draw();

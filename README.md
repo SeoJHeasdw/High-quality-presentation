@@ -3,9 +3,9 @@
 Technology Expert Lab 발표용 16:9 브라우저 덱.
 개인의 30년 계획, AI 사례, 실제 자비스 엔진과 결과물을 다룬다.
 
-13번 장표의 건축 장면에서 출발한 별도 홈페이지는 [construction-site/README.md](construction-site/README.md)에 있다. `construction-site`에서 `npm run dev`로 실행하며 포트는 5190이다.
+13번 장표의 건축 장면에서 출발한 별도 홈페이지는 [astra-site/README.md](astra-site/README.md)에 있다. `astra-site`에서 `npm run dev`로 실행하며 포트는 5190이다.
 
-같은 13번 장표를 벤치마킹한 또 하나의 홈페이지(가상의 건설사 Technology Expert Lab)는 [tel-site/README.md](tel-site/README.md)에 있다. `tel-site`에서 `npm run dev`로 실행하며 포트는 5200이다.
+같은 13번 장표를 벤치마킹한 또 하나의 홈페이지(가상의 건설사 Technology Expert Lab)는 [opus-site/README.md](opus-site/README.md)에 있다. `opus-site`에서 `npm run dev`로 실행하며 포트는 5200이다.
 
 ```bash
 cd deck

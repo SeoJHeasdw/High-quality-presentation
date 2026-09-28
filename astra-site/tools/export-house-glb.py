@@ -2,7 +2,7 @@
 """Export the finished slide-film house as a compact, browser-ready GLB.
 
 Run from the repository root:
-    blender -b --python construction-site/tools/export-house-glb.py
+    blender -b --python astra-site/tools/export-house-glb.py
 
 The slide source builds a complete city for its film. This exporter evaluates only
 its definitions and builds the 11 house parts. The original slide files stay intact.
@@ -12,7 +12,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 SOURCE = ROOT / "deck/tools/render-house-scroll.py"
-OUTPUT = ROOT / "construction-site/public/models/house.glb"
+OUTPUT = ROOT / "astra-site/public/models/house.glb"
 
 # All geometry and the assembly's eleven named parent objects come from the film.
 # Stop before the source's top-level scene build and render/export side effects.

@@ -5,7 +5,7 @@
 ## 실행
 
 ```bash
-cd construction-site
+cd astra-site
 npm install
 npm run dev
 ```

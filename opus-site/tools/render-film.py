@@ -7,12 +7,12 @@
 홈페이지는 이 영상의 프레임을 스크롤 위치로 고른다(13번 장표와 같은 방식).
 정지 지점(ANCHORS)에서는 카메라·크레인·공정이 모두 멈춰 있어 프레임이 선명하다.
 
-  blender -b --python tel-site/tools/render-film.py -- --mode layout
-  blender -b --python tel-site/tools/render-film.py -- --mode still --scale 40 --samples 24
-  blender -b --python tel-site/tools/render-film.py -- --mode still --frames 300,500 --scale 100
-  blender -b --python tel-site/tools/render-film.py -- --mode final [--frames 0-340]
-  blender -b --python tel-site/tools/render-film.py -- --mode track     # 라벨 좌표만
-  blender -b --python tel-site/tools/render-film.py -- --mode shot --shot bridge   # 프로젝트 사진
+  blender -b --python opus-site/tools/render-film.py -- --mode layout
+  blender -b --python opus-site/tools/render-film.py -- --mode still --scale 40 --samples 24
+  blender -b --python opus-site/tools/render-film.py -- --mode still --frames 300,500 --scale 100
+  blender -b --python opus-site/tools/render-film.py -- --mode final [--frames 0-340]
+  blender -b --python opus-site/tools/render-film.py -- --mode track     # 라벨 좌표만
+  blender -b --python opus-site/tools/render-film.py -- --mode shot --shot bridge   # 프로젝트 사진
 
 결과 프레임은 render/film/frames/, 라벨 좌표는 src/film/track.json.
 인코딩은 tools/encode-film.sh.

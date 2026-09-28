@@ -1,10 +1,10 @@
 # Technology Expert Lab — 선에서, 빛까지
 
 13번 장표(스크롤로 훑는 Blender 영상 위의 글과 3D 라벨)를 벤치마킹해 만든 **가상의 하이엔드 건설사 홈페이지**입니다.
-발표 덱(`deck/`)이나 다른 사이트(`construction-site/`)를 건드리지 않는 독립 프로젝트입니다.
+발표 덱(`deck/`)이나 다른 사이트(`astra-site/`)를 건드리지 않는 독립 프로젝트입니다.
 
 ```bash
-cd tel-site
+cd opus-site
 npm install
 npm run dev        # http://localhost:5200
 ```

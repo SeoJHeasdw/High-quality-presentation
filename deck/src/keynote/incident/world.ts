@@ -4,6 +4,7 @@ import { RenderPass } from "three/examples/jsm/postprocessing/RenderPass.js";
 import { UnrealBloomPass } from "three/examples/jsm/postprocessing/UnrealBloomPass.js";
 import { OutputPass } from "three/examples/jsm/postprocessing/OutputPass.js";
 import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
+import { frameGate } from "../stage3d/frame-gate";
 
 /*
  * 9~12번 사건 재구성 공간(연결 장면 1장 + 사건 3장).
@@ -992,9 +993,11 @@ export function createIncidentWorld(canvas: HTMLCanvasElement, initialPhase: num
   /* ------------------------------------------------------------------ loop */
   let raf = 0, last = performance.now(), frames = 0, disposed = false, dirty = 3, motionHold = false;
   const listeners: (() => void)[] = [];
-  const frame = () => {
+  const gate = frameGate();
+  const frame = (at: number) => {
     raf = 0;
     if (disposed || motionHold) return;
+    if (!gate(at)) { raf = requestAnimationFrame(frame); return; }
     const now = performance.now(); const dt = Math.min(0.1, (now - last) / 1000); last = now;
     update(motion ? dt : 0);
     composer.render();
