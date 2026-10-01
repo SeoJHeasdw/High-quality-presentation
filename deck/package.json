@@ -15,6 +15,7 @@
     "preflight": "node tools/preflight.mjs",
     "shots": "node tools/shots.mjs",
     "check:keynote": "node tools/check-keynote.mjs",
+    "check:annotation": "node tools/check-annotation.mjs",
     "check:performance": "node tools/check-performance.mjs"
   },
   "dependencies": {

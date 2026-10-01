@@ -33,6 +33,19 @@ export default function EnginePreview({ engine, title, image, alt, description }
     };
   }, [open]);
 
+  useEffect(() => {
+    if (!open) return;
+    const onEscape = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      window.dispatchEvent(new Event("deck:cancel-jump"));
+      close();
+    };
+    window.addEventListener("keydown", onEscape, true);
+    return () => window.removeEventListener("keydown", onEscape, true);
+  }, [open]);
+
   return <>
     <div className="personal-preview-title"><span>{engine}</span><h2>{title}</h2></div>
     <figure className="engine-preview-surface">
@@ -48,8 +61,7 @@ export default function EnginePreview({ engine, title, image, alt, description }
       onCancel={event => { event.preventDefault(); close(); }}
       onClick={event => { if (event.target === event.currentTarget) close(); }}
       onKeyDown={event => {
-        if (event.key === "Escape") close();
-        else if (["ArrowRight", "ArrowLeft", "PageDown", "PageUp", "Home", "End"].includes(event.key)) close(false);
+        if (["ArrowRight", "ArrowLeft", "PageDown", "PageUp", "Home", "End"].includes(event.key)) close(false);
       }}
     >
       <div className="engine-preview-dialog__heading"><span>{engine} / 실제 결과물</span><h2 id={heading}>{title}</h2></div>

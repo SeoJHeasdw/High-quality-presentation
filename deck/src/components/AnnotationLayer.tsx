@@ -11,10 +11,32 @@ const COLORS = [
   { name: "노랑", value: "#ffe347" },
 ] as const;
 const WIDTHS = [3, 6, 12, 22] as const;
+const TEXT_SIZE = 42;
+const TEXT_LINE_HEIGHT = 56;
+const TEXT_MIN_WIDTH = 360;
+const TEXT_INSET = 12;
 
-type Tool = "pen" | "eraser" | "rectangle";
+type Tool = "pen" | "eraser" | "rectangle" | "text";
 type Point = { x: number; y: number };
 type Stroke = { pointerId: number; tool: Tool; start: Point; last: Point };
+type TextDraft = Point & { id: number; value: string; color: string; width: number };
+
+function wrappedLines(ctx: CanvasRenderingContext2D, value: string, maxWidth: number) {
+  const lines: string[] = [];
+  for (const paragraph of value.split("\n")) {
+    let line = "";
+    for (const character of paragraph) {
+      if (line && ctx.measureText(line + character).width > maxWidth) {
+        lines.push(line);
+        line = character;
+      } else {
+        line += character;
+      }
+    }
+    lines.push(line);
+  }
+  return lines;
+}
 
 /** 장표 단위로만 살아 있는 비트맵. 스텝 전환과 W 토글에는 리마운트하지 않는다. */
 export default function AnnotationLayer({ active, slideIndex }: { active: boolean; slideIndex: number }) {
@@ -22,9 +44,14 @@ export default function AnnotationLayer({ active, slideIndex }: { active: boolea
   const previewRef = useRef<HTMLCanvasElement>(null);
   const strokeRef = useRef<Stroke | null>(null);
   const dirtyRef = useRef(false);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
+  const draftRef = useRef<TextDraft | null>(null);
+  const textTopRef = useRef(0);
+  const nextTextId = useRef(0);
   const [tool, setTool] = useState<Tool>("pen");
   const [color, setColor] = useState<string>(COLORS[0].value);
   const [width, setWidth] = useState<number>(WIDTHS[1]);
+  const [draft, setDraft] = useState<TextDraft | null>(null);
 
   useLayoutEffect(() => {
     // CSS가 스테이지 전체를 축소하므로 내부 좌표는 항상 1920×1080이다.
@@ -40,16 +67,33 @@ export default function AnnotationLayer({ active, slideIndex }: { active: boolea
   useLayoutEffect(() => {
     strokeRef.current = null;
     dirtyRef.current = false;
+    draftRef.current = null;
+    setDraft(null);
     inkRef.current?.getContext("2d")?.clearRect(0, 0, WIDTH, HEIGHT);
     previewRef.current?.getContext("2d")?.clearRect(0, 0, WIDTH, HEIGHT);
   }, [slideIndex]);
 
   useLayoutEffect(() => {
     if (!active) {
+      commitText();
       strokeRef.current = null;
       previewRef.current?.getContext("2d")?.clearRect(0, 0, WIDTH, HEIGHT);
     }
   }, [active]);
+
+  useLayoutEffect(() => {
+    if (draft) inputRef.current?.focus({ preventScroll: true });
+  }, [draft?.id]);
+
+  useLayoutEffect(() => {
+    const input = inputRef.current;
+    if (!draft || !input) return;
+    input.style.height = "0px";
+    const height = Math.max(60, input.scrollHeight + 2);
+    input.style.height = `${height}px`;
+    textTopRef.current = Math.max(0, Math.min(draft.y, HEIGHT - height - 12));
+    input.style.top = `${textTopRef.current}px`;
+  }, [draft?.value, draft?.width]);
 
   // 로컬 서버가 내려가도 열린 탭의 JS는 계속 실행된다. 그림을 서버 상태보다
   // 오래 남기지 않도록, 잉크가 있을 때만 같은 출처의 응답을 확인한다.
@@ -77,7 +121,7 @@ export default function AnnotationLayer({ active, slideIndex }: { active: boolea
     return () => { disposed = true; window.clearInterval(interval); };
   }, []);
 
-  const point = (e: ReactPointerEvent<HTMLCanvasElement>): Point => {
+  const point = (e: { currentTarget: HTMLCanvasElement; clientX: number; clientY: number }): Point => {
     const rect = e.currentTarget.getBoundingClientRect();
     return {
       x: Math.max(0, Math.min(WIDTH, (e.clientX - rect.left) * WIDTH / rect.width)),
@@ -120,6 +164,7 @@ export default function AnnotationLayer({ active, slideIndex }: { active: boolea
 
   const onPointerDown = (e: ReactPointerEvent<HTMLCanvasElement>) => {
     if (!active || e.button !== 0 || strokeRef.current) return;
+    if (tool === "text") return;
     e.preventDefault();
     const start = point(e);
     strokeRef.current = { pointerId: e.pointerId, tool, start, last: start };
@@ -165,8 +210,47 @@ export default function AnnotationLayer({ active, slideIndex }: { active: boolea
   const clear = () => {
     strokeRef.current = null;
     dirtyRef.current = false;
+    draftRef.current = null;
+    setDraft(null);
     inkRef.current?.getContext("2d")?.clearRect(0, 0, WIDTH, HEIGHT);
     previewRef.current?.getContext("2d")?.clearRect(0, 0, WIDTH, HEIGHT);
+  };
+
+  const commitText = () => {
+    const text = draftRef.current;
+    if (!text) return;
+    draftRef.current = null;
+    setDraft(null);
+    if (!text.value.trim()) return;
+    const ctx = inkRef.current?.getContext("2d");
+    if (!ctx) return;
+    ctx.save();
+    ctx.fillStyle = text.color;
+    ctx.font = `500 ${TEXT_SIZE}px "Pretendard Variable", sans-serif`;
+    ctx.textBaseline = "top";
+    wrappedLines(ctx, text.value, text.width - TEXT_INSET).forEach((line, index) => {
+      ctx.fillText(line, text.x, textTopRef.current + index * TEXT_LINE_HEIGHT);
+    });
+    ctx.restore();
+    dirtyRef.current = true;
+  };
+
+  const onDoubleClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    if (!active || tool !== "text") return;
+    e.preventDefault();
+    commitText();
+    const position = point(e);
+    const text = {
+      id: ++nextTextId.current,
+      x: Math.min(position.x, WIDTH - TEXT_MIN_WIDTH - TEXT_INSET),
+      y: Math.min(position.y, HEIGHT - TEXT_LINE_HEIGHT),
+      value: "",
+      color,
+      width: TEXT_MIN_WIDTH,
+    };
+    textTopRef.current = text.y;
+    draftRef.current = text;
+    setDraft(text);
   };
 
   return (
@@ -179,17 +263,47 @@ export default function AnnotationLayer({ active, slideIndex }: { active: boolea
         onPointerMove={onPointerMove}
         onPointerUp={(e) => finish(e)}
         onPointerCancel={(e) => finish(e, true)}
+        onDoubleClick={onDoubleClick}
         onContextMenu={(e) => active && e.preventDefault()}
       />
       <canvas ref={previewRef} className="annotation__preview" aria-hidden="true" />
 
+      {active && draft && (
+        <textarea
+          ref={inputRef}
+          className="annotation__text-input"
+          aria-label="장표에 쓸 텍스트"
+          wrap="soft"
+          spellCheck={false}
+          value={draft.value}
+          rows={1}
+          style={{ left: draft.x, top: draft.y, width: draft.width, color: draft.color }}
+          onChange={(event) => {
+            const value = event.target.value;
+            const ctx = inkRef.current?.getContext("2d");
+            let textWidth = TEXT_MIN_WIDTH;
+            if (ctx) {
+              ctx.save();
+              ctx.font = `500 ${TEXT_SIZE}px "Pretendard Variable", sans-serif`;
+              textWidth = Math.max(textWidth, ...value.split("\n").map(line => ctx.measureText(line).width + TEXT_INSET));
+              ctx.restore();
+            }
+            const next = { ...draft, value, width: Math.min(WIDTH - draft.x - TEXT_INSET, textWidth) };
+            draftRef.current = next;
+            setDraft(next);
+          }}
+          onBlur={commitText}
+        />
+      )}
+
       {active && (
         <div className="annotation__toolbar" role="toolbar" aria-label="발표 드로잉 도구">
-          <span className="annotation__mode">드로잉 <kbd>W</kbd> 종료</span>
+          <span className="annotation__mode">드로잉 <kbd>Esc</kbd> 종료</span>
           <span className="annotation__divider" />
           <div className="annotation__group" aria-label="도구">
             <button type="button" className="annotation__tool" data-selected={tool === "pen"} aria-pressed={tool === "pen"} onClick={() => setTool("pen")}>펜</button>
             <button type="button" className="annotation__tool" data-selected={tool === "rectangle"} aria-pressed={tool === "rectangle"} onClick={() => setTool("rectangle")}>□ 네모</button>
+            <button type="button" className="annotation__tool" data-selected={tool === "text"} aria-pressed={tool === "text"} onClick={() => setTool("text")}>텍스트 · 더블클릭</button>
             <button type="button" className="annotation__tool" data-selected={tool === "eraser"} aria-pressed={tool === "eraser"} onClick={() => setTool("eraser")}>지우개</button>
           </div>
           <span className="annotation__divider" />

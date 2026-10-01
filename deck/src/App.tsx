@@ -232,7 +232,7 @@ function Hud({
       <span className="hud__sep" />
       <span style={{ opacity: 0.6 }}>
         <kbd>숫자</kbd>+<kbd>Enter</kbd> 이동 <kbd>H</kbd> 조작 바{" "}
-        <kbd>F</kbd> 전체화면 <kbd>W</kbd> 드로잉 <kbd>Esc</kbd> 종료
+        <kbd>F</kbd> 전체화면 <kbd>W</kbd> 드로잉 켜기 <kbd>Esc</kbd> 닫기
         {deckId === "course" && (
           <>
             {" "}<kbd>S</kbd> 자막영역

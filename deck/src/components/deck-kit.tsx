@@ -341,22 +341,33 @@ export function useDeckNav(slides: SlideDef[], deckId: string) {
     return () => window.removeEventListener("deck:step", onStep);
   }, []);
 
-  /* 주석 모드에서는 덱과 씬의 모든 단축키를 캡처 단계에서 막는다.
-     W만 모드를 전환하며, 발표자 창에도 같은 상태를 전송한다. */
+  useEffect(() => {
+    const cancelJump = () => setJump("");
+    window.addEventListener("deck:cancel-jump", cancelJump);
+    return () => window.removeEventListener("deck:cancel-jump", cancelJump);
+  }, []);
+
+  /* W는 주석 모드 진입, Esc는 종료. 텍스트 입력 중에는 입력을 허용하되
+     덱과 씬의 단축키에는 전달하지 않는다. */
   useEffect(() => {
     const onAnnotationKey = (e: KeyboardEvent) => {
-      const toggle = e.key.toLowerCase() === "w" && !e.ctrlKey && !e.metaKey && !e.altKey;
-      if (!toggle && !annotationModeRef.current) return;
-      e.preventDefault();
+      const editable = (e.target as Element | null)?.closest?.("input, textarea, select, [contenteditable='true']");
+      const open = e.key.toLowerCase() === "w" && !e.ctrlKey && !e.metaKey && !e.altKey && !editable;
+      const close = e.key === "Escape" && annotationModeRef.current;
+      if (!annotationModeRef.current && !open) return;
       e.stopImmediatePropagation();
-      if (toggle && !e.repeat) {
-        const next = !annotationModeRef.current;
+      if ((open && !annotationModeRef.current) || close) {
+        e.preventDefault();
+        if (e.repeat) return;
+        const next = open;
         const revision = Math.max(Date.now(), annotationRevisionRef.current + 1);
         annotationRevisionRef.current = revision;
         annotationModeRef.current = next;
         setAnnotationMode(next);
         setJump("");
         post({ type: "annotation-mode", on: next, revision });
+      } else if (!editable) {
+        e.preventDefault();
       }
     };
     const onAnnotationWheel = (e: WheelEvent) => {
@@ -413,7 +424,13 @@ export function useDeckNav(slides: SlideDef[], deckId: string) {
         return;
       }
       if (e.key === "Escape") {
-        setJump("");
+        if (jumpRef.current) {
+          e.preventDefault();
+          setJump("");
+        } else if (document.fullscreenElement) {
+          e.preventDefault();
+          void document.exitFullscreen();
+        }
         return;
       }
       if (e.key === "Enter") {

@@ -17,7 +17,7 @@
   height: 100%;
 }
 
-/* W로 나가면 메모는 숨기되 비트맵은 같은 장표에서 재진입할 때까지 보관한다. */
+/* 모드를 나가면 메모는 숨기되 같은 장표에서 재진입할 때까지 보관한다. */
 .annotation[data-active="false"] .annotation__canvas,
 .annotation[data-active="false"] .annotation__preview {
   visibility: hidden;
@@ -35,6 +35,22 @@
 
 .annotation__preview {
   pointer-events: none;
+}
+
+.annotation__text-input {
+  position: absolute;
+  z-index: 1;
+  box-sizing: border-box;
+  min-height: 60px;
+  padding: 0 4px;
+  border: 1px dashed rgba(255, 255, 255, 0.8);
+  outline: none;
+  background: rgba(12, 17, 28, 0.78);
+  font: 500 42px/56px "Pretendard Variable", sans-serif;
+  resize: none;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  pointer-events: auto;
 }
 
 .annotation__toolbar {
