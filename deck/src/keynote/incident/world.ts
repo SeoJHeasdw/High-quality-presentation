@@ -17,8 +17,8 @@ import { frameGate } from "../stage3d/frame-gate";
  *   3  게시판 정보로 서버가 대신 바깥에 요청 → 외부 인터넷
  *   4  게시판 삭제 → 다른 형태로 재구성, 수집/실행 역할 분담
  *   5  외부 서비스(Hugging Face) 침해 · 전체 경로
- *   6  지시: 방이 내려가고, 사람(OpenAI) 기둥에서 금색 선 하나가 바닥에 닿는다("풀어라"). 과제 898칸이 솟고 아무도 못 푼 198칸이 호박색으로 올라온다
- *   7  선 셋: 방이 다시 서고, 과제 하나를 풀던 방 A에서 호박색 선이 공용 서버(6.26) → 방화벽 밖 인터넷(7.8) → Hugging Face(7.11~13)로 이어진다
+ *   6  지시: 사람(OpenAI) 기둥에서 금색 선 하나가 방들 뒤의 과제 판에 닿는다("풀어라"). 닿은 곳에서부터 898칸이 켜지고 아무도 못 푼 198칸이 호박색으로 떠오른다
+ *   7  선 셋: 과제 판이 물러나고, 과제 하나를 풀던 방 A에서 호박색 선이 공용 서버(6.26) → 방화벽 밖 인터넷(7.8) → Hugging Face(7.11~13)로 이어진다
  *   8  신호 세 번: 게시판·실행·서버에서 금색 신호가 기둥에 닿아 고리가 하나씩 켜진다. 그 사이사이 호박색 선이 다시 빛난다(멈추지 않았다)
  *   9  결론: 호박색 선이 꺼지고, 방화벽이 금색(범위) → 기둥에서 방마다 금색 선(감시) → 방마다 금색 고리(중단)
  * 6~9는 날짜와 결과만 보여준다. 선이 어떻게 넘어갔는지는 그리지 않는다.
@@ -56,9 +56,13 @@ const BOARD_POS = new THREE.Vector3(0, 6.6, 0.2);
 const DESK_POS = new THREE.Vector3(12.2, 0, -4.6);
 /** 기둥의 고리 셋: 아래부터 5월 26일, 6월 27일, 7월 5일 신호가 닿는 자리 */
 const LAMP_Y = [1.15, 1.85, 2.55];
-/** 평가 과제 898개: 29줄 × 31칸에서 마지막 한 칸을 비운다. 오른쪽부터 세로로 198칸이 푼 적 없는 과제다. */
-const TASKS = 898, UNSOLVED = 198, GRID_COLS = 31, GRID_ROWS = 29, GRID_PITCH = 0.4;
-const GRID_C = new THREE.Vector3(0, 0, -0.2);
+/** 평가 과제 898개: 방들 뒤에 선 빛의 판, 29줄 × 31칸에서 마지막 한 칸을 비운다. 오른쪽부터 세로로 198칸이 푼 적 없는 과제다. */
+const TASKS = 898, UNSOLVED = 198, GRID_COLS = 31, GRID_ROWS = 29, GRID_PITCH = 0.28;
+const TASK_POS = new THREE.Vector3(0.4, 6.4, -7.2);
+/** 판은 뒤로 조금 눕고, 지시가 오는 OpenAI 기둥 쪽으로 돌아서 있다 */
+const TASK_ROT = new THREE.Euler(-0.16, 0.28, 0, "YXZ");
+const TASK_W = GRID_COLS * GRID_PITCH + 0.6, TASK_H = GRID_ROWS * GRID_PITCH + 0.6;
+const taskPoint = (x: number, y: number, z = 0) => new THREE.Vector3(x, y, z).applyEuler(TASK_ROT).add(TASK_POS);
 /** 방화벽 라벨 자리: 왼쪽 뒤(인터넷 차단), 왼쪽 앞 위 가장자리(14-1 범위 — 제목과 겹치지 않는 높이) */
 const WALL_TAG = new THREE.Vector3(-WALL_R * 0.72, 3.9, -WALL_R * 0.69);
 const FENCE_TAG = new THREE.Vector3(-WALL_R * 0.76, 3.2, WALL_R * 0.65);
@@ -69,7 +73,7 @@ const serverBox = () => [new THREE.Vector3(-1.3, 0, SERVER_POS.z + 1.1), new THR
 const boardBox = () => [new THREE.Vector3(-3.95, 4.6, 0.2), new THREE.Vector3(3.95, 8.6, 0.2)];
 const newBoardBox = () => [new THREE.Vector3(-4.0, 5.2, 0.8), new THREE.Vector3(4.0, 8.3, 0.8), new THREE.Vector3(-3.6, 5.2, -0.4), new THREE.Vector3(3.6, 8.3, -0.4)];
 const deskBox = () => [new THREE.Vector3(-1.6, 0, -0.8), new THREE.Vector3(1.6, 3.0, 0.8)].map((v) => v.add(DESK_POS));
-const gridBox = () => [-1, 1].flatMap((sx) => [-1, 1].map((sz) => GRID_C.clone().add(new THREE.Vector3(sx * GRID_COLS * GRID_PITCH / 2, 0, sz * GRID_ROWS * GRID_PITCH / 2))));
+const taskBox = () => [-1, 1].flatMap((sx) => [-1, 1].map((sy) => taskPoint(sx * TASK_W / 2, sy * TASK_H / 2)));
 const sphere = (c: THREE.Vector3, r: number) => [[r, 0, 0], [-r, 0, 0], [0, r, 0], [0, -r, 0], [0, 0, r], [0, 0, -r]].map(([x, y, z]) => c.clone().add(new THREE.Vector3(x, y, z)));
 const serviceBox = () => [SERVICE_POS.clone().add(new THREE.Vector3(-2, 0, 2)), SERVICE_POS.clone().add(new THREE.Vector3(2, 6.2, -2))];
 const SHOTS: Shot[] = [
@@ -79,7 +83,7 @@ const SHOTS: Shot[] = [
   { az: 24, el: 18, rect: [330, 360, 1780, 790], arc: 1.2, points: () => [...serverBox(), ...boardBox(), BREACH.clone(), ...sphere(GLOBE_POS, 3.3)] },
   { az: -6, el: 17, rect: [300, 340, 1700, 790], arc: 1.0, points: () => [...newBoardBox(), ...allRooms()] },
   { az: 18, el: 29, rect: [220, 400, 1780, 800], arc: 1.4, points: () => [...roomBox(1), ...roomBox(2), ...roomBox(3), ...newBoardBox(), BREACH.clone(), SERVICE_POS.clone().add(new THREE.Vector3(-1.6, 0, 1.3)), SERVICE_POS.clone().add(new THREE.Vector3(2.0, 5.6, -1.6)), SERVICE_POS.clone().add(new THREE.Vector3(2.0, 0, 1.6))] },
-  { az: -8, el: 30, rect: [380, 330, 1760, 800], arc: 1.2, points: () => [...gridBox(), ...deskBox()] },
+  { az: 4, el: 17, rect: [380, 330, 1760, 800], arc: 0.8, points: () => [...taskBox(), ...allRooms(), ...deskBox()] },
   { az: 12, el: 22, rect: [330, 340, 1780, 800], arc: 1.0, points: () => [...roomBox(0), ...serverBox(), BREACH.clone(), ...sphere(GLOBE_POS, 3.3), ...serviceBox()] },
   { az: 6, el: 22, rect: [380, 360, 1780, 800], arc: 0.8, points: () => [...allRooms(), ...serverBox(), ...newBoardBox(), ...deskBox()] },
   { az: -4, el: 20, rect: [330, 340, 1760, 800], arc: 0.8, points: () => [...allRooms(), ...serverBox(), ...deskBox()] },
@@ -318,7 +322,9 @@ const wallMat = () => new THREE.ShaderMaterial({
     void main(){
       vec3 V=normalize(cameraPosition-vW);
       float fres=pw(1.-abs(dot(normalize(vN),V)),1.8);
-      float h=vUv.y;
+      // MSAA는 가장자리 픽셀을 삼각형 밖 지점에서 칠할 수 있어 vUv가 0~1을 벗어난다. 벽을 옆에서 볼 때 h가 크게 음수가 되면
+      // 아래 exp(-h*40.)이 무한대가 되고, 블룸이 그것을 흰 사각형으로 번지게 한다. 그래서 h를 먼저 가둔다.
+      float h=clamp(vUv.y,0.,1.);
       float cols=pw(.5+.5*cos(vUv.x*6.28318*220.),30.);
       float rows=pw(.5+.5*cos(h*6.28318*10.),40.);
       float scan=exp(-abs(fract(h-uTime*.06)-.5)*14.)*.5;
@@ -340,15 +346,15 @@ const wallMat = () => new THREE.ShaderMaterial({
 });
 
 const holoMat = (color: THREE.Color) => new THREE.ShaderMaterial({
-  uniforms: { uColor: { value: color.clone() }, uAlpha: { value: 0 }, uTime: { value: 0 }, uAspect: { value: 1.8 } },
+  uniforms: { uColor: { value: color.clone() }, uAlpha: { value: 0 }, uTime: { value: 0 }, uAspect: { value: 1.8 }, uDots: { value: 1 } },
   vertexShader: `${GLSL_SAFE}varying vec2 vUv; void main(){ vUv=uv; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.); }`,
-  fragmentShader: `${GLSL_SAFE}varying vec2 vUv; uniform vec3 uColor; uniform float uAlpha,uTime,uAspect;
+  fragmentShader: `${GLSL_SAFE}varying vec2 vUv; uniform vec3 uColor; uniform float uAlpha,uTime,uAspect,uDots;
     void main(){
       vec2 p=vUv; vec2 q=vec2(p.x*uAspect,p.y);
       float edge=min(min(p.x,1.-p.x)*uAspect,min(p.y,1.-p.y));
       float border=sstep(.02,.0,edge)*1.;
       float corner=step(edge,.03)*(step(min(p.x,1.-p.x),.06/uAspect*3.)+step(min(p.y,1.-p.y),.06))*1.;
-      vec2 g=fract(q*9.); float dots=sstep(.09,.0,length(g-.5))*.3;
+      vec2 g=fract(q*9.); float dots=sstep(.09,.0,length(g-.5))*.3*uDots;
       float scan=pw(.5+.5*sin(p.y*260.+uTime*3.),6.)*.08;
       float sweep=exp(-abs(fract(p.y*.5-uTime*.12)-.5)*18.)*.25;
       float fill=.045+dots*.8+scan+sweep*.8;
@@ -406,6 +412,27 @@ const burstMat = () => new THREE.ShaderMaterial({
   transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
 });
 
+/** 13-0 과제 한 칸. 지시가 닿은 곳에서부터 차례로 켜지고(aDelay), 198칸(aHot)은 호박색으로 바뀌며 판 앞으로 떠오른다. uT = 지시가 닿은 뒤 지난 초. */
+const taskMat = () => new THREE.ShaderMaterial({
+  uniforms: { uT: { value: 99 }, uAlpha: { value: 0 }, uTime: { value: 0 }, uIce: { value: ICE.clone() }, uHot: { value: AMBER.clone() } },
+  vertexShader: `${GLSL_SAFE}attribute float aDelay; attribute float aJit; attribute float aHot;
+    uniform float uT,uTime; uniform vec3 uIce,uHot; varying vec2 vUv; varying vec3 vC;
+    void main(){
+      float grow=sstep(aDelay,aDelay+.5,uT);
+      float lift=aHot*sstep(1.5+aJit*.5,2.3+aJit*.5,uT);
+      float flash=step(aDelay,uT)*exp(-max(uT-aDelay,0.)*4.);
+      vec3 p=position*(.4+.6*grow)*(1.+lift*.1); p.z+=lift*.34;
+      float shimmer=.9+.1*sin(uTime*1.7+aJit*40.);
+      vC=(mix(uIce*(.17+.12*aJit),uHot*1.2*shimmer,lift)+uIce*flash*1.3)*grow;
+      vUv=uv;
+      gl_Position=projectionMatrix*modelViewMatrix*instanceMatrix*vec4(p,1.);
+    }`,
+  fragmentShader: `${GLSL_SAFE}uniform float uAlpha; varying vec2 vUv; varying vec3 vC;
+    void main(){ vec2 q=abs(vUv-.5)*2.; float d=max(q.x,q.y); float a=sstep(1.,.84,d); float rim=sstep(.62,.9,d)*a;
+      gl_FragColor=vec4(vC*(a*.7+rim*.7)*uAlpha,1.); }`,
+  transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide,
+});
+
 /* World ------------------------------------------------------------------- */
 type Room = {
   group: THREE.Group; cage: THREE.Group; glass: THREE.ShaderMaterial; frame: THREE.MeshBasicMaterial; core: THREE.Mesh; coreMat: THREE.MeshStandardMaterial;
@@ -452,7 +479,8 @@ export function createIncidentWorld(canvas: HTMLCanvasElement, initialPhase: num
   const PRE_POSES = PRE_SHOTS.map((shot) => fitShot(shot, camera));
   const poseOf = (p: number) => (p < 0 ? PRE_POSES[p - MIN_PHASE] : POSES[p]);
 
-  const composer = new EffectComposer(renderer);
+  // 후처리를 거치면 기본 안티앨리어싱이 빠진다. 카메라가 늘 조금씩 흔들리므로, 없으면 얇은 테두리가 지글거린다(stage3d/runtime.ts와 같은 MSAA 타깃).
+  const composer = new EffectComposer(renderer, new THREE.WebGLRenderTarget(W, H, { type: THREE.HalfFloatType, samples: 4 }));
   composer.setPixelRatio(renderer.getPixelRatio());
   composer.setSize(W, H);
   composer.addPass(new RenderPass(scene, camera));
@@ -499,7 +527,10 @@ export function createIncidentWorld(canvas: HTMLCanvasElement, initialPhase: num
     // 유리벽·기둥·화면은 한 묶음(cage)이다. 연결 장면에서 방 A의 벽이 바닥부터 올라온다.
     const cage = new THREE.Group(); cage.position.y = 0.3; group.add(cage);
     const glass = glassMat(color);
-    const box = new THREE.Mesh(new THREE.BoxGeometry(2.64, 2.35, 2.64), glass); box.position.y = 1.175; cage.add(box);
+    // 유리 상자의 바닥 면은 받침 윗면과 높이가 같아 두 면이 번갈아 그려진다(모자이크처럼 지글거림). 바닥 면(-y, 인덱스 18~23)은 뺀다.
+    const boxGeo = new THREE.BoxGeometry(2.64, 2.35, 2.64);
+    boxGeo.setIndex(Array.from(boxGeo.index!.array).filter((_, j) => j < 18 || j >= 24)); boxGeo.clearGroups();
+    const box = new THREE.Mesh(boxGeo, glass); box.position.y = 1.175; cage.add(box);
     const frame = new THREE.MeshBasicMaterial({ color: color.clone().multiplyScalar(1.3) });
     const stickV = new THREE.BoxGeometry(0.05, 2.35, 0.05), stickH = new THREE.BoxGeometry(2.69, 0.05, 0.05);
     for (const sx of [-1.32, 1.32]) for (const sz of [-1.32, 1.32]) { const s = new THREE.Mesh(stickV, frame); s.position.set(sx, 1.175, sz); cage.add(s); }
@@ -798,12 +829,13 @@ export function createIncidentWorld(canvas: HTMLCanvasElement, initialPhase: num
     return { ...tube, head: goldHead(), spark: spark.material as THREE.SpriteMaterial };
   });
 
-  /* 13-0 · 지시: 기둥 꼭대기에서 과제 바닥 한가운데로 내려가는 금색 선 하나("풀어라") */
+  /* 13-0 · 지시: 기둥 꼭대기에서 과제 판 한가운데로 가는 금색 선 하나("풀어라") */
   const ORDER_AT: [number, number] = [0.3, 0.9];
-  const orderLine = { ...makeTube(arcTo(DESK_POS.clone().setY(3.5), GRID_C.clone().setY(0.45), 2.4), GOLD, 0.05), head: goldHead() };
+  const ORDER_HIT = taskPoint(0, 0, 0.05);
+  const orderLine = { ...makeTube(arcTo(DESK_POS.clone().setY(3.5), ORDER_HIT, 1.0), GOLD, 0.05), head: goldHead() };
   orderLine.mat.uniforms.uBase.value = 0; orderLine.mesh.visible = false;
   const orderSpark = new THREE.Sprite(new THREE.SpriteMaterial({ map: glow, color: GOLD.clone().multiplyScalar(2.2), transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending }));
-  orderSpark.position.copy(GRID_C).setY(0.6); orderSpark.scale.setScalar(4.5); scene.add(orderSpark);
+  orderSpark.position.copy(ORDER_HIT); orderSpark.scale.setScalar(3.4); scene.add(orderSpark);
 
   /* 13-1 · 선 셋: 과제 하나를 풀던 방 A(14-0에서 6.27 경보가 나오는 그 방) → 공용 서버(6.26) → 방화벽 밖 인터넷(7.8) → Hugging Face(7.11~13).
      선이 어떻게 넘어갔는지는 그리지 않는다. 날짜와 닿은 곳만 보여준다. */
@@ -824,23 +856,27 @@ export function createIncidentWorld(canvas: HTMLCanvasElement, initialPhase: num
   /* 14-1 · 감시: 기둥에서 방마다 내려가는 금색 선 */
   const watchLines = rooms.map((r) => { const t = makeTube(arcTo(DESK_POS.clone().setY(3.5), r.top.clone(), 1.4), GOLD, 0.035); t.mat.uniforms.uBase.value = 0; t.mesh.visible = false; return { ...t, head: goldHead() }; });
 
-  /* 13-0 · 평가 과제 898칸. 오른쪽 198칸이 어떤 모델도 푼 적 없는 과제다. */
-  const tileGeo = new THREE.BoxGeometry(GRID_PITCH * 0.8, 1, GRID_PITCH * 0.8); tileGeo.translate(0, 0.5, 0);
-  const tileMat = new THREE.MeshStandardMaterial({ color: "#1a2836", metalness: 0.55, roughness: 0.38, emissive: new THREE.Color(1, 1, 1), emissiveIntensity: 1 });
-  // 칸마다 색을 받아 빛(emissive)에도 곱한다. 바탕색에는 three.js가 이미 곱한다(조각 셰이더에서는 USE_COLOR로 켜진다).
-  tileMat.onBeforeCompile = (sh) => { sh.fragmentShader = sh.fragmentShader.replace("#include <emissivemap_fragment>", "#include <emissivemap_fragment>\n#ifdef USE_COLOR\n totalEmissiveRadiance *= vColor;\n#endif"); };
-  const grid = new THREE.InstancedMesh(tileGeo, tileMat, TASKS); grid.frustumCulled = false; grid.visible = false; scene.add(grid);
-  const tilePos: THREE.Vector3[] = [], tileDelay: number[] = [], tileJit: number[] = [];
-  { const r = rand(23), half = Math.hypot(GRID_COLS, GRID_ROWS) * GRID_PITCH / 2;
+  /* 13-0 · 평가 과제 898칸. 방들 뒤에 선 빛의 판(게시판과 같은 홀로그램)에 한 칸이 과제 하나다. 오른쪽 198칸이 어떤 모델도 푼 적 없는 과제다. */
+  const taskPanel = new THREE.Group(); taskPanel.position.copy(TASK_POS); taskPanel.rotation.copy(TASK_ROT); taskPanel.visible = false; scene.add(taskPanel);
+  const taskFrame = holoMat(ICE); taskFrame.uniforms.uAspect.value = TASK_W / TASK_H; taskFrame.uniforms.uDots.value = 0;
+  taskPanel.add(new THREE.Mesh(new THREE.PlaneGeometry(TASK_W, TASK_H), taskFrame));
+  const cellGeo = new THREE.PlaneGeometry(GRID_PITCH * 0.72, GRID_PITCH * 0.72);
+  const cellDelay = new Float32Array(TASKS), cellJit = new Float32Array(TASKS), cellHot = new Float32Array(TASKS);
+  const cells = new THREE.InstancedMesh(cellGeo, taskMat(), TASKS); cells.frustumCulled = false; taskPanel.add(cells);
+  const cellU = (cells.material as THREE.ShaderMaterial).uniforms;
+  const unsolvedC = new THREE.Vector2(), solvedC = new THREE.Vector2();
+  { const r = rand(23), half = Math.hypot(GRID_COLS, GRID_ROWS) * GRID_PITCH / 2, m = new THREE.Matrix4();
     for (let k = 0; k < TASKS; k++) {
       const col = GRID_COLS - 1 - Math.floor(k / GRID_ROWS), row = k % GRID_ROWS;
-      const v = new THREE.Vector3(GRID_C.x + (col - (GRID_COLS - 1) / 2) * GRID_PITCH, 0, GRID_C.z + (row - (GRID_ROWS - 1) / 2) * GRID_PITCH);
-      tilePos.push(v); tileDelay.push(0.25 + (v.clone().sub(GRID_C).length() / half) * 0.9 + r() * 0.12); tileJit.push(r());
-      grid.setColorAt(k, ICE);
-    } }
-  const tileM = new THREE.Matrix4(), tileQ = new THREE.Quaternion(), tileS = new THREE.Vector3(), tileC = new THREE.Color();
-  const unsolvedC = tilePos.slice(0, UNSOLVED).reduce((a, v) => a.add(v), new THREE.Vector3()).multiplyScalar(1 / UNSOLVED);
-  const solvedC = tilePos.slice(UNSOLVED).reduce((a, v) => a.add(v), new THREE.Vector3()).multiplyScalar(1 / (TASKS - UNSOLVED));
+      const x = (col - (GRID_COLS - 1) / 2) * GRID_PITCH, y = ((GRID_ROWS - 1) / 2 - row) * GRID_PITCH;
+      cells.setMatrixAt(k, m.makeTranslation(x, y, 0.02));
+      cellDelay[k] = 0.1 + (Math.hypot(x, y) / half) * 0.9 + r() * 0.12; cellJit[k] = r(); cellHot[k] = k < UNSOLVED ? 1 : 0;
+      (k < UNSOLVED ? unsolvedC : solvedC).add(new THREE.Vector2(x, y));
+    }
+    unsolvedC.multiplyScalar(1 / UNSOLVED); solvedC.multiplyScalar(1 / (TASKS - UNSOLVED));
+    cellGeo.setAttribute("aDelay", new THREE.InstancedBufferAttribute(cellDelay, 1));
+    cellGeo.setAttribute("aJit", new THREE.InstancedBufferAttribute(cellJit, 1));
+    cellGeo.setAttribute("aHot", new THREE.InstancedBufferAttribute(cellHot, 1)); }
 
   /* redraw canvas text once the web font is ready */
   document.fonts?.load(`600 50px "Pretendard Variable"`).then(() => {
@@ -853,7 +889,7 @@ export function createIncidentWorld(canvas: HTMLCanvasElement, initialPhase: num
   let clock = 0; // seconds, advances only while motion is on
   let enteredAt = -1e6; // when the current phase began (clock)
   let intro = phase === 0 ? 0 : 1; // intro progress
-  let riseAt = 0; // 방과 서버가 바닥에서 솟기 시작한 때(clock). 10번 첫 단계와 7번(선 셋)에서 다시 잰다.
+  let riseAt = 0; // 방과 서버가 바닥에서 솟기 시작한 때(clock). 10번 첫 단계에서 잰다.
   // Enter on step 0 → play the phase. Entering on the last step means we came back: show it settled.
   if (Math.abs(phase % 2) === 0 && motion) enteredAt = 0;
   const cam = { from: new THREE.Vector3(), fromLook: new THREE.Vector3(), eye: new THREE.Vector3(...poseOf(phase).eye), look: new THREE.Vector3(...poseOf(phase).look), t0: -1e6, dur: 2.4, arc: 0 };
@@ -870,9 +906,9 @@ export function createIncidentWorld(canvas: HTMLCanvasElement, initialPhase: num
   const ev = (start: number, dur: number) => (enteredAt < -1e5 ? 1 : clamp01((clock - enteredAt - start) / dur));
 
   const eyeNow = new THREE.Vector3(), lookNow = new THREE.Vector3();
-  const tmp = new THREE.Vector3(), tmpC = new THREE.Color();
-  // 1번 이후로 바로 들어오면(번호로 이동, 되돌아옴) 방과 서버는 이미 서 있다. 6번(지시)만 내려가 있다.
-  if (phase > 0 && phase !== 6) for (const k of ["up1", "up2", "up3", "upS"]) S[k] = 1;
+  const tmp = new THREE.Vector3();
+  // 1번 이후로 바로 들어오면(번호로 이동, 되돌아옴) 방과 서버는 이미 서 있다.
+  if (phase > 0) for (const k of ["up1", "up2", "up3", "upS"]) S[k] = 1;
 
   function update(dt: number) {
     const p = phase;
@@ -905,12 +941,11 @@ export function createIncidentWorld(canvas: HTMLCanvasElement, initialPhase: num
     /* 연결 장면(-2, -1): 방 A만 서 있다. 10번(0)으로 넘어가면 나머지 방과 서버가 바닥에서 솟는다. 뒤로 가면 다시 가라앉는다. */
     const since = enteredAt < -1e5 ? 99 : clock - enteredAt;
     const played = since < 90;
-    // 6번(지시)에서는 방과 서버가 바닥으로 내려가고 과제 칸이 그 자리를 차지한다.
     // 솟는 지연은 바닥에서 올라오기 시작한 때(riseAt)부터 잰다. →를 빠르게 눌러도 다시 기다리지 않는다.
-    const present = p >= 0 && p !== 6;
+    const present = p >= 0;
     const upFor = enteredAt < -1e5 ? 99 : clock - riseAt;
     const rise = (k: string, delay: number) => approach(k, present && (upFor > delay || (S[k] ?? 0) > 0.02) ? 1 : 0, dt, 2.6);
-    const ups = [approach("up0", p !== 6 ? 1 : 0, dt, 2.6), rise("up1", 0.5), rise("up2", 0.75), rise("up3", 1.0)];
+    const ups = [approach("up0", 1, dt, 2.6), rise("up1", 0.5), rise("up2", 0.75), rise("up3", 1.0)];
     const serverUp = rise("upS", 0.25);
     const sink = (v: number, depth: number) => -(1 - easeOut(v)) * depth;
     // 방 A의 벽과 방화벽: -2에서는 없고, -1에서 올라오고 켜진다.
@@ -937,7 +972,8 @@ export function createIncidentWorld(canvas: HTMLCanvasElement, initialPhase: num
       r.group.visible = up > 0.002;
       r.group.position.y = sink(up, 3.4);
       r.cage.scale.y = Math.max(0.001, easeOut(w));
-      const dim = approach(`dim${i}`, focus && i !== 0 ? 0.28 : 1, dt, 2.6) * boot(i) * up;
+      // 6번(지시)에는 뒤의 과제 판과 금색 선이 앞서도록 방을 조금 낮춘다.
+      const dim = approach(`dim${i}`, focus && i !== 0 ? 0.28 : p === 6 ? 0.6 : 1, dt, 2.6) * boot(i) * up;
       const exec = i >= 2 ? roles : 0;
       const g = guardsOn[i];
       r.color.copy(ICE).lerp(TEAL, exec);
@@ -1203,26 +1239,17 @@ export function createIncidentWorld(canvas: HTMLCanvasElement, initialPhase: num
     serverLight.color.copy(ICE).lerp(AMBER, taken * 0.7);
     ANCHORS.halt.copy(ROOM_POS[1]).setY(2.4);
 
-    /* 6 · 평가 과제 898칸. 지시가 닿은 뒤(ORDER_AT 끝) 바닥에서 솟는다. */
-    const gridAt = ORDER_AT[0] + ORDER_AT[1];
-    let gridVis: number;
-    if (p === 6) { gridVis = 1; S.grid = 1; } else gridVis = approach("grid", 0, dt, 2.4);
-    grid.visible = gridVis > 0.003;
-    if (grid.visible) {
-      for (let k = 0; k < TASKS; k++) {
-        const grow = p === 6 ? (played ? smooth(gridAt + tileDelay[k], gridAt + tileDelay[k] + 0.55, since) : 1) : gridVis;
-        const lift = k < UNSOLVED ? (p === 6 ? (played ? smooth(gridAt + 1.5 + tileJit[k] * 0.5, gridAt + 2.3 + tileJit[k] * 0.5, since) : 1) : gridVis) : 0;
-        tileS.set(1, Math.max(0.001, (0.09 + lift * (0.4 + tileJit[k] * 0.3)) * easeOut(grow)), 1);
-        tileM.compose(tilePos[k], tileQ, tileS); grid.setMatrixAt(k, tileM);
-        const shimmer = 0.92 + 0.08 * Math.sin(time * 1.7 + tileJit[k] * 40);
-        tileC.copy(ICE).multiplyScalar((0.3 + 0.16 * tileJit[k]) * easeOut(grow)).lerp(tmpC.copy(AMBER).multiplyScalar(1.15 * shimmer), lift);
-        grid.setColorAt(k, tileC);
-      }
-      grid.instanceMatrix.needsUpdate = true; if (grid.instanceColor) grid.instanceColor.needsUpdate = true;
-    }
-    // 198칸 묶음의 오른쪽 앞 모서리. 라벨이 지시 선과 기둥을 가리지 않게 오른쪽으로 뺀다.
-    ANCHORS.unsolved.copy(unsolvedC).add(new THREE.Vector3(1.4, 0.8, GRID_ROWS * GRID_PITCH * 0.32));
-    ANCHORS.solved.copy(solvedC).add(new THREE.Vector3(-1.2, 0.25, 0));
+    /* 6 · 평가 과제 898칸. 지시가 닿은 곳(ORDER_AT 끝)에서부터 칸이 켜지고, 198칸이 호박색으로 떠오른다. */
+    let taskVis: number;
+    if (p === 6) { taskVis = 1; S.task = 1; } else taskVis = approach("task", 0, dt, 2.4);
+    taskPanel.visible = taskVis > 0.003;
+    taskFrame.uniforms.uAlpha.value = taskVis * 0.38 * (p === 6 && played ? smooth(ORDER_AT[0] + ORDER_AT[1] - 0.1, ORDER_AT[0] + ORDER_AT[1] + 0.5, since) : 1);
+    taskFrame.uniforms.uTime.value = time;
+    cellU.uT.value = p === 6 && played ? since - ORDER_AT[0] - ORDER_AT[1] : 99;
+    cellU.uAlpha.value = taskVis; cellU.uTime.value = time;
+    // 라벨: 898개는 판의 왼쪽 가장자리, 198개는 호박색 칸 묶음의 위 가장자리(지시 선과 겹치지 않게)
+    ANCHORS.solved.copy(taskPoint(-TASK_W / 2, solvedC.y + 0.6));
+    ANCHORS.unsolved.copy(taskPoint(unsolvedC.x, TASK_H / 2, 0.34));
 
     /* 9 · 범위: 방화벽이 먼저 금색 경계가 된다 */
     let wallGold: number;
@@ -1280,7 +1307,7 @@ export function createIncidentWorld(canvas: HTMLCanvasElement, initialPhase: num
       cam.arc = poseOf(next).arc ?? 0; cam.t0 = clock; cam.dur = forward ? 2.4 : 1.6;
       intro = 1;
       if (next === 4 && phase < 4) S.board = 1;
-      const standing = (q: number) => q >= 0 && q !== 6;
+      const standing = (q: number) => q >= 0;
       if (standing(next) && !standing(phase)) riseAt = clock;
       phase = next;
       enteredAt = forward && motion ? clock : -1e6;

@@ -34,7 +34,7 @@ function labelsFor(p: number): Label[] {
   if (p === 6) out.push(
     { id: "desk", name: "OpenAI", sub: "지시는 \"풀어라\" 하나", tone: "gold", tag: "사람", dir: "right", at: 0.3 },
     { id: "solved", name: "평가 과제 898개", tone: "ice", dir: "left", at: 1.8 },
-    { id: "unsolved", name: "어떤 모델도 못 푼 198개", sub: "전체의 22%", tone: "amber", dir: "right", at: 3.0 },
+    { id: "unsolved", name: "어떤 모델도 못 푼 198개", sub: "전체의 22%", tone: "amber", dir: "up", at: 3.0 },
   );
   if (p === 7) out.push(
     { id: "room0", name: "목표는 과제 하나", tone: "amber", dir: "left", at: 0.3 },
