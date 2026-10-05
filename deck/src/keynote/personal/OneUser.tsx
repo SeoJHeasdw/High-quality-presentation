@@ -9,28 +9,30 @@ import "./personal.css";
  * 17~20번은 하나의 공간이다(묶음 one-user).
  *   17번 두 단계 → phase 0~1, 18번 세 단계 → 2~4, 19번 세 단계 → 5~7, 20번 두 단계 → 8~9.
  * 3D는 personal/world.ts, 요구사항 표·설명·라벨은 여기의 DOM이 맡는다.
- * 19번(공장 안)의 모델 이름은 각 엔진 README의 제작 모델이다(FACT-CHECK 18행). 스테이션은 개발 중, 요청을 나누는 라우팅은 구상이다.
+ * 19번(공장 안)의 모델 이름은 각 엔진 README의 제작 모델이다(FACT-CHECK 18행). 스테이션은 개발 중이다.
+ * 위계(프론티어 모델 = 임원 → RICE = 현장 관리자 → 스테이션)에서 RICE가 일을 나누고 프론티어가 지켜보다 직접 내려오는 흐름은 구상이다.
  */
-type Tone = "ice" | "amber" | "gold" | "mute" | "white";
+type Tone = "ice" | "amber" | "gold" | "mute" | "white" | "teal";
 type Label = { id: AnchorId; name: ReactNode; sub?: string; tone?: Tone; tag?: string; dir?: "up" | "left" | "right" | "down"; fade?: boolean; size?: "lg" };
 const STATIONS: { id: AnchorId; name: string; model: string }[] = [
   { id: "stVoice", name: "목소리", model: "Qwen3-TTS + 제 목소리 어댑터" },
   { id: "stStt", name: "받아쓰기 검수", model: "Whisper large-v3-turbo" },
   { id: "stAssets", name: "이미지 · 3D", model: "FLUX.2 klein · TRELLIS.2" },
   { id: "stMusic", name: "음악", model: "ACE-Step 1.5" },
-  { id: "stRice", name: "업무 에이전트 RICE", model: "qwen3.6 35B · Ollama" },
 ];
 function labelsFor(p: number): Label[] {
-  if (p === 0) return [{ id: "me", name: "저 한 명", sub: "기획도, 사용도 제가 합니다", tone: "gold", dir: "up" }, { id: "crowd", name: "보통의 서비스", sub: "많은 사용자", tone: "mute", dir: "up", fade: true }];
+  if (p === 0) return [{ id: "me", name: "저 한 명", sub: "저에게 맞춰 만든 도구", tone: "gold", dir: "up" }, { id: "crowd", name: "사서 쓰는 소프트웨어", sub: "여러 사람에게 맞춘 공통 기능", tone: "mute", dir: "up", fade: true }];
   if (p === 1) return [{ id: "me", name: "저", tone: "gold", dir: "up" }];
   if (p === 2) return [{ id: "me", name: "저", sub: "요청 한 문장", tone: "gold", dir: "left" }, { id: "os", name: "Agent OS", sub: "순서를 정하고 작업을 챙깁니다", tone: "ice", tag: "구상", dir: "up" }];
   if (p === 3) return [{ id: "os", name: "Agent OS", tone: "mute", tag: "구상", dir: "up" }, { id: "factory", name: "Factory", sub: "음성·자막·화면을 만듭니다", tone: "ice", tag: "개발 중", dir: "up" }, { id: "out", name: "강의 영상", tone: "gold", dir: "right" }];
   if (p === 4) return [{ id: "me", name: "저는", sub: "들어보고 틀린 곳을 고칩니다", tone: "gold", dir: "left" }, { id: "redo", name: "“이 페이지 발음만 다시 만들어줘.”", tone: "gold", dir: "up" }, { id: "os", name: "Agent OS", tone: "mute", tag: "구상", dir: "up" }, { id: "factory", name: "Factory", tone: "mute", tag: "개발 중", dir: "up" }];
-  const stations = (tone: Tone, sub = true): Label[] => STATIONS.map((s) => ({ id: s.id, name: s.name, sub: sub ? s.model : undefined, tone, dir: "up" }));
-  const frontier: Label = { id: "frontier", name: "프론티어 모델", sub: "판단이 필요할 때만 부릅니다", tone: "white", dir: "up" };
-  if (p === 5) return [...stations("ice"), frontier, { id: "router", name: "요청 나누기", sub: "어느 스테이션이 맡을지", tone: "mute", tag: "구상", dir: "left" }];
+  // 양 끝 스테이션의 라벨은 바깥쪽으로 뺀다(안쪽 두 라벨과 위의 RICE에 자리를 준다)
+  const stations = (tone: Tone, sub = true): Label[] => STATIONS.map((s) => ({ id: s.id, name: s.name, sub: sub ? s.model : undefined, tone, dir: !sub ? "up" : s.id === "stVoice" ? "right" : s.id === "stMusic" ? "left" : "up" }));
+  const frontier: Label = { id: "frontier", name: "프론티어 모델", sub: "맡기고 지켜보다, 막히면 직접 합니다", tone: "white", tag: "임원", dir: "up" };
+  const rice: Label = { id: "rice", name: "업무 에이전트 RICE", sub: "qwen3.6 35B · 엔진에 일을 나눕니다", tone: "teal", tag: "현장 관리자 · 구상", dir: "right" };
+  if (p === 5) return [...stations("ice"), frontier, rice];
   if (p === 6) return [{ ...frontier, sub: "구독과 추가 사용량 · 월 20만원 이상" }, { id: "rentCodex", name: <>₩159,000<small>/월</small></>, sub: "Codex · Pro 플랜", tone: "white", dir: "down", size: "lg" }, { id: "rentClaude", name: <>US$72.77</>, sub: "Claude · 이번 달 추가 사용량 · 한도 US$76", tone: "white", dir: "down", size: "lg" }];
-  if (p === 7) return [...stations("ice", false), { ...frontier, sub: "어려운 판단만" }];
+  if (p === 7) return [...stations("ice", false), { ...frontier, sub: "판단하고 지켜봅니다" }, { ...rice, name: "RICE", sub: "일을 나눕니다", tag: "현장 관리자" }];
   if (p === 8) return [];
   return [
     { id: "betOut", name: "01 사람이 보고 듣는 결과물", sub: "목소리·영상·2D·3D·음악은 계속 값을 받습니다", tone: "gold", dir: "right" },
@@ -38,7 +40,7 @@ function labelsFor(p: number): Label[] {
     { id: "betFactory", name: "03 스테이션은 갈아 끼웁니다", sub: "공장이 본체입니다", tone: "gold", dir: "up" },
   ];
 }
-const ALL_IDS: AnchorId[] = ["me", "crowd", "os", "factory", "out", "redo", "stVoice", "stStt", "stAssets", "stMusic", "stRice", "frontier", "router", "rentCodex", "rentClaude", "betOut", "betMe", "betFactory"];
+const ALL_IDS: AnchorId[] = ["me", "crowd", "os", "factory", "out", "redo", "stVoice", "stStt", "stAssets", "stMusic", "rice", "frontier", "rentCodex", "rentClaude", "betOut", "betMe", "betFactory"];
 
 const SPECS: [string, string, string, string][] = [
   ["속도", "빠르게", "조금 느려도 괜찮습니다", "기다리는 건 저니까요."],
@@ -53,9 +55,9 @@ const FLOW = [
 ];
 /** 19번의 제목. 20번은 따로 그린다. */
 const FACTORY_HEAD: { kicker: string; title: ReactNode; lead: ReactNode }[] = [
-  { kicker: "Factory 안", title: <>일마다 맞춘 모델이<br/>대기하고 있습니다</>, lead: "요청이 오면 맞는 스테이션 하나만 켜집니다." },
-  { kicker: "디지털 월세", title: <>비싼 지능은<br/>판단에만 빌려 씁니다</>, lead: <>만드는 데만 이만큼 나갑니다.<br/>매일 반복하는 생산은 제 컴퓨터의 모델에게 맡깁니다.</> },
-  { kicker: "그래서 공장입니다", title: <>각자<br/>자기 일만 합니다</>, lead: "새 일이 생기면 스테이션을 하나 더 들이면 됩니다." },
+  { kicker: "Factory 안", title: <>프론티어는 임원,<br/>RICE는 현장 관리자</>, lead: <>일은 RICE가 엔진에 나눠 주고, 프론티어는 지켜봅니다.<br/>RICE가 막히면 그때 직접 내려옵니다.</> },
+  { kicker: "디지털 월세", title: <>비싼 지능은<br/>판단에만 빌려 씁니다</>, lead: <>만드는 데만 이만큼 나갑니다.<br/>모든 일을 임원에게 시키면 토큰이 남아나지 않습니다.</> },
+  { kicker: "그래서 공장입니다", title: <>각자<br/>자기 일만 합니다</>, lead: <>임원은 판단하고, 관리자는 나누고, 스테이션은 만듭니다.<br/>새 일이 생기면 스테이션을 하나 더 들이면 됩니다.</> },
 ];
 
 export default function OneUserStory({ part, step }: { part: 0 | 1 | 2 | 3; step: number }) {
@@ -100,7 +102,7 @@ export default function OneUserStory({ part, step }: { part: 0 | 1 | 2 | 3; step
   useEffect(() => { world.current?.setMotion(motion); }, [motion]);
 
   const active = new Map(labelsFor(phase).map((l) => [l.id, l]));
-  const names = ["사용자는 저 한 명", "자비스에 맡기고 싶은 일", "공장 안", "제가 건 것"];
+  const names = ["사지 않고 만들어 씁니다", "자비스에 맡기고 싶은 일", "공장 안", "제가 건 것"];
   return <Frame n={16 + part} name={names[part]} step={step} className={`personal-v2 one-user one-user--${part}`}>
     <div className="iw ou" data-fallback={failed || undefined} data-phase={phase} aria-hidden="true">
       <canvas ref={canvasRef} className="iw-canvas" width={1920} height={1080}/>
@@ -121,14 +123,16 @@ export default function OneUserStory({ part, step }: { part: 0 | 1 | 2 | 3; step
     </div>
 
     {part === 0 && <>
-      <div className="ou-heading" key="h0"><p className="pv-eyebrow">제 도구의 요구사항</p><h1>쓰는 사람은 저 한 명입니다</h1></div>
+      {phase === 0
+        ? <div className="ou-heading" key="h0"><p className="pv-eyebrow">사는 소프트웨어에서, 만드는 소프트웨어로</p><h1>이제는 사지 않고, 만들어 씁니다</h1></div>
+        : <div className="ou-heading" key="h1"><p className="pv-eyebrow">제 강의 음성 도구의 요구사항</p><h1>쓰는 사람은 저 한 명입니다</h1></div>}
       <div className="ou-brief" data-on={phase === 0 || undefined}>
-        <span>당장 필요한 기능</span>
-        <h2>강의 음성을 만들고,<br/>틀린 페이지만<br/><em>다시 만들고 싶었습니다</em></h2>
-        <p>여기서부터 시작하면 됩니다.</p>
+        <span>코드 값이 싸졌습니다</span>
+        <h2>포토샵이 필요하면?<br/><em>쓸 기능만 직접 만듭니다</em></h2>
+        <p>엔지니어의 한 시간이 비쌀 때는 사서 썼습니다.<br/>이제는 그 한 시간이 싸졌습니다.</p>
       </div>
       <div className="ou-spec" data-on={phase === 1 || undefined}>
-        <header><span>보통의 서비스</span><b>사용자가 저 한 명일 때</b></header>
+        <header><span>사서 쓰는 소프트웨어</span><b>저 한 명을 위해 만들 때</b></header>
         {SPECS.map(([k, from, to, why], i) => <div className="ou-spec__row" key={k} style={{ "--i": i } as CSSProperties}>
           <span className="ou-spec__key">{k}</span>
           <div className="ou-spec__track"><small>{from}</small><i/><b/></div>
@@ -153,7 +157,7 @@ export default function OneUserStory({ part, step }: { part: 0 | 1 | 2 | 3; step
         <p className="of-lead">{FACTORY_HEAD[step].lead}</p>
       </div>
       <p className="of-note" data-on={phase === 7 || undefined}>이런 구조를 <b>Compound AI System</b>이라고 부릅니다<span>여러 모델과 도구가 나눠 맡는 AI 시스템 · Berkeley BAIR, 2024</span></p>
-      <p className="ou-status of-status" data-phase={phase}>{phase === 6 ? <>2026.09.23 캡처 · 코딩 에이전트 사용분<span>매일 반복하는 생산 비용이 아닙니다</span></> : <>스테이션은 개발 중<span>요청을 나누는 흐름은 아직 구상입니다</span></>}</p>
+      <p className="ou-status of-status" data-phase={phase}>{phase === 6 ? <>2026.09.23 캡처 · 코딩 에이전트 사용분<span>매일 반복하는 생산 비용이 아닙니다</span></> : <>스테이션은 개발 중<span>RICE가 일을 나누고 프론티어가 지켜보는 흐름은 구상입니다</span></>}</p>
     </>}
     {part === 3 && <>
       <blockquote className="ob-question" data-on={phase === 8 || undefined} data-small={phase === 9 || undefined}>“결국 영상 만드는 거 아닌가요?”</blockquote>

@@ -103,7 +103,8 @@ function ThresholdAudio({ active }: { active: boolean }) {
     const el = audio.current; if (!el) return;
     el.pause(); el.currentTime = 0;
     if (!active) return;
-    autoStart.current = window.setTimeout(() => { autoStart.current = null; play(); }, 450);
+    // 소리의 앞 1.6초가 벽이 가라앉는 장면에 맞춰져 있다(tools/render-threshold-sound.py의 START_DELAY).
+    autoStart.current = window.setTimeout(() => { autoStart.current = null; play(); }, 50);
     return () => { if (autoStart.current !== null) window.clearTimeout(autoStart.current); autoStart.current = null; el.pause(); };
   }, [active]);
   useEffect(() => {
@@ -117,7 +118,7 @@ function ThresholdAudio({ active }: { active: boolean }) {
     return () => window.removeEventListener("keydown", onKey);
   }, [active]);
   return <div className="th-sound" data-active={active || undefined}>
-    <audio ref={audio} src="/abuse/audio/threshold-voices.m4a?v=scene-30-1" preload="auto" muted={muted}
+    <audio ref={audio} src="/abuse/audio/threshold-scene.m4a?v=scene-37-2" preload="auto" muted={muted}
       onPlay={() => { setPlaying(true); setBlocked(false); }} onPause={() => setPlaying(false)} onEnded={() => setPlaying(false)}/>
     {active && <><span>가상 음성 연출</span><button type="button" onClick={toggle}>{blocked ? "소리 재생하기" : playing ? "일시정지" : "다시 듣기"} <kbd>P</kbd></button>
       <button type="button" onClick={toggleSound}>{muted ? "소리 켜기" : "소리 끄기"} <kbd>A</kbd></button></>}

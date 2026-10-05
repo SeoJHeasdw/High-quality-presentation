@@ -7,17 +7,52 @@
     "reference": "Presenter's own benchmark voice recording",
     "adapter": "jaeho-ko-r16-v1",
     "layers": [
-      { "startSeconds": 0, "adapterScale": 0, "seed": 300930, "source": "Base model without adapter" },
-      { "startSeconds": 1, "adapterScale": 0.5, "seed": 300930 },
-      { "startSeconds": 2, "adapterScale": 1, "seed": 300932, "punctuation": "엄마, 나야. 제호야!" }
+      {
+        "startSeconds": 0,
+        "adapterScale": 0,
+        "seed": 300930,
+        "source": "Base model without adapter"
+      },
+      {
+        "startSeconds": 1,
+        "adapterScale": 0.5,
+        "seed": 300930
+      },
+      {
+        "startSeconds": 2,
+        "adapterScale": 1,
+        "seed": 300932,
+        "punctuation": "엄마, 나야. 제호야!"
+      }
     ]
   },
   "ending": {
-    "startSeconds": 4.7,
+    "startSeconds": 6.82,
     "line": "엄마, 나 제호 아니야.",
-    "voice": "macOS Korean Yuna synthetic voice"
+    "file": "threshold-final-line.m4a",
+    "voice": "Presenter's own synthetic voice: Qwen3-TTS + jaeho-ko-r16-v1 adapter 0.6, same reference as the phone scenes (05-genai-limit-0036)",
+    "seed": 370940,
+    "selection": "8 takes (2 punctuations x 4 seeds), all read correctly by Qwen3-ASR; chose the lowest, flattest falling contour",
+    "processing": "pauses after 엄마 (+0.32s) and 나 (+0.12s), -3 semitones by slower playback, atempo 0.85, highs above 3.2kHz -7dB, +3dB around 190Hz, dark reverb on the last word",
+    "asrAfterProcessing": "엄마 나 재호 아니야 (whisper-large-v3-turbo)",
+    "previousVoice": "macOS Korean Yuna synthetic voice (--final yuna)"
   },
   "processing": "Stereo alternating layers with short echoes; the layers fade out before the dry final line",
   "durationSeconds": 6.6,
-  "humanListeningReview": "pending"
+  "humanListeningReview": "pending",
+  "sceneMix": {
+    "file": "threshold-scene.m4a",
+    "tool": "tools/render-threshold-sound.py",
+    "level": "strong",
+    "durationSeconds": 12.36,
+    "timeline": {
+      "walls": "0-1.6s, synced to the canvas walls (playback starts 50ms after the step)",
+      "layersAt": 1.7,
+      "cutAt": 6.12,
+      "finalLineAt": 6.82,
+      "finalLineEnds": 9.16
+    },
+    "bed": "Synthesized with numpy only: wall thuds, low crowd noise, E1 sub with E2-F2 minor second and B-flat2 tritone drone gliding up a semitone, heartbeat 66->92bpm, reverse noise swell cut to silence, faint 6.15kHz ringing, dark reverb on the final line",
+    "voiceSource": "threshold-voices.m4a unchanged for the layers; the final line is threshold-final-line.m4a"
+  }
 }

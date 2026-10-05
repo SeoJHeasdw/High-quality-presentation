@@ -8,19 +8,22 @@ import { FONT, GLSL_SAFE, PhaseClock, canvasTexture, clamp01, createStage, easeI
  *   2  (18) 카메라가 물러나며 고리 위의 흐름이 드러난다. 요청이 Agent OS(구상)로 간다.
  *   3  (18) Agent OS가 Factory의 엔진으로 일을 넘기고, 강의 영상이 나온다.
  *   4  (18) 결과가 저에게 돌아오고, "이 페이지 발음만 다시" 요청이 TTS로 되돌아간다.
- *   5  (19) 카메라가 Factory 안으로 들어간다. 엔진이 호를 따라 스테이션으로 늘어서고, 요청이 오면 맞는 스테이션 하나만 켜진다.
- *          위에 따로 떨어진 문(프론티어 모델)에는 어려운 판단만 올라간다.
+ *   5  (19) 카메라가 Factory 안으로 들어간다. 엔진이 호를 따라 스테이션 넷으로 늘어서고, 그 위에 현장 관리자 RICE, 맨 위에 임원인 문(프론티어 모델)이 선다.
+ *          문이 RICE에 일을 맡기고 RICE가 스테이션에 나눠 준다. RICE가 막히면 문이 직접 스테이션으로 내려온다("나와 봐, 내가 할게").
  *   6  (19) 문 양옆으로 실제 영수증 두 장이 내려온다(디지털 월세).
  *   7  (19) 물러나면 모든 스테이션이 각자 자기 일을 한다.
  *   8  (20) 공간 전체가 어두워지고 청중의 질문이 뜬다(DOM).
  *   9  (20) 세 가지 베팅: 결과물이 빛나고, 저에게서 금색 고리가 퍼지고, 목소리 스테이션의 모델이 새것으로 바뀐다.
- * Agent OS, 전체 연결, 요청을 나누는 라우팅은 구상이다. 스테이션(엔진)들은 따로 개발 중이다(대본·화면에 표시).
+ * Agent OS, 전체 연결, RICE가 엔진에 일을 나누고 프론티어가 지켜보는 흐름은 구상이다. 스테이션(엔진)들은 따로 개발 중이다(대본·화면에 표시).
  */
 
 export const PHASES = 10;
 const ICE = new THREE.Color("#8fd0ff");
 const GOLD = new THREE.Color("#ffd49a");
 const WHITE = new THREE.Color("#eef5ff");
+/** 현장 관리자 RICE. 엔진(ICE)과 임원(WHITE) 사이의 색 */
+const TEAL = new THREE.Color("#72e6cf");
+const AMBER = new THREE.Color("#ffb45e");
 
 const R = 5.2;
 const at = (deg: number, y = 0) => { const a = THREE.MathUtils.degToRad(deg); return new THREE.Vector3(R * Math.cos(a), y, R * Math.sin(a)); };
@@ -39,15 +42,18 @@ const IN_R = new THREE.Vector3(-IN_F.z, 0, IN_F.x);
 const FACE_Y = Math.atan2(-IN_F.x, -IN_F.z);
 const IN_AZ = THREE.MathUtils.radToDeg(FACE_Y);
 const stationAt = (x: number, front = 0) => FACTORY.clone().addScaledVector(IN_R, x).addScaledVector(IN_F, 0.3 + x * x / 20 - front);
-/** 왼쪽부터 RICE · 음악 · 이미지·3D · 받아쓰기 검수 · 목소리 */
-const ST_IDS = ["stRice", "stMusic", "stAssets", "stStt", "stVoice"] as const;
-const ST_X = [-4.1, -2.05, 0, 2.05, 4.1];
+/** 왼쪽부터 음악 · 이미지·3D · 받아쓰기 검수 · 목소리. RICE는 이 줄이 아니라 그 위의 관리자 자리다. */
+const ST_IDS = ["stMusic", "stAssets", "stStt", "stVoice"] as const;
+const ST_X = [-4.0, -1.35, 1.35, 4.0];
 const ST_POS = ST_X.map((x) => stationAt(x));
+const VOICE_ST = 3;
 /** 기존 엔진 세 개(TTS·ASSETS·MUSIC)가 옮겨 가는 스테이션 자리 */
-const ENGINE_TO_ST = [4, 2, 1];
-const DOOR = FACTORY.clone().addScaledVector(IN_F, 2.3).setY(4.7);
+const ENGINE_TO_ST = [3, 1, 0];
+/** 위계: 문(임원, 프론티어 모델) → RICE(현장 관리자) → 스테이션(현장) */
+const DOOR = FACTORY.clone().addScaledVector(IN_F, 2.3).setY(6.3);
 const DOOR_W = 1.7, DOOR_H = 2.8;
-const BUS_PTS = [-6.1, -4.1, -2.05, 0, 2.05, 4.1, 5.3].map((x) => stationAt(x, 1.35).setY(0.05));
+const RICE_POS = FACTORY.clone().addScaledVector(IN_F, 1.2).setY(3.85);
+const ST_TOP = 1.85;
 const CODEX_W = 3.5, CODEX_H = CODEX_W * 150 / 1565, CLAUDE_W = 3.5, CLAUDE_H = CLAUDE_W * 550 / 1990;
 // 문 앞 아래쪽에 두 장이 걸린다. 금액 라벨은 각 영수증 아래에 선다.
 const CODEX_AT = DOOR.clone().addScaledVector(IN_R, -2.15).add(new THREE.Vector3(0, -2.35, 0)).addScaledVector(IN_F, -1.3);
@@ -56,6 +62,7 @@ const CLAUDE_AT = DOOR.clone().addScaledVector(IN_R, 2.2).add(new THREE.Vector3(
 const around = (c: THREE.Vector3, r: number, h = r) => [[-r, 0, 0], [r, 0, 0], [0, -h, 0], [0, h, 0], [0, 0, -r], [0, 0, r]].map(([x, y, z]) => c.clone().add(new THREE.Vector3(x, y, z)));
 const ring = () => [ME, OS.clone().setY(2.6), ...around(ME, 1.1), OUT.clone().add(new THREE.Vector3(1.3, -0.7, 0.3)), OUT.clone().add(new THREE.Vector3(-1.3, 0.8, 0)), ...ENGINES.flatMap((e) => [e.pos.clone().setY(2.5), e.pos.clone().add(new THREE.Vector3(0.7, 0, 0.7))]), at(A0 + 225, 0), at(A0 + 45, 0)];
 const stations = (top = 2.3) => ST_POS.flatMap((p) => [p.clone(), p.clone().setY(top)]);
+const riceBox = () => around(RICE_POS, 0.8, 0.4);
 const doorCorners = () => [-1, 1].flatMap((sx) => [-1, 1].map((sy) => DOOR.clone().addScaledVector(IN_R, sx * DOOR_W / 2).add(new THREE.Vector3(0, sy * DOOR_H / 2, 0))));
 const quadCorners = (c: THREE.Vector3, w: number, h: number) => [-1, 1].flatMap((sx) => [-1, 1].map((sy) => c.clone().addScaledVector(IN_R, sx * w / 2).add(new THREE.Vector3(0, sy * h / 2, 0))));
 const wide = () => [...ring(), ...ST_POS.map((p) => p.clone().setY(2.4)), DOOR.clone().setY(DOOR.y + DOOR_H / 2 + 0.4)];
@@ -66,9 +73,9 @@ const SHOTS: Shot[] = [
   { az: 3, el: 31, rect: [330, 485, 1790, 905], points: ring },
   { az: 0, el: 33, rect: [330, 485, 1790, 905], points: ring },
   // 18 · 공장 안
-  { az: IN_AZ, el: 13, rect: [520, 230, 1800, 930], points: () => [...stations(), ...doorCorners()] },
+  { az: IN_AZ, el: 13, rect: [520, 230, 1800, 930], points: () => [...stations(), ...riceBox(), ...doorCorners()] },
   { az: IN_AZ + 2, el: 5, rect: [760, 250, 1830, 760], points: () => [...doorCorners(), ...quadCorners(CODEX_AT, CODEX_W, CODEX_H), ...quadCorners(CLAUDE_AT, CLAUDE_W, CLAUDE_H)] },
-  { az: IN_AZ - 6, el: 21, rect: [420, 250, 1820, 940], points: () => [...stations(), ...doorCorners(), BUS_PTS[0]] },
+  { az: IN_AZ - 6, el: 21, rect: [420, 250, 1820, 940], points: () => [...stations(), ...riceBox(), ...doorCorners()] },
   // 19 · 베팅
   { az: 0, el: 34, rect: [560, 380, 1840, 880], points: wide },
   { az: 2, el: 33, rect: [600, 380, 1840, 860], points: wide },
@@ -76,8 +83,8 @@ const SHOTS: Shot[] = [
 
 export const ANCHORS = {
   me: new THREE.Vector3(), os: new THREE.Vector3(), factory: new THREE.Vector3(), tts: new THREE.Vector3(), out: new THREE.Vector3(), redo: new THREE.Vector3(), crowd: new THREE.Vector3(),
-  stVoice: new THREE.Vector3(), stStt: new THREE.Vector3(), stAssets: new THREE.Vector3(), stMusic: new THREE.Vector3(), stRice: new THREE.Vector3(),
-  frontier: new THREE.Vector3(), router: new THREE.Vector3(), rentCodex: new THREE.Vector3(), rentClaude: new THREE.Vector3(),
+  stVoice: new THREE.Vector3(), stStt: new THREE.Vector3(), stAssets: new THREE.Vector3(), stMusic: new THREE.Vector3(), rice: new THREE.Vector3(),
+  frontier: new THREE.Vector3(), takeover: new THREE.Vector3(), rentCodex: new THREE.Vector3(), rentClaude: new THREE.Vector3(),
   betOut: new THREE.Vector3(), betMe: new THREE.Vector3(), betFactory: new THREE.Vector3(),
 };
 export type AnchorId = keyof typeof ANCHORS;
@@ -86,6 +93,12 @@ function chipTexture(text: string) {
   return canvasTexture(560, 140, (g) => {
     roundRect(g, 4, 4, 552, 132, 30); g.fillStyle = "rgba(10,24,38,.92)"; g.fill(); g.strokeStyle = "rgba(143,208,255,.75)"; g.lineWidth = 3; g.stroke();
     g.font = `600 56px ${FONT}`; g.fillStyle = "#e6f4ff"; g.textAlign = "center"; g.textBaseline = "middle"; g.fillText(text, 280, 72);
+  });
+}
+function sayTexture(text: string) {
+  return canvasTexture(720, 156, (g) => {
+    roundRect(g, 4, 4, 712, 148, 74); g.fillStyle = "rgba(14,20,30,.9)"; g.fill(); g.strokeStyle = "rgba(238,245,255,.85)"; g.lineWidth = 3; g.stroke();
+    g.font = `600 58px ${FONT}`; g.fillStyle = "#f4f8ff"; g.textAlign = "center"; g.textBaseline = "middle"; g.fillText(text, 360, 80);
   });
 }
 function engineTexture(name: string, sub: string, gold: boolean) {
@@ -114,11 +127,14 @@ export type OneUserWorld = {
 
 export type OneUserImages = { lecture: HTMLImageElement; codex: HTMLImageElement; claude: HTMLImageElement; image: HTMLImageElement; music: HTMLImageElement };
 
-/** 19-0에서 되풀이하는 요청. 스테이션 번호(ST_IDS 순서), -1은 프론티어 문. */
-const REQUESTS = [4, 3, 2, -1, 1, 0];
-const REQ_START = 3.1, REQ_GAP = 1.55, DOOR_GAP = 3.6;
-const REQ_AT: number[] = []; let REQ_CYCLE = 0;
-for (const r of REQUESTS) { REQ_AT.push(REQ_CYCLE); REQ_CYCLE += r < 0 ? DOOR_GAP : REQ_GAP; }
+/** 21-0에서 되풀이하는 일. 문(임원)이 RICE에 맡기고(JOB_DOWN초), RICE가 스테이션에 나눠 준다(JOB_OUT초).
+ *  마지막 일(음악)은 RICE가 막히고, 문이 RICE를 거치지 않고 그 스테이션으로 직접 내려온다. */
+const JOBS = [VOICE_ST, 2, 1, 0];
+const TAKE_ST = 0;
+const REQ_START = 3.4, JOB_GAP = 1.5, JOB_DOWN = 0.7, JOB_OUT = 0.8;
+const FAIL_AT = (JOBS.length - 1) * JOB_GAP + JOB_DOWN + JOB_OUT;
+const TAKE_AT = FAIL_AT + 1.0, TAKE_RUN = 0.9;
+const REQ_CYCLE = TAKE_AT + TAKE_RUN + 3.0;
 
 export function createOneUserWorld(canvas: HTMLCanvasElement, images: OneUserImages, initialPhase: number, initialMotion: boolean): OneUserWorld {
   const { lecture } = images;
@@ -224,8 +240,12 @@ export function createOneUserWorld(canvas: HTMLCanvasElement, images: OneUserIma
         void main(){ vec3 V=normalize(cameraPosition-vW); float f=pw(1.-abs(dot(normalize(vN),V)),2.4); gl_FragColor=vec4(uColor*(.04+f*.45)*uLit,1.); }`,
       transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide,
     });
-    const box = new THREE.Mesh(new THREE.BoxGeometry(1.25, 1.55, 1.25), glassMat); box.position.y = 0.2 + 0.775; g.add(box);
-    const plinthMat = new THREE.MeshStandardMaterial({ color: "#0c131c", metalness: 0.75, roughness: 0.35, transparent: true, opacity: 1 });
+    // 유리 상자의 바닥 면은 받침 윗면과 높이가 같아 두 면이 번갈아 그려진다(모자이크처럼 지글거림). 바닥 면(-y, 인덱스 18~23)은 빼고,
+    // 받침 윗면에 놓이는 아래 테두리 선이 이기도록 받침을 깊이에서 조금 뒤로 민다.
+    const boxGeo = new THREE.BoxGeometry(1.25, 1.55, 1.25);
+    boxGeo.setIndex(Array.from(boxGeo.index!.array).filter((_, j) => j < 18 || j >= 24)); boxGeo.clearGroups();
+    const box = new THREE.Mesh(boxGeo, glassMat); box.position.y = 0.2 + 0.775; g.add(box);
+    const plinthMat = new THREE.MeshStandardMaterial({ color: "#0c131c", metalness: 0.75, roughness: 0.35, transparent: true, opacity: 1, polygonOffset: true, polygonOffsetFactor: 1, polygonOffsetUnits: 1 });
     const plinth = new THREE.Mesh(new THREE.BoxGeometry(1.45, 0.2, 1.45), plinthMat); plinth.position.y = 0.1; g.add(plinth);
     const edges = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(1.25, 1.55, 1.25)), new THREE.LineBasicMaterial({ color: ICE.clone().multiplyScalar(1.4), transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false }));
     edges.position.y = box.position.y; g.add(edges);
@@ -243,8 +263,8 @@ export function createOneUserWorld(canvas: HTMLCanvasElement, images: OneUserIma
     const label = new THREE.Mesh(new THREE.PlaneGeometry(1.4, 0.57), labelMat); label.position.set(0, 2.2, 0); s.g.add(label);
     return { ...s, labelMat, label };
   });
-  // 공장 안에서 새로 서는 두 스테이션: 받아쓰기 검수(3), RICE(0)
-  const extra = [3, 0].map((st) => ({ st, ...makeStation(ST_POS[st], ICE.clone()) }));
+  // 공장 안에서 새로 서는 스테이션: 받아쓰기 검수(2)
+  const extra = [2].map((st) => ({ st, ...makeStation(ST_POS[st], ICE.clone()) }));
   /** 스테이션 번호 → 그 스테이션의 물체 */
   const stationObj = (st: number) => { const e = ENGINE_TO_ST.indexOf(st); return e >= 0 ? engines[e] : extra.find((x) => x.st === st)!; };
   // 19 · 목소리 스테이션에 새로 들어오는 모델
@@ -252,20 +272,6 @@ export function createOneUserWorld(canvas: HTMLCanvasElement, images: OneUserIma
   const newCore = new THREE.Mesh(new THREE.DodecahedronGeometry(0.28, 0), newCoreMat); scene.add(newCore);
   const swapRingMat = additive(WHITE.clone().multiplyScalar(1.6));
   const swapRing = new THREE.Mesh(new THREE.RingGeometry(0.72, 0.78, 96), swapRingMat); swapRing.rotation.x = -Math.PI / 2; scene.add(swapRing);
-
-  /* 요청 버스: 스테이션 앞을 지나는 선. 요청을 나누는 부분(입구)은 구상이다. */
-  const busCurve = new THREE.CatmullRomCurve3(BUS_PTS, false, "centripetal");
-  const busMat = cableMat(ICE, busCurve.getLength()); busMat.uniforms.uBase.value = 0.1;
-  const bus = new THREE.Mesh(new THREE.TubeGeometry(busCurve, 200, 0.03, 8, false), busMat); scene.add(bus);
-  const busU = ST_POS.map((p) => { let best = 0, bd = 1e9; for (let k = 0; k <= 200; k++) { const d = busCurve.getPoint(k / 200).distanceToSquared(p); if (d < bd) { bd = d; best = k / 200; } } return best; });
-  const centerU = busU[2];
-  const routerMat = new THREE.ShaderMaterial({
-    uniforms: { uLit: { value: 0 }, uTime: { value: 0 } },
-    vertexShader: `varying vec2 vUv; void main(){ vUv=uv; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.); }`,
-    fragmentShader: `${GLSL_SAFE}varying vec2 vUv; uniform float uLit,uTime; void main(){ float dash=step(.5,fract(vUv.x*36.-uTime*.3)); gl_FragColor=vec4(vec3(.56,.82,1.)*(.1+dash*1.1)*uLit,1.); }`,
-    transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
-  });
-  const router = new THREE.Mesh(new THREE.TorusGeometry(0.55, 0.02, 8, 120), routerMat); router.rotation.x = Math.PI / 2; router.position.copy(BUS_PTS[0]).setY(0.08); scene.add(router);
 
   /* 프론티어 모델: 위에 따로 떨어진 문 하나 */
   const door = new THREE.Group(); door.position.copy(DOOR); door.rotation.y = FACE_Y; scene.add(door);
@@ -285,10 +291,32 @@ export function createOneUserWorld(canvas: HTMLCanvasElement, images: OneUserIma
     const bar = new THREE.Mesh(new THREE.BoxGeometry(w, h, 0.06), doorFrameMat); bar.position.set(x, y, 0.02); door.add(bar);
   }
   const doorGlow = glowSprite(WHITE.clone().multiplyScalar(0.6), 1); doorGlow.scale.set(5.2, 6.2, 1); doorGlow.position.z = -0.4; door.add(doorGlow);
-  // 판단 요청이 오르내리는 길: 버스 가운데에서 문 아래로
-  const judgeCurve = new THREE.CatmullRomCurve3([busCurve.getPoint(centerU).setY(0.06), busCurve.getPoint(centerU).setY(2.2), DOOR.clone().setY(DOOR.y - DOOR_H / 2 - 0.9), DOOR.clone().setY(DOOR.y - DOOR_H / 2)], false, "centripetal");
-  const judgeMat = cableMat(WHITE, judgeCurve.getLength()); judgeMat.uniforms.uBase.value = 0.08;
-  const judge = new THREE.Mesh(new THREE.TubeGeometry(judgeCurve, 100, 0.022, 8, false), judgeMat); scene.add(judge);
+
+  /* 현장 관리자 RICE: 문(임원)과 스테이션(현장) 사이. 위에서 일을 받아 엔진에 나눠 준다(관리자 역할은 구상). */
+  const rice = new THREE.Group(); rice.position.copy(RICE_POS); scene.add(rice);
+  const riceRingMat = additive(TEAL.clone().multiplyScalar(1.7));
+  const riceRing = new THREE.Mesh(new THREE.TorusGeometry(0.62, 0.028, 8, 160), riceRingMat); riceRing.rotation.x = Math.PI / 2; rice.add(riceRing);
+  const riceRing2 = new THREE.Mesh(new THREE.TorusGeometry(0.43, 0.016, 8, 140), riceRingMat); riceRing2.rotation.x = Math.PI / 2.6; rice.add(riceRing2);
+  const riceCoreMat = new THREE.MeshStandardMaterial({ color: "#07161a", emissive: TEAL.clone(), emissiveIntensity: 0, flatShading: true, metalness: 0.2, roughness: 0.4, transparent: true, opacity: 1 });
+  const riceCore = new THREE.Mesh(new THREE.IcosahedronGeometry(0.25, 0), riceCoreMat); rice.add(riceCore);
+  const riceGlow = glowSprite(TEAL.clone(), 2.6); rice.add(riceGlow);
+
+  /* 위계의 선: 문 → RICE(맡김), RICE → 스테이션(나눔), 문 → 스테이션(직접 내려옴) */
+  const line = (pts: THREE.Vector3[], color: THREE.Color, r: number) => {
+    const curve = new THREE.CatmullRomCurve3(pts, false, "centripetal");
+    const mat = cableMat(color, curve.getLength()); mat.uniforms.uBase.value = 0;
+    const mesh = new THREE.Mesh(new THREE.TubeGeometry(curve, 90, r, 8, false), mat); mesh.visible = false; scene.add(mesh);
+    return { curve, mat, mesh };
+  };
+  const DOOR_FOOT = DOOR.clone().setY(DOOR.y - DOOR_H / 2 - 0.05);
+  const orderLine = line([DOOR_FOOT, DOOR_FOOT.clone().lerp(RICE_POS, 0.5), RICE_POS.clone().setY(RICE_POS.y + 0.1)], WHITE, 0.024);
+  const orderCurve = orderLine.curve;
+  const dispatch = ST_POS.map((p) => line([RICE_POS.clone().setY(RICE_POS.y - 0.1), RICE_POS.clone().lerp(p, 0.55).setY((RICE_POS.y + ST_TOP) / 2 + 0.3), p.clone().setY(ST_TOP)], TEAL, 0.02));
+  const TAKE_FROM = DOOR.clone().addScaledVector(IN_R, -DOOR_W / 2 - 0.05).setY(DOOR.y - 0.7);
+  const takeLine = line([TAKE_FROM, TAKE_FROM.clone().lerp(ST_POS[TAKE_ST], 0.45).addScaledVector(IN_R, -0.9).setY(3.9), ST_POS[TAKE_ST].clone().setY(ST_TOP + 0.05)], WHITE, 0.03);
+  const takeCurve = takeLine.curve;
+  const sayMat = new THREE.MeshBasicMaterial({ map: keep(sayTexture("“나와 봐, 내가 할게”")), transparent: true, opacity: 0, depthWrite: false, toneMapped: false });
+  const say = new THREE.Mesh(new THREE.PlaneGeometry(3.0, 0.65), sayMat); scene.add(say);
 
   /* 디지털 월세: 잘라낸 실제 영수증 두 장 */
   const receipt = (im: HTMLImageElement, w: number, h: number, at: THREE.Vector3, tilt: number) => {
@@ -347,40 +375,42 @@ export function createOneUserWorld(canvas: HTMLCanvasElement, images: OneUserIma
   const tmp = new THREE.Vector3();
   const hit = (x: number) => (x < 0 ? 0 : x < 0.12 ? x / 0.12 : Math.exp(-(x - 0.12) * 0.9));
 
-  /** 19-0 · 되풀이하는 요청의 빛과 스테이션의 반응. 모션을 끄면 목소리 스테이션 하나만 켜진 장면으로 멈춘다. */
+  /** 21-0 · 되풀이하는 일의 빛과 반응. 모션을 끄면 목소리 스테이션 하나가 켜진 장면으로 멈춘다. */
   function requests(loopT: number | null) {
-    const act = [0, 0, 0, 0, 0]; let flare = 0, judgeLit = 0, used = 0;
-    if (loopT === null) { act[4] = 1; return { act, flare, judgeLit }; }
-    const c = ((loopT % REQ_CYCLE) + REQ_CYCLE) % REQ_CYCLE;
-    REQUESTS.forEach((st, j) => {
-      for (const local of [c - REQ_AT[j], c - REQ_AT[j] + REQ_CYCLE]) {
-        // 아직 시작하지 않은 첫 주기 앞의 요청은 그리지 않는다
-        if (local < 0 || local > 6 || loopT - local < -1e-6) continue;
-        const pk = used < packets.length ? packets[used] : null;
-        if (st >= 0) {
-          const run = 1.05, hop = 0.35, u = busU[st];
-          if (local < run + hop && pk) {
-            if (local < run) pk.position.copy(busCurve.getPoint(u * easeInOut(local / run))).setY(0.3);
-            else pk.position.copy(busCurve.getPoint(u)).setY(0.3).lerp(tmp.copy(ST_POS[st]).setY(0.95), (local - run) / hop);
-            pk.material.opacity = 1; pk.material.color.copy(ICE).multiplyScalar(2.4); used++;
-          }
-          act[st] = Math.max(act[st], hit(local - run - hop));
-        } else {
-          const run = 0.8, up = 1.1, down = 1.0;
-          judgeLit = Math.max(judgeLit, local < run + up + 0.8 + down ? 1 : 0);
-          if (pk && local < run + up + 0.8 + down) {
-            if (local < run) pk.position.copy(busCurve.getPoint(centerU * easeInOut(local / run))).setY(0.3);
-            else if (local < run + up) pk.position.copy(judgeCurve.getPoint(easeInOut((local - run) / up)));
-            else if (local < run + up + 0.8) pk.position.copy(judgeCurve.getPoint(1));
-            else pk.position.copy(judgeCurve.getPoint(1 - easeInOut((local - run - up - 0.8) / down)));
-            pk.material.opacity = local > run + up && local < run + up + 0.8 ? 0.4 : 1; pk.material.color.copy(WHITE).multiplyScalar(2.6); used++;
-          }
-          flare = Math.max(flare, hit(local - run - up) * 0.9);
-        }
+    const act = [0, 0, 0, 0], fail = [0, 0, 0, 0], taken = [0, 0, 0, 0], lines = [0, 0, 0, 0];
+    let order = 0, riceHit = 0, riceFail = 0, flare = 0, take = 0, say = 0, used = 0;
+    const put = (pos: THREE.Vector3, color: THREE.Color) => { const pk = packets[used++]; if (!pk) return; pk.position.copy(pos); pk.material.opacity = 1; pk.material.color.copy(color).multiplyScalar(2.4); };
+    if (loopT === null) { act[VOICE_ST] = 1; lines[VOICE_ST] = 1; order = 1; }
+    else if (loopT >= 0) {
+      const c = ((loopT % REQ_CYCLE) + REQ_CYCLE) % REQ_CYCLE;
+      // 첫 주기가 시작되기 전에는 아무것도 그리지 않는다
+      const first = loopT < REQ_CYCLE;
+      JOBS.forEach((st, j) => {
+        const local = c - j * JOB_GAP;
+        if (local < 0 || (first && loopT < j * JOB_GAP)) return;
+        if (local < JOB_DOWN) { put(orderCurve.getPoint(easeInOut(local / JOB_DOWN)), WHITE); order = Math.max(order, 1); }
+        riceHit = Math.max(riceHit, hit(local - JOB_DOWN));
+        if (local >= JOB_DOWN && local < JOB_DOWN + JOB_OUT) { put(dispatch[st].curve.getPoint(easeInOut((local - JOB_DOWN) / JOB_OUT)), TEAL); lines[st] = 1; }
+        const done = local - JOB_DOWN - JOB_OUT;
+        if (st === TAKE_ST && j === JOBS.length - 1) {
+          // RICE가 막힌다: 스테이션이 호박색으로 깜빡이고 RICE도 호박색이 된다
+          if (done >= 0 && c < TAKE_AT + TAKE_RUN) { const f = smooth(0, 0.2, done) * (0.55 + 0.45 * Math.sin(done * 18)); fail[st] = f; act[st] = Math.max(act[st], 0.35 * f); riceFail = Math.max(riceFail, smooth(0.1, 0.4, done)); }
+        } else act[st] = Math.max(act[st], hit(done));
+      });
+      // 문이 직접 내려온다
+      const tk = c - TAKE_AT;
+      if (tk >= -0.4) {
+        flare = Math.max(flare, hit(tk + 0.4) * 0.9);
+        take = tk < 0 ? 0 : easeInOut(Math.min(1, tk / TAKE_RUN));
+        if (tk >= 0 && tk < TAKE_RUN) put(takeCurve.getPoint(take), WHITE);
+        const landed = tk - TAKE_RUN;
+        if (landed >= 0) { taken[TAKE_ST] = hit(landed) > 0.05 ? Math.min(1, hit(landed) * 1.4) : 0; act[TAKE_ST] = Math.max(act[TAKE_ST], hit(landed)); }
+        say = smooth(0.1, 0.5, tk) * (1 - smooth(TAKE_RUN + 1.9, TAKE_RUN + 2.6, tk));
+        riceFail *= 1 - smooth(TAKE_RUN, TAKE_RUN + 0.6, tk);
       }
-    });
+    }
     for (let i = used; i < packets.length; i++) packets[i].material.opacity = 0;
-    return { act, flare, judgeLit };
+    return { act, fail, taken, lines, order, riceHit, riceFail, flare, take, say };
   }
 
   function update(dt: number) {
@@ -451,6 +481,8 @@ export function createOneUserWorld(canvas: HTMLCanvasElement, images: OneUserIma
     if (!req) packets.forEach((pk) => { pk.material.opacity = 0; });
     const newCoreIn = p === 9 ? easeInOut(ev(2.9, 1.3)) : 0;
     const oldCoreOut = p === 9 ? easeInOut(ev(2.5, 1.0)) : 0;
+    const tintC = new THREE.Color();
+    const tint = (st: number) => tintC.copy(ICE).lerp(AMBER, follow(`fail${st}`, req?.fail[st] ?? 0, dt, 12)).lerp(WHITE, follow(`taken${st}`, req?.taken[st] ?? 0, dt, 6) * 0.8);
     const stationLevel = (st: number, i: number) => {
       if (p < 5) return -1; // 18번까지의 엔진 규칙을 쓴다
       if (p === 5) return 0.05 + 0.95 * (req?.act[st] ?? 0);
@@ -469,7 +501,7 @@ export function createOneUserWorld(canvas: HTMLCanvasElement, images: OneUserIma
         busy = (p === 3 && i === 0 ? smooth(1.4, 1.9, t) : 0) + (p === 4 && i === 0 ? 0.6 + 0.4 * smooth(2.2, 2.8, t) : 0);
       } else on = follow(`eng${i}`, lv, dt, p === 5 ? 9 : 3);
       const room = lv >= 0; // 공장 안에서는 쉬는 스테이션을 더 어둡게 둔다
-      e.glassMat.uniforms.uLit.value = room ? 0.14 + 0.86 * on : 0.3 + 0.7 * on; e.glassMat.uniforms.uColor.value.copy(i === 0 && busy > 0 ? ICE.clone().lerp(GOLD, Math.min(1, busy)) : ICE);
+      e.glassMat.uniforms.uLit.value = room ? 0.14 + 0.86 * on : 0.3 + 0.7 * on; e.glassMat.uniforms.uColor.value.copy(i === 0 && busy > 0 ? ICE.clone().lerp(GOLD, Math.min(1, busy)) : tint(st));
       e.edges.opacity = room ? 0.1 + 0.75 * on : 0.2 + 0.6 * on; e.coreMat.emissiveIntensity = (room ? 0.25 + 3.4 * on : 0.6 + 2.8 * on) + 1.5 * busy;
       const inRoom = lv >= 0 ? Math.max(0, on - 0.25) / 0.75 : 0;
       e.beam.opacity = (p >= 5 && p <= 7 ? 0.9 : 0.25) * inRoom; e.poolMat.opacity = 0.55 * inRoom;
@@ -483,25 +515,49 @@ export function createOneUserWorld(canvas: HTMLCanvasElement, images: OneUserIma
       const rise = p === 5 ? easeOut(ev(1.0 + j * 0.3, 1.6)) : p > 5 ? 1 : 0;
       const on = follow(`xst${j}`, stationLevel(e.st, 3 + j), dt, p === 5 ? 9 : 3);
       e.g.position.copy(ST_POS[e.st]).setY(-2.2 * (1 - rise)); e.g.rotation.y = FACE_Y; e.g.visible = rise > 0.001;
-      e.glassMat.uniforms.uLit.value = (0.14 + 0.86 * on) * rise; e.edges.opacity = (0.1 + 0.75 * on) * rise; e.coreMat.emissiveIntensity = (0.25 + 3.4 * on) * rise;
+      e.glassMat.uniforms.uLit.value = (0.14 + 0.86 * on) * rise; e.glassMat.uniforms.uColor.value.copy(tint(e.st)); e.edges.opacity = (0.1 + 0.75 * on) * rise; e.coreMat.emissiveIntensity = (0.25 + 3.4 * on) * rise;
       const inRoom = Math.max(0, on - 0.25) / 0.75;
       e.beam.opacity = (p >= 5 && p <= 7 ? 0.9 : 0.25) * inRoom * rise; e.poolMat.opacity = 0.55 * inRoom * rise;
       const d6 = follow(`d6x${j}`, p === 6 ? 0.25 : 1, dt, 3); e.glassMat.uniforms.uLit.value *= d6; e.edges.opacity *= d6; e.coreMat.emissiveIntensity *= d6; e.core.scale.setScalar(1 + 0.25 * inRoom);
       e.core.rotation.y = time * (0.7 + j * 0.15) * (1 + inRoom);
     });
     // 19 · 새 모델이 목소리 스테이션으로 내려온다
-    const voice = ST_POS[4];
+    const voice = ST_POS[VOICE_ST];
     newCore.position.copy(voice).setY(0.975 + (1 - newCoreIn) * 1.6); newCore.rotation.y = time * 0.9; newCore.rotation.x = time * 0.4;
     newCoreMat.opacity = newCoreIn; newCoreMat.emissiveIntensity = 3.4 * newCoreIn; newCore.visible = newCoreIn > 0.001;
     const swapPulse = p === 9 ? smooth(3.9, 4.2, t) * (1 - smooth(4.2, 5.6, t)) : 0;
     swapRing.position.copy(voice).setY(0.08); swapRing.scale.setScalar(1 + (p === 9 ? smooth(3.9, 5.6, t) : 0) * 1.6); swapRingMat.opacity = swapPulse * 0.9; swapRing.visible = swapPulse > 0.001;
 
-    // 버스와 입구(구상)
-    const busDraw = p === 5 ? easeOut(ev(0.9, 1.6)) : p > 5 ? 1 : 0;
-    busMat.uniforms.uDraw.value = busDraw; busMat.uniforms.uTime.value = time;
-    busMat.uniforms.uLit.value = follow("bus", p === 5 ? 0.55 : p === 6 ? 0.2 : p === 7 ? 1 : p >= 8 ? 0.35 : 0, dt, 3);
-    busMat.uniforms.uBase.value = p >= 5 ? 0.12 : 0; bus.visible = p >= 5;
-    routerMat.uniforms.uLit.value = follow("router", p === 5 ? smooth(1.4, 2.2, t) : p >= 8 ? 0.3 : 0, dt, 3); routerMat.uniforms.uTime.value = time; router.visible = p >= 5;
+    // 현장 관리자 RICE: 공장에 들어오면 위에서 내려와 문과 스테이션 사이에 선다
+    // 21-1(영수증)에는 문과 영수증이 앞서도록 거의 끈다
+    const riceEnter = p === 5 ? easeOut(ev(1.6, 1.6)) : p > 5 ? 1 : 0;
+    const riceIn = riceEnter * follow("riceD6", p === 6 ? 0.12 : 1, dt, 3);
+    rice.visible = riceIn > 0.001;
+    rice.position.copy(RICE_POS).setY(RICE_POS.y + (1 - riceEnter) * 1.4 + (pc.motion ? Math.sin(time * 0.9) * 0.04 : 0));
+    const riceLit = follow("rice", p === 5 ? 0.75 : p === 6 ? 0.25 : p === 7 ? 1 : 0.5, dt, 3) * riceIn;
+    const riceHit = req?.riceHit ?? 0, riceFail = follow("riceFail", req?.riceFail ?? 0, dt, 8);
+    riceRingMat.color.copy(TEAL).lerp(AMBER, riceFail).multiplyScalar(1.7);
+    riceRingMat.opacity = riceIn * (0.35 + 0.5 * riceLit + 0.4 * riceHit);
+    riceCoreMat.emissive.copy(TEAL).lerp(AMBER, riceFail); riceCoreMat.emissiveIntensity = riceIn * (0.4 + 2.6 * riceLit + 2 * riceHit); riceCoreMat.opacity = riceIn;
+    riceGlow.material.color.copy(TEAL).lerp(AMBER, riceFail); riceGlow.material.opacity = riceIn * (0.12 + 0.3 * riceLit + 0.4 * riceHit);
+    riceCore.rotation.y = time * 0.8; riceRing2.rotation.z = time * 0.5;
+
+    // 위계의 선. 21-0에서는 일이 지나갈 때만 밝고, 21-2에서는 모두 흐른다.
+    const lineBase = p === 6 ? 0.08 : p === 7 ? 0.5 : p >= 8 ? 0.12 : 0.1;
+    orderLine.mesh.visible = riceIn > 0.01;
+    orderLine.mat.uniforms.uLit.value = follow("order", (p === 5 ? 0.25 + 0.75 * (req?.order ?? 0) : lineBase * 1.4) * riceIn, dt, 6);
+    orderLine.mat.uniforms.uDraw.value = 1; orderLine.mat.uniforms.uBase.value = 0.1 * riceIn; orderLine.mat.uniforms.uTime.value = time;
+    dispatch.forEach((d, i) => {
+      d.mesh.visible = riceIn > 0.01;
+      d.mat.uniforms.uLit.value = follow(`disp${i}`, (p === 5 ? 0.15 + 0.85 * (req?.lines[i] ?? 0) : lineBase) * riceIn, dt, 6);
+      d.mat.uniforms.uDraw.value = 1; d.mat.uniforms.uBase.value = 0.08 * riceIn; d.mat.uniforms.uTime.value = time;
+    });
+    const take = p === 5 ? req?.take ?? 0 : 0;
+    takeLine.mesh.visible = take > 0.001;
+    takeLine.mat.uniforms.uDraw.value = take; takeLine.mat.uniforms.uLit.value = 1; takeLine.mat.uniforms.uTime.value = time;
+    const sayA = p === 5 ? req?.say ?? 0 : 0;
+    say.visible = sayA > 0.001; sayMat.opacity = sayA;
+    say.position.copy(takeCurve.getPoint(0.45)).addScaledVector(IN_R, -1.75).add(tmp.set(0, 0.25, 0)); say.quaternion.copy(camera.quaternion);
 
     // 프론티어 문
     const doorIn = p === 5 ? easeOut(ev(1.3, 1.8)) : p > 5 ? 1 : 0;
@@ -510,8 +566,6 @@ export function createOneUserWorld(canvas: HTMLCanvasElement, images: OneUserIma
     doorFillMat.uniforms.uLit.value = doorLit; doorFillMat.uniforms.uFlare.value = req?.flare ?? 0; doorFillMat.uniforms.uTime.value = time;
     doorFrameMat.opacity = Math.min(1, doorIn * (0.45 + 0.35 * doorLit + (req?.flare ?? 0)));
     (doorGlow.material as THREE.SpriteMaterial).opacity = doorIn * (0.1 + 0.18 * doorLit + 0.55 * (req?.flare ?? 0));
-    judgeMat.uniforms.uLit.value = follow("judge", p === 5 ? (req?.judgeLit ?? 0) : p === 6 ? 0.8 : p === 7 ? 0.3 : 0, dt, 5); judgeMat.uniforms.uDraw.value = 1; judgeMat.uniforms.uTime.value = time;
-    judge.visible = p >= 5;
 
     // 영수증: 문 양옆으로 내려와 걸린다
     [codexR, claudeR].forEach((r, i) => {
@@ -555,9 +609,11 @@ export function createOneUserWorld(canvas: HTMLCanvasElement, images: OneUserIma
     ANCHORS.out.copy(OUT).add(tmp.set(0, outH / 2 + 0.2, 0));
     ANCHORS.redo.copy(redoCurve.getPoint(0.42)).add(tmp.set(0, 0.1, 0));
     // 이웃한 라벨이 겹치지 않도록 높이를 엇갈린다
-    ST_IDS.forEach((id, st) => ANCHORS[id].copy(ST_POS[st]).setY(st % 2 ? 2.95 : 2.05));
+    // 스테이션 라벨은 상자 바로 위 한 줄에 둔다(위의 RICE와 겹치지 않게)
+    ST_IDS.forEach((id, st) => ANCHORS[id].copy(ST_POS[st]).setY(2.0));
     ANCHORS.frontier.copy(DOOR).setY(door.position.y + DOOR_H / 2 + 0.3);
-    ANCHORS.router.copy(BUS_PTS[0]).setY(0.35);
+    ANCHORS.rice.copy(rice.position).addScaledVector(tmp.set(1, 0, 0).applyQuaternion(camera.quaternion), 0.75);
+    ANCHORS.takeover.copy(say.position);
     ANCHORS.rentCodex.copy(codexR.g.position).add(tmp.set(0, -CODEX_H / 2 - 0.08, 0));
     ANCHORS.rentClaude.copy(claudeR.g.position).add(tmp.set(0, -CLAUDE_H / 2 - 0.08, 0));
     ANCHORS.betOut.copy(OUT).add(tmp.set(0, 0, 0)).addScaledVector(tmp.set(1, 0, 0).applyQuaternion(camera.quaternion), outW / 2 + 0.1);
