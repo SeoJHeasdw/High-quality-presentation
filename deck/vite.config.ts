@@ -1,8 +1,9 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
+import engineLauncher from './tools/engine-launcher.mjs';
 
 export default defineConfig(({ mode }) => ({
-  plugins: [react()],
+  plugins: [react(), engineLauncher()],
   server: {
     port: 5180,
     open: mode !== 'capture',

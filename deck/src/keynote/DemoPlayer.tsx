@@ -11,6 +11,23 @@ export default function DemoPlayer({kind}:{kind:keyof typeof DEMOS}){
  const demo=DEMOS[kind],ref=useRef<HTMLMediaElement>(null);
  const autoStart=useRef<number|null>(null);
  const [playing,setPlaying]=useState(false),[muted,setMuted]=useState(kind==='assets'),[time,setTime]=useState(0),[error,setError]=useState("");
+ const launchPending=useRef(false);
+ const [launching,setLaunching]=useState(false),[launchMessage,setLaunchMessage]=useState("");
+ const engineName=kind==='tts'?'TTS':kind==='assets'?'Assets':'Music';
+ const launchEngine=async()=>{
+  if(launchPending.current)return;
+  launchPending.current=true;setLaunching(true);setLaunchMessage("");
+  if(autoStart.current!==null){window.clearTimeout(autoStart.current);autoStart.current=null}
+  ref.current?.pause();
+  if(document.fullscreenElement)await document.exitFullscreen().catch(()=>{});
+  try{
+   const response=await fetch(`/__javis/engines/${kind}/launch`,{method:'POST',headers:{'X-Javis-Launch':'1'},signal:AbortSignal.timeout(10000)});
+   const result=await response.json().catch(()=>null);
+   if(!response.ok||!result?.ok)throw new Error(result?.error||"로컬 발표 서버를 다시 켠 뒤 실행해주세요.");
+   setLaunchMessage(`${engineName} 엔진 실행을 요청했습니다. 앱 창을 확인해주세요.`);
+  }catch(cause){setLaunchMessage(cause instanceof Error&&!(cause instanceof TypeError)&&cause.name!=='TimeoutError'?cause.message:"실행 서버에 연결하지 못했습니다. 로컬 발표 서버를 확인해주세요.")}
+  finally{launchPending.current=false;setLaunching(false)}
+ };
  const toggle=()=>{if(autoStart.current!==null){window.clearTimeout(autoStart.current);autoStart.current=null}const el=ref.current;if(!el)return;if(el.paused){setError("");void el.play().catch(()=>setError("재생 버튼을 눌러주세요."))}else el.pause()};
  const sound=()=>{const el=ref.current;if(!el)return;el.muted=!el.muted;setMuted(el.muted)};
  useEffect(()=>{
@@ -26,6 +43,6 @@ export default function DemoPlayer({kind}:{kind:keyof typeof DEMOS}){
    {demo.audio?<><audio ref={ref as React.RefObject<HTMLAudioElement>} src={demo.src} preload="auto" muted={muted} {...events}/><div className="music-wave" aria-label="실제 음원의 파형">{musicWave.peaks.map((height,i)=><i key={i} data-played={time/duration>=i/musicWave.peaks.length||undefined} style={{height:`${Math.max(5,height*220)}px`}}/>)}</div><span className="music-time">{time.toFixed(1)}<small> / {duration.toFixed(1)} s</small></span></>:<video ref={ref as React.RefObject<HTMLVideoElement>} src={demo.src} poster={demo.poster} preload="auto" playsInline muted={muted} {...events}/>}
    <span className="demo-caption">{demo.caption}</span>
   </div>
-  <div className="demo-controls" onKeyDown={e=>{if(e.key===' ')e.stopPropagation()}}><button type="button" onClick={toggle}>{playing?"일시정지":"재생"} <kbd>P</kbd></button>{kind!=='assets'&&<button type="button" onClick={sound}>{muted?"소리 켜기":"소리 끄기"} <kbd>A</kbd></button>}<span>{error||demo.description}</span></div>
+  <div className="demo-controls" onKeyDown={e=>{if(e.key===' ')e.stopPropagation()}}><button type="button" onClick={toggle}>{playing?"일시정지":"재생"} <kbd>P</kbd></button>{kind!=='assets'&&<button type="button" onClick={sound}>{muted?"소리 켜기":"소리 끄기"} <kbd>A</kbd></button>}<span role="status">{launchMessage||error||demo.description}</span><button type="button" className="demo-launch" onClick={()=>void launchEngine()} disabled={launching} aria-busy={launching}>{launching?"앱 여는 중…":`${engineName} 엔진 실행`} <b aria-hidden="true">↗</b></button></div>
  </Briefing>;
 }

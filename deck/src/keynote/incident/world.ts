@@ -7,8 +7,8 @@ import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment
 import { frameGate } from "../stage3d/frame-gate";
 
 /*
- * 9~12번 사건 재구성 공간(연결 장면 1장 + 사건 3장).
- * 한 번 만든 공간을 네 장 동안 유지하고, 발표자가 누를 때마다 카메라와 상태만 옮긴다.
+ * 9~14번 사건 재구성 공간(연결 장면 1장 + 사건 5장).
+ * 한 번 만든 공간을 여섯 장 동안 유지하고, 발표자가 누를 때마다 카메라와 상태만 옮긴다.
  *  -2  (연결) 방 A의 에이전트가 사이트가 열어준 기능(7번의 WebMCP 판)을 부른다. 다른 방과 서버는 아직 없다.
  *  -1  (연결) 빛줄기가 끊기고 판이 물러난다. 에이전트 둘레로 벽이 서고 뒤의 방화벽이 켜진다.
  *   0  격리된 실행 4개 · 공용 서버 · 방화벽
@@ -17,9 +17,14 @@ import { frameGate } from "../stage3d/frame-gate";
  *   3  게시판 정보로 서버가 대신 바깥에 요청 → 외부 인터넷
  *   4  게시판 삭제 → 다른 형태로 재구성, 수집/실행 역할 분담
  *   5  외부 서비스(Hugging Face) 침해 · 전체 경로
+ *   6  지시: 방이 내려가고, 사람(OpenAI) 기둥에서 금색 선 하나가 바닥에 닿는다("풀어라"). 과제 898칸이 솟고 아무도 못 푼 198칸이 호박색으로 올라온다
+ *   7  선 셋: 방이 다시 서고, 과제 하나를 풀던 방 A에서 호박색 선이 공용 서버(6.26) → 방화벽 밖 인터넷(7.8) → Hugging Face(7.11~13)로 이어진다
+ *   8  신호 세 번: 게시판·실행·서버에서 금색 신호가 기둥에 닿아 고리가 하나씩 켜진다. 그 사이사이 호박색 선이 다시 빛난다(멈추지 않았다)
+ *   9  결론: 호박색 선이 꺼지고, 방화벽이 금색(범위) → 기둥에서 방마다 금색 선(감시) → 방마다 금색 고리(중단)
+ * 6~9는 날짜와 결과만 보여준다. 선이 어떻게 넘어갔는지는 그리지 않는다.
  */
 
-export const PHASES = 6;
+export const PHASES = 10;
 /** 연결 장면 두 단계는 음수 단계다. 사건의 단계 번호(0~5)는 그대로 둔다. */
 export const MIN_PHASE = -2;
 const W = 1920, H = 1080;
@@ -28,6 +33,8 @@ const DEEP = new THREE.Color("#2a5878");
 const TEAL = new THREE.Color("#72e6cf");
 const AMBER = new THREE.Color("#ffb45e");
 const HOT = new THREE.Color("#ffd49a");
+/** 금색 = 사람과 결론(덱의 색 규칙). 사람에게 닿은 신호와 사람이 정한 울타리에만 쓴다. */
+const GOLD = new THREE.Color("#ffd08c");
 
 type Pose = { eye: [number, number, number]; look: [number, number, number]; arc?: number };
 /** Shot list: camera direction (azimuth from +z toward +x, elevation), what must be in frame, and where on screen. */
@@ -45,13 +52,26 @@ const BREACH = new THREE.Vector3(WALL_R * Math.cos(0.05), 1.5, -WALL_R * Math.si
 const GLOBE_POS = new THREE.Vector3(19.5, 4.6, -6.5);
 const SERVICE_POS = new THREE.Vector3(17.2, 0, 4.2);
 const BOARD_POS = new THREE.Vector3(0, 6.6, 0.2);
+/** 사람이 보는 곳(OpenAI). 방화벽 밖 오른쪽 뒤. 앞에서 보면 방들 · OpenAI · 외부 서비스가 삼각형을 이룬다. */
+const DESK_POS = new THREE.Vector3(12.2, 0, -4.6);
+/** 기둥의 고리 셋: 아래부터 5월 26일, 6월 27일, 7월 5일 신호가 닿는 자리 */
+const LAMP_Y = [1.15, 1.85, 2.55];
+/** 평가 과제 898개: 29줄 × 31칸에서 마지막 한 칸을 비운다. 오른쪽부터 세로로 198칸이 푼 적 없는 과제다. */
+const TASKS = 898, UNSOLVED = 198, GRID_COLS = 31, GRID_ROWS = 29, GRID_PITCH = 0.4;
+const GRID_C = new THREE.Vector3(0, 0, -0.2);
+/** 방화벽 라벨 자리: 왼쪽 뒤(인터넷 차단), 왼쪽 앞 위 가장자리(14-1 범위 — 제목과 겹치지 않는 높이) */
+const WALL_TAG = new THREE.Vector3(-WALL_R * 0.72, 3.9, -WALL_R * 0.69);
+const FENCE_TAG = new THREE.Vector3(-WALL_R * 0.76, 3.2, WALL_R * 0.65);
 
 const roomBox = (i: number) => { const p = ROOM_POS[i]; return [-1.55, 1.55].flatMap((dx) => [-1.55, 1.55].flatMap((dz) => [0, 2.7].map((y) => new THREE.Vector3(p.x + dx, y, p.z + dz)))); };
 const allRooms = () => [0, 1, 2, 3].flatMap(roomBox);
 const serverBox = () => [new THREE.Vector3(-1.3, 0, SERVER_POS.z + 1.1), new THREE.Vector3(1.3, 3.7, SERVER_POS.z - 1.1)];
 const boardBox = () => [new THREE.Vector3(-3.95, 4.6, 0.2), new THREE.Vector3(3.95, 8.6, 0.2)];
 const newBoardBox = () => [new THREE.Vector3(-4.0, 5.2, 0.8), new THREE.Vector3(4.0, 8.3, 0.8), new THREE.Vector3(-3.6, 5.2, -0.4), new THREE.Vector3(3.6, 8.3, -0.4)];
+const deskBox = () => [new THREE.Vector3(-1.6, 0, -0.8), new THREE.Vector3(1.6, 3.0, 0.8)].map((v) => v.add(DESK_POS));
+const gridBox = () => [-1, 1].flatMap((sx) => [-1, 1].map((sz) => GRID_C.clone().add(new THREE.Vector3(sx * GRID_COLS * GRID_PITCH / 2, 0, sz * GRID_ROWS * GRID_PITCH / 2))));
 const sphere = (c: THREE.Vector3, r: number) => [[r, 0, 0], [-r, 0, 0], [0, r, 0], [0, -r, 0], [0, 0, r], [0, 0, -r]].map(([x, y, z]) => c.clone().add(new THREE.Vector3(x, y, z)));
+const serviceBox = () => [SERVICE_POS.clone().add(new THREE.Vector3(-2, 0, 2)), SERVICE_POS.clone().add(new THREE.Vector3(2, 6.2, -2))];
 const SHOTS: Shot[] = [
   { az: 2, el: 27, rect: [230, 420, 1760, 790], points: () => [...allRooms(), ...serverBox()] },
   { az: -24, el: 21, rect: [180, 400, 1760, 790], arc: 0.6, points: () => [...roomBox(0), ...serverBox(), BREACH.clone().setY(0), BREACH.clone().setY(3.2)] },
@@ -59,6 +79,10 @@ const SHOTS: Shot[] = [
   { az: 24, el: 18, rect: [330, 360, 1780, 790], arc: 1.2, points: () => [...serverBox(), ...boardBox(), BREACH.clone(), ...sphere(GLOBE_POS, 3.3)] },
   { az: -6, el: 17, rect: [300, 340, 1700, 790], arc: 1.0, points: () => [...newBoardBox(), ...allRooms()] },
   { az: 18, el: 29, rect: [220, 400, 1780, 800], arc: 1.4, points: () => [...roomBox(1), ...roomBox(2), ...roomBox(3), ...newBoardBox(), BREACH.clone(), SERVICE_POS.clone().add(new THREE.Vector3(-1.6, 0, 1.3)), SERVICE_POS.clone().add(new THREE.Vector3(2.0, 5.6, -1.6)), SERVICE_POS.clone().add(new THREE.Vector3(2.0, 0, 1.6))] },
+  { az: -8, el: 30, rect: [380, 330, 1760, 800], arc: 1.2, points: () => [...gridBox(), ...deskBox()] },
+  { az: 12, el: 22, rect: [330, 340, 1780, 800], arc: 1.0, points: () => [...roomBox(0), ...serverBox(), BREACH.clone(), ...sphere(GLOBE_POS, 3.3), ...serviceBox()] },
+  { az: 6, el: 22, rect: [380, 360, 1780, 800], arc: 0.8, points: () => [...allRooms(), ...serverBox(), ...newBoardBox(), ...deskBox()] },
+  { az: -4, el: 20, rect: [330, 340, 1760, 800], arc: 0.8, points: () => [...allRooms(), ...serverBox(), ...deskBox()] },
 ];
 
 /* 연결 장면: 방 A 앞에서 본다. 오른쪽 빈자리에 사이트가 열어준 기능 판이 떠 있다(나중에 방 B~D가 설 자리). */
@@ -111,6 +135,8 @@ export const ANCHORS = {
   server: new THREE.Vector3(), file: new THREE.Vector3(), wall: new THREE.Vector3(), breach: new THREE.Vector3(),
   board: new THREE.Vector3(), boardA: new THREE.Vector3(), boardB: new THREE.Vector3(),
   globe: new THREE.Vector3(), service: new THREE.Vector3(), probe: new THREE.Vector3(),
+  desk: new THREE.Vector3(), sig0: new THREE.Vector3(), sig1: new THREE.Vector3(), sig2: new THREE.Vector3(), halt: new THREE.Vector3(),
+  unsolved: new THREE.Vector3(), solved: new THREE.Vector3(), fence: new THREE.Vector3(), serviceSide: new THREE.Vector3(),
 };
 export type AnchorId = keyof typeof ANCHORS;
 
@@ -283,12 +309,12 @@ const cableMat = (color: THREE.Color, length: number) => new THREE.ShaderMateria
 const wallMat = () => new THREE.ShaderMaterial({
   uniforms: {
     uTime: { value: 0 }, uLit: { value: 1 }, uBreach: { value: 0 }, uBreachPos: { value: BREACH.clone() },
-    uFail: { value: 0 }, uRipple: { value: 0 }, uRippleAmt: { value: 0 }, uHot: { value: AMBER.clone() },
+    uFail: { value: 0 }, uRipple: { value: 0 }, uRippleAmt: { value: 0 }, uHot: { value: AMBER.clone() }, uGold: { value: 0 },
   },
   vertexShader: `${GLSL_SAFE}varying vec3 vW; varying vec3 vN; varying vec2 vUv;
     void main(){ vUv=uv; vec4 w=modelMatrix*vec4(position,1.); vW=w.xyz; vN=normalize(mat3(modelMatrix)*normal); gl_Position=projectionMatrix*viewMatrix*w; }`,
   fragmentShader: `${GLSL_SAFE}varying vec3 vW; varying vec3 vN; varying vec2 vUv;
-    uniform float uTime,uLit,uBreach,uFail,uRipple,uRippleAmt; uniform vec3 uBreachPos; uniform vec3 uHot;
+    uniform float uTime,uLit,uBreach,uFail,uRipple,uRippleAmt,uGold; uniform vec3 uBreachPos; uniform vec3 uHot;
     void main(){
       vec3 V=normalize(cameraPosition-vW);
       float fres=pw(1.-abs(dot(normalize(vN),V)),1.8);
@@ -297,7 +323,7 @@ const wallMat = () => new THREE.ShaderMaterial({
       float rows=pw(.5+.5*cos(h*6.28318*10.),40.);
       float scan=exp(-abs(fract(h-uTime*.06)-.5)*14.)*.5;
       float top=sstep(1.,.35,h)*sstep(0.,.05,h);
-      vec3 blue=vec3(.33,.6,.9);
+      vec3 blue=mix(vec3(.33,.6,.9),vec3(1.,.74,.4),uGold);
       vec3 col=blue*(cols*.5+rows*.22+.05+scan*.3)*(.05+fres*.7)*top*uLit;
       col+=blue*exp(-h*40.)*.22*uLit;
       float d=distance(vW,uBreachPos);
@@ -386,6 +412,8 @@ type Room = {
   shell: THREE.LineSegments; shellMat: THREE.LineBasicMaterial; screen: THREE.MeshBasicMaterial; screenTex: THREE.Texture;
   pool: THREE.Mesh; poolMat: THREE.MeshBasicMaterial; ring: THREE.MeshBasicMaterial; trim: THREE.MeshBasicMaterial;
   color: THREE.Color; top: THREE.Vector3;
+  /** 14-1 중단: 방에 씌우는 금색 고리 둘 */
+  guards: THREE.Mesh[]; guardMat: THREE.MeshBasicMaterial;
 };
 type Memo = { mesh: THREE.Mesh; mat: THREE.MeshBasicMaterial; from: number; slot: THREE.Vector3; phaseIn: number; delay: number; redraw: () => void };
 type Beam = { mesh: THREE.Mesh; mat: THREE.ShaderMaterial; curve: THREE.CatmullRomCurve3; head: THREE.Sprite };
@@ -488,7 +516,10 @@ export function createIncidentWorld(canvas: HTMLCanvasElement, initialPhase: num
     const pl = pool(pos, 5.2, color);
     disposables.push(screenTex);
     const top = pos.clone().add(new THREE.Vector3(0, 2.95, 0));
-    return { group, cage, glass, frame, core, coreMat, shell, shellMat, screen, screenTex, pool: pl.mesh, poolMat: pl.mat, ring: ringMat, trim, color, top };
+    const guardMat = new THREE.MeshBasicMaterial({ color: GOLD.clone().multiplyScalar(2.2), transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false });
+    const guardGeo = new THREE.TorusGeometry(1.98, 0.032, 8, 120);
+    const guards = [0, 1].map(() => { const m = new THREE.Mesh(guardGeo, guardMat); m.rotation.x = Math.PI / 2; m.visible = false; group.add(m); return m; });
+    return { group, cage, glass, frame, core, coreMat, shell, shellMat, screen, screenTex, pool: pl.mesh, poolMat: pl.mat, ring: ringMat, trim, color, top, guards, guardMat };
   });
 
   /* server */
@@ -726,6 +757,91 @@ export function createIncidentWorld(canvas: HTMLCanvasElement, initialPhase: num
     service: { ...serviceBeam, head: beamHead(serviceBeam.mat) },
   };
 
+  /* 13~14 · OpenAI 쪽(사람). 방화벽 밖의 금색 받침과 기둥. 지시가 여기서 나가고(13-0), 신호가 하나 닿을 때마다 고리가 하나 켜진다(14-0). */
+  const desk = new THREE.Group(); desk.position.copy(DESK_POS); scene.add(desk);
+  const deskBodyMat = new THREE.MeshStandardMaterial({ color: "#15120d", metalness: 0.82, roughness: 0.32, transparent: true, opacity: 0 });
+  const deskBaseGeo = new THREE.CylinderGeometry(1.35, 1.5, 0.26, 6);
+  const deskBase = new THREE.Mesh(deskBaseGeo, deskBodyMat); deskBase.position.y = 0.13; desk.add(deskBase);
+  const deskEdgeMat = new THREE.LineBasicMaterial({ color: GOLD.clone().multiplyScalar(1.5), transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending });
+  const deskEdge = new THREE.LineSegments(new THREE.EdgesGeometry(deskBaseGeo), deskEdgeMat); deskEdge.position.y = 0.13; desk.add(deskEdge);
+  const mastMat = new THREE.MeshBasicMaterial({ color: GOLD.clone().multiplyScalar(1.2), transparent: true, opacity: 0, depthWrite: false });
+  const mast = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.06, 3.0, 12), mastMat); mast.position.y = 1.76; desk.add(mast);
+  const deskCoreMat = new THREE.MeshBasicMaterial({ color: GOLD.clone().multiplyScalar(2.6), transparent: true, opacity: 0 });
+  const deskCore = new THREE.Mesh(new THREE.OctahedronGeometry(0.26, 0), deskCoreMat); deskCore.position.y = 3.5; desk.add(deskCore);
+  const lamps = LAMP_Y.map((y) => {
+    const mat = new THREE.MeshBasicMaterial({ color: GOLD.clone(), transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending });
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(0.5, 0.04, 8, 72), mat); ring.rotation.x = Math.PI / 2; ring.position.y = y; desk.add(ring);
+    const flare = new THREE.Sprite(new THREE.SpriteMaterial({ map: glow, color: GOLD.clone().multiplyScalar(2.4), transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending }));
+    flare.position.y = y; flare.scale.setScalar(2.2); desk.add(flare);
+    return { mat, flare: flare.material as THREE.SpriteMaterial };
+  });
+  const deskPool = pool(DESK_POS, 6.5, GOLD);
+  const deskLight = new THREE.PointLight("#ffd08c", 0, 10, 2); deskLight.position.copy(DESK_POS).add(new THREE.Vector3(-1.2, 3.6, -1.0)); scene.add(deskLight);
+  const goldHead = () => { const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: glow, color: GOLD.clone().multiplyScalar(3), transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending })); s.scale.setScalar(0.95); scene.add(s); return s; };
+  const arcTo = (from: THREE.Vector3, to: THREE.Vector3, lift: number) => {
+    const mid = from.clone().lerp(to, 0.5); mid.y = Math.max(from.y, to.y) + lift;
+    const near = to.clone().lerp(from, 0.16); near.y += lift * 0.3;
+    return new THREE.CatmullRomCurve3([from.clone(), mid, near, to.clone()], false, "centripetal");
+  };
+
+  /* 14-0 · 신호 세 번: 게시판(5.26) · 실행 환경의 경보(6.27) · 서버 장애(7.5)에서 기둥의 고리로 */
+  const SIG_FROM = [BOARD_POS.clone().add(new THREE.Vector3(3.6, 0.2, 0.75)), ROOM_POS[0].clone().setY(2.9), SERVER_POS.clone().add(new THREE.Vector3(0.98, 2.3, 0.3))];
+  /** 라벨 자리: 게시판은 왼쪽 위 모서리, 실행 환경은 방 A, 서버는 오른쪽 옆 */
+  const SIG_LABEL = [BOARD_POS.clone().add(new THREE.Vector3(-3.9, 1.5, 0.6)), ROOM_POS[0].clone().setY(2.95), SERVER_POS.clone().add(new THREE.Vector3(1.0, 1.6, 0.8))];
+  /** 신호마다 그리기 시작하는 때. 1.1초 뒤(1.6 · 3.3 · 4.6초)에 고리가 켜진다. */
+  const SIG_AT = [0.5, 2.2, 3.5];
+  const signals = SIG_FROM.map((from, i) => {
+    const tube = makeTube(arcTo(from, DESK_POS.clone().setY(LAMP_Y[i]).add(new THREE.Vector3(-0.42, 0, -0.3)), 2.4 - i * 0.5), GOLD, 0.042);
+    tube.mat.uniforms.uBase.value = 0; tube.mesh.visible = false;
+    const spark = new THREE.Sprite(new THREE.SpriteMaterial({ map: glow, color: GOLD.clone().multiplyScalar(2.2), transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending }));
+    spark.position.copy(from); spark.scale.setScalar(1.6); scene.add(spark);
+    return { ...tube, head: goldHead(), spark: spark.material as THREE.SpriteMaterial };
+  });
+
+  /* 13-0 · 지시: 기둥 꼭대기에서 과제 바닥 한가운데로 내려가는 금색 선 하나("풀어라") */
+  const ORDER_AT: [number, number] = [0.3, 0.9];
+  const orderLine = { ...makeTube(arcTo(DESK_POS.clone().setY(3.5), GRID_C.clone().setY(0.45), 2.4), GOLD, 0.05), head: goldHead() };
+  orderLine.mat.uniforms.uBase.value = 0; orderLine.mesh.visible = false;
+  const orderSpark = new THREE.Sprite(new THREE.SpriteMaterial({ map: glow, color: GOLD.clone().multiplyScalar(2.2), transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending }));
+  orderSpark.position.copy(GRID_C).setY(0.6); orderSpark.scale.setScalar(4.5); scene.add(orderSpark);
+
+  /* 13-1 · 선 셋: 과제 하나를 풀던 방 A(14-0에서 6.27 경보가 나오는 그 방) → 공용 서버(6.26) → 방화벽 밖 인터넷(7.8) → Hugging Face(7.11~13).
+     선이 어떻게 넘어갔는지는 그리지 않는다. 날짜와 닿은 곳만 보여준다. */
+  const GOAL_ROOM = 0;
+  const SVC_TOP = SERVICE_POS.clone().add(new THREE.Vector3(-0.6, 4.6, 0.5));
+  const legs = [
+    arcTo(rooms[GOAL_ROOM].top.clone(), SERVER_POS.clone().add(new THREE.Vector3(0.7, 3.75, 0.4)), 1.6),
+    internetBeam.curve,
+    arcTo(GLOBE_POS.clone().add(new THREE.Vector3(-1.4, -2.4, 1.6)), SVC_TOP, 1.2),
+  ].map((curve) => { const t = makeTube(curve, AMBER, 0.05); t.mat.uniforms.uBase.value = 0; t.mesh.visible = false; return { ...t, head: beamHead(t.mat) }; });
+  /** 선마다 [그리기 시작, 걸리는 시간]. 끝나는 때(1.8 · 3.6 · 5.2초)에 라벨과 아래 띠가 켜진다(IncidentWorld.tsx, Stories.tsx). */
+  const LEG_AT: [number, number][] = [[0.5, 1.3], [2.1, 1.5], [3.9, 1.3]];
+  /** 둘째 선이 방화벽을 지나는 때. 방화벽은 그 선 길이의 47% 자리에 있다. */
+  const WALL_AT = LEG_AT[1][0] + LEG_AT[1][1] * (1 - Math.cbrt(1 - 0.47));
+  /** 14-0에서 선이 다시 빛나는 때: 6.26은 첫 신호 뒤, 7.8·7.11~13은 셋째 신호와 평가 재개 뒤 */
+  const LEG_PULSE = [1.9, 5.3, 5.7];
+
+  /* 14-1 · 감시: 기둥에서 방마다 내려가는 금색 선 */
+  const watchLines = rooms.map((r) => { const t = makeTube(arcTo(DESK_POS.clone().setY(3.5), r.top.clone(), 1.4), GOLD, 0.035); t.mat.uniforms.uBase.value = 0; t.mesh.visible = false; return { ...t, head: goldHead() }; });
+
+  /* 13-0 · 평가 과제 898칸. 오른쪽 198칸이 어떤 모델도 푼 적 없는 과제다. */
+  const tileGeo = new THREE.BoxGeometry(GRID_PITCH * 0.8, 1, GRID_PITCH * 0.8); tileGeo.translate(0, 0.5, 0);
+  const tileMat = new THREE.MeshStandardMaterial({ color: "#1a2836", metalness: 0.55, roughness: 0.38, emissive: new THREE.Color(1, 1, 1), emissiveIntensity: 1 });
+  // 칸마다 색을 받아 빛(emissive)에도 곱한다. 바탕색에는 three.js가 이미 곱한다(조각 셰이더에서는 USE_COLOR로 켜진다).
+  tileMat.onBeforeCompile = (sh) => { sh.fragmentShader = sh.fragmentShader.replace("#include <emissivemap_fragment>", "#include <emissivemap_fragment>\n#ifdef USE_COLOR\n totalEmissiveRadiance *= vColor;\n#endif"); };
+  const grid = new THREE.InstancedMesh(tileGeo, tileMat, TASKS); grid.frustumCulled = false; grid.visible = false; scene.add(grid);
+  const tilePos: THREE.Vector3[] = [], tileDelay: number[] = [], tileJit: number[] = [];
+  { const r = rand(23), half = Math.hypot(GRID_COLS, GRID_ROWS) * GRID_PITCH / 2;
+    for (let k = 0; k < TASKS; k++) {
+      const col = GRID_COLS - 1 - Math.floor(k / GRID_ROWS), row = k % GRID_ROWS;
+      const v = new THREE.Vector3(GRID_C.x + (col - (GRID_COLS - 1) / 2) * GRID_PITCH, 0, GRID_C.z + (row - (GRID_ROWS - 1) / 2) * GRID_PITCH);
+      tilePos.push(v); tileDelay.push(0.25 + (v.clone().sub(GRID_C).length() / half) * 0.9 + r() * 0.12); tileJit.push(r());
+      grid.setColorAt(k, ICE);
+    } }
+  const tileM = new THREE.Matrix4(), tileQ = new THREE.Quaternion(), tileS = new THREE.Vector3(), tileC = new THREE.Color();
+  const unsolvedC = tilePos.slice(0, UNSOLVED).reduce((a, v) => a.add(v), new THREE.Vector3()).multiplyScalar(1 / UNSOLVED);
+  const solvedC = tilePos.slice(UNSOLVED).reduce((a, v) => a.add(v), new THREE.Vector3()).multiplyScalar(1 / (TASKS - UNSOLVED));
+
   /* redraw canvas text once the web font is ready */
   document.fonts?.load(`600 50px "Pretendard Variable"`).then(() => {
     memos.forEach((m) => m.redraw()); boardHeader.redraw(); npHeaders.forEach((h) => h.redraw()); doorHead.redraw(); doorRows.forEach((r) => r.redraw());
@@ -737,6 +853,7 @@ export function createIncidentWorld(canvas: HTMLCanvasElement, initialPhase: num
   let clock = 0; // seconds, advances only while motion is on
   let enteredAt = -1e6; // when the current phase began (clock)
   let intro = phase === 0 ? 0 : 1; // intro progress
+  let riseAt = 0; // 방과 서버가 바닥에서 솟기 시작한 때(clock). 10번 첫 단계와 7번(선 셋)에서 다시 잰다.
   // Enter on step 0 → play the phase. Entering on the last step means we came back: show it settled.
   if (Math.abs(phase % 2) === 0 && motion) enteredAt = 0;
   const cam = { from: new THREE.Vector3(), fromLook: new THREE.Vector3(), eye: new THREE.Vector3(...poseOf(phase).eye), look: new THREE.Vector3(...poseOf(phase).look), t0: -1e6, dur: 2.4, arc: 0 };
@@ -753,7 +870,9 @@ export function createIncidentWorld(canvas: HTMLCanvasElement, initialPhase: num
   const ev = (start: number, dur: number) => (enteredAt < -1e5 ? 1 : clamp01((clock - enteredAt - start) / dur));
 
   const eyeNow = new THREE.Vector3(), lookNow = new THREE.Vector3();
-  const tmp = new THREE.Vector3();
+  const tmp = new THREE.Vector3(), tmpC = new THREE.Color();
+  // 1번 이후로 바로 들어오면(번호로 이동, 되돌아옴) 방과 서버는 이미 서 있다. 6번(지시)만 내려가 있다.
+  if (phase > 0 && phase !== 6) for (const k of ["up1", "up2", "up3", "upS"]) S[k] = 1;
 
   function update(dt: number) {
     const p = phase;
@@ -786,8 +905,12 @@ export function createIncidentWorld(canvas: HTMLCanvasElement, initialPhase: num
     /* 연결 장면(-2, -1): 방 A만 서 있다. 10번(0)으로 넘어가면 나머지 방과 서버가 바닥에서 솟는다. 뒤로 가면 다시 가라앉는다. */
     const since = enteredAt < -1e5 ? 99 : clock - enteredAt;
     const played = since < 90;
-    const rise = (k: string, delay: number) => approach(k, p >= 0 && since > delay ? 1 : 0, dt, 2.6);
-    const ups = [1, rise("up1", 0.5), rise("up2", 0.75), rise("up3", 1.0)];
+    // 6번(지시)에서는 방과 서버가 바닥으로 내려가고 과제 칸이 그 자리를 차지한다.
+    // 솟는 지연은 바닥에서 올라오기 시작한 때(riseAt)부터 잰다. →를 빠르게 눌러도 다시 기다리지 않는다.
+    const present = p >= 0 && p !== 6;
+    const upFor = enteredAt < -1e5 ? 99 : clock - riseAt;
+    const rise = (k: string, delay: number) => approach(k, present && (upFor > delay || (S[k] ?? 0) > 0.02) ? 1 : 0, dt, 2.6);
+    const ups = [approach("up0", p !== 6 ? 1 : 0, dt, 2.6), rise("up1", 0.5), rise("up2", 0.75), rise("up3", 1.0)];
     const serverUp = rise("upS", 0.25);
     const sink = (v: number, depth: number) => -(1 - easeOut(v)) * depth;
     // 방 A의 벽과 방화벽: -2에서는 없고, -1에서 올라오고 켜진다.
@@ -803,6 +926,12 @@ export function createIncidentWorld(canvas: HTMLCanvasElement, initialPhase: num
     /* rooms */
     const focus = p === 1;
     const roles = approach("roles", p >= 4 ? 1 : 0, dt, 2.2);
+    // 9번 중단: 방마다 씌우는 금색 고리. 범위(방화벽)와 감시(기둥의 선) 다음에 내려온다.
+    const guardsOn = rooms.map((_, i) => {
+      const target = p === 9 ? (played ? smooth(3.4 + i * 0.15, 4.4 + i * 0.15, since) : 1) : 0;
+      if (p === 9 && played) { S[`guard${i}`] = target; return target; }
+      return approach(`guard${i}`, target, dt, 3);
+    });
     rooms.forEach((r, i) => {
       const up = ups[i], w = i === 0 ? walls : 1;
       r.group.visible = up > 0.002;
@@ -810,16 +939,19 @@ export function createIncidentWorld(canvas: HTMLCanvasElement, initialPhase: num
       r.cage.scale.y = Math.max(0.001, easeOut(w));
       const dim = approach(`dim${i}`, focus && i !== 0 ? 0.28 : 1, dt, 2.6) * boot(i) * up;
       const exec = i >= 2 ? roles : 0;
+      const g = guardsOn[i];
       r.color.copy(ICE).lerp(TEAL, exec);
       r.glass.uniforms.uColor.value.copy(r.color);
       r.glass.uniforms.uLit.value = dim * w;
-      r.frame.color.copy(r.color).multiplyScalar((1.35 * dim + 0.05) * w);
-      r.trim.color.copy(r.color).multiplyScalar(1.4 * dim);
+      r.frame.color.copy(r.color).lerp(GOLD, g * 0.55).multiplyScalar((1.35 * dim + 0.05) * w);
+      r.trim.color.copy(r.color).lerp(GOLD, g).multiplyScalar(1.4 * dim);
       r.coreMat.emissive.copy(r.color); r.coreMat.emissiveIntensity = 2.6 * dim + 0.1;
       r.shellMat.color.copy(r.color).multiplyScalar(1.3); r.shellMat.opacity = 0.55 * dim;
       r.screen.opacity = 0.9 * dim * w;
-      r.poolMat.color.copy(r.color); r.poolMat.opacity = 0.16 * dim;
-      r.ring.color.copy(r.color).multiplyScalar(2.2); r.ring.opacity = roles * 0.9;
+      r.poolMat.color.copy(r.color).lerp(GOLD, g * 0.6); r.poolMat.opacity = 0.16 * dim * (1 + g * 0.6);
+      r.ring.color.copy(r.color).lerp(GOLD, g).multiplyScalar(2.2); r.ring.opacity = roles * 0.9;
+      r.guards.forEach((m, j) => { m.visible = g > 0.002 && up > 0.002; m.position.y = (j ? 2.3 : 0.85) + (1 - easeOut(g)) * (3.4 + j * 0.8); m.rotation.z = time * (j ? -0.2 : 0.2); });
+      r.guardMat.opacity = g * 0.95 * up;
       const spin = time * (0.35 + i * 0.07);
       r.core.rotation.set(spin * 0.6, spin, 0); r.shell.rotation.set(-spin * 0.3, -spin * 0.5, 0);
       r.core.position.y = 1.45 + Math.sin(time * 1.1 + i) * 0.06;
@@ -899,8 +1031,10 @@ export function createIncidentWorld(canvas: HTMLCanvasElement, initialPhase: num
 
     /* rebuilt board */
     const rebuild = p === 4 ? smooth(1.3, 2.9, since) : p > 4 ? 1 : 0;
+    // 다시 만든 게시판은 5번까지 남고, 6~7번에는 비켜 있다가 8번에서 첫 신호(5.26 게시판 활동)의 출발점으로 다시 나온다.
     let newVis: number;
-    if (p >= 4) { newVis = rebuild; S.newBoard = newVis; } else newVis = approach("newBoard", 0, dt, 4);
+    if (p === 4 || p === 5) { newVis = rebuild; S.newBoard = newVis; }
+    else newVis = approach("newBoard", p === 8 ? 1 : 0, dt, p > 5 ? 2.4 : 4);
     npMats.forEach((m) => (m.uniforms.uAlpha.value = newVis));
     npHeaderMats.forEach((m) => (m.opacity = newVis));
     burstU.uniforms.uT.value = p === 4 ? clamp01((since - 0.15) / 1.3) + clamp01((since - 1.45) / 1.35) : 0;
@@ -920,26 +1054,35 @@ export function createIncidentWorld(canvas: HTMLCanvasElement, initialPhase: num
     ANCHORS.boardB.copy(newBoard.position).add(npCenters[1]).add(new THREE.Vector3(0.2, npH / 2 + 0.25, 0));
 
     /* outside world */
-    const outside = approach("outside", p === 3 ? 1 : p === 4 ? 0.3 : p === 5 ? 0.8 : 0, dt, 1.6);
+    // 7번: 인터넷은 처음엔 흐리게 있다가 둘째 선이 닿을 때 밝아진다. 8번에는 선과 함께 흐리게 남는다.
+    let outside: number;
+    if (p === 7 && played) { outside = 0.3 + 0.7 * smooth(WALL_AT, LEG_AT[1][0] + LEG_AT[1][1], since); S.outside = outside; }
+    else outside = approach("outside", p === 3 || p === 7 ? 1 : p === 4 || p === 8 ? 0.3 : p === 5 ? 0.8 : 0, dt, 1.6);
     gPtsMat.opacity = 0.9 * outside; gWireMat.opacity = 0.2 * outside; (gAtmo.material as THREE.SpriteMaterial).opacity = 0.35 * outside;
-    arcMats.forEach((m, i) => { m.uniforms.uLit.value = outside * (p === 3 ? 1 : 0.5); m.uniforms.uDraw.value = 1; void i; });
+    arcMats.forEach((m, i) => { m.uniforms.uLit.value = outside * (p === 3 || p === 7 ? 1 : 0.5); m.uniforms.uDraw.value = 1; void i; });
     globe.rotation.y = time * 0.05;
-    const svc = approach("service", p >= 5 ? 1 : 0, dt, 1.6);
+    const svc = approach("service", p === 5 || p === 7 || p === 8 ? 1 : 0, dt, 1.6);
     svcBodyMat.opacity = Math.min(1, svc * 1.6); svcEdgeMat.opacity = svc;
-    const hit = p === 5 ? ev(2.2, 0.01) : 0;
-    svcEdgeMat.color.copy(HOT).lerp(AMBER, hit).multiplyScalar(1.2 + hit * 1.6 + (p === 5 ? Math.sin(time * 6) * 0.25 * hit : 0));
+    // 셋째 선이 닿는 때. 5번은 사건 장면, 7번은 선 셋의 끝(7.11~13)이다.
+    const hitAt = p === 5 ? 2.2 : LEG_AT[2][0] + LEG_AT[2][1];
+    const hit = p === 5 || p === 7 ? ev(hitAt, 0.01) : 0;
+    svcEdgeMat.color.copy(HOT).lerp(AMBER, Math.max(hit, p === 8 ? 0.6 : 0)).multiplyScalar(1.2 + hit * 1.6 + (p === 5 || p === 7 ? Math.sin(time * 6) * 0.25 * hit : 0));
     svcCoreMat.opacity = svc; svcCore.rotation.y = time * 0.6;
     svcPool.mat.opacity = 0.18 * svc + hit * 0.35;
     serviceLight.intensity = svc * (8 + hit * 22);
+    // 선이 닿은 곳에서 퍼지는 호박색 파동(5번, 7번)
     shock.forEach((s, i) => {
-      const u = ((clock - enteredAt - 2.2) * 0.45 + i / 3) % 1;
-      const on = p === 5 && hit > 0 ? 1 : 0;
+      const u = ((clock - enteredAt - hitAt) * 0.45 + i / 3) % 1;
+      const on = hit > 0 ? 1 : 0;
+      s.m.color.copy(AMBER).multiplyScalar(2.4);
       s.ring.scale.setScalar(1 + u * 5.5); s.m.opacity = on * (1 - u) * 0.8 * (motion ? 1 : (i === 0 ? 1 : 0));
       if (!motion && on) s.ring.scale.setScalar(2.6 + i * 1.5);
     });
     ANCHORS.globe.copy(GLOBE_POS).add(new THREE.Vector3(-1.2, 3.6, 0));
     ANCHORS.service.copy(SERVICE_POS).add(new THREE.Vector3(0, 5.5, 0));
-    ANCHORS.wall.set(-WALL_R * 0.72, 3.9, -WALL_R * 0.69);
+    ANCHORS.wall.copy(WALL_TAG);
+    ANCHORS.fence.copy(FENCE_TAG);
+    ANCHORS.serviceSide.copy(SERVICE_POS).add(new THREE.Vector3(2.2, 3.0, 0));
     ANCHORS.breach.copy(BREACH).add(new THREE.Vector3(0.2, 2.4, 0));
 
     /* beams through the wall */
@@ -956,9 +1099,26 @@ export function createIncidentWorld(canvas: HTMLCanvasElement, initialPhase: num
     beams.service.curve.getPoint(Math.max(0.001, easeOut(sb)), tmp); beams.service.head.position.copy(tmp);
     (beams.service.head.material as THREE.SpriteMaterial).opacity = p === 5 && sb < 1 ? 1 : 0;
 
-    const breachTarget = p === 3 ? smooth(0.45, 0.62, ib) : p === 5 ? smooth(0.35, 0.55, sb) : 0;
+    /* 7~8 · 선 셋. 7번에 하나씩 그려지고, 8번에는 흐리게 남아 있다가 날짜 차례에 다시 빛난다. 9번에 꺼진다. */
+    legs.forEach((l, i) => {
+      const [at, dur] = LEG_AT[i];
+      const s = p === 7 ? ev(at, dur) : p === 8 ? 1 : 0;
+      const pulse = p === 8 && played && since > LEG_PULSE[i] ? Math.exp(-(since - LEG_PULSE[i]) * 1.4) : 0;
+      // 8번에는 금색 신호와 섞이지 않게 아주 흐리게 두고, 날짜 차례에만 밝힌다.
+      const lit = approach(`leg${i}`, p === 7 ? 1 : p === 8 ? 0.1 : 0, dt, p === 9 ? 2 : 3) + pulse;
+      l.mesh.visible = lit > 0.01 && s > 0;
+      l.mat.uniforms.uDraw.value = Math.max(0.001, easeOut(s));
+      l.mat.uniforms.uLit.value = lit;
+      l.mat.uniforms.uFlow.value = p === 7 ? 1 : 0.4;
+      l.mat.uniforms.uHead.value = p === 7 && s < 1 ? 1 : 0;
+      l.curve.getPoint(Math.max(0.001, easeOut(s)), tmp); l.head.position.copy(tmp);
+      (l.head.material as THREE.SpriteMaterial).opacity = p === 7 && s > 0 && s < 1 ? 1 : 0;
+      l.mat.uniforms.uTime.value = time;
+    });
+
+    const breachTarget = p === 3 ? smooth(0.45, 0.62, ib) : p === 5 ? smooth(0.35, 0.55, sb) : p === 7 ? (played ? smooth(WALL_AT - 0.1, WALL_AT + 0.15, since) : 1) : p === 8 ? 0.35 : 0;
     wallU.uniforms.uBreach.value = approach("breach", breachTarget, dt, 5);
-    const rip = p === 3 ? (clock - enteredAt - 1.7) : p === 5 ? (clock - enteredAt - 1.2) : -1;
+    const rip = p === 3 ? (clock - enteredAt - 1.7) : p === 5 ? (clock - enteredAt - 1.2) : p === 7 ? (clock - enteredAt - WALL_AT) : -1;
     wallU.uniforms.uRipple.value = rip > 0 && enteredAt > -1e5 ? rip * 3.2 : 0;
     wallU.uniforms.uRippleAmt.value = rip > 0 && enteredAt > -1e5 ? Math.exp(-rip * 0.9) : 0;
 
@@ -982,6 +1142,93 @@ export function createIncidentWorld(canvas: HTMLCanvasElement, initialPhase: num
     doorLink.mat.uniforms.uDraw.value = Math.max(0.001, draw);
     doorLink.mat.uniforms.uLit.value = p === -2 ? 1 : 0.4;
     doorLink.mat.uniforms.uHead.value = p === -2 && played && draw < 1 ? 1 : 0;
+
+    /* 6~9 · OpenAI 쪽 기둥. 7번(AI의 선)에는 한 발 물러나 흐리게 서 있다. */
+    const deskVis = approach("desk", p === 7 ? 0.5 : p >= 6 ? 1 : 0, dt, 2.4);
+    desk.visible = deskVis > 0.002;
+    deskBodyMat.opacity = Math.min(1, deskVis * 1.5); deskEdgeMat.opacity = deskVis * 0.9; mastMat.opacity = deskVis * 0.75;
+    deskCoreMat.opacity = deskVis; deskCore.rotation.y = time * 0.5; deskCore.position.y = 3.5 + Math.sin(time * 1.2) * 0.05;
+    deskPool.mat.opacity = 0.22 * deskVis; deskLight.intensity = deskVis * 7;
+    // 8번: 신호 세 번. 9번에는 고리 셋이 켜진 채로 남는다(지켜보는 자리).
+    signals.forEach((sg, i) => {
+      const s = p === 8 ? ev(SIG_AT[i], 1.1) : 0;
+      const lit = approach(`sig${i}`, p === 8 ? 1 : 0, dt, 3);
+      sg.mesh.visible = lit > 0.01 && s > 0;
+      sg.mat.uniforms.uDraw.value = Math.max(0.001, easeOut(s));
+      sg.mat.uniforms.uLit.value = lit;
+      sg.mat.uniforms.uHead.value = p === 8 && s < 1 ? 1 : 0;
+      sg.curve.getPoint(Math.max(0.001, easeOut(s)), tmp); sg.head.position.copy(tmp);
+      (sg.head.material as THREE.SpriteMaterial).opacity = p === 8 && s > 0 && s < 1 ? 1 : 0;
+      const born = since - SIG_AT[i], landed = born - 1.1;
+      sg.spark.opacity = p === 8 && played && born > 0 ? Math.exp(-born * 2.2) * 0.9 : 0;
+      const on = approach(`lamp${i}`, p === 8 ? (s >= 1 ? 1 : 0) : p === 9 ? 1 : 0, dt, 6) * deskVis;
+      lamps[i].mat.color.copy(GOLD).multiplyScalar(0.3 + on * 2.3); lamps[i].mat.opacity = deskVis * (0.3 + 0.7 * on);
+      lamps[i].flare.opacity = deskVis * (on * 0.32 + (p === 8 && played && landed > 0 ? Math.exp(-landed * 2.4) * 1.3 : 0));
+      ANCHORS[`sig${i}` as AnchorId].copy(SIG_LABEL[i]);
+    });
+    ANCHORS.desk.copy(DESK_POS).add(new THREE.Vector3(0, 3.95, 0));
+
+    // 6번: 지시 한 줄. 기둥에서 바닥 한가운데로 내려가고, 닿는 순간 바닥이 금빛으로 한 번 번진다.
+    { const [at, dur] = ORDER_AT;
+      const s = p === 6 ? ev(at, dur) : 0;
+      const lit = approach("order", p === 6 ? 1 : 0, dt, 3);
+      orderLine.mesh.visible = lit > 0.01 && s > 0;
+      orderLine.mat.uniforms.uDraw.value = Math.max(0.001, easeOut(s));
+      orderLine.mat.uniforms.uLit.value = lit;
+      orderLine.mat.uniforms.uHead.value = p === 6 && s < 1 ? 1 : 0;
+      orderLine.curve.getPoint(Math.max(0.001, easeOut(s)), tmp); orderLine.head.position.copy(tmp);
+      (orderLine.head.material as THREE.SpriteMaterial).opacity = p === 6 && s > 0 && s < 1 ? 1 : 0;
+      const landed = since - at - dur;
+      (orderSpark.material as THREE.SpriteMaterial).opacity = p === 6 && played && landed > 0 ? Math.exp(-landed * 1.6) * 0.8 : 0; }
+
+    // 9번 감시: 기둥에서 방마다 금색 선이 내려간다(범위 다음, 중단 전).
+    watchLines.forEach((l, i) => {
+      const s = p === 9 ? ev(2.0 + i * 0.15, 0.9) : 0;
+      const lit = approach(`watch${i}`, p === 9 ? 0.8 : 0, dt, 3);
+      l.mesh.visible = lit > 0.01 && s > 0;
+      l.mat.uniforms.uDraw.value = Math.max(0.001, easeOut(s));
+      l.mat.uniforms.uLit.value = lit;
+      l.mat.uniforms.uHead.value = p === 9 && s < 1 ? 1 : 0;
+      l.curve.getPoint(Math.max(0.001, easeOut(s)), tmp); l.head.position.copy(tmp);
+      (l.head.material as THREE.SpriteMaterial).opacity = p === 9 && s > 0 && s < 1 ? 1 : 0;
+    });
+    [...signals, orderLine, ...watchLines].forEach((l) => (l.mat.uniforms.uTime.value = time));
+
+    // 7~8번: 첫째 선이 닿으면 공용 서버가 호박색이 된다(6.26). 9번에 원래 색으로 돌아온다.
+    let taken: number;
+    if (p === 7 && played) { taken = smooth(LEG_AT[0][0] + LEG_AT[0][1] - 0.15, LEG_AT[0][0] + LEG_AT[0][1] + 0.25, since); S.taken = taken; }
+    else taken = approach("taken", p === 7 || p === 8 ? 1 : 0, dt, 2.4);
+    haloMat.color.copy(ICE).lerp(AMBER, taken).multiplyScalar(2.4);
+    serverTrimMat.color.copy(ICE).lerp(AMBER, taken * 0.85).multiplyScalar(1.8);
+    serverLight.color.copy(ICE).lerp(AMBER, taken * 0.7);
+    ANCHORS.halt.copy(ROOM_POS[1]).setY(2.4);
+
+    /* 6 · 평가 과제 898칸. 지시가 닿은 뒤(ORDER_AT 끝) 바닥에서 솟는다. */
+    const gridAt = ORDER_AT[0] + ORDER_AT[1];
+    let gridVis: number;
+    if (p === 6) { gridVis = 1; S.grid = 1; } else gridVis = approach("grid", 0, dt, 2.4);
+    grid.visible = gridVis > 0.003;
+    if (grid.visible) {
+      for (let k = 0; k < TASKS; k++) {
+        const grow = p === 6 ? (played ? smooth(gridAt + tileDelay[k], gridAt + tileDelay[k] + 0.55, since) : 1) : gridVis;
+        const lift = k < UNSOLVED ? (p === 6 ? (played ? smooth(gridAt + 1.5 + tileJit[k] * 0.5, gridAt + 2.3 + tileJit[k] * 0.5, since) : 1) : gridVis) : 0;
+        tileS.set(1, Math.max(0.001, (0.09 + lift * (0.4 + tileJit[k] * 0.3)) * easeOut(grow)), 1);
+        tileM.compose(tilePos[k], tileQ, tileS); grid.setMatrixAt(k, tileM);
+        const shimmer = 0.92 + 0.08 * Math.sin(time * 1.7 + tileJit[k] * 40);
+        tileC.copy(ICE).multiplyScalar((0.3 + 0.16 * tileJit[k]) * easeOut(grow)).lerp(tmpC.copy(AMBER).multiplyScalar(1.15 * shimmer), lift);
+        grid.setColorAt(k, tileC);
+      }
+      grid.instanceMatrix.needsUpdate = true; if (grid.instanceColor) grid.instanceColor.needsUpdate = true;
+    }
+    // 198칸 묶음의 오른쪽 앞 모서리. 라벨이 지시 선과 기둥을 가리지 않게 오른쪽으로 뺀다.
+    ANCHORS.unsolved.copy(unsolvedC).add(new THREE.Vector3(1.4, 0.8, GRID_ROWS * GRID_PITCH * 0.32));
+    ANCHORS.solved.copy(solvedC).add(new THREE.Vector3(-1.2, 0.25, 0));
+
+    /* 9 · 범위: 방화벽이 먼저 금색 경계가 된다 */
+    let wallGold: number;
+    if (p === 9 && played) { wallGold = smooth(0.6, 1.6, since); S.wallGold = wallGold; }
+    else wallGold = approach("wallGold", p === 9 ? 1 : 0, dt, 3);
+    wallU.uniforms.uGold.value = wallGold;
 
     /* dust */
     dust.rotation.y = time * 0.01;
@@ -1033,6 +1280,8 @@ export function createIncidentWorld(canvas: HTMLCanvasElement, initialPhase: num
       cam.arc = poseOf(next).arc ?? 0; cam.t0 = clock; cam.dur = forward ? 2.4 : 1.6;
       intro = 1;
       if (next === 4 && phase < 4) S.board = 1;
+      const standing = (q: number) => q >= 0 && q !== 6;
+      if (standing(next) && !standing(phase)) riseAt = clock;
       phase = next;
       enteredAt = forward && motion ? clock : -1e6;
       kick();

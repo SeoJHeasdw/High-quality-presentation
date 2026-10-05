@@ -63,14 +63,14 @@ const ordered = [
  {id:"story-bots",scriptKey:"story-bots",steps:1,render:({step})=><BotStory step={step}/>},
  {id:"story-web-door",scriptKey:"story-web-door",steps:1,group:"agent-web",render:({step})=><AgentWebStory part={0} step={step}/>},
  {id:"story-price",scriptKey:"story-price",steps:2,group:"agent-web",render:({step})=><AgentWebStory part={1} step={step}/>},
- // 9~12 · 열어준 문에서 닫아둔 문으로 넘어와, 같은 공간에서 사건을 재구성한다(묶음 incident-rooms).
- ...["story-closed-door","story-rooms","story-board","story-boundary"].map((id,i)=>({id,scriptKey:id,steps:1,group:"incident-rooms",render:({step})=><IncidentStory part={i-1} step={step}/>})),
+ // 9~14 · 열어준 문에서 닫아둔 문으로 넘어와, 같은 공간에서 사건을 재구성하고(10~12) 지시·선 셋·신호·결론까지 본다(13·14, 묶음 incident-rooms).
+ ...["story-closed-door","story-rooms","story-board","story-boundary","story-lines","story-signals"].map((id,i)=>({id,scriptKey:id,steps:1,group:"incident-rooms",render:({step})=><IncidentStory part={i-1} step={step}/>})),
  {id:"story-next-market",scriptKey:"story-next-market",steps:7,render:({step})=><NextMarket step={step}/>},
- // 14·15 · 같은 집과 30년 눈금 위에서 이어진다(묶음 person-ruler).
+ // 16·17 · 같은 집과 30년 눈금 위에서 이어진다(묶음 person-ruler).
  byId("manifesto-person"),
  {id:"manifesto-transition",scriptKey:"manifesto-transition",steps:2,group:"person-ruler",render:({step})=><PersonalIntro part={1} step={step}/>},
  byId("manifesto-compute"),
- // 17~20 · 한 사람을 둘러싼 흐름에서 Factory 안으로 들어가 제 베팅까지 한 공간이다(묶음 one-user).
+ // 19~22 · 한 사람을 둘러싼 흐름에서 Factory 안으로 들어가 제 베팅까지 한 공간이다(묶음 one-user).
  {id:"manifesto-requirements",scriptKey:"manifesto-requirements",steps:1,group:"one-user",render:({step})=><OneUserStory part={0} step={step}/>},
  {id:"manifesto-system",scriptKey:"manifesto-system",steps:2,group:"one-user",render:({step})=><OneUserStory part={1} step={step}/>},
  {id:"manifesto-factory",scriptKey:"manifesto-factory",steps:2,group:"one-user",render:({step})=><OneUserStory part={2} step={step}/>},
@@ -81,7 +81,7 @@ const ordered = [
  {id:"manifesto-worst-model",scriptKey:"manifesto-worst-model",steps:2,render:({step})=><WorstModelStory step={step}/>},
  byId("tel-this-presentation"),
  ...ABUSE_SLIDES,
- // 40~44 · 목줄에서 새벽으로. 40번의 3D 장면이 41번 첫 단계까지 이어지고, 배경은 다섯 장 동안 다시 그리지 않는다(묶음 finale).
+ // 42~46 · 목줄에서 새벽으로. 42번의 3D 장면이 43번 첫 단계까지 이어지고, 배경은 다섯 장 동안 다시 그리지 않는다(묶음 finale).
  {id:"abuse-leash",scriptKey:"abuse-leash",group:"finale",steps:2,render:({step})=><FinaleStory part={-1} step={step}/>},
  ...(["manifesto-remains","tel-sharing","tel-unfinished","tel-invitation"] as const).map((id,part)=>({id,scriptKey:id,group:"finale",steps:id==="tel-unfinished"?4:id==="manifesto-remains"?1:undefined,render:({step}:{step:number})=><FinaleStory part={part as 0|1|2|3} step={step}/>})),
 ];
