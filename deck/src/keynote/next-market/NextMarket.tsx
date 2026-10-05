@@ -7,10 +7,12 @@ import { createPulses } from "./pulses";
 import "./next-market.css";
 
 /*
- * 13번 · 다음 시장. 한 장 안에서 스크롤하는 페이지다.
+ * 15번 · 다음 시장. 한 장 안에서 스크롤하는 페이지다.
  * 뒤에는 Blender로 렌더한 영상이 고정돼 있고(tools/render-house-scroll.py), 스크롤 위치가 프레임을 고른다.
  * 휠·트랙패드는 영상을 앞뒤로 훑고, →는 다음 정지 지점까지 원래 속도로 재생하며, ←는 빠르게 되감는다.
  * 스크롤로 정지 지점을 넘으면 덱의 단계도 바꿔 발표자 창의 대본이 따라온다.
+ * 7단계(교차로)에 멈추면 같은 카메라로 렌더한 8초 반복 영상이 정지 화면을 이어받고,
+ * 그 안에서 차와 로봇이 판단하는 순간에 판단 카드가 뜬다.
  */
 
 export const NEXT_MARKET_SOURCES = {
@@ -18,10 +20,22 @@ export const NEXT_MARKET_SOURCES = {
   a16z: "https://a16z.com/the-trillion-dollar-ai-software-development-stack/",
   bofa: "https://fortune.com/2025/06/26/agentic-ai-spending-155-billion-by-2030-cfo-bofa-analysts",
   jev: "https://typesafe.ai/blog/introducing-system-one-models-and-jev",
+  openai: "https://openai.com/index/devday-2026-recap/",
+  clef: "https://blog.cloudflare.com/clef-decision-models/",
 };
 
 const FILM = "/house-scroll/film.mp4";
-const NAV: [string, number, number][] = [["문제 해결", 0, 3], ["시장", 4, 5], ["속도", 6, 6], ["다음", 7, 7]];
+const LOOP_FILM = "/house-scroll/street-loop.mp4";
+const STREET = 7;
+const NAV: [string, number, number][] = [["문제 해결", 0, 3], ["시장", 4, 5], ["판단", 6, 7], ["다음", 8, 8]];
+
+/** 교차로의 판단 둘. 좌표와 순간(반복 영상의 프레임)은 Blender가 내보낸다. 선택지와 고른 답은 설명용 도식이다. */
+type Decision = { id: keyof typeof track.street.decisions; question: string; options: [string, string]; pick: 0 | 1; side: "up" | "left" };
+const DECISIONS: Decision[] = [
+  { id: "car", question: "오른쪽으로 갈까?", options: ["간다", "기다린다"], pick: 0, side: "up" },
+  { id: "robot", question: "계단을 오를까?", options: ["오른다", "돌아간다"], pick: 0, side: "left" },
+];
+const CARD_LEAD = 14, CARD_HOLD = 66, CARD_FADE = 12;
 
 type Label = { id: keyof typeof track.labels; name: string; sub?: string; peak: number; gold?: boolean };
 const LABELS: Label[] = [
@@ -94,17 +108,26 @@ const SECTIONS: { cls: string; body: ReactNode }[] = [
     <Src href={NEXT_MARKET_SOURCES.bofa}>BofA Global Research · Fortune 2025.6.26 · 기준이 다른 두 추정치를 나란히 둔 비교</Src>
   </> },
   { cls: "nm-s6", body: <>
-    <p className="nm-kicker">그리고 속도</p>
-    <p className="nm-figure is-ice"><b>0.07–0.5</b><span>초</span></p>
-    <h2>Jev가 판단 하나를<br/>돌려주는 시간</h2>
-    <div className="nm-flow"><span>상황</span><i/><span className="is-ice">판단 값</span><i/><span>행동</span></div>
-    <ul className="nm-chips is-small"><li>게임</li><li>에이전트 루프</li><li>실시간 거래<small>가설</small></li></ul>
-    <p className="nm-note">출력 토큰 무료 · 입력 100만 토큰당 0.042달러</p>
-    <Src href={NEXT_MARKET_SOURCES.jev}>TypeSafe AI · Jev 발표 · 2026.9.15 · 속도와 가격은 개발사 발표 · 빛 한 줄기가 판단 하나인 도식</Src>
+    <p className="nm-kicker">그리고 판단</p>
+    <h1>판단까지<br/>싸지기 시작했습니다</h1>
+    <p className="nm-lead">긴 답 대신 판단 하나를 바로 돌려주는 모델이<br/>보름 남짓 사이에 잇달아 나왔습니다.</p>
+    <ol className="nm-decide" aria-label="판단 모델 공개 순서">
+      <li><b>9.15</b><span>TypeSafe AI · Jev</span></li>
+      <li><b>9.29</b><span>OpenAI · Decisions API</span></li>
+      <li><b>10.1</b><span>Cloudflare · Clef</span><em>오픈웨이트</em></li>
+    </ol>
+    <div className="nm-flow"><span>상황</span><i/><span className="is-ice">판단 하나</span><i/><span>행동</span></div>
+    <p className="nm-source"><a href={NEXT_MARKET_SOURCES.jev} target="_blank" rel="noreferrer">TypeSafe AI ↗</a> · <a href={NEXT_MARKET_SOURCES.openai} target="_blank" rel="noreferrer">OpenAI DevDay ↗</a> · <a href={NEXT_MARKET_SOURCES.clef} target="_blank" rel="noreferrer">Cloudflare ↗</a> · 2026년 각 사 발표 · 빛 한 줄기가 판단 하나인 도식</p>
   </> },
   { cls: "nm-s7", body: <>
+    <p className="nm-kicker">길 위로</p>
+    <h1>판단이 싸지면<br/>화면 밖으로 나갑니다</h1>
+    <p className="nm-lead">자율주행차가 오른쪽으로 갈지, 로봇이 계단을 오를지.<br/>이런 작은 판단이 싸질수록 피지컬 AI도 빨라집니다.</p>
+    <Src>발표자의 관점 · 차와 로봇, 판단 카드와 빛은 설명용 장면</Src>
+  </> },
+  { cls: "nm-s8", body: <>
     <h1>이제 우리 일로<br/>넘어옵니다</h1>
-    <p className="nm-lead">문제를 푸는 에이전트가 더 빠르고 싸게,<br/>더 많은 일에 들어옵니다.</p>
+    <p className="nm-lead">문제를 푸는 에이전트가 더 빠르고 싸게,<br/>우리가 매일 내리는 판단 속으로 들어옵니다.</p>
   </> },
 ];
 
@@ -112,7 +135,7 @@ const clamp = (v: number, a = 0, b = 1) => Math.min(b, Math.max(a, v));
 const smooth = (t: number) => { t = clamp(t); return t * t * (3 - 2 * t); };
 /** 단계 k를 중심으로 폭 w 안에서 떠오르는 값. 가운데 40%는 온전히 보인다. */
 const window1 = (p: number, k: number, w: number) => smooth((w - Math.abs(p - k)) / (w * .6));
-const navPos = (p: number) => (p <= 3 ? 0 : p < 4 ? p - 3 : p <= 5 ? 1 : p < 6 ? p - 4 : p < 7 ? p - 4 : 3);
+const navPos = (p: number) => (p <= 3 ? 0 : p < 4 ? p - 3 : p <= 5 ? 1 : p < 6 ? p - 4 : p <= 7 ? 2 : p < 8 ? p - 5 : 3);
 
 type Mode = "idle" | "wheel" | "play" | "tween";
 
@@ -121,6 +144,8 @@ export default function NextMarket({ step }: { step: number }) {
   const motionRef = useRef(motion); motionRef.current = motion;
   const rootRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const loopRef = useRef<HTMLVideoElement>(null);
+  const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const secRefs = useRef<(HTMLElement | null)[]>([]);
   const labelRefs = useRef<(HTMLDivElement | null)[]>([]);
@@ -136,9 +161,18 @@ export default function NextMarket({ step }: { step: number }) {
   const api = useRef<{ go(to: number): void; report(k: number): void } | null>(null);
 
   useEffect(() => {
-    const video = videoRef.current!, root = rootRef.current!, s = st.current;
+    const video = videoRef.current!, loopVideo = loopRef.current!, root = rootRef.current!, s = st.current;
     // src는 여기서 건다. 정리할 때 src를 비우므로, JSX 속성에만 두면 다시 마운트될 때 빈 영상이 된다.
     video.src = FILM;
+    loopVideo.src = LOOP_FILM;
+    // 교차로 반복 영상: 0번 프레임이 본 영상의 7단계 정지 프레임과 같아서, 멈추면 이어받고 떠나면 넘겨준다.
+    const L = track.street.loop, lfps = track.street.fps;
+    let loopOn: "off" | "arming" | "on" = "off", loopPause = 0, loopStart = 0;
+    const startLoop = () => {
+      if (loopOn !== "arming") return;
+      loopOn = "on"; loopStart = performance.now(); loopVideo.toggleAttribute("data-on", true);
+      loopVideo.play().catch(() => {});
+    };
     const scrub = new Scrubber(video);
     const pulses = createPulses(canvasRef.current!, track.pulses);
     const onReady = () => setReady(true);
@@ -230,6 +264,36 @@ export default function NextMarket({ step }: { step: number }) {
       if (s.mode !== "play" && motionRef.current && !failedRef.current) scrub.seek(frameAt(s.p));
       paint(s.p, Math.round(frameAt(s.p)));
       pulses.setActive(motionRef.current && Math.abs(s.p - 6) < .3);
+      const moving = motionRef.current && !failedRef.current;
+      const atStreet = moving && s.mode === "idle" && Math.abs(s.p - STREET) < 1e-3 && scrub.settled;
+      if (atStreet && loopOn === "off") {
+        loopOn = "arming"; clearTimeout(loopPause);
+        if (loopVideo.readyState >= 2 && loopVideo.currentTime === 0) startLoop();
+        else { loopVideo.addEventListener("seeked", startLoop, { once: true }); loopVideo.currentTime = 0; }
+      } else if (!atStreet && loopOn !== "off") {
+        loopOn = "off"; loopVideo.toggleAttribute("data-on", false);
+        loopPause = window.setTimeout(() => { if (loopOn === "off") loopVideo.pause(); }, 450);
+      }
+      // 판단 카드: 반복 영상의 시각을 따라 판단 직전에 질문이, 판단하는 순간에 고른 답이 뜬다. 모션을 끄면 답이 고정된다.
+      const near = window1(s.p, STREET, .3);
+      const T = loopOn === "on" ? (loopVideo.currentTime * lfps) % L : -1;
+      const played = (performance.now() - loopStart) / 1000 * lfps;   // 멈춘 뒤 흐른 프레임: 멈추기 전에 내린 판단은 카드로 띄우지 않는다
+      DECISIONS.forEach((d, i) => {
+        const el = cardRefs.current[i]; if (!el) return;
+        let o = 0, picked = true;
+        if (!moving) o = near;
+        else if (T >= 0) {
+          const u = (((T - track.street.decisions[d.id].t) % L) + L) % L;
+          if (u > L - CARD_LEAD) { o = 1 - (L - u) / CARD_LEAD; picked = false; }
+          else if (played < u) o = 0;
+          else if (u < CARD_HOLD) o = 1;
+          else if (u < CARD_HOLD + CARD_FADE) o = 1 - (u - CARD_HOLD) / CARD_FADE;
+          o *= near;
+        }
+        el.style.opacity = o.toFixed(3);
+        el.style.visibility = o > 0 ? "visible" : "hidden";
+        el.toggleAttribute("data-picked", picked && o > 0);
+      });
       const settled = s.mode === "idle" && (!motionRef.current || failedRef.current || scrub.settled);
       root.dataset.settled = String(settled);
       root.dataset.progress = s.p.toFixed(3);
@@ -258,6 +322,9 @@ export default function NextMarket({ step }: { step: number }) {
 
     return () => {
       cancelAnimationFrame(raf);
+      clearTimeout(loopPause);
+      loopVideo.removeEventListener("seeked", startLoop);
+      loopVideo.pause(); loopVideo.removeAttribute("src"); loopVideo.load();
       removeEventListener("wheel", onWheel);
       video.removeEventListener("seeked", onReady);
       video.removeEventListener("error", onError);
@@ -288,9 +355,22 @@ export default function NextMarket({ step }: { step: number }) {
     <div className="nm" ref={rootRef} data-scroll-page data-settled="false">
       <div className="nm-film" aria-hidden="true">
         <video ref={videoRef} muted playsInline preload="auto" data-hidden={showStill || undefined}/>
+        <video ref={loopRef} className="nm-loop" muted playsInline loop preload="auto"/>
         <img src={`/house-scroll/a${still}.jpg`} alt="" data-visible={showStill || undefined}/>
         <canvas ref={canvasRef} className="nm-pulses" width={1920} height={1080}/>
         <div className="nm-shade"/>
+      </div>
+      <div className="nm-cards" aria-hidden="true">
+        {DECISIONS.map((d, i) => {
+          const at = track.street.decisions[d.id];
+          return <div key={d.id} ref={(el) => { cardRefs.current[i] = el; }} className="nm-card" data-side={d.side} style={{ left: at.x, top: at.y }}>
+            <i/>
+            <div>
+              <p>{d.question}</p>
+              <ul>{d.options.map((o, k) => <li key={o} data-pick={k === d.pick || undefined}>{o}</li>)}</ul>
+            </div>
+          </div>;
+        })}
       </div>
       <div className="nm-labels" aria-hidden="true">
         {LABELS.map((l, i) => <div key={l.id} ref={(el) => { labelRefs.current[i] = el; }} className="nm-label" data-gold={l.gold || undefined}>
@@ -306,7 +386,7 @@ export default function NextMarket({ step }: { step: number }) {
         {NAV.map(([name], k) => <span key={name} ref={(el) => { navRefs.current[k] = el; }}>{name}</span>)}
         <b ref={barRef} className="nm-nav-bar"/>
       </nav>
-      <div className="nm-rail" ref={railRef} aria-hidden="true">{Array.from({ length: LAST_STEP + 1 }, (_, k) => <i key={k}/>)}</div>
+      <div className="nm-rail" ref={railRef} aria-hidden="true">{Array.from({ length: LAST_STEP + 1 }, (_, k) => <i key={k} style={{ "--k": k * 8 / LAST_STEP } as CSSProperties}/>)}</div>
       <div className="nm-hint" ref={hintRef} aria-hidden="true"><span className="nm-mouse"><i/></span>스크롤</div>
     </div>
   </Frame>;

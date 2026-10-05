@@ -1,4 +1,4 @@
-/* 13 · 다음 시장. 영상이 뒤에 고정되고, 글이 스크롤을 따라 올라가는 한 장짜리 페이지. */
+/* 15 · 다음 시장. 영상이 뒤에 고정되고, 글이 스크롤을 따라 올라가는 한 장짜리 페이지. */
 .story-next-market { background: #05080e; }
 .story-next-market .kn-chrome, .story-next-market .kn-footer { z-index: 7; }
 .story-next-market .kn-footer { color: #93a3b1; }
@@ -11,6 +11,9 @@
 .nm-film video, .nm-film img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
 .nm-film video[data-hidden] { visibility: hidden; }
 .nm-film img { opacity: 0; transition: opacity .3s ease; }
+/* 교차로 반복 영상: 첫 프레임이 본 영상의 정지 프레임과 같아 그대로 겹쳐 놓고, 떠날 때만 천천히 걷는다. */
+.nm-film .nm-loop { opacity: 0; transition: opacity .35s ease; }
+.nm-film .nm-loop[data-on] { opacity: 1; }
 .nm-film img[data-visible] { opacity: 1; }
 .nm-pulses { position: absolute; inset: 0; width: 100%; height: 100%; mix-blend-mode: screen; opacity: 0; pointer-events: none; }
 .nm-shade { position: absolute; inset: 0; pointer-events: none;
@@ -33,8 +36,9 @@
 .nm-s3 { --top: 262px; }
 .nm-s4 { --top: 262px; }
 .nm-s5 { --top: 226px; }
-.nm-s6 { --top: 206px; }
-.nm-s7 { --top: 660px; }
+.nm-s6 { --top: 196px; }
+.nm-s7 { --top: 226px; }
+.nm-s8 { --top: 660px; }
 
 .story-next-market .nm-kicker { display: flex; align-items: center; gap: 16px; font-size: 23px; font-weight: 540; letter-spacing: .02em; color: #e2c795; margin: 0 0 24px; }
 .story-next-market .nm-kicker::before { content: ""; width: 34px; height: 1px; background: #e2c795; opacity: .8; }
@@ -100,9 +104,34 @@
 .nm-flow i { width: 54px; height: 1px; background: linear-gradient(90deg, #ffffff30, #8fd0ff); position: relative; }
 .nm-flow i::after { content: ""; position: absolute; right: 0; top: -4px; width: 8px; height: 8px; border-top: 1px solid #8fd0ff; border-right: 1px solid #8fd0ff; transform: rotate(45deg); }
 
-.nm-s7 .nm-lead { font-size: 30px; }
+/* 교차로의 글은 가까운 창들 위에 놓이므로 글 뒤를 어둡게 */
+.nm-s7::before { content: ""; position: absolute; z-index: -1; left: -260px; top: -190px; width: 1180px; height: 720px; background: radial-gradient(closest-side, #04070cd9, #04070c8c 58%, #04070c00); }
+.nm-s8 .nm-lead { font-size: 30px; }
 /* 착지 문장은 지평선의 불빛 위에 놓이므로 글 뒤를 한 번 더 어둡게 */
-.nm-s7::before { content: ""; position: absolute; z-index: -1; left: -220px; top: -150px; width: 1180px; height: 560px; background: radial-gradient(closest-side, #04070ce0, #04070c99 55%, #04070c00); }
+.nm-s8::before { content: ""; position: absolute; z-index: -1; left: -220px; top: -150px; width: 1180px; height: 560px; background: radial-gradient(closest-side, #04070ce0, #04070c99 55%, #04070c00); }
+
+/* 판단 모델 공개 순서 */
+.nm-decide { list-style: none; margin: 34px 0 0; padding: 0 0 0 22px; display: grid; gap: 14px; border-left: 1px solid #8fd0ff4d; }
+.nm-decide li { position: relative; display: flex; align-items: baseline; gap: 18px; font-size: 25px; color: #e3eaf0; letter-spacing: -.02em; }
+.nm-decide li::before { content: ""; position: absolute; left: -27px; top: 12px; width: 9px; height: 9px; border-radius: 50%; background: #8fd0ff; box-shadow: 0 0 12px #8fd0ff; }
+.nm-decide b { width: 62px; font-size: 21px; font-weight: 560; color: #9fd6ff; font-variant-numeric: tabular-nums; }
+.nm-decide em { font-style: normal; font-size: 16px; letter-spacing: .02em; color: #f0cf95; border: 1px solid #e2c79580; border-radius: 999px; padding: 3px 11px 4px; }
+
+/* 교차로의 판단 카드: 점은 판단하는 자리, 상자는 질문과 고른 답 */
+.nm-cards { position: absolute; inset: 0; z-index: 2; pointer-events: none; }
+.nm-card { position: absolute; width: 0; height: 0; opacity: 0; visibility: hidden; will-change: opacity; --ice: #9fd6ff; }
+.nm-card > i { position: absolute; left: -6px; top: -6px; width: 12px; height: 12px; border-radius: 50%; border: 1.5px solid var(--ice); box-shadow: 0 0 14px #8fd0ffaa; }
+.nm-card > i::after { content: ""; position: absolute; background: linear-gradient(var(--dir, 0deg), #9fd6ff, #9fd6ff00); }
+.nm-card[data-side="up"] > i::after { left: 9px; bottom: 9px; width: 34px; height: 1px; transform-origin: left; transform: rotate(-52deg); --dir: 90deg; }
+.nm-card[data-side="left"] > i::after { right: 9px; bottom: 9px; width: 34px; height: 1px; transform-origin: right; transform: rotate(40deg); --dir: 270deg; }
+.nm-card > div { position: absolute; padding: 14px 18px 16px; border-radius: 14px; background: #06101ad1; border: 1px solid #8fd0ff59; backdrop-filter: blur(8px); box-shadow: 0 10px 34px #0009; white-space: nowrap; }
+.nm-card[data-side="up"] > div { left: 26px; bottom: 34px; }
+.nm-card[data-side="left"] > div { right: 30px; bottom: 28px; }
+.nm-card p { margin: 0 0 12px; font-size: 24px; font-weight: 600; color: #f2f6f9; letter-spacing: -.03em; }
+.nm-card ul { list-style: none; margin: 0; padding: 0; display: flex; gap: 8px; }
+.nm-card li { font-size: 19px; padding: 6px 15px 7px; border-radius: 999px; border: 1px solid #ffffff2e; color: #a9b8c4; transition: background .25s, color .25s, border-color .25s, box-shadow .25s, opacity .25s; }
+.nm-card[data-picked] li { opacity: .45; }
+.nm-card[data-picked] li[data-pick] { opacity: 1; color: #04121d; background: #bfe6ff; border-color: #bfe6ff; box-shadow: 0 0 18px #8fd0ff99; font-weight: 600; }
 
 /* 영상 속 좌표를 따라가는 라벨 */
 .nm-labels { position: absolute; inset: 0; z-index: 2; pointer-events: none; }
@@ -126,9 +155,7 @@
 .nm-rail { position: absolute; right: 44px; top: 350px; height: 380px; width: 2px; z-index: 6; background: #ffffff1c; --fill: 0; }
 .nm-rail::before { content: ""; position: absolute; left: 0; top: 0; width: 2px; height: 100%; background: linear-gradient(180deg, #e2c795, #f5e3bd); transform: scaleY(var(--fill)); transform-origin: top; }
 .nm-rail i { position: absolute; left: -4px; width: 10px; height: 10px; border-radius: 50%; background: #0a111a; border: 1px solid #ffffff4d; transition: transform .3s, background .3s, border-color .3s; }
-.nm-rail i:nth-child(1) { top: -5px; } .nm-rail i:nth-child(2) { top: calc(100% / 7 - 5px); } .nm-rail i:nth-child(3) { top: calc(200% / 7 - 5px); }
-.nm-rail i:nth-child(4) { top: calc(300% / 7 - 5px); } .nm-rail i:nth-child(5) { top: calc(400% / 7 - 5px); } .nm-rail i:nth-child(6) { top: calc(500% / 7 - 5px); }
-.nm-rail i:nth-child(7) { top: calc(600% / 7 - 5px); } .nm-rail i:nth-child(8) { top: calc(100% - 5px); }
+.nm-rail i { top: calc(var(--k) * 100% / 8 - 5px); }
 .nm-rail i[data-on] { background: #e2c795; border-color: #e2c795; transform: scale(1.35); box-shadow: 0 0 12px #e2c795; }
 
 /* 첫 화면의 스크롤 안내 */

@@ -65,7 +65,7 @@ const ordered = [
  {id:"story-price",scriptKey:"story-price",steps:2,group:"agent-web",render:({step})=><AgentWebStory part={1} step={step}/>},
  // 9~14 · 열어준 문에서 닫아둔 문으로 넘어와, 같은 공간에서 사건을 재구성하고(10~12) 지시·선 셋·신호·결론까지 본다(13·14, 묶음 incident-rooms).
  ...["story-closed-door","story-rooms","story-board","story-boundary","story-lines","story-signals"].map((id,i)=>({id,scriptKey:id,steps:1,group:"incident-rooms",render:({step})=><IncidentStory part={i-1} step={step}/>})),
- {id:"story-next-market",scriptKey:"story-next-market",steps:7,render:({step})=><NextMarket step={step}/>},
+ {id:"story-next-market",scriptKey:"story-next-market",steps:8,render:({step})=><NextMarket step={step}/>},
  // 16·17 · 같은 집과 30년 눈금 위에서 이어진다(묶음 person-ruler).
  byId("manifesto-person"),
  {id:"manifesto-transition",scriptKey:"manifesto-transition",steps:2,group:"person-ruler",render:({step})=><PersonalIntro part={1} step={step}/>},

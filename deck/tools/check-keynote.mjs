@@ -150,10 +150,10 @@ await page.waitForSelector('.nm[data-settled="true"]',{timeout:15000});await pag
 await page.keyboard.press('ArrowLeft');await page.waitForTimeout(200);await page.waitForSelector('.nm[data-settled="true"]',{timeout:15000});report.scrollPage.rewound=await nm();
 await page.keyboard.press('m');await page.keyboard.press('ArrowRight');await page.waitForTimeout(300);report.scrollPage.motionOff=await nm();await page.keyboard.press('m');
 await go(scrollN+1);await page.keyboard.press('ArrowLeft');await page.waitForSelector('.nm[data-settled="true"]',{timeout:15000});report.scrollPage.enteredBack=await nm();
-const sp=report.scrollPage,anchor=k=>[0,84,168,252,342,420,480,570][k];
+const sp=report.scrollPage,anchor=k=>[0,84,168,252,342,420,480,570,670][k];
 const scrollOk=sp.start.step===0&&sp.start.section===0&&sp.wheel.step===1&&sp.wheel.visible<=1&&sp.presenterFollows&&sp.wheelBack.step===0&&sp.wheelBack.section===0
  &&sp.playing.p>0&&sp.playing.p<1&&sp.held.step===1&&Math.abs(sp.held.frame-anchor(1))<=1&&sp.held.section===1&&sp.rewound.step===0&&sp.rewound.frame<=1
- &&sp.motionOff.step===1&&sp.motionOff.p===1&&sp.motionOff.still&&sp.enteredBack.step===7&&sp.enteredBack.section===7&&Math.abs(sp.enteredBack.frame-anchor(7))<=1;
+ &&sp.motionOff.step===1&&sp.motionOff.p===1&&sp.motionOff.still&&sp.enteredBack.step===8&&sp.enteredBack.section===8&&Math.abs(sp.enteredBack.frame-anchor(8))<=1;
 // Each authored film cue plays once, holds, and stays under presenter control.
 await go(factoryStart);await page.waitForSelector('.factory-film[data-status="held"]',{timeout:15000});
 await page.evaluate(()=>window.__film=document.querySelector('.factory-film'));

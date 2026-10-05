@@ -1,21 +1,24 @@
 #!/usr/bin/env python3
-"""Keynote 12 · 스크롤 페이지 영상.
+"""Keynote 15 · 스크롤 페이지 영상.
 
 해 질 녘 빈 대지의 평면선 위로 집의 부품이 위·좌우에서 날아와 조립되고,
-카메라가 물러나며 도시가 세워지고 불이 켜진 뒤, 다시 집으로 내려온다.
+카메라가 물러나며 도시가 세워지고 불이 켜진 뒤, 교차로로 내려갔다가 다시 집으로 돌아온다.
 페이지는 이 영상을 스크롤 위치로 스크럽한다. 멈추는 지점(ANCHORS)에서는
-카메라와 부품이 모두 정지해 있어 모션 블러 없이 선명하다.
+카메라와 부품이 모두 정지해 있어 모션 블러 없이 선명하다. 교차로(7단계)만은
+차와 로봇이 계속 움직이므로, 같은 카메라로 렌더한 반복 영상(--mode loop)이 정지 화면 대신 돈다.
 
   blender -b --python deck/tools/render-house-scroll.py -- --mode still --frames 0,84,168 --scale 50
-  blender -b --python deck/tools/render-house-scroll.py -- --mode final
+  blender -b --python deck/tools/render-house-scroll.py -- --mode final --frames 481-670   # 7단계부터 다시
+  blender -b --python deck/tools/render-house-scroll.py -- --mode loop
   blender -b --python deck/tools/render-house-scroll.py -- --mode track   # 라벨 좌표만 다시 계산
-  blender -b --python deck/tools/render-house-scroll.py -- --mode still --frames 570 --time sunrise --scale 100 --samples 160 --out render/house-dawn
-      # 35~38번: 마지막 정지 지점(집)을 같은 카메라로, 하늘과 불빛만 새벽으로 바꿔 한 장 렌더
+  blender -b --python deck/tools/render-house-scroll.py -- --mode still --frames 670 --time sunrise --scale 100 --samples 160 --out render/house-dawn
+      # 42~46번: 마지막 정지 지점(집)을 같은 카메라로, 하늘과 불빛만 새벽으로 바꿔 한 장 렌더
 
-결과 프레임은 render/house-scroll/frames/, 라벨 좌표는 src/keynote/next-market/track.json.
-인코딩은 tools/encode-house-scroll.sh.
+결과 프레임은 render/house-scroll/frames/, 반복 영상 프레임은 render/house-scroll/loop/,
+라벨 좌표는 src/keynote/next-market/track.json. 인코딩은 tools/encode-house-scroll.sh.
 """
 import bpy, math, json, sys, argparse, random, time, zlib
+from bisect import bisect
 from pathlib import Path
 from mathutils import Vector, Matrix
 from bpy_extras.object_utils import world_to_camera_view
@@ -26,7 +29,7 @@ TRACK = ROOT / "src/keynote/next-market/track.json"
 WORK = ROOT / "render/house-scroll"
 ARGS = sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else []
 ap = argparse.ArgumentParser()
-ap.add_argument("--mode", choices=["still", "final", "track", "verify", "layout"], default="still")
+ap.add_argument("--mode", choices=["still", "final", "loop", "track", "verify", "layout"], default="still")
 ap.add_argument("--frames", default="")
 ap.add_argument("--samples", type=int, default=0)
 ap.add_argument("--scale", type=int, default=0, help="resolution percentage")
@@ -37,9 +40,12 @@ ap.add_argument("--time", choices=["night", "blue", "sunrise"], default="night",
 A = ap.parse_args(ARGS)
 
 FPS = 30
-# 발표자가 멈추는 지점. 페이지의 단계(0~7)와 1:1로 대응한다.
-ANCHORS = [0, 84, 168, 252, 342, 420, 480, 570]
+# 발표자가 멈추는 지점. 페이지의 단계(0~8)와 1:1로 대응한다.
+# 7단계(교차로)는 2026-10-05에 넣었다. 0~480 프레임은 그 전 렌더와 같아야 하므로
+# 480 이후를 바꾸는 값은 모두 split()으로 480에서 끊는다. 예전 마지막 프레임은 570이었다.
+ANCHORS = [0, 84, 168, 252, 342, 420, 480, 570, 670]
 LAST = ANCHORS[-1]
+KEEP, OLD_LAST = ANCHORS[6], 570
 W, H = 1920, 1080
 
 
@@ -839,18 +845,53 @@ def building_material():
     glow = M("MULTIPLY", M("MULTIPLY", window, on), ready)
     bright = M("ADD", .6, M("MULTIPLY", noise4(floor, colo, 5.0), .8))
     level = M("ADD", M("MULTIPLY", office, 2.1), M("MULTIPLY", M("SUBTRACT", 1, office), 2.7))
-    L.new(M("MULTIPLY", M("MULTIPLY", glow, bright), level), b.inputs["Emission Strength"])
+    old_em = M("MULTIPLY", M("MULTIPLY", glow, bright), level)
     cf, ca, cb, co = mix_rgb(N)
     ca.default_value = (.74, .85, 1.0, 1); cb.default_value = (1.0, .86, .68, 1)
     L.new(M("MAXIMUM", M("SUBTRACT", 1, office), M("GREATER_THAN", noise4(floor, colo, 6.0), .8)), cf)
     gf, ga, gb, go = mix_rgb(N)
     L.new(co, ga); gb.default_value = (1.0, .56, .16, 1)
     L.new(warm, gf)
-    L.new(go, b.inputs["Emission Color"])
     # 외벽: 사무동은 어두운 반사 유리, 주거동은 어두운 석재
     bf, ba, bb, bo = mix_rgb(N)
     ba.default_value = (.05, .046, .042, 1); bb.default_value = (.014, .018, .024, 1)
-    L.new(M("MAXIMUM", office, M("MULTIPLY", window, .7)), bf); L.new(bo, b.inputs["Base Color"])
+    L.new(M("MAXIMUM", office, M("MULTIPLY", window, .7)), bf)
+
+    # 가까이서 볼 때의 창(교차로). Detail이 0이면 위의 값을 그대로 쓰므로 1~6단계와 8단계 화면은 변하지 않는다.
+    # 창마다 실내 빛의 색온도와 밝기가 다르고, 천장 쪽이 밝으며, 절반쯤은 블라인드가 내려와 있고, 창틀이 보인다.
+    det = N.new("ShaderNodeValue"); det.name = "Detail"; det.outputs[0].default_value = 0.0
+    D = det.outputs[0]
+    inv = M("SUBTRACT", 1, office)
+    wu = M("ADD", M("MULTIPLY", office, M("DIVIDE", M("SUBTRACT", fo, .05), .9)), M("MULTIPLY", inv, M("DIVIDE", M("SUBTRACT", fr, .2), .58)))
+    wv = M("ADD", M("MULTIPLY", office, M("DIVIDE", M("SUBTRACT", fz, .1), .8)), M("MULTIPLY", inv, M("DIVIDE", M("SUBTRACT", fz, .3), .5)))
+    colw = M("ADD", M("MULTIPLY", office, colo), M("MULTIPLY", inv, colr))
+    r1, r2, r3, r4 = (noise4(floor, colw, w) for w in (7.0, 8.0, 9.0, 10.0))
+    ceiling = M("ADD", .5, M("MULTIPLY", wv, .5))
+    blinds = M("MULTIPLY", M("LESS_THAN", r2, .5), M("GREATER_THAN", wv, M("SUBTRACT", 1, M("MULTIPLY", r3, .85))))
+    slats = M("ADD", .16, M("MULTIPLY", M("GREATER_THAN", M("FRACT", M("MULTIPLY", wv, 18)), .55), .12))
+    shade = M("SUBTRACT", 1, M("MULTIPLY", blinds, M("SUBTRACT", 1, slats)))
+    frame_v = M("MULTIPLY", inv, band(wu, .48, .52))
+    frame_h = band(wv, .66, .69)
+    mull = M("SUBTRACT", 1, M("MINIMUM", 1, M("ADD", frame_v, frame_h)))
+    vary = M("ADD", .35, M("MULTIPLY", r4, .75))
+    new_em = M("MULTIPLY", M("MULTIPLY", M("MULTIPLY", old_em, ceiling), M("MULTIPLY", shade, mull)), M("MULTIPLY", vary, .55))
+    em = N.new("ShaderNodeMix"); em.data_type = "FLOAT"
+    L.new(D, sock(em.inputs, "Factor_Float")); L.new(old_em, sock(em.inputs, "A_Float")); L.new(new_em, sock(em.inputs, "B_Float"))
+    L.new(sock(em.outputs, "Result_Float"), b.inputs["Emission Strength"])
+    tint = N.new("ShaderNodeValToRGB"); tint.color_ramp.interpolation = "CONSTANT"
+    tint.color_ramp.elements[0].position, tint.color_ramp.elements[0].color = 0.0, (1.0, .62, .34, 1)
+    tint.color_ramp.elements[1].position, tint.color_ramp.elements[1].color = .42, (1.0, .82, .62, 1)
+    e3 = tint.color_ramp.elements.new(.78); e3.color = (.76, .86, 1.0, 1)
+    L.new(r1, tint.inputs["Fac"])
+    hf, ha, hb, ho = mix_rgb(N)
+    L.new(tint.outputs["Color"], ha); hb.default_value = (1.0, .56, .16, 1); L.new(warm, hf)
+    xf, xa, xb, xo = mix_rgb(N)
+    L.new(D, xf); L.new(go, xa); L.new(ho, xb)
+    L.new(xo, b.inputs["Emission Color"])
+    # 외벽은 가로등과 번짐에 회색으로 뜨지 않게 더 어둡게
+    df, da, db, do = mix_rgb(N, "MULTIPLY")
+    L.new(M("MULTIPLY", D, .6), df); L.new(bo, da); db.default_value = (0, 0, 0, 1)
+    L.new(do, b.inputs["Base Color"])
     L.new(M("SUBTRACT", .78, M("MULTIPLY", M("MAXIMUM", office, window), .68)), b.inputs["Roughness"])
     b.inputs["Specular IOR Level"].default_value = .65
     no_emission_sampling(m)
@@ -859,6 +900,8 @@ def building_material():
 
 def build_city():
     fac = building_material()
+    # 가까이서 보는 창의 디테일: 480까지 0, 교차로로 내려오며 1, 집으로 돌아가며 다시 0
+    bake(fac.node_tree, 'nodes["Detail"].outputs[0].default_value', [(f, street_window(f)) for f in sorted({0, *range(KEEP, LAST + 1, 2), LAST})])
     plot_mat = textured("sidewalk", (.05, .05, .052), (.085, .085, .09), rough=.75, scale=.4, bump=.05, variation=False)
     curb = emissive("street lights", (1.0, .74, .46), 3.2)
     beacon = emissive("aircraft light", (1.0, .12, .06), 60.0)
@@ -914,7 +957,8 @@ def build_city():
                 lights.box(cx + o - .07, cx + o + .07, cy - BLOCK / 2, cy + BLOCK / 2, .01, .04)
             lights = lights.build(f"curb {i},{j}")
             hide_until(lights, int(rise0) - 2)
-            PROPS.append((lights, "lit", [(0, 0), (int(rise0 + 8), 0), (int(rise0 + 30), 1), (LAST, 1)]))
+            PROPS.append((lights, "lit", [(0, 0), (int(rise0 + 8), 0), (int(rise0 + 30), 1), (KEEP, 1),
+                                          *[(f, 1 - .55 * street_window(f)) for f in range(KEEP + 2, LAST, 4)], (LAST, 1)]))
             # 블록 유형
             kind = r.random()
             lots = []   # (x, y, w, d, h, office)
@@ -972,6 +1016,604 @@ def hide_until(ob, f):
     bake(ob, "hide_render", [(0, 1), (max(0, f - 1), 1), (f, 0), (LAST, 0)], interp="CONSTANT")
 
 
+# ── 교차로(7단계): 판단이 길 위로 ─────────────────────────────────────
+# 카메라가 동서 길을 따라 내려와 3·4열 사이 남북 대로와 만나는 교차로 앞에 선다.
+# 자율주행차는 우회전할지, 사족 로봇은 계단을 오를지 정한다. 판단마다 빛 한 줄기가 하늘로 오른다(도식).
+# 움직임은 모두 t = f - STREET 의 함수이고, 화면은 LOOP 프레임마다 똑같이 돌아온다.
+# 그래서 정지 지점에서는 같은 카메라로 렌더한 LOOP 프레임짜리 반복 영상이 끊김 없이 이어진다.
+# 새로 놓는 것은 모두 STREET_ON부터 보이고 집으로 돌아오기 전에 사라진다(1~6단계와 8단계 화면은 그대로).
+AVE_X, ST_Y = X0 + PITCH * 3.5, Y0 + PITCH * .5          # -60, 430
+NB, SB, EB, WB = AVE_X + 1.75, AVE_X - 1.75, ST_Y - 1.75, ST_Y + 1.75   # 차선 중심
+CURB_W, CURB_E, CURB_S, CURB_N = AVE_X - 7, AVE_X + 7, ST_Y - 7, ST_Y + 7
+STREET, STREET_ON, STREET_OFF, LOOP = ANCHORS[7], ANCHORS[6] + 1, ANCHORS[8] - 30, 240
+STREET_EXPOSURE = .6
+STREET_HAZE = 4.5
+STREET_BLOOM = .2
+# 계단: 남서쪽 사무동(3,0.1)의 북쪽 면 앞. 로봇은 북쪽 보도를 따라 동쪽으로 오다 남쪽으로 돌아 오른다.
+STAIR = dict(x0=-75.6, x1=-72.4, front=421.6, top=420.1, door=418.7, z0=.22, rise=.24, n=5)
+WALK_Y = 422.3
+STREET_SHOT = dict(eye=(-88, 431, 7.5), at=(-58, 422, 1.2), lens=24, shift=0.0, fstop=16)
+STREET_IN = [(-360, 380, 60), (-300, 431, 22), (-200, 432, 10)]
+STREET_OUT = [(-98, 432, 62), (-160, 310, 125), (-84, -70, 13)]
+LOOK_VIA = {7: [(-40, 520, 25), (-90, 520, 40), (-40, 220, 18)]}
+AGENTS = []       # 시간 t를 받아 자세를 정하는 함수들
+DECISIONS = {}    # 반복 영상 안에서 판단이 일어나는 순간과 자리(페이지의 카드 좌표)
+ICE = (.62, .86, 1.0)
+LAMP_W = 90
+
+
+def street_window(f):
+    """교차로 소품이 켜지는 정도. 카메라가 내려오며 켜지고, 집으로 돌아가며 꺼진다."""
+    return ramp(f, STREET_ON, STREET_ON + 50) * (1 - ramp(f, STREET_OFF - 40, STREET_OFF))
+
+
+def street_prop(ob, name="lit", peak=1.0):
+    frames = sorted({STREET_ON - 1, *range(STREET_ON, LAST + 1, 2), LAST})
+    prop(ob, name, [(f, peak * street_window(f)) for f in frames])
+
+
+def street_only(ob):
+    ob.hide_render = True
+    bake(ob, "hide_render", [(0, 1), (STREET_ON - 1, 1), (STREET_ON, 0), (STREET_OFF, 1), (LAST, 1)], interp="CONSTANT")
+    return ob
+
+
+def road_material():
+    """도시 바닥과 같은 아스팔트. wet가 1이 되면 빗물에 젖어 창과 가로등이 비친다."""
+    m = bpy.data.materials.new("wet road")
+    N, L = tree_of(m)
+    b = N["Principled BSDF"]
+    b.inputs["Base Color"].default_value = (.018, .019, .021, 1)
+    wet = N.new("ShaderNodeAttribute"); wet.attribute_type = "OBJECT"; wet.attribute_name = "wet"
+    tc = N.new("ShaderNodeTexCoord")
+    pud = N.new("ShaderNodeTexNoise"); pud.inputs["Scale"].default_value = .09; pud.inputs["Detail"].default_value = 4
+    L.new(tc.outputs["Object"], pud.inputs["Vector"])
+    pr = N.new("ShaderNodeMapRange"); pr.inputs["From Min"].default_value = .42; pr.inputs["From Max"].default_value = .6
+    pr.inputs["To Min"].default_value = .3; pr.inputs["To Max"].default_value = .05
+    L.new(pud.outputs["Fac"], pr.inputs["Value"])
+    rough = N.new("ShaderNodeMix"); rough.data_type = "FLOAT"
+    sock(rough.inputs, "A_Float").default_value = .55
+    L.new(wet.outputs["Fac"], sock(rough.inputs, "Factor_Float")); L.new(pr.outputs["Result"], sock(rough.inputs, "B_Float"))
+    L.new(sock(rough.outputs, "Result_Float"), b.inputs["Roughness"])
+    bp = N.new("ShaderNodeBump"); bp.inputs["Strength"].default_value = .12
+    fine = N.new("ShaderNodeTexNoise"); fine.inputs["Scale"].default_value = 3.0; fine.inputs["Detail"].default_value = 8
+    L.new(fine.outputs["Fac"], bp.inputs["Height"]); L.new(bp.outputs["Normal"], b.inputs["Normal"])
+    return m
+
+
+def bar(b, x0, y0, x1, y1, w, z=.012):
+    """바닥에 칠한 선. 두 점 사이 폭 w."""
+    dx, dy = x1 - x0, y1 - y0; n = math.hypot(dx, dy); nx, ny = -dy / n * w / 2, dx / n * w / 2
+    b.quad([(x0 + nx, y0 + ny, z), (x0 - nx, y0 - ny, z), (x1 - nx, y1 - ny, z), (x1 + nx, y1 + ny, z)])
+
+
+def build_street():
+    # 젖은 노면: 도시 전체에 한 장. 가장자리는 블록(높이 .22)에 묻힌다.
+    road = Builder(road_material()).quad([(-300, 372, .004), (300, 372, .004), (300, 850, .004), (-300, 850, .004)]).build("street road")
+    street_only(road); street_prop(road, "wet")
+    # 차선과 횡단보도
+    white = principled("road paint", (.32, .32, .31), rough=.55)
+    yellow = principled("road paint yellow", (.5, .34, .06), rough=.55)
+    wb, yb = Builder(white), Builder(yellow)
+    gaps = lambda a, b, holes: [(lo, hi) for lo, hi in zip([a, *[h[1] for h in holes]], [*[h[0] for h in holes], b])]
+    ave_holes = [(Y0 + PITCH * (j + .5) - 7, Y0 + PITCH * (j + .5) + 7) for j in range(ROWS - 1)]
+    st_holes = [(X0 + PITCH * (i + .5) - 7, X0 + PITCH * (i + .5) + 7) for i in range(COLS - 1)]
+    for lo, hi in gaps(Y0 - 23, Y0 + PITCH * (ROWS - 1) + 23, ave_holes):
+        for o in (-.13, .13): bar(yb, AVE_X + o, lo + 4, AVE_X + o, hi - 4, .1)
+        for o in (-3.6, 3.6): bar(wb, AVE_X + o, lo + 4, AVE_X + o, hi - 4, .12)
+    for lo, hi in gaps(X0 - 23, X0 + PITCH * (COLS - 1) + 23, st_holes):
+        for o in (-.13, .13): bar(yb, lo + 4, ST_Y + o, hi - 4, ST_Y + o, .1)
+        for o in (-3.6, 3.6): bar(wb, lo + 4, ST_Y + o, hi - 4, ST_Y + o, .12)
+    # 교차로 네 방향의 횡단보도와 정지선
+    for yc in (CURB_S - 2, CURB_N + 2):
+        x = CURB_W + .6
+        while x < CURB_E - .6:
+            bar(wb, x, yc - 1.5, x, yc + 1.5, .45); x += 1.0
+    for xc in (CURB_W - 2, CURB_E + 2):
+        y = CURB_S + .6
+        while y < CURB_N - .6:
+            bar(wb, xc - 1.5, y, xc + 1.5, y, .45); y += 1.0
+    bar(wb, AVE_X, CURB_S - 4, CURB_E - .4, CURB_S - 4, .4)          # 북행 정지선
+    bar(wb, CURB_E + 4, ST_Y, CURB_E + 4, CURB_N - .4, .4)          # 서행 정지선
+    for ob in (wb.build("street paint"), yb.build("street paint yellow")):
+        street_only(ob)
+
+    # 가로등: 보도 가장자리에서 차도 쪽으로 팔을 뻗는다.
+    post_mat = principled("lamp post", (.02, .021, .023), rough=.4, metal=.8)
+    head_mat = emissive("lamp head", (1.0, .84, .66), 40.0)
+    posts, heads = Builder(post_mat), Builder(head_mat)
+    lamps = [((CURB_W - .6, 402), (1, 0)), ((CURB_E + .6, 410), (-1, 0)), ((CURB_W - .6, 452), (1, 0)), ((CURB_E + .6, 452), (-1, 0)),
+             ((-100, CURB_S - .6), (0, 1)), ((-112, CURB_N + .6), (0, -1)), ((-40, CURB_S - .6), (0, 1)), ((-38, CURB_N + .6), (0, -1)),
+             ((-12, CURB_S - .6), (0, 1)), ((-14, CURB_N + .6), (0, -1)), ((-150, CURB_S - .6), (0, 1)), ((-160, CURB_N + .6), (0, -1)),
+             ((CURB_W - .6, 476), (1, 0)), ((CURB_E + .6, 500), (-1, 0))]
+    for (x, y), (dx, dy) in lamps:
+        r, h, arm = .09, 7.6, 1.9
+        posts.box(x - r, x + r, y - r, y + r, .22, h)
+        hx, hy = x + dx * arm, y + dy * arm
+        posts.box(min(x, hx) - .05, max(x, hx) + .05, min(y, hy) - .05, max(y, hy) + .05, h - .12, h)
+        heads.box(hx - .32, hx + .32, hy - .14, hy + .14, h - .2, h - .12)
+        ld = bpy.data.lights.new(f"street lamp {x:.0f},{y:.0f}", "AREA"); ld.shape = "DISK"; ld.size = .45
+        ld.color = (1.0, .84, .66); ld.energy = 0.0
+        lo = put(bpy.data.objects.new(ld.name, ld)); lo.location = (hx, hy, h - .22)
+        frames = sorted({STREET_ON - 1, *range(STREET_ON, LAST + 1, 2), LAST})
+        bake(ld, "energy", [(f, LAMP_W * street_window(f)) for f in frames])
+        street_only(lo)
+    ph = heads.build("street lamp heads"); street_only(ph); street_prop(ph)
+    street_only(posts.build("street lamp posts", bevel=.02))
+
+    # 계단과 문: 로봇이 오를지 정하는 자리
+    s = STAIR
+    stone = textured("stair stone", (.2, .2, .2), (.3, .3, .29), rough=.6, scale=2.0, bump=.05)
+    st = Builder(stone)
+    run = (s["front"] - s["top"]) / s["n"]
+    for k in range(s["n"]):
+        y_front = s["front"] - k * run
+        st.box(s["x0"], s["x1"], s["door"], y_front, s["z0"], s["z0"] + s["rise"] * (k + 1))
+    street_only(st.build("street stairs", bevel=.01))
+    # 양옆 난간: 가는 금속 띠 아래로 빛이 흐른다
+    top_z = s["z0"] + s["rise"] * s["n"]
+    rail, rail_led = Builder(principled("rail", (.02, .02, .022), rough=.3, metal=.9)), Builder(emissive("rail led", (1.0, .8, .58), 5.0))
+    for x in (s["x0"] + .06, s["x1"] - .06):
+        for yy, zz in ((s["front"], s["z0"]), (s["top"], top_z)):
+            rail.box(x - .025, x + .025, yy - .025, yy + .025, zz, zz + .95)
+        n = 12
+        for i in range(n):
+            y0, y1 = s["front"] + (s["top"] - s["front"]) * i / n, s["front"] + (s["top"] - s["front"]) * (i + 1) / n
+            z0 = s["z0"] + .95 + (top_z - s["z0"]) * i / n
+            rail.box(x - .03, x + .03, min(y0, y1), max(y0, y1), z0, z0 + .05)
+            rail_led.box(x - .02, x + .02, min(y0, y1), max(y0, y1), z0 - .02, z0)
+        rail.box(x - .03, x + .03, s["door"] + .2, s["top"], top_z + .95, top_z + 1.0)
+    street_only(rail.build("street rail")); rl = rail_led.build("street rail led"); street_only(rl); street_prop(rl)
+    glow = Builder(emissive("stair nosing", (1.0, .8, .58), 6.0))
+    for k in range(s["n"]):
+        y_front = s["front"] - k * run
+        z = s["z0"] + s["rise"] * (k + 1)
+        glow.box(s["x0"] + .05, s["x1"] - .05, y_front - .03, y_front - .01, z - .05, z - .02)
+    g = glow.build("street stair lights"); street_only(g); street_prop(g)
+    door = Builder(emissive("door glow", (1.0, .78, .52), 2.2)).box(s["x0"] + .3, s["x1"] - .3, s["door"] - .02, s["door"] + .01, s["z0"] + s["rise"] * s["n"], 3.9).build("street door")
+    street_only(door); street_prop(door)
+    build_shopfronts()
+    canopy = Builder(principled("canopy", (.03, .03, .032), rough=.35, metal=.6)).box(s["x0"] - .5, s["x1"] + .5, s["door"], s["top"] + .4, 4.0, 4.18).build("street canopy")
+    street_only(canopy)
+    build_agents()
+
+
+def shop_material():
+    """가게 유리 안쪽의 빛. 가게마다(메시 조각마다) 색과 밝기가 다르고, 천장 쪽이 밝고, 안쪽 진열이 얼룩진다."""
+    m = bpy.data.materials.new("shop glow")
+    N, L = tree_of(m); N.clear()
+    out = N.new("ShaderNodeOutputMaterial"); em = N.new("ShaderNodeEmission")
+    geo = N.new("ShaderNodeNewGeometry"); tc = N.new("ShaderNodeTexCoord"); sep = N.new("ShaderNodeSeparateXYZ")
+    L.new(tc.outputs["Object"], sep.inputs[0])
+    lit = N.new("ShaderNodeAttribute"); lit.attribute_type = "OBJECT"; lit.attribute_name = "lit"
+
+    def M(op, a, c):
+        n = N.new("ShaderNodeMath"); n.operation = op
+        for k, v in enumerate((a, c)):
+            if isinstance(v, (int, float)): n.inputs[k].default_value = v
+            else: L.new(v, n.inputs[k])
+        return n.outputs[0]
+    rnd = geo.outputs["Random Per Island"]
+    ramp_c = N.new("ShaderNodeValToRGB"); ramp_c.color_ramp.interpolation = "CONSTANT"
+    ramp_c.color_ramp.elements[0].color = (1.0, .6, .3, 1); ramp_c.color_ramp.elements[1].position = .55; ramp_c.color_ramp.elements[1].color = (1.0, .8, .58, 1)
+    e = ramp_c.color_ramp.elements.new(.82); e.color = (.72, .86, 1.0, 1)
+    L.new(rnd, ramp_c.inputs["Fac"]); L.new(ramp_c.outputs["Color"], em.inputs["Color"])
+    top = M("ADD", .35, M("MULTIPLY", M("DIVIDE", M("SUBTRACT", sep.outputs["Z"], .45), 3.0), .65))
+    nz = N.new("ShaderNodeTexNoise"); nz.inputs["Scale"].default_value = 1.6; nz.inputs["Detail"].default_value = 3
+    L.new(tc.outputs["Object"], nz.inputs["Vector"])
+    blot = M("ADD", .45, M("MULTIPLY", nz.outputs["Fac"], .9))
+    strength = M("MULTIPLY", M("MULTIPLY", M("MULTIPLY", top, blot), M("ADD", .25, M("MULTIPLY", rnd, .9))), M("MULTIPLY", lit.outputs["Fac"], .75))
+    L.new(strength, em.inputs["Strength"]); L.new(em.outputs[0], out.inputs["Surface"])
+    no_emission_sampling(m)
+    return m
+
+
+def build_shopfronts():
+    """교차로 가까운 건물의 1층 가게 불빛. 길 쪽 면에만, 칸마다 켜짐과 색을 조금씩 다르게."""
+    S.frame_set(STREET)   # 건물 크기는 키프레임으로만 있으므로 한 번 평가한다
+    r = random.Random(11)
+    warm = cool = Builder(shop_material())
+    frame = Builder(principled("shop frame", (.02, .02, .022), rough=.4, metal=.6))
+    for o in [o for o in S.objects if o.name.startswith("bldg")]:
+        x, y = o.location.x, o.location.y; w, d = o.scale.x, o.scale.y
+        if not (-180 < x < 70 and 377 < y < 560): continue
+        i, j = round((x - X0) / PITCH), round((y - Y0) / PITCH)
+        cx, cy = X0 + i * PITCH, Y0 + j * PITCH
+        faces = [("x", x - w / 2, y - d / 2, y + d / 2, -1, (x - w / 2) - (cx - BLOCK / 2)), ("x", x + w / 2, y - d / 2, y + d / 2, 1, (cx + BLOCK / 2) - (x + w / 2)),
+                 ("y", y - d / 2, x - w / 2, x + w / 2, -1, (y - d / 2) - (cy - BLOCK / 2)), ("y", y + d / 2, x - w / 2, x + w / 2, 1, (cy + BLOCK / 2) - (y + d / 2))]
+        eye = Vector(STREET_SHOT["eye"])
+        for axis, at, lo, hi, sgn, gap in faces:
+            if gap > 4.5: continue
+            mid = Vector((at, (lo + hi) / 2, 2)) if axis == "x" else Vector(((lo + hi) / 2, at, 2))
+            if (mid - eye).length < 26: continue   # 카메라 코앞의 면은 화면을 덮으므로 비운다
+            u = lo + .6
+            while u < hi - 1.5:
+                seg = min(hi - .6, u + r.uniform(3.5, 8.0))
+                if r.random() < .72:
+                    b = warm if r.random() < .62 else cool
+                    z0, z1, t0 = .45, r.uniform(2.9, 3.4), at + sgn * .02
+                    m0, m1 = min(at, at + sgn * .08), max(at, at + sgn * .08)
+                    if axis == "x":
+                        b.box(min(t0, t0 + sgn * .04), max(t0, t0 + sgn * .04), u, seg, z0, z1)
+                        frame.box(min(at, at + sgn * .5), max(at, at + sgn * .5), u - .1, seg + .1, z1 + .05, z1 + .3)
+                        for mu in [u + k * 1.3 for k in range(1, int((seg - u) / 1.3))]:
+                            frame.box(m0, m1, mu - .04, mu + .04, z0, z1)
+                    else:
+                        b.box(u, seg, min(t0, t0 + sgn * .04), max(t0, t0 + sgn * .04), z0, z1)
+                        frame.box(u - .1, seg + .1, min(at, at + sgn * .5), max(at, at + sgn * .5), z1 + .05, z1 + .3)
+                        for mu in [u + k * 1.3 for k in range(1, int((seg - u) / 1.3))]:
+                            frame.box(mu - .04, mu + .04, m0, m1, z0, z1)
+                u = seg + r.uniform(.4, 1.6)
+    ob = warm.build("street shops")
+    street_only(ob); street_prop(ob)
+    street_only(frame.build("street shop awnings"))
+
+
+# ── 움직이는 것들 ────────────────────────────────────────────────────
+class Route:
+    """평면 꺾은선. 모서리마다 반지름 r의 원호로 깎는다. s(앞에서부터 거리) → 위치와 방향."""
+    def __init__(self, pts, r=0.0):
+        P = [Vector(p) for p in pts]
+        out = [P[0]]
+        for a, b, c in zip(P, P[1:], P[2:]):
+            d1, d2 = (b - a).normalized(), (c - b).normalized()
+            turn = math.atan2(d1.x * d2.y - d1.y * d2.x, d1.dot(d2))
+            if r <= 0 or abs(turn) < 1e-3:
+                out.append(b); continue
+            k = r * math.tan(abs(turn) / 2)
+            p0 = b - d1 * k
+            n = Vector((-d1.y, d1.x)) * (1 if turn > 0 else -1)
+            ctr = p0 + n * r
+            a0 = math.atan2(p0.y - ctr.y, p0.x - ctr.x)
+            steps = max(6, int(abs(turn) / .05))
+            for i in range(steps + 1):
+                ang = a0 + turn * i / steps
+                out.append(ctr + Vector((math.cos(ang), math.sin(ang))) * r)
+        out.append(P[-1])
+        self.p = out
+        self.cum = [0.0]
+        for a, b in zip(out, out[1:]):
+            self.cum.append(self.cum[-1] + (b - a).length)
+        self.length = self.cum[-1]
+
+    def at(self, s):
+        s = max(0.0, min(self.length - 1e-6, s))
+        i = min(bisect(self.cum, s) - 1, len(self.p) - 2)
+        a, b = self.p[i], self.p[i + 1]
+        seg = self.cum[i + 1] - self.cum[i]
+        pos = a.lerp(b, (s - self.cum[i]) / seg if seg > 0 else 0)
+        # 방향은 조금 앞뒤를 보고 정해 원호에서도 매끄럽게
+        j, k = max(0, i - 1), min(len(self.p) - 1, i + 2)
+        d = self.p[k] - self.p[j]
+        return pos, math.atan2(d.y, d.x)
+
+
+def timeline(keys):
+    """[(τ, s)]를 단조 3차 보간한다(Fritsch–Carlson). 같은 s가 이어지면 그 사이는 멈춰 있다."""
+    T, V = [k[0] for k in keys], [k[1] for k in keys]
+    n = len(keys)
+    d = [(V[i + 1] - V[i]) / (T[i + 1] - T[i]) for i in range(n - 1)]
+    m = [d[0], *[0.0 if d[i - 1] * d[i] <= 0 else (d[i - 1] + d[i]) / 2 for i in range(1, n - 1)], d[-1]]
+    for i in range(n - 1):
+        if d[i] == 0:
+            m[i] = m[i + 1] = 0.0
+    for i in range(n - 1):
+        if d[i] == 0: continue
+        a, b = m[i] / d[i], m[i + 1] / d[i]
+        h = a * a + b * b
+        if h > 9:
+            t = 3 / math.sqrt(h); m[i], m[i + 1] = t * a * d[i], t * b * d[i]
+
+    def s(t):
+        if t <= T[0]: return V[0]
+        if t >= T[-1]: return V[-1]
+        i = bisect(T, t) - 1
+        h = T[i + 1] - T[i]; u = (t - T[i]) / h
+        h00, h10, h01, h11 = 2 * u ** 3 - 3 * u ** 2 + 1, u ** 3 - 2 * u ** 2 + u, -2 * u ** 3 + 3 * u ** 2, u ** 3 - u ** 2
+        return h00 * V[i] + h10 * h * m[i] + h01 * V[i + 1] + h11 * h * m[i + 1]
+    return s
+
+
+def emissive_attr(name, color, strength, attr):
+    return emissive(name, color, strength, attr=attr)
+
+
+CAR_GLASS = principled("car glass", (.012, .016, .02), rough=.06, spec=.8)
+CAR_TRIM = principled("car trim", (.015, .015, .016), rough=.5)
+CAR_TIRE = principled("tire", (.01, .01, .01), rough=.85)
+SENSOR = principled("roof sensor", (.03, .032, .036), rough=.25, metal=.4)
+
+
+def car_paint(name, color):
+    m = principled(name, color, rough=.22)
+    b = m.node_tree.nodes["Principled BSDF"]
+    try: b.inputs["Coat Weight"].default_value = .6
+    except Exception: pass
+    return m
+
+
+def wheel_mesh():
+    v, f, seg, r, w = [], [], 18, .34, .24
+    for i in range(seg):
+        a = math.tau * i / seg
+        v += [(r * math.cos(a), -w / 2, r * math.sin(a) + r), (r * math.cos(a), w / 2, r * math.sin(a) + r)]
+    for i in range(seg):
+        j = (i + 1) % seg; f.append((2 * i, 2 * j, 2 * j + 1, 2 * i + 1))
+    f.append(tuple(2 * i for i in range(seg))); f.append(tuple(2 * i + 1 for i in reversed(range(seg))))
+    me = bpy.data.meshes.new("wheel"); me.from_pydata(v, [], f); me.update(); me.materials.append(CAR_TIRE)
+    for p in me.polygons: p.use_smooth = True
+    return me
+
+
+WHEEL = None
+
+
+def child(parent, ob, loc=(0, 0, 0)):
+    ob.parent = parent
+    ob.location = loc
+    return ob
+
+
+def make_car(name, paint, hero=False):
+    """자율주행 택시. +x가 앞. 지붕의 센서 고리가 판단할 때 밝아진다."""
+    global WHEEL
+    WHEEL = WHEEL or wheel_mesh()
+    root = put(bpy.data.objects.new(f"street · {name}", None))
+    parts = []
+    body = (Builder(paint, CAR_TRIM)
+            .box(-2.3, 2.3, -.93, .93, .3, .86, 0)
+            .box(-2.32, 2.32, -.94, .94, .3, .44, 1)
+            .build(f"street · {name} body", bevel=.14))
+    cabin = Builder(CAR_GLASS, paint).box(-1.45, 1.0, -.82, .82, .86, 1.4, 0).box(-1.2, .8, -.72, .72, 1.4, 1.46, 1).build(f"street · {name} cabin", bevel=.1)
+    sensor = cylinder(f"street · {name} sensor", -.2, 0, 1.44, 1.66, .26, SENSOR, seg=20)
+    ring = cylinder(f"street · {name} ring", -.2, 0, 1.53, 1.57, .265, emissive(f"{name} ring", ICE, 3.0, attr="flash"), seg=20)
+    head = Builder(emissive(f"{name} head", (1.0, .94, .86), 26.0)).box(2.27, 2.33, -.86, -.5, .66, .74).box(2.27, 2.33, .5, .86, .66, .74).box(2.29, 2.33, -.5, .5, .7, .72).build(f"street · {name} head")
+    tail = Builder(emissive(f"{name} tail", (1.0, .05, .03), 5.0, attr="brake")).box(-2.33, -2.27, -.9, .9, .76, .82).build(f"street · {name} tail")
+    blink = Builder(emissive(f"{name} blink", (1.0, .45, .05), 14.0, attr="blink")).box(2.25, 2.31, -.93, -.84, .64, .74).box(-2.33, -2.27, -.93, -.84, .7, .8).build(f"street · {name} blink")
+    head["lit"] = 1.0
+    for ob in (body, cabin, sensor, ring, head, tail, blink):
+        parts.append(child(root, ob))
+    for x in (1.45, -1.45):
+        for y in (.83, -.83):
+            parts.append(child(root, put(bpy.data.objects.new(f"street · {name} wheel", WHEEL)), (x, y, 0)))
+    for y in (.68, -.68):
+        ld = bpy.data.lights.new(f"street · {name} beam", "SPOT"); ld.energy = 220 if hero else 140
+        ld.spot_size = math.radians(70); ld.spot_blend = .5; ld.color = (1.0, .93, .82); ld.shadow_soft_size = .05
+        lo = put(bpy.data.objects.new(ld.name, ld)); lo.rotation_euler = (0, math.radians(-82), 0)
+        parts.append(child(root, lo, (2.4, y, .72)))
+    return root, parts, dict(ring=ring, tail=tail, blink=blink)
+
+
+ROBOT_SHELL = principled("robot shell", (.62, .64, .66), rough=.35, metal=.1)
+ROBOT_DARK = principled("robot joints", (.025, .026, .03), rough=.4, metal=.5)
+L1, L2, HIP_H = .27, .28, .485
+
+
+def make_robot(name, scale=1.45):
+    """사족 로봇. +x가 앞. 몸 옆의 띠와 눈이 판단할 때 밝아진다."""
+    root = put(bpy.data.objects.new(f"street · {name}", None))
+    root.scale = (scale,) * 3
+    parts, legs = [], []
+    body = Builder(ROBOT_SHELL, ROBOT_DARK).box(-.42, .42, -.16, .16, -.1, .12, 0).box(-.38, .38, -.12, .12, -.14, -.1, 1).box(.42, .56, -.11, .11, -.06, .08, 1).build(f"street · {name} body", bevel=.03)
+    eyes = Builder(emissive(f"{name} eyes", ICE, 6.0, attr="flash")).box(.555, .565, -.08, .08, .0, .03).box(-.3, .3, .161, .166, .02, .05).box(-.3, .3, -.166, -.161, .02, .05).build(f"street · {name} eyes")
+    torso_z = HIP_H + .03 + .04
+    parts += [child(root, body, (0, 0, torso_z)), child(root, eyes, (0, 0, torso_z))]
+    thigh_me = Builder(ROBOT_DARK).box(-.045, .045, -.04, .04, -L1, .03).build(f"{name} thigh").data
+    shin_me = Builder(ROBOT_SHELL).box(-.032, .032, -.03, .03, -L2, .0).box(-.045, .045, -.045, .045, -L2 - .03, -L2 + .03).build(f"{name} shin").data
+    for o in [o for o in bpy.data.objects if o.data in (thigh_me, shin_me) and o.name.startswith(name)]:
+        bpy.data.objects.remove(o)
+    for k, (hx, hy) in enumerate(((.32, .2), (.32, -.2), (-.32, .2), (-.32, -.2))):
+        hip = child(root, put(bpy.data.objects.new(f"street · {name} hip {k}", None)), (hx, hy, torso_z - .04))
+        thigh = child(hip, put(bpy.data.objects.new(f"street · {name} thigh {k}", thigh_me)))
+        knee = child(hip, put(bpy.data.objects.new(f"street · {name} knee {k}", None)), (0, 0, -L1))
+        shin = child(knee, put(bpy.data.objects.new(f"street · {name} shin {k}", shin_me)))
+        parts += [hip, thigh, knee, shin]
+        legs.append((hip, knee, 0.0 if k in (0, 3) else math.pi))
+    ld = bpy.data.lights.new(f"street · {name} lamp", "SPOT"); ld.energy = 12; ld.spot_size = math.radians(60); ld.color = (.75, .9, 1.0); ld.shadow_soft_size = .02
+    lo = put(bpy.data.objects.new(ld.name, ld)); lo.rotation_euler = (0, math.radians(-75), 0)
+    parts.append(child(root, lo, (.6, 0, torso_z)))
+    return root, parts, dict(eyes=eyes, legs=legs)
+
+
+def leg_ik(x, z):
+    """엉덩이에서 발까지 (x 앞, z 위). 무릎이 뒤로 접히는 두 마디. 허벅지 각과 정강이 상대 각."""
+    D = min(L1 + L2 - 1e-3, math.hypot(x, z))
+    th = math.atan2(-x, -z)
+    al = math.acos(max(-1, min(1, (L1 * L1 + D * D - L2 * L2) / (2 * L1 * D))))
+    be = math.acos(max(-1, min(1, (L2 * L2 + D * D - L1 * L1) / (2 * L2 * D))))
+    a, c = th + al, th - be
+    return a, c - a
+
+
+def make_beam(name):
+    """판단 하나 = 빛 한 줄기(도식). head가 오르는 높이, on이 밝기."""
+    m = bpy.data.materials.new(f"{name} light")
+    N, L = tree_of(m); N.clear()
+    out = N.new("ShaderNodeOutputMaterial"); em = N.new("ShaderNodeEmission"); em.inputs["Color"].default_value = (*ICE, 1)
+    tr = N.new("ShaderNodeBsdfTransparent"); add = N.new("ShaderNodeAddShader")
+    tc = N.new("ShaderNodeTexCoord"); sep = N.new("ShaderNodeSeparateXYZ"); L.new(tc.outputs["Object"], sep.inputs[0])
+
+    def attr(n):
+        a = N.new("ShaderNodeAttribute"); a.attribute_type = "OBJECT"; a.attribute_name = n
+        return a.outputs["Fac"]
+
+    def M(op, a, c, clamp=False):
+        n = N.new("ShaderNodeMath"); n.operation = op; n.use_clamp = clamp
+        for k, v in enumerate((a, c)):
+            if isinstance(v, (int, float)): n.inputs[k].default_value = v
+            else: L.new(v, n.inputs[k])
+        return n.outputs[0]
+    head, on = attr("head"), attr("on")
+    dz = M("SUBTRACT", head, sep.outputs["Z"])
+    tail = M("SUBTRACT", 1.0, M("DIVIDE", dz, 9.0), clamp=True)
+    below = M("GREATER_THAN", dz, 0.0)
+    val = M("MULTIPLY", M("MULTIPLY", M("MULTIPLY", tail, tail), below), M("MULTIPLY", on, 60.0))
+    L.new(val, em.inputs["Strength"])
+    L.new(tr.outputs[0], add.inputs[0]); L.new(em.outputs[0], add.inputs[1]); L.new(add.outputs[0], out.inputs["Surface"])
+    no_emission_sampling(m)
+    ob = cylinder(f"street · {name}", 0, 0, 0, 40, .05, m, seg=8)
+    ob.visible_shadow = False; ob.visible_diffuse = False
+    ob["head"] = 0.0; ob["on"] = 0.0
+    return ob
+
+
+def pulse_at(tau, t_dec, rise=24.0):
+    """판단 순간부터 빛이 오르는 높이와 밝기."""
+    u = tau - t_dec
+    if u < 0 or u > 40: return 0.0, 0.0
+    return min(42.0, u * rise / 12 * 1.4), (1 - ramp(u, 18, 40)) if u > 18 else 1.0
+
+
+def flash_at(tau, t_dec, base):
+    u = tau - t_dec
+    return base + (6.0 * math.exp(-max(0, u) / 10) if u >= -2 else 0) if u < 60 else base
+
+
+def build_agents():
+    """자율주행차(우회전), 마주 오는 차, 사족 로봇(계단). 복제본을 주기의 몫만큼 어긋나게 둔다."""
+    # 주인공 차: 남쪽에서 북행 차선으로 올라와 정지선에 서고, 판단한 뒤 동쪽으로 우회전해 협곡으로 간다.
+    hero_route = Route([(NB, 380), (NB, EB), (-1.75, EB), (-1.75, 360)], r=5.5)
+    stop_s = (CURB_S - 4 - .25 - 2.33) - 380
+    hero_tl = timeline([(0, 0), (40, 13.2), (80, 25.5), (110, 32.0), (130, stop_s - .25), (145, stop_s), (230, stop_s),
+                        (255, stop_s + 1.0), (280, stop_s + 4.0), (310, stop_s + 11), (340, stop_s + 21), (370, stop_s + 33),
+                        (400, stop_s + 47), (430, stop_s + 62), (455, stop_s + 75), (479, stop_s + 88)])
+    HERO_DEC, HERO_Q = 165, 2 * LOOP
+    hero_hidden = lambda tau: hero_route.at(hero_tl(tau))[0].y < 416.5 and tau > 300
+    for c in range(2):
+        root, parts, lights = make_car(f"robotaxi {c}", car_paint(f"robotaxi paint {c}", (.78, .79, .8)), hero=True)
+        beam = make_beam(f"car decision {c}")
+        off = c * LOOP
+
+        def apply(t, root=root, parts=parts, lights=lights, beam=beam, off=off):
+            tau = (t + off) % HERO_Q
+            s = hero_tl(tau); pos, yaw = hero_route.at(s)
+            v = hero_tl(tau + 1) - hero_tl(tau - 1)
+            root.location = (pos.x, pos.y, .0); root.rotation_euler = (0, 0, yaw)
+            hidden = hero_hidden(tau)
+            for p in parts: p.hide_render = hidden
+            lights["tail"]["brake"] = 1.0 if v < .02 or (hero_tl(tau + 3) - hero_tl(tau)) < (hero_tl(tau) - hero_tl(tau - 3)) - .02 else .35
+            lights["blink"]["blink"] = 1.0 if 130 <= tau <= 300 and int(tau / 12) % 2 == 0 else 0.0
+            lights["ring"]["flash"] = flash_at(tau, HERO_DEC, 1.0)
+            h, on = pulse_at(tau, HERO_DEC)
+            beam.location = (pos.x - .2 * math.cos(yaw), pos.y - .2 * math.sin(yaw), 1.66)
+            beam["head"], beam["on"] = h, on
+            beam.hide_render = on <= 0
+            return [root, *parts, beam]
+        AGENTS.append(apply)
+    p, _ = hero_route.at(stop_s)
+    DECISIONS["car"] = dict(t=HERO_DEC % LOOP, at=(p.x, p.y, 2.2))
+
+    # 마주 오는 차들: 북쪽 대로를 따라 남행. 주기마다 88 m(11 m/s × 8 s) 간격.
+    south = Route([(SB, 556), (SB, 380)])
+    v = 88.0 / LOOP
+    for c in range(2):
+        root, parts, lights = make_car(f"southbound {c}", car_paint(f"car paint s{c}", ((.05, .055, .06), (.32, .33, .35))[c]))
+
+        def apply(t, root=root, parts=parts, lights=lights, c=c):
+            s = (t * v + c * 88.0) % south.length
+            pos, yaw = south.at(s)
+            root.location = (pos.x, pos.y, 0); root.rotation_euler = (0, 0, yaw)
+            for p in parts: p.hide_render = False
+            lights["tail"]["brake"] = .35; lights["blink"]["blink"] = 0.0; lights["ring"]["flash"] = .6
+            return [root, *parts]
+        AGENTS.append(apply)
+    # 서행: x=0 대로에서 좌회전해 들어와 카메라 아래로 지나간다.
+    west = Route([(1.75, 380), (1.75, WB), (-140, WB)], r=6.0)
+    for c in range(2):
+        root, parts, lights = make_car(f"westbound {c}", car_paint(f"car paint w{c}", ((.16, .17, .19), (.6, .6, .62))[c]))
+
+        def apply(t, root=root, parts=parts, lights=lights, c=c):
+            s = (t * v + c * 88.0 + 30) % 176.0
+            pos, yaw = west.at(s)
+            root.location = (pos.x, pos.y, 0); root.rotation_euler = (0, 0, yaw)
+            for p in parts: p.hide_render = False
+            lights["tail"]["brake"] = .35; lights["blink"]["blink"] = 0.0; lights["ring"]["flash"] = .6
+            return [root, *parts]
+        AGENTS.append(apply)
+
+    # 사족 로봇: 북쪽 보도를 따라 동쪽으로 오다 계단 앞에서 남쪽으로 돌아 서고, 판단한 뒤 올라 문으로 들어간다.
+    s = STAIR
+    cx = (s["x0"] + s["x1"]) / 2
+    walk = timeline([(0, -90.0), (30, -88.6), (200, -78.4), (235, cx - .05), (250, cx)])
+    TURN0, TURN1, ROB_DEC, CLIMB0, CLIMB1, DOOR1 = 250, 285, 300, 335, 420, 470
+    climb = timeline([(CLIMB0, WALK_Y), (CLIMB0 + 12, WALK_Y - .15), (CLIMB1, s["top"] - .2), (DOOR1, s["door"] - 1.3)])
+    ROB_Q = 2 * LOOP
+    stair_z = lambda y: s["z0"] + max(0.0, min(s["n"] * s["rise"], (s["front"] - y) / (s["front"] - s["top"]) * s["n"] * s["rise"]))
+    for c in range(2):
+        root, parts, bits = make_robot(f"quadruped {c}")
+        beam = make_beam(f"robot decision {c}")
+        off = c * LOOP
+
+        def apply(t, root=root, parts=parts, bits=bits, beam=beam, off=off):
+            tau = (t + off) % ROB_Q
+            sc = root.scale[0]
+            if tau < TURN0:
+                x, y, yaw = walk(tau), WALK_Y, 0.0
+                dist = walk(tau) + 90.0
+            elif tau < CLIMB0:
+                x, y = cx, WALK_Y
+                yaw = -math.pi / 2 * ease_io((tau - TURN0) / (TURN1 - TURN0))
+                dist = (walk(TURN0) + 90.0) + abs(yaw) * .35
+            else:
+                x, y, yaw = cx, climb(tau), -math.pi / 2
+                dist = (walk(TURN0) + 90.0) + math.pi / 2 * .35 + (WALK_Y - y)
+            # 계단 위에서는 몸 앞뒤의 높이 차로 기울기를 정한다.
+            half = .42 * sc
+            zf, zb = stair_z(y - half), stair_z(y + half)
+            z = (zf + zb) / 2 - s["z0"]
+            pitch = -math.atan2(zf - zb, 2 * half) * .7
+            root.location = (x, y, s["z0"] + z)
+            root.rotation_euler = (0, pitch, yaw)
+            moving = abs((walk(tau + 1) - walk(tau - 1)) if tau < TURN0 else (climb(tau + 1) - climb(tau - 1)) if tau >= CLIMB0 else (TURN0 < tau < TURN1))
+            stride = .52 * sc
+            on_stairs = CLIMB0 <= tau < CLIMB1 + 10
+            for hip, knee, ph in bits["legs"]:
+                phi = math.tau * dist / stride + ph
+                amp = min(1.0, moving * 12) if not isinstance(moving, bool) else (1.0 if moving else 0.0)
+                u = .12 * math.sin(phi) * amp
+                lift = (.07 + (.1 if on_stairs else 0)) * max(0.0, math.cos(phi)) * amp
+                a, b = leg_ik(u, -(HIP_H - lift))
+                hip.rotation_euler = (0, a, 0); knee.rotation_euler = (0, b, 0)
+            hidden = tau >= DOOR1 - 4
+            for p in parts: p.hide_render = hidden
+            bits["eyes"]["flash"] = flash_at(tau, ROB_DEC, 1.0)
+            h, on = pulse_at(tau, ROB_DEC)
+            beam.location = (x, y, s["z0"] + z + 1.0)
+            beam["head"], beam["on"] = h, on
+            beam.hide_render = on <= 0
+            return [root, *parts, beam]
+        AGENTS.append(apply)
+    DECISIONS["robot"] = dict(t=ROB_DEC % LOOP, at=(cx, WALK_Y, 1.6))
+    for ob in bpy.data.objects:
+        if ob.name.startswith("street · "):
+            ob.cycles.use_motion_blur = False
+
+
+def apply_agents(t):
+    obs = []
+    for fn in AGENTS: obs += fn(t)
+    return obs
+
+
+def bake_agents():
+    """필름 구간에서는 프레임마다 자세를 굽는다. STREET_ON 앞과 STREET_OFF 뒤에서는 숨긴다."""
+    rec = {}
+    for f in range(STREET_ON - 1, LAST + 1):
+        hide = f < STREET_ON or f >= STREET_OFF
+        for ob in apply_agents(f - STREET):
+            if hide: ob.hide_render = True
+            for path in ("location", "rotation_euler"):
+                for i, v in enumerate(getattr(ob, path)):
+                    rec.setdefault((ob, path, i), []).append((f, v))
+            rec.setdefault((ob, "hide_render", 0), []).append((f, float(ob.hide_render)))
+            for key in ("brake", "blink", "flash", "head", "on"):
+                if key in ob.keys(): rec.setdefault((ob, f'["{key}"]', 0), []).append((f, ob[key]))
+    for (ob, path, i), samples in rec.items():
+        if len({round(v, 6) for _, v in samples}) == 1 and path != "hide_render":
+            continue   # 움직이지 않는 값은 굽지 않는다
+        bake(ob, path, samples, index=i, interp="CONSTANT" if path == "hide_render" else "LINEAR")
+
+
 # ── 하늘 ─────────────────────────────────────────────────────────────
 def build_world():
     w = bpy.data.worlds.new("dusk"); S.world = w
@@ -1003,19 +1645,33 @@ def build_world():
     L.new(sc.outputs[0], ab)
     L.new(ao, bg.inputs["Color"])
     frames = sorted({*range(0, LAST + 1, 6), LAST})
-    elev = [(0, -.9), (252, -2.2), (342, -3.6), (420, -5.2), (480, -6.4), (LAST, -6.8)]
-    strength = [(0, 1.0), (252, 1.0), (420, 1.25), (LAST, 1.35)]
-    starsv = [(0, 0), (300, 0), (420, .6), (LAST, .9)]
+    elev = split([(0, -.9), (252, -2.2), (342, -3.6), (420, -5.2), (480, -6.4), (OLD_LAST, -6.8)], [(LAST, -6.8)])
+    strength = split([(0, 1.0), (252, 1.0), (420, 1.25), (OLD_LAST, 1.35)], [(LAST, 1.35)])
+    starsv = split([(0, 0), (300, 0), (420, .6), (OLD_LAST, .9)], [(LAST, .9)])
+    # 교차로에서는 가까운 창과 가로등이 밝으므로 노출을 조금 내린다.
+    expo = split([(0, .95), (168, 1.0), (252, 1.0), (342, 1.25), (420, 1.4), (480, 1.5), (OLD_LAST, 1.35)], [(ANCHORS[7], STREET_EXPOSURE), (LAST, 1.35)])
+    bake(w.node_tree, 'nodes["Sky"].sun_elevation', [(f, math.radians(elev(f))) for f in frames])
+    bake(w.node_tree, 'nodes["Background"].inputs[1].default_value', [(f, strength(f)) for f in frames])
+    bake(w.node_tree, 'nodes["Stars"].outputs[0].default_value', [(f, starsv(f)) for f in frames])
+    bake(S, "view_settings.exposure", [(f, expo(f)) for f in frames])
 
-    def piece(tbl, f):
+
+def piece(tbl, f):
+    for (f0, v0), (f1, v1) in zip(tbl, tbl[1:]):
+        if f0 <= f <= f1: return lerp(v0, v1, ease_io((f - f0) / (f1 - f0)))
+    return tbl[-1][1]
+
+
+def split(old, new):
+    """KEEP(480)까지는 예전 표 그대로, 그 뒤는 KEEP의 값에서 새 표로 잇는다. 값은 수 또는 튜플."""
+    def mix(tbl, f):
         for (f0, v0), (f1, v1) in zip(tbl, tbl[1:]):
-            if f0 <= f <= f1: return lerp(v0, v1, ease_io((f - f0) / (f1 - f0)))
+            if f0 <= f <= f1:
+                t = ease_io((f - f0) / (f1 - f0))
+                return tuple(lerp(a, b, t) for a, b in zip(v0, v1)) if isinstance(v0, tuple) else lerp(v0, v1, t)
         return tbl[-1][1]
-    bake(w.node_tree, 'nodes["Sky"].sun_elevation', [(f, math.radians(piece(elev, f))) for f in frames])
-    bake(w.node_tree, 'nodes["Background"].inputs[1].default_value', [(f, piece(strength, f)) for f in frames])
-    bake(w.node_tree, 'nodes["Stars"].outputs[0].default_value', [(f, piece(starsv, f)) for f in frames])
-    expo = [(0, .95), (168, 1.0), (252, 1.0), (342, 1.25), (420, 1.4), (480, 1.5), (LAST, 1.35)]
-    bake(S, "view_settings.exposure", [(f, piece(expo, f)) for f in frames])
+    tail = [(KEEP, mix(old, KEEP)), *new]
+    return lambda f: mix(old, f) if f <= KEEP else mix(tail, f)
 
 
 # ── 카메라 ───────────────────────────────────────────────────────────
@@ -1028,6 +1684,7 @@ SHOTS = [
     dict(eye=(150, 120, 190), at=(0, 560, 30), lens=27, shift=-.1, fstop=22),
     dict(eye=(-390, -130, 920), at=(-30, 615, 0), lens=27, shift=-.19, fstop=22),
     dict(eye=(-520, 120, 190), at=(-160, 700, 40), lens=26, shift=-.16, fstop=22),
+    STREET_SHOT,
     dict(eye=(-12, -40, 1.9), at=(1, 0, 7.5), lens=26, shift=-.14, fstop=11),
 ]
 # 전환 사이에 거쳐 가는 점(부드러운 궤적을 위해)
@@ -1035,7 +1692,8 @@ VIA = {
     3: [(40, -60, 40), (110, 20, 140)],
     4: [(-80, 40, 520)],
     5: [(-470, 0, 560)],
-    6: [(-300, 60, 80), (-90, -60, 12)],
+    6: STREET_IN,
+    7: STREET_OUT,
 }
 for k, v in (json.loads(A.shots) if A.shots else {}).items():
     SHOTS[int(k)].update(v)
@@ -1050,8 +1708,8 @@ def camera_curve():
         pts = [Vector(a["eye"]), *[Vector(v) for v in VIA.get(k, [])], Vector(b["eye"])]
         segs.append(pts)
 
-    def eye_at(k, s):
-        pts = segs[k]
+    def eye_at(k, s, pts=None):
+        pts = pts or segs[k]
         n = len(pts) - 1
         x = s * n; i = min(int(x), n - 1); t = x - i
         p0 = pts[i - 1] if i > 0 else pts[i] * 2 - pts[i + 1]
@@ -1066,7 +1724,10 @@ def camera_curve():
                 s = ease_io((f - f0) / (f1 - f0))
                 eye = eye_at(k, s)
                 a, b = SHOTS[k], SHOTS[k + 1]
-                look = Vector(a["at"]).lerp(Vector(b["at"]), s)
+                if k in LOOK_VIA:   # 시선도 거쳐 가는 점을 따라 돈다(교차로에서 집으로 물러날 때 계속 북쪽을 보도록)
+                    look = eye_at(k, s, [Vector(a["at"]), *[Vector(v) for v in LOOK_VIA[k]], Vector(b["at"])])
+                else:
+                    look = Vector(a["at"]).lerp(Vector(b["at"]), s)
                 lens = lerp(a["lens"], b["lens"], s)
                 shift = lerp(a["shift"], b["shift"], s)
                 fstop = math.exp(lerp(math.log(a["fstop"]), math.log(b["fstop"]), s))
@@ -1186,7 +1847,8 @@ def bake_parts():
 
 
 # ── 대기와 마감 ───────────────────────────────────────────────────────
-HAZE = [(0, (.075, .066, .085)), (252, (.05, .05, .07)), (342, (.03, .036, .058)), (420, (.018, .025, .046)), (LAST, (.014, .02, .04))]
+HAZE = split([(0, (.075, .066, .085)), (252, (.05, .05, .07)), (342, (.03, .036, .058)), (420, (.018, .025, .046)), (OLD_LAST, (.014, .02, .04))],
+             [(LAST, (.014, .02, .04))])
 
 
 def add_haze():
@@ -1197,7 +1859,7 @@ def add_haze():
     N, L = g.nodes, g.links
     gi, go = N.new("NodeGroupInput"), N.new("NodeGroupOutput")
     cam = N.new("ShaderNodeCameraData")
-    k = N.new("ShaderNodeMath"); k.operation = "MULTIPLY"; k.inputs[1].default_value = -1 / 1500
+    k = N.new("ShaderNodeMath"); k.operation = "MULTIPLY"; k.inputs[1].default_value = -1 / 1500; k.name = "HazeK"
     L.new(cam.outputs["View Distance"], k.inputs[0])
     e = N.new("ShaderNodeMath"); e.operation = "EXPONENT"; L.new(k.outputs[0], e.inputs[0])
     inv = N.new("ShaderNodeMath"); inv.operation = "SUBTRACT"; inv.inputs[0].default_value = 1.0; L.new(e.outputs[0], inv.inputs[1])
@@ -1208,14 +1870,12 @@ def add_haze():
     L.new(fac.outputs[0], mx.inputs[0]); L.new(gi.outputs[0], mx.inputs[1]); L.new(em.outputs[0], mx.inputs[2])
     L.new(mx.outputs[0], go.inputs[0])
     frames = sorted({*range(0, LAST + 1, 6), LAST})
-
-    def at(f):
-        for (f0, c0), (f1, c1) in zip(HAZE, HAZE[1:]):
-            if f0 <= f <= f1:
-                t = ease_io((f - f0) / (f1 - f0)); return [lerp(a, b, t) for a, b in zip(c0, c1)] + [1.0]
-        return list(HAZE[-1][1]) + [1.0]
+    at = lambda f: [*HAZE(f), 1.0]
     for i in range(4):
         bake(g, 'nodes["Haze"].outputs[0].default_value', [(f, at(f)[i]) for f in frames], index=i)
+    # 교차로에서는 거리가 수십 미터라 안개를 짙게 해 먼 건물을 밤빛에 묻는다.
+    dense = split([(0, 1.0), (OLD_LAST, 1.0)], [(ANCHORS[7] - 20, STREET_HAZE), (ANCHORS[7], STREET_HAZE), (STREET_OFF - 20, 1.0), (LAST, 1.0)])
+    bake(g, 'nodes["HazeK"].inputs[1].default_value', [(f, -dense(f) / 1500) for f in frames])
     for m in list(bpy.data.materials):
         if not m.node_tree: continue
         out = next((n for n in m.node_tree.nodes if n.type == "OUTPUT_MATERIAL"), None)
@@ -1241,6 +1901,12 @@ def add_bloom():
         except Exception as e: print("GLARE", key, e)
     out = N.new("NodeGroupOutput")
     L.new(rl.outputs["Image"], gl.inputs["Image"]); L.new(gl.outputs["Image"], out.inputs[0])
+    # 교차로에서는 가까운 창이 많아 번짐이 화면 전체를 회색으로 덮는다. 480 뒤에만 줄인다.
+    gl.name = "Glare"
+    idx = next((i for i, x in enumerate(gl.inputs) if x.name == "Strength"), None)
+    if idx is not None:
+        k = split([(0, .42), (OLD_LAST, .42)], [(ANCHORS[7] - 20, STREET_BLOOM), (ANCHORS[7], STREET_BLOOM), (STREET_OFF - 10, .42), (LAST, .42)])
+        bake(ng, f'nodes["Glare"].inputs[{idx}].default_value', [(f, k(f)) for f in sorted({*range(0, LAST + 1, 6), LAST})])
     S.compositing_node_group = ng
     S.render.use_compositing = True
 
@@ -1265,6 +1931,13 @@ def export_track():
         if p.z > 0 and .03 < p.x < .97 and .06 < p.y < .9:
             pts.append([round(p.x * W, 1), round((1 - p.y) * H, 1), round(p.z, 1)])
     out["pulses"] = pts
+    # 7단계 반복 영상 안의 판단: 몇 번째 프레임에, 화면 어디서(카드가 가리킬 자리)
+    S.frame_set(STREET)
+    dec = {}
+    for k, d in DECISIONS.items():
+        p = world_to_camera_view(S, cam, Vector(d["at"]))
+        dec[k] = {"t": d["t"], "x": round(p.x * W, 1), "y": round((1 - p.y) * H, 1)}
+    out["street"] = {"loop": LOOP, "fps": FPS, "decisions": dec}
     TRACK.parent.mkdir(parents=True, exist_ok=True)
     TRACK.write_text(json.dumps(out, separators=(",", ":")))
     print("TRACK", len(pts), "pulse points")
@@ -1277,9 +1950,12 @@ build_house()
 build_landscape()
 build_blueprint()
 build_city()
+build_street()
 SHAKE[:] = [(p.frames[1] - 3, .035) for p in PARTS if p.land == "heavy"]
 build_camera()
 bake_parts()
+if A.mode != "loop":
+    bake_agents()
 add_haze()
 add_bloom()
 print(f"BUILD {time.time() - t0:.1f}s objects={len(bpy.data.objects)}")
@@ -1328,7 +2004,7 @@ def verify_holds():
             if g < 0 or g > LAST: continue
             S.frame_set(g)
             for o in obs:
-                if o.hide_render: continue
+                if o.hide_render or o.name.startswith("street · "): continue   # 교차로의 차와 로봇은 반복 영상이 맡는다
                 mats.setdefault(o.name, {})[g] = o.matrix_world.copy()
         for name, m in mats.items():
             ks = sorted(m)
@@ -1357,10 +2033,29 @@ def layout_report():
         print("LAYOUT", k, f, " | ".join(out))
 
 
+def path_report():
+    """교차로로 내려갔다 집으로 돌아오는 동안 카메라가 건물이나 나무에 너무 가까이 가는지."""
+    boxes = [(o.name, o.location.x - o.scale.x / 2, o.location.x + o.scale.x / 2, o.location.y - o.scale.y / 2, o.location.y + o.scale.y / 2, o.scale.z)
+             for o in S.objects if o.name.startswith("bldg")]
+    trees = [(o.location.x, o.location.y, 12 * o.scale.z) for o in S.objects if o.name.startswith(("park tree", "garden tree"))]
+    worst = []
+    for f in range(KEEP, LAST + 1):
+        S.frame_set(f)
+        e = S.camera.matrix_world.translation
+        for name, x0, x1, y0, y1, h in boxes:
+            d = math.hypot(max(x0 - e.x, 0, e.x - x1), max(y0 - e.y, 0, e.y - y1))
+            if e.z < h + 3 and d < 3: worst.append((f, name, round(d, 2), round(e.z, 1)))
+        for x, y, h in trees:
+            if e.z < h + 2 and math.hypot(e.x - x, e.y - y) < 4: worst.append((f, "tree", round(math.hypot(e.x - x, e.y - y), 2), round(e.z, 1)))
+    for row in worst[:30]: print("NEAR", *row)
+    print("PATH", "ok" if not worst else f"{len(worst)} close calls")
+
+
 if A.mode == "verify":
     verify_holds()
 if A.mode == "layout":
     layout_report()
+    path_report()
 
 if A.save:
     WORK.mkdir(parents=True, exist_ok=True)
@@ -1375,6 +2070,23 @@ if A.mode == "still":
         t = time.time()
         bpy.ops.render.render(write_still=True)
         print(f"STILL {f} {time.time() - t:.1f}s")
+elif A.mode == "loop":
+    # 교차로 정지 지점의 반복 영상. 카메라와 도시는 STREET 프레임에 두고 차와 로봇만 t = 0..LOOP-1로 옮긴다.
+    target = Path(A.out) if A.out else WORK / "loop"
+    target.mkdir(parents=True, exist_ok=True)
+    S.frame_set(STREET)
+    ks = range(LOOP)
+    if A.frames:
+        a, b = [int(x) for x in A.frames.split("-")]
+        ks = range(a, b + 1)
+    for k in ks:
+        out = target / f"f{k:04d}.png"
+        if out.exists(): continue
+        apply_agents(k)
+        S.render.filepath = str(out)
+        t = time.time()
+        bpy.ops.render.render(write_still=True)
+        print(f"LOOP {k} {time.time() - t:.1f}s")
 elif A.mode == "final":
     frames_dir = WORK / "frames"; frames_dir.mkdir(parents=True, exist_ok=True)
     S.render.filepath = str(frames_dir / "f")

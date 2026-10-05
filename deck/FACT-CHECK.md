@@ -20,11 +20,13 @@
 | GitHub 이슈 해결률 | SWE-bench Verified는 사람이 검증한 실제 GitHub 이슈 500개. GPT-4o 33.2%(OpenAI 2024.08.13, 최적 스캐폴드), Claude Opus 4.5 80.9%(Anthropic 2025.11.24). 시점과 스캐폴드가 다른 최고 점수의 비교이며 같은 조건의 실험이 아님. 화면은 반올림한 33%, 81%. | [OpenAI](https://openai.com/index/introducing-swe-bench-verified/), [Anthropic](https://www.anthropic.com/news/claude-opus-4-5) |
 | 개발자 3조 달러 | a16z 추정: 개발자 약 3천만 명 × 1인당 연 10만 달러의 경제적 가치. 임금 총액이나 소프트웨어 매출이 아님. 기획 단계의 "1조"를 이 수치로 교정. | [a16z · 2025.10.09](https://a16z.com/the-trillion-dollar-ai-software-development-stack/) |
 | 지식근로 18.6조 달러 | BofA Global Research: 영업·마케팅·고객지원·재무·인사·IT·운영 7개 직군의 전 세계 연간 임금. 건축·3D 같은 전문 직군은 빠져 있어 "+"로 표시. a16z와 기준(가치와 임금)이 달라 정확한 배수로 말하지 않음. IT 직군과 개발자는 일부 겹침. | [Fortune · 2025.06.26](https://fortune.com/2025/06/26/agentic-ai-spending-155-billion-by-2030-cfo-bofa-analysts) |
-| Jev | TypeSafe AI가 2026.09.15 공개. 구조화된 판단 값, 개발사 제시 응답 시간 70–500ms, 출력 토큰 무료·입력 100만 토큰당 0.042달러(개발사 가격). 공식 시연은 Doom과 Wikiracing. "환각 0%", "40~200배 빠름" 같은 개발사 주장은 화면에 쓰지 않음. 속도 보장이나 투자 수익으로 확대하지 않음. | [개발사 발표](https://typesafe.ai/blog/introducing-system-one-models-and-jev) |
+| Jev | TypeSafe AI가 2026.09.15 공개. 구조화된 판단 값, 개발사 제시 응답 시간 70–500ms, 출력 토큰 무료·입력 100만 토큰당 0.042달러(개발사 가격). 공식 시연은 Doom과 Wikiracing. 비공개 모델이고 입력은 텍스트·JSON. 2026.10.05부터 응답 시간과 가격은 화면에 쓰지 않음(초기 수치라 곧 바뀜, 대본 출처에만). "환각 0%", "40~200배 빠름" 같은 개발사 주장도 쓰지 않음. | [개발사 발표](https://typesafe.ai/blog/introducing-system-one-models-and-jev) |
+| 판단 모델의 확산 (15번 6단계) | 화면: 9.15 TypeSafe AI·Jev → 9.29 OpenAI·Decisions API → 10.1 Cloudflare·Clef(오픈웨이트), "보름 남짓"(9.15~10.1, 16일). OpenAI: DevDay 2026.09.29 발표, GPT-6 Luna를 미리 정한 선택지 중 하나를 고르게 맞춘 API, 텍스트·이미지 입력, 제한 프리뷰. openai.com 원문은 자동 접근이 막혀(403) The New Stack(2026.09.29)·OpenAI Developers X 게시물·디지털투데이로 확인했고, 보도된 "약 150ms"는 화면에 쓰지 않음. Cloudflare: 2026.10.01, Clef 27B·Clef-flash 9B, Apache 2.0 가중치를 Hugging Face에 공개, 이미지 입력(Jev는 텍스트만), Jev API 호환, 블로그에 "decision models 시장이 포화되고 있다"는 문장. Cloudflare가 잰 지연 시간 비교는 자사 측정이라 화면에 쓰지 않음. "판단까지 싸지기 시작했다"는 발표자의 요약. | [OpenAI DevDay 2026](https://openai.com/index/devday-2026-recap/), [The New Stack](https://thenewstack.io/openai-decision-api-luna/), [Cloudflare](https://blog.cloudflare.com/clef-decision-models/) |
+| 교차로 (15번 7단계) | "판단이 싸지면 화면 밖으로 나간다", "피지컬 AI도 빨라진다"는 발표자의 관점(화면 출처 줄에 표시). 세 발표 어디에도 자율주행이나 로봇 사례는 없음. 자율주행차·사족 로봇·판단 카드의 선택지("오른쪽으로 갈까?", "계단을 오를까?")와 빛은 Blender로 만든 도식이며, 지금의 차나 로봇이 이런 모델로 움직인다고 말하지 않음(대본에 명시). | 발표자의 관점 |
 
 가격 인하가 광고보다 유리해질 가능성과 실시간 주식 트레이딩은 발표자의 미래 응용 가설이다.
 15번에서 문제 풀이 능력이 건축 설계·3D 모션 그래픽 같은 전문가의 일로 넘어온다는 문장은 발표자의 관점이다.
-15번의 집과 도시는 Blender로 렌더한 설명용 장면이다. 도시의 금색 구역은 80블록 중 13블록(16%)으로 3 ÷ 18.6에 맞췄고, 직군별 구역의 크기는 데이터가 아니다. 빛 한 줄기의 이동 시간은 Jev가 발표한 응답 시간 범위에서 고른 도식이며 실제 호출이 아니다.
+15번의 집과 도시, 7단계의 교차로는 Blender로 렌더한 설명용 장면이다. 도시의 금색 구역은 80블록 중 13블록(16%)으로 3 ÷ 18.6에 맞췄고, 직군별 구역의 크기는 데이터가 아니다. 빛 한 줄기의 이동 시간은 Jev가 발표한 응답 시간 범위에서 고른 도식이며 실제 호출이 아니다.
 AGI 도달 여부를 위 사례만으로 판정하지 않는다. 사건 그림의 방·메모·통로는 실제 로그 화면이 아니라 설명용 비유다.
 고양이는 기존 발표에 있던 사진이며 특정 역사적 논문의 시험 자료라고 주장하지 않는다.
 

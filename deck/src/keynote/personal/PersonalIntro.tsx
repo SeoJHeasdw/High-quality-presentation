@@ -26,7 +26,7 @@ export default function PersonalIntro({ part = 0, step = 0 }: { part?: 0 | 1; st
   const beat = part === 0 ? -1 : Math.min(2, step);
   const head = beat >= 0 ? HEAD[beat] : null;
   return <Frame n={13 + part} name={part === 0 ? "서제호의 30년" : "과도기"} step={step} className={`personal-v2 p13 p13--${part}`}>
-    <div className="p13-bg" aria-hidden="true"><img src="/house-scroll/a7.jpg" alt=""/></div>
+    <div className="p13-bg" aria-hidden="true"><img src="/house-scroll/a8.jpg" alt=""/></div>
     <div className="p13-shade" aria-hidden="true"/>
     <div className="tr-shade" data-on={part === 1 || undefined} data-beat={beat} aria-hidden="true"/>
     <div className="p13-copy-fade" data-off={part === 1 || undefined} aria-hidden={part === 1 || undefined}>

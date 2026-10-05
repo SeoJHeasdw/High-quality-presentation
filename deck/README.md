@@ -177,7 +177,7 @@ M 또는 모션 줄이기 설정에서는 정지 지점 이미지만 보여주�
 - 공간들의 공통 렌더 틀(bloom·MSAA·단계 시계·샷 맞춤·투명 배경): `src/keynote/stage3d/runtime.ts`
 - 9~14번 연결 장면과 사건 재구성 공간: `src/keynote/incident/world.ts`(장면·카메라 샷), `IncidentWorld.tsx`(라벨), `incident.css`
 - 15번 스크롤 페이지: `src/keynote/next-market/NextMarket.tsx`(글·스크롤·단계 동기화), `film.ts`(영상 좌표와 스크럽), `pulses.ts`(판단의 빛), `next-market.css`
-- 15번 영상: `tools/render-house-scroll.py`(Blender 장면·카메라·라벨 좌표, `--mode layout`으로 글 단과 겹치는지 확인), `tools/encode-house-scroll.sh`(MP4와 정지 지점 이미지), 결과는 `public/house-scroll/`
+- 15번 영상: `tools/render-house-scroll.py`(Blender 장면·카메라·라벨 좌표, `--mode layout`으로 글 단과 겹치는지·카메라가 건물에 닿는지 확인, `--mode loop`으로 7단계 교차로의 8초 반복 영상), `tools/encode-house-scroll.sh`(MP4, 정지 지점 이미지 a0~a8, `street-loop.mp4`), 결과는 `public/house-scroll/`
 - 4~6·10~12번 리뷰 반영: `opening-revision.css`, `story-revision.css`
 - 실제 미디어 재생: `src/keynote/DemoPlayer.tsx`
 - 공통 프레임과 번호: `src/keynote/KeynoteFrame.tsx`(쪽번호는 순서에서 자동 계산)
@@ -186,7 +186,7 @@ M 또는 모션 줄이기 설정에서는 정지 지점 이미지만 보여주�
 - 악용 사례 구간: `src/keynote/AbuseSlides.tsx`(순서), `src/keynote/abuse/`(31 OwnVoice, 34·37 AbuseScenes, 35·36·38 PhoneStories·NightPhone, `abuse-v2.css`, `night-phone.css`), `abuse-slides.css`, `public/abuse/`
 - 한밤중 휴대전화 렌더: `tools/render-night-phone.py`(`--mode final`은 2880×1620과 화면 네 모서리 JSON)
 - 마무리 구간 43~46번: `src/keynote/finale/Finale.tsx`(네 장의 글·기록), `Blueprint3D.tsx`·`blueprint.ts`(45번 3D 설계도와 RICE 영상), `finale.css`, 46번의 선택지 `src/keynote/ClosingChoices.tsx`
-- 새벽·아침 배경: `blender --background --python tools/render-house-scroll.py -- --mode still --frames 570 --time blue|sunrise --scale 100 --samples 160 --out render/house-dawn`, 결과는 `public/house-dawn/`
+- 새벽·아침 배경: `blender --background --python tools/render-house-scroll.py -- --mode still --frames 670 --time blue|sunrise --scale 100 --samples 160 --out render/house-dawn`, 결과는 `public/house-dawn/`
 - 대본: `script/keynote/manifesto.md`, `stories.md`, `abuse.md`
 
 ## 검사
