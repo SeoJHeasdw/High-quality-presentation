@@ -6,6 +6,7 @@
  *   npm run mv:render -- --size 720 --crf 23        # 가벼운 확인용
  *   npm run mv:render -- --from 79 --to 100         # 일부만
  *   npm run mv:render -- --still 5,30,90            # 그 시각의 PNG만 render/mv/stills/
+ *   npm run mv:render -- --to 16.5 --fade --out render/mv/look.mp4   # 유화 스타일 시험(기본). 첫 시안은 --look lines
  *
  * 필요한 것: playwright(devDependencies)의 Chromium 또는 설치된 Chrome(CHROME_PATH), ffmpeg.
  */
@@ -30,6 +31,8 @@ const CRF = arg("crf", "20");
 const OUT = path.resolve(ROOT, arg("out", "render/mv/hiphop-mv.mp4"));
 const WAV = path.join(ROOT, "public/demos/emotional-hiphop-draft.wav");
 const STILLS = arg("still", "");
+const LOOK = arg("look", "");
+const FADE = process.argv.includes("--fade");
 
 function run(cmd, args, input) {
   return new Promise((ok, fail) => {
@@ -50,7 +53,7 @@ async function launch() {
 async function openPage(browser, url) {
   const page = await browser.newPage({ viewport: { width: 1920, height: 1080 } });
   page.on("pageerror", (e) => console.error("페이지 오류:", e.message));
-  await page.goto(`${url}/?render`);
+  await page.goto(`${url}/?render${LOOK ? `&look=${LOOK}` : ""}`);
   return { page, info: await page.evaluate(() => window.__mv.ready) };
 }
 
@@ -106,7 +109,10 @@ try {
     fs.writeFileSync(list, segs.filter(Boolean).map((s) => `file '${s}'`).join("\n"));
     await run("ffmpeg", ["-y", "-loglevel", "error", "-f", "concat", "-safe", "0", "-i", list,
       "-ss", String(from), "-t", String(to - from), "-i", WAV,
-      "-map", "0:v", "-map", "1:a", "-c:v", "copy", "-c:a", "aac", "-b:a", "192k", "-shortest", "-movflags", "+faststart", OUT]);
+      "-map", "0:v", "-map", "1:a",
+      // 일부만 뽑을 때 --fade면 끝 0.8초를 검정·무음으로 닫는다(다시 인코딩)
+      ...(FADE ? ["-vf", `fade=out:st=${(to - from - .8).toFixed(3)}:d=0.8`, "-af", `afade=out:st=${(to - from - .8).toFixed(3)}:d=0.8`, "-c:v", "libx264", "-crf", CRF, "-pix_fmt", "yuv420p"] : ["-c:v", "copy"]),
+      "-c:a", "aac", "-b:a", "192k", "-shortest", "-movflags", "+faststart", OUT]);
     fs.rmSync(tmp, { recursive: true, force: true });
     const mb = (fs.statSync(OUT).size / 1e6).toFixed(1);
     console.log(`${path.relative(ROOT, OUT)}  ${total}프레임 · ${mb}MB · ${Math.round((Date.now() - started) / 1000)}초`);

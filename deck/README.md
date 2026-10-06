@@ -151,6 +151,10 @@ M 또는 모션 줄이기 설정에서는 정지 지점 이미지만 보여주�
 
 `감성 힙합 초안` 3분에 맞춘 모션그래픽 뮤직비디오 시안이다. Blender 없이 브라우저 캔버스로 그리고, 아직 장표에는 넣지 않았다.
 
+지금 기본은 **유화 스타일 시험**(`src/mv/paint/`, 곡의 앞 16초)이다. 레퍼런스는 손그림 캐릭터의 연기와 남보라 밤·금빛 색감이다.
+깨끗하게 그린 장면을 붓질 패스(`painter.ts`)가 다시 칠하고, 움직임은 초당 15장으로 끊는다. 후드 쓴 아이(`hoodie.ts`)는 몸은 칠하고 눈은 붓질 뒤에 얹는다.
+`npm run mv:render -- --to 16.5 --fade --out render/mv/look-paint.mp4`로 뽑는다. 첫 시안(선·도형)은 `?look=lines`, `--look lines`.
+
 ```bash
 npm run mv            # http://localhost:5185  Space 재생 · ←/→ 5초 · ↑/↓ 구간 · H HUD · D 편집표
 npm run mv:render     # render/mv/hiphop-mv.mp4 (1080p, 원곡 WAV 포함)
