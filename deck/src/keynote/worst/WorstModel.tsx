@@ -7,7 +7,7 @@ import "./worst.css";
 
 /*
  * 30번 · 실제 결과물 세 편(27~29) 바로 뒤. "AI로 할 바엔 사람이 낫지 않나요?"를 먼저 인정하고,
- * 2~3번의 고양이를 다시 불러 "지금 쓰는 모델이 앞으로 쓸 모델 중 가장 구린 모델"로 회수한다.
+ * 2~3번의 고양이를 다시 불러 "지금 쓰는 모델이 앞으로 쓸 모델 중 가장 멍청한 모델"로 회수한다.
  * 3D는 worst/world.ts(2~3번과 같은 입자 문법), 글·눈금 라벨·근거는 여기의 DOM이 맡는다. 좌표는 world.ts의 LAYOUT과 같다.
  */
 export default function WorstModelStory({ step }: { step: number }) {
@@ -41,7 +41,7 @@ export default function WorstModelStory({ step }: { step: number }) {
   useEffect(() => { world.current?.setPhase(step); }, [step]);
   useEffect(() => { world.current?.setMotion(motion); }, [motion]);
 
-  return <Frame n={29} name="가장 구린 모델" step={step} className="personal-v2 worst">
+  return <Frame n={29} name="가장 멍청한 모델" step={step} className="personal-v2 worst">
     <div className="wm" data-step={step} data-fallback={failed || undefined} aria-hidden="true">
       <canvas ref={canvasRef} className="wm-canvas" width={1920} height={1080}/>
       <div className="wm-shade"/>
@@ -56,7 +56,7 @@ export default function WorstModelStory({ step }: { step: number }) {
     {step >= 1 && <div className="wm-heading" key={`h${step}`} data-step={step} data-back={dir.current.back || undefined}>
       {step === 1 ? <>
         <p className="pv-eyebrow">이 업계에서 자주 하는 말</p>
-        <h1>지금 쓰는 모델이,<br/>앞으로 쓸 모델 중 가장 구린 모델입니다</h1>
+        <h1>지금 쓰는 모델이,<br/>앞으로 쓸 모델 중 가장 멍청한 모델입니다</h1>
         <p className="wm-source">“The AI models that you're using today is the worst AI model you will ever use for the rest of your life.” · 케빈 웨일, 당시 OpenAI 최고제품책임자 · Lenny's Podcast, 2025.04</p>
       </> : <>
         <p className="pv-eyebrow">그래서</p>
