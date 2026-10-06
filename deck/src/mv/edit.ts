@@ -32,6 +32,8 @@ export function buildEdit(song: Song): Shot[] {
   const { sections, downbeats } = song.a;
   const shots: Shot[] = [];
   const bar = song.beatLength * 4;
+  // 구도 번호는 장면마다 따로 센다. 같은 장면이 이어져도 컷마다 구도가 바뀐다
+  const used: Record<SceneId, number> = { record: 0, city: 0, ridge: 0, tunnel: 0, type: 0 };
 
   sections.forEach((sec, si) => {
     const prev = sections[si - 1];
@@ -62,7 +64,7 @@ export function buildEdit(song: Song): Shot[] {
         const jump = prev ? sec.energy - prev.energy : 0;
         enter = k === 0 && jump > .35 ? "flash" : "fade";
       }
-      shots.push({ start, end, scene, variant: Math.floor(k / pool.length) + si, section: si, enter });
+      shots.push({ start, end, scene, variant: used[scene]++, section: si, enter });
     });
   });
   // 마지막 컷은 곡 끝까지
