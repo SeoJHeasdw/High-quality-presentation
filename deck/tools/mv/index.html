@@ -43,7 +43,7 @@
     const canvas = document.getElementById("mv");
     const hud = params.get("hud") !== "0";
     // 기본은 유화 뮤비 본편. 첫 시안(선·도형)은 ?look=lines
-    const make = (h) => params.get("look") === "lines" ? createMusicVideo(canvas, song, { lyrics, hud: h }) : createPaintedFilm(canvas, song);
+    const make = (h) => params.get("look") === "lines" ? createMusicVideo(canvas, song, { lyrics, hud: h }) : createPaintedFilm(canvas, song, { ending: params.get("ending") === "tel" ? "tel" : undefined });
     return {
       song, canvas, hud,
       mv: make(hud),

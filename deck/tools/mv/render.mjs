@@ -6,7 +6,8 @@
  *   npm run mv:render -- --size 720 --crf 23        # 가벼운 확인용
  *   npm run mv:render -- --from 79 --to 100         # 일부만
  *   npm run mv:render -- --still 5,30,90            # 그 시각의 PNG만 render/mv/stills/
- *   npm run mv:render -- --to 16.5 --fade --out render/mv/look.mp4   # 유화 스타일 시험(기본). 첫 시안은 --look lines
+ *   npm run mv:render -- --ending tel --out render/mv/hiphop-mv-tel.mp4   # 팀 시연용: 끝에 나방이 Technology Expert Lab을 만든다
+ *   첫 시안(선·도형)은 --look lines
  *
  * 필요한 것: playwright(devDependencies)의 Chromium 또는 설치된 Chrome(CHROME_PATH), ffmpeg.
  */
@@ -32,6 +33,7 @@ const OUT = path.resolve(ROOT, arg("out", "render/mv/hiphop-mv.mp4"));
 const WAV = path.join(ROOT, "public/demos/emotional-hiphop-draft.wav");
 const STILLS = arg("still", "");
 const LOOK = arg("look", "");
+const ENDING = arg("ending", "");
 const FADE = process.argv.includes("--fade");
 
 function run(cmd, args, input) {
@@ -53,7 +55,7 @@ async function launch() {
 async function openPage(browser, url) {
   const page = await browser.newPage({ viewport: { width: 1920, height: 1080 } });
   page.on("pageerror", (e) => console.error("페이지 오류:", e.message));
-  await page.goto(`${url}/?render${LOOK ? `&look=${LOOK}` : ""}`);
+  await page.goto(`${url}/?render${LOOK ? `&look=${LOOK}` : ""}${ENDING ? `&ending=${ENDING}` : ""}`);
   return { page, info: await page.evaluate(() => window.__mv.ready) };
 }
 

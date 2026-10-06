@@ -57,7 +57,12 @@ function bez(a: { x: number; y: number }, b: { x: number; y: number }, ctl: { x:
   return { x: u * u * a.x + 2 * u * v * ctl.x + v * v * b.x, y: u * u * a.y + 2 * u * v * ctl.y + v * v * b.y };
 }
 
-export function createPaintedFilm(canvas: HTMLCanvasElement, song: Song) {
+export type FilmOptions = {
+  /** "tel": 팀 시연용. 끝에 나방이 모여 Technology Expert Lab을 만든다(기본은 글자 없음) */
+  ending?: "tel";
+};
+
+export function createPaintedFilm(canvas: HTMLCanvasElement, song: Song, opts: FilmOptions = {}) {
   canvas.width = W;
   canvas.height = H;
   const g = canvas.getContext("2d")!;
@@ -1137,6 +1142,82 @@ export function createPaintedFilm(canvas: HTMLCanvasElement, song: Song) {
     },
   });
 
+
+  // 팀 시연용 엔딩(옵션): 새벽하늘 아래 지붕의 아이. 품과 도시 창에서 나방이 날아올라 글자를 이룬다
+  if (opts.ending === "tel") {
+    const TEXT = "Technology Expert Lab";
+    const TY = 400;
+    // 글자 모양을 한 번 그려서 나방이 앉을 자리를 뽑는다(엇갈린 격자)
+    const targets: { x: number; y: number }[] = [];
+    const halo = document.createElement("canvas");
+    halo.width = W; halo.height = H;
+    {
+      const m = document.createElement("canvas");
+      m.width = W; m.height = 300;
+      const mg = m.getContext("2d", { willReadFrequently: true })!;
+      mg.font = '700 128px "Pretendard Variable", Pretendard, sans-serif';
+      mg.textAlign = "center";
+      mg.textBaseline = "middle";
+      mg.fillStyle = "#fff";
+      mg.fillText(TEXT, W / 2, 150);
+      const d = mg.getImageData(0, 0, W, 300).data;
+      // 나방 하나하나가 보이는 간격(촘촘하면 흰 글씨처럼 뭉친다)
+      const step = 10.5;
+      for (let y = 0, row = 0; y < 300; y += step, row++) for (let x = row % 2 ? step / 2 : 0; x < W; x += step) {
+        if (d[((y | 0) * W + (x | 0)) * 4 + 3] > 140) targets.push({ x, y: y - 150 + TY });
+      }
+      targets.sort((a, b) => hash(a.x | 0, a.y | 0) - hash(b.x | 0, b.y | 0));
+      const hg = halo.getContext("2d")!;
+      hg.filter = "blur(14px)";
+      hg.drawImage(m, 0, TY - 150);
+    }
+    const KID = { x: 430, y: 1010 };
+    add("tel-end", snap(172.85), 24, "cut", {
+      draw(c, f) {
+        const sky = c.createLinearGradient(0, -100, 0, 1000);
+        sky.addColorStop(0, "#232458");
+        sky.addColorStop(.55, "#6c4f86");
+        sky.addColorStop(1, "#d9976c");
+        c.fillStyle = sky;
+        c.fillRect(-200, -200, W + 400, 1300);
+        starfield(c, k, 380, f.tq, .6);
+        cloudBands(c, f.tq, 97, 5, 120, 90, "rgba(226,160,176,.32)", .5);
+        for (let n = 0; n < 2; n++) farCity(c, n * W * .55, 1000 - HORIZON * .55, .55, .2);
+        c.fillStyle = "#080a22";
+        c.fillRect(-200, 1000, W + 400, 200);
+        c.fillStyle = "#2a2e6c";
+        c.fillRect(-200, 1000, W + 400, 6);
+        const pose: Pose = { x: KID.x, y: KID.y, s: 220, back: true, rim: RIM, squash: .01 * Math.sin(f.lt * 1.3) };
+        drawHoodie(c, pose);
+        return { cam: CAM0, kids: [pose], mask: [pose] };
+      },
+      glow(c, f) {
+        for (let n = 0; n < 2; n++) farCityGlow(c, n * W * .55, 1000 - HORIZON * .55, .55, .2);
+        const lt = f.lt;
+        const formed = smooth(2.2, 3, lt);
+        lighter(c, () => {
+          // 아이 품의 빛
+          c.globalAlpha = .6;
+          c.drawImage(k.glowGold, KID.x - 120, KID.y - 210, 240, 240);
+          c.globalAlpha = .2 * formed * (.85 + .15 * f.beat);
+          c.drawImage(halo, 0, 0);
+          c.globalAlpha = 1;
+          targets.forEach((p, i) => {
+            const fromKid = i % 2 === 0;
+            const sx = fromKid ? KID.x + (hash(i, 991) - .5) * 60 : hash(i, 992) * W;
+            const sy = fromKid ? KID.y - 110 : 700 + hash(i, 993) * 260;
+            const q = easeIO(clamp((lt - .3 - hash(i, 994) * 1.2) / 1.2));
+            if (q <= 0) return;
+            const cx = (sx + p.x) / 2 + (hash(i, 995) - .5) * 500, cy = Math.min(sy, p.y) - 200 - hash(i, 996) * 200;
+            const at = bez({ x: sx, y: sy }, p, { x: cx, y: cy }, q);
+            const jit = q >= 1 ? Math.sin(f.tq * 2 + i) * 1.2 : 0;
+            moth(c, k, at.x + jit, at.y + jit * .6, 6.5, q >= 1 ? f.tq * .35 : f.tq, i, .72);
+          });
+        });
+      },
+    });
+  }
+
   /* ── 컷 정리와 한 프레임 ──────────────────────────── */
 
   shots.sort((a, b) => a.start - b.start);
@@ -1198,7 +1279,8 @@ export function createPaintedFilm(canvas: HTMLCanvasElement, song: Song) {
     if (shot.enter === "dip" && f.lt < .45) black = 1 - f.lt / .45;
     const next = shots[i + 1];
     if (next && next.enter === "dip" && shot.end - t < .35) black = Math.max(black, 1 - (shot.end - t) / .35);
-    black = Math.max(black, 1 - smooth(0, 1.2, t), smooth(song.duration - 2.2, song.duration - .4, t));
+    const fadeFrom = opts.ending === "tel" ? song.duration - 1.3 : song.duration - 2.2;
+    black = Math.max(black, 1 - smooth(0, 1.2, t), smooth(fadeFrom, song.duration - .1, t));
 
     g.save();
     g.globalCompositeOperation = "overlay";
