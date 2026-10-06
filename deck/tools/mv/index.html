@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>감성 힙합 초안 · 뮤비 시안</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #000; color: #d9dee2; overflow: hidden;
+    font-family: "Pretendard Variable", Pretendard, -apple-system, system-ui, sans-serif; }
+  canvas { position: absolute; inset: 0; margin: auto; max-width: 100vw; max-height: 100vh;
+    width: 100vw; height: calc(100vw * 9 / 16); }
+  @media (min-aspect-ratio: 16/9) { canvas { width: calc(100vh * 16 / 9); height: 100vh; } }
+  body.render canvas { width: 1920px; height: 1080px; max-width: none; max-height: none; inset: 0 auto auto 0; margin: 0; }
+  #hint { position: fixed; left: 50%; bottom: 28px; transform: translateX(-50%); font-size: 15px; color: #7b95a9;
+    background: rgba(5,7,12,.7); padding: 8px 14px; border-radius: 4px; transition: opacity .4s; white-space: nowrap; }
+  #debug { position: fixed; left: 12px; top: 10px; font: 12px ui-monospace, monospace; color: #9cb1c1; display: none; }
+  body.debug #debug { display: block; }
+</style>
+</head>
+<body>
+<canvas id="mv"></canvas>
+<div id="hint">클릭 또는 Space 재생 · ←/→ 5초 · ↑/↓ 구간 · H HUD · D 편집표</div>
+<pre id="debug"></pre>
+<audio id="audio" src="/demos/emotional-hiphop-draft.wav" preload="none"></audio>
+<script type="module">
+  import { createMusicVideo, Song } from "/src/mv/mv.ts";
+
+  const params = new URLSearchParams(location.search);
+  const renderMode = params.has("render");
+  if (renderMode) document.body.classList.add("render");
+
+  async function boot() {
+    const font = new FontFace("Pretendard Variable", "url(/fonts/PretendardVariable.woff2)", { weight: "45 920" });
+    document.fonts.add(await font.load());
+    const analysis = await (await fetch("/mv/hiphop-analysis.json")).json();
+    let lyrics = [];
+    try {
+      const r = await fetch("/mv/hiphop-lyrics.json");
+      if (r.ok) lyrics = await r.json();
+    } catch {}
+    const song = new Song(analysis);
+    const canvas = document.getElementById("mv");
+    const hud = params.get("hud") !== "0";
+    return {
+      song, canvas, hud,
+      mv: createMusicVideo(canvas, song, { lyrics, hud }),
+      setHud(v) { this.hud = v; this.mv = createMusicVideo(canvas, song, { lyrics, hud: v }); },
+    };
+  }
+
+  const ready = boot();
+
+  if (renderMode) {
+    // tools/mv/render.mjs가 프레임 시각을 하나씩 넘긴다
+    window.__mv = {
+      ready: ready.then((s) => ({ duration: s.song.duration, shots: s.mv.shots })),
+      async frame(t, quality = .92) {
+        const s = await ready;
+        s.mv.render(t);
+        return s.canvas.toDataURL("image/jpeg", quality);
+      },
+      async still(t) {
+        const s = await ready;
+        s.mv.render(t);
+        return s.canvas.toDataURL("image/png");
+      },
+    };
+  } else {
+    const audio = document.getElementById("audio");
+    audio.preload = "auto"; // 렌더 모드에서는 34MB WAV를 받지 않는다
+    const hint = document.getElementById("hint");
+    const debug = document.getElementById("debug");
+    const state = await ready;
+    if (params.has("t")) audio.currentTime = +params.get("t");
+    const toggle = () => { audio.paused ? audio.play() : audio.pause(); hint.style.opacity = 0; };
+    document.addEventListener("click", toggle);
+    document.addEventListener("keydown", (e) => {
+      const secs = state.song.a.sections.map((s) => s.start);
+      if (e.code === "Space") { e.preventDefault(); toggle(); }
+      else if (e.key === "ArrowRight") audio.currentTime = Math.min(state.song.duration, audio.currentTime + 5);
+      else if (e.key === "ArrowLeft") audio.currentTime = Math.max(0, audio.currentTime - 5);
+      else if (e.key === "ArrowDown") { const n = secs.find((s) => s > audio.currentTime + .1); if (n !== undefined) audio.currentTime = n; }
+      else if (e.key === "ArrowUp") { const p = secs.filter((s) => s < audio.currentTime - 1).pop(); audio.currentTime = p ?? 0; }
+      else if (e.key.toLowerCase() === "h") state.setHud(!state.hud);
+      else if (e.key.toLowerCase() === "d") document.body.classList.toggle("debug");
+    });
+    const loop = () => {
+      const t = audio.currentTime;
+      state.mv.render(t);
+      if (document.body.classList.contains("debug")) {
+        const shots = state.mv.shots;
+        const i = shots.findLastIndex((s) => t >= s.start);
+        debug.textContent = shots.map((s, k) => `${k === i ? "▶" : " "} ${s.start.toFixed(2).padStart(7)}  ${s.scene.padEnd(6)} v${s.variant} §${s.section} ${s.enter}`).join("\n");
+      }
+      requestAnimationFrame(loop);
+    };
+    loop();
+  }
+</script>
+</body>
+</html>
