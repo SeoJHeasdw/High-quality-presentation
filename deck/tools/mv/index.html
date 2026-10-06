@@ -24,7 +24,7 @@
 <audio id="audio" src="/demos/emotional-hiphop-draft.wav" preload="none"></audio>
 <script type="module">
   import { createMusicVideo, Song } from "/src/mv/mv.ts";
-  import { createPaintedLook } from "/src/mv/paint/look.ts";
+  import { createPaintedFilm } from "/src/mv/paint/film.ts";
 
   const params = new URLSearchParams(location.search);
   const renderMode = params.has("render");
@@ -42,8 +42,8 @@
     const song = new Song(analysis);
     const canvas = document.getElementById("mv");
     const hud = params.get("hud") !== "0";
-    // 기본은 유화 스타일 시험. 첫 시안(선·도형)은 ?look=lines
-    const make = (h) => params.get("look") === "lines" ? createMusicVideo(canvas, song, { lyrics, hud: h }) : createPaintedLook(canvas, song);
+    // 기본은 유화 뮤비 본편. 첫 시안(선·도형)은 ?look=lines
+    const make = (h) => params.get("look") === "lines" ? createMusicVideo(canvas, song, { lyrics, hud: h }) : createPaintedFilm(canvas, song);
     return {
       song, canvas, hud,
       mv: make(hud),

@@ -5,7 +5,7 @@
  *   2. 굵은 붓 → 중간 붓 → 가는 붓. 가는 붓은 윤곽(밝기 변화가 큰 곳)에만 간다
  *   3. 붓 방향: 윤곽이 있으면 윤곽을 따라, 없으면 소용돌이 흐름(하늘의 고흐 같은 결)
  *
- * 붓 위치는 격자에 고정하고, 1/12초마다 조금씩만 흔든다. 손으로 칠한 애니메이션처럼
+ * 붓 위치는 격자에 고정하고, 초당 7.5번 조금씩만 흔든다. 손으로 칠한 애니메이션처럼
  * 그림이 살짝 꿈틀거리되 멈춘 곳이 번쩍이지는 않는다.
  */
 import { hash, mix } from "../scenes.ts";
@@ -22,10 +22,11 @@ export function vnoise(x: number, y: number, seed = 0) {
 
 export type Brush = { cell: number; len: number; width: number; detail: number; alpha: number };
 
+// 매끈하게: 길고 넓은 붓을 옅게 겹치고, 가는 붓은 또렷한 윤곽에만
 export const BRUSHES: Brush[] = [
-  { cell: 24, len: 38, width: 16, detail: 0, alpha: .92 },
-  { cell: 13, len: 22, width: 8.5, detail: 0, alpha: .88 },
-  { cell: 7, len: 12, width: 4.2, detail: 14, alpha: .9 },
+  { cell: 20, len: 48, width: 20, detail: 0, alpha: .8 },
+  { cell: 11, len: 28, width: 10.5, detail: 0, alpha: .74 },
+  { cell: 6, len: 13, width: 4, detail: 22, alpha: .85 },
 ];
 
 export type PaintOptions = {
@@ -43,10 +44,10 @@ export function paint(dst: CanvasRenderingContext2D, src: HTMLCanvasElement, hol
   const k = sw / W;
   const data = src.getContext("2d")!.getImageData(0, 0, sw, sh).data;
   const fs = o.flowScale ?? .0022;
-  const boil = o.boil ?? .3;
+  const boil = o.boil ?? .2;
 
   dst.save();
-  dst.filter = "blur(6px)";
+  dst.filter = "blur(5px)";
   dst.drawImage(src, 0, 0, W, H);
   dst.filter = "none";
   dst.lineCap = "round";
@@ -71,14 +72,14 @@ export function paint(dst: CanvasRenderingContext2D, src: HTMLCanvasElement, hol
       if (mag < b.detail) continue;
       const a = mag > 9
         ? Math.atan2(gy, gx) + Math.PI / 2
-        : vnoise(x * fs, y * fs, o.flowSeed) * Math.PI * 2.6 + (hash(id, 3) - .5) * .5;
+        : vnoise(x * fs, y * fs, o.flowSeed) * Math.PI * 2.6 + (hash(id, 3) - .5) * .25;
       const xi = Math.min(sw - 1, Math.max(0, sx | 0)), yi = Math.min(sh - 1, Math.max(0, sy | 0));
       const p = (yi * sw + xi) * 4;
-      const f = .9 + .2 * hash(id, 4);
-      const r = Math.min(255, data[p] * f), g = Math.min(255, data[p + 1] * f), bl = Math.min(255, data[p + 2] * f + 5 * (hash(id, 5) - .3));
+      const f = .95 + .1 * hash(id, 4);
+      const r = Math.min(255, data[p] * f), g = Math.min(255, data[p + 1] * f), bl = Math.min(255, data[p + 2] * f + 3 * (hash(id, 5) - .3));
       const len = b.len * (.7 + .6 * hash(id, 6)) * (mag > 30 ? .65 : 1);
       const cx = Math.cos(a) * len / 2, cy = Math.sin(a) * len / 2;
-      const bend = (hash(id, 7) - .5) * len * .4;
+      const bend = (hash(id, 7) - .5) * len * .25;
       dst.strokeStyle = `rgb(${r | 0},${g | 0},${bl | 0})`;
       dst.lineWidth = b.width * (.75 + .5 * hash(id, 8));
       dst.beginPath();
