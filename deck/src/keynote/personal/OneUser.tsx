@@ -22,8 +22,8 @@ const STATIONS: { id: AnchorId; name: string; model: string }[] = [
 ];
 function labelsFor(p: number): Label[] {
   if (p === 0) return [{ id: "me", name: "저 한 명", sub: "저에게 맞춰 만든 도구", tone: "gold", dir: "up" }, { id: "crowd", name: "사서 쓰는 소프트웨어", sub: "여러 사람에게 맞춘 공통 기능", tone: "mute", dir: "up", fade: true }];
-  if (p === 1) return [{ id: "me", name: "저", tone: "gold", dir: "up" }];
-  if (p === 2) return [{ id: "me", name: "저", sub: "요청 한 문장", tone: "gold", dir: "left" }, { id: "os", name: "Agent OS", sub: "순서를 정하고 작업을 챙깁니다", tone: "ice", tag: "구상", dir: "up" }];
+  if (p === 1) return [{ id: "me", name: "나", tone: "gold", dir: "up" }];
+  if (p === 2) return [{ id: "me", name: "나", sub: "요청 한 문장", tone: "gold", dir: "left" }, { id: "os", name: "Agent OS", sub: "순서를 정하고 작업을 챙깁니다", tone: "ice", tag: "구상", dir: "up" }];
   if (p === 3) return [{ id: "os", name: "Agent OS", tone: "mute", tag: "구상", dir: "up" }, { id: "factory", name: "Factory", sub: "음성·자막·화면을 만듭니다", tone: "ice", tag: "개발 중", dir: "up" }, { id: "out", name: "강의 영상", tone: "gold", dir: "right" }];
   if (p === 4) return [{ id: "me", name: "저는", sub: "들어보고 틀린 곳을 고칩니다", tone: "gold", dir: "left" }, { id: "redo", name: "“이 페이지 발음만 다시 만들어줘.”", tone: "gold", dir: "up" }, { id: "os", name: "Agent OS", tone: "mute", tag: "구상", dir: "up" }, { id: "factory", name: "Factory", tone: "mute", tag: "개발 중", dir: "up" }];
   // 양 끝 스테이션의 라벨은 바깥쪽으로 뺀다(안쪽 두 라벨과 위의 RICE에 자리를 준다)
