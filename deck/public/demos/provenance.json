@@ -9,12 +9,10 @@
     "kind": "previz sketch"
   },
   "music": {
-    "source": "/Users/jaehoseo/Desktop/vswrk/javis/local-music-engine/projects/shine-on-me/exports/job_68ba282ee7c0410db901adef1090fccd-candidate_e6ef39a6eb82464a936e86d13a34bcdc.wav",
-    "project": "shine-on-me",
-    "title": "Shine on Me (햇살)",
-    "candidateId": "candidate_e6ef39a6eb82464a936e86d13a34bcdc",
-    "durationSeconds": 30,
-    "kind": "selected full-song WAV export",
+    "source": "emotional-hiphop-draft.wav (user-supplied draft)",
+    "title": "감성 힙합 초안",
+    "durationSeconds": 180,
+    "kind": "draft WAV",
     "humanReview": "unreviewed"
   },
   "rice": {

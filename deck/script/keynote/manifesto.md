@@ -123,9 +123,9 @@ Assets Engine입니다. 청록색 유리 깃털과 금속 몸체를 가진 새�
 
 ## factory-music
 ### 0
-Music Engine에는 가사와 원하는 분위기를 줍니다. 곡 후보를 몇 개 만든 다음 들어보고 고릅니다. 마음에 안 드는 구간은 그 부분만 다시 만들고요. 이 장면에 들어간 파형도 실제로 만든 15초 후보에서 가져왔습니다. 곡 자체는 잠시 뒤에 들어보겠습니다.
+Music Engine에는 가사와 원하는 분위기를 줍니다. 곡 후보를 몇 개 만든 다음 들어보고 고릅니다. 마음에 안 드는 구간은 그 부분만 다시 만들고요. 이 장면에 들어간 파형도 실제로 만든 곡에서 가져왔습니다. 곡 자체는 잠시 뒤에 들어보겠습니다.
 
-근거: local-music-engine/README.md 및 docs/HANDOFF.md. 실제 파형 원본은 public/demos/music-candidate.wav입니다. 15초 개발 후보이며 최종 청취 승인은 아직 하지 않았습니다.
+근거: local-music-engine/README.md 및 docs/HANDOFF.md. 실제 음원은 public/demos/emotional-hiphop-draft.wav(감성 힙합 초안, 3분)입니다. 최종 청취 승인은 아직 하지 않았습니다.
 
 ## factory-return
 ### 0
