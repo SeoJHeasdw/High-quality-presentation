@@ -1,6 +1,6 @@
 /**
  * 유화 뮤비의 공용 재료. 깨끗한 장면용(하늘·도시·지붕·구름·달), 빛 층용(창 불빛·나방·별·빛의 실),
- * 붓질 뒤에 얹는 낙서(점선 궤적·느낌표·땀·어지러움·하트·반짝이·손글씨).
+ * 붓질 뒤에 얹는 낙서(점선 궤적·느낌표·땀·어지러움·하트·반짝이). 글자는 쓰지 않는다.
  * 색은 덱의 규칙을 잇는다: 남보라 밤(기계·세상), 금빛(사람·마음).
  */
 import { W, H, hash, clamp, mix, smooth } from "../scenes.ts";
@@ -446,49 +446,6 @@ export function speedLines(c: CanvasRenderingContext2D, x: number, y: number, di
     const yy = y + (i - 1.5) * 26 + wob(hold, i, 8);
     const l = len * (.6 + .4 * hash(i + hold, 77));
     c.beginPath(); c.moveTo(x - dir * 20, yy); c.lineTo(x - dir * (20 + l), yy); c.stroke();
-  }
-  c.restore();
-}
-
-export function zzz(c: CanvasRenderingContext2D, x: number, y: number, s: number, tq: number) {
-  c.save();
-  c.fillStyle = P.ink;
-  c.textAlign = "center";
-  for (let i = 0; i < 3; i++) {
-    const ph = ((tq * .5 + i / 3) % 1);
-    c.globalAlpha = Math.sin(ph * Math.PI) * .85;
-    c.font = `600 ${s * (.6 + ph * .6)}px "Pretendard Variable", Pretendard, sans-serif`;
-    c.fillText("z", x + ph * s * 1.2, y - ph * s * 2);
-  }
-  c.restore();
-}
-
-/** 손글씨처럼 한 글자씩 써지는 제목. 써지는 자리에 펜 끝 빛이 있다 */
-export function handwrite(c: CanvasRenderingContext2D, k: Kit, text: string, x: number, y: number, size: number, progress: number, hold: number) {
-  c.save();
-  c.font = `300 ${size}px "Pretendard Variable", Pretendard, sans-serif`;
-  c.textBaseline = "alphabetic";
-  c.fillStyle = P.ink;
-  let xx = x;
-  const n = text.length * clamp(progress);
-  for (let i = 0; i < text.length; i++) {
-    const ch = text[i];
-    const w = c.measureText(ch).width;
-    const a = clamp(n - i);
-    if (a > 0) {
-      c.save();
-      c.globalAlpha = a;
-      c.translate(xx + w / 2, y);
-      c.rotate((hash(i, 601) - .5) * .08 + wob(hold, i, .02));
-      c.fillText(ch, -w / 2, (hash(i, 602) - .5) * size * .06);
-      c.restore();
-    }
-    if (a > 0 && a < 1) {
-      c.globalCompositeOperation = "lighter";
-      c.drawImage(k.glowGold, xx + w * a - 30, y - size * .45 - 30, 60, 60);
-      c.globalCompositeOperation = "source-over";
-    }
-    xx += w + size * .04;
   }
   c.restore();
 }

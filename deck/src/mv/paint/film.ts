@@ -15,7 +15,7 @@ import {
   W, H, P, HORIZON, hash, clamp, mix, smooth, key, blinkAt, easeIO, easeOut, hop, makeKit, type Kit, type Win,
   skyFill, starfield, cloudBands, cloudSea, moonDisc, cityBody, roofs, roofY,
   windowGlow, moth, starGlow, glowLine,
-  dotted, bang, sweat, spiral, heart, sparkle, speedLines, zzz, handwrite,
+  dotted, bang, sweat, spiral, heart, sparkle, speedLines,
 } from "./kit.ts";
 
 const STEP = 15;
@@ -1114,7 +1114,7 @@ export function createPaintedFilm(canvas: HTMLCanvasElement, song: Song) {
     },
   });
 
-  // 23 2:47 새벽: 창가에서 잠든 아이, 창틀의 나방 한 마리, 손글씨 제목
+  // 23 2:47 새벽: 창가에서 잠든 아이, 품의 빛 구슬, 창틀의 나방 한 마리. 글자는 넣지 않는다
   add("dawn", song.a.sections[9]?.start ?? snap(167.3), 23, "dip", {
     draw(c, f) {
       const lt = f.lt;
@@ -1134,12 +1134,6 @@ export function createPaintedFilm(canvas: HTMLCanvasElement, song: Song) {
         c.globalAlpha = 1;
         moth(c, k, 1520, 752, 16, f.tq * .25, 0);
       });
-    },
-    front(c, f, s) {
-      zzz(c, 1260, 520, 40, f.tq);
-      c.save(); c.setTransform(1, 0, 0, 1, 0, 0);
-      handwrite(c, k, "감성 힙합 초안", 150, 330, 118, smooth(2.5, 7, f.lt), f.hold);
-      c.restore();
     },
   });
 
