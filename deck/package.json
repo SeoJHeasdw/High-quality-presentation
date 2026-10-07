@@ -16,10 +16,7 @@
     "shots": "node tools/shots.mjs",
     "check:keynote": "node tools/check-keynote.mjs",
     "check:annotation": "node tools/check-annotation.mjs",
-    "check:performance": "node tools/check-performance.mjs",
-    "mv": "node tools/mv/serve.mjs",
-    "mv:render": "node tools/mv/render.mjs",
-    "mv:analyze": "python3 tools/mv/analyze.py"
+    "check:performance": "node tools/check-performance.mjs"
   },
   "dependencies": {
     "@gsap/react": "^2.1.2",

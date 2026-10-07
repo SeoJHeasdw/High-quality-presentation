@@ -2,24 +2,22 @@
  * 뮤비 시안을 mp4로 뽑는다. 브라우저에 프레임 시각을 하나씩 넘겨 그린 그림을 받고(실시간이 아니라
  * 프레임 단위라 느린 기계에서도 끊기지 않는다), ffmpeg로 묶어 원곡 WAV를 붙인다.
  *
- *   npm run mv:render                               # 전체 1080p → render/mv/hiphop-mv.mp4
+ *   npm run mv:render                               # 전체 1080p → render/hiphop-mv.mp4
  *   npm run mv:render -- --size 720 --crf 23        # 가벼운 확인용
  *   npm run mv:render -- --from 79 --to 100         # 일부만
- *   npm run mv:render -- --still 5,30,90            # 그 시각의 PNG만 render/mv/stills/
- *   npm run mv:render -- --ending tel --out render/mv/hiphop-mv-tel.mp4   # 팀 시연용: 끝에 나방이 Technology Expert Lab을 만든다
+ *   npm run mv:render -- --still 5,30,90            # 그 시각의 PNG만 render/stills/
+ *   npm run mv:render -- --ending tel --out render/hiphop-mv-tel.mp4   # 팀 시연용: 끝에 나방이 Technology Expert Lab을 만든다
  *   첫 시안(선·도형)은 --look lines
  *
- * 필요한 것: playwright(devDependencies)의 Chromium 또는 설치된 Chrome(CHROME_PATH), ffmpeg.
+ * 필요한 것: playwright(devDependencies, npm install)의 Chromium 또는 설치된 Chrome(CHROME_PATH), ffmpeg.
  */
 import { chromium } from "playwright";
 import { spawn } from "node:child_process";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
-import { startServer } from "./serve.mjs";
+import { startServer, ROOT, DECK_PUBLIC } from "./serve.mjs";
 
-const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const arg = (name, def) => {
   const i = process.argv.indexOf(`--${name}`);
   return i > 0 ? process.argv[i + 1] : def;
@@ -29,8 +27,8 @@ const SIZE = +arg("size", 1080);
 const JOBS = Math.max(1, +arg("jobs", Math.min(4, os.cpus().length)));
 const QUALITY = +arg("quality", .92);
 const CRF = arg("crf", "20");
-const OUT = path.resolve(ROOT, arg("out", "render/mv/hiphop-mv.mp4"));
-const WAV = path.join(ROOT, "public/demos/emotional-hiphop-draft.wav");
+const OUT = path.resolve(ROOT, arg("out", "render/hiphop-mv.mp4"));
+const WAV = path.join(DECK_PUBLIC, "demos/emotional-hiphop-draft.wav");
 const STILLS = arg("still", "");
 const LOOK = arg("look", "");
 const ENDING = arg("ending", "");

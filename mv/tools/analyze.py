@@ -1,9 +1,9 @@
 """
-뮤비 시안(src/mv)이 쓰는 곡 분석. 화면은 이 JSON만 보고 그리므로, 같은 시각이면 언제 그려도 같은 그림이 나온다.
+뮤비 시안(mv/src)이 쓰는 곡 분석. 화면은 이 JSON만 보고 그리므로, 같은 시각이면 언제 그려도 같은 그림이 나온다.
 
-  python3 deck/tools/mv/analyze.py                                   # 감성 힙합 초안
-  python3 deck/tools/mv/analyze.py --wav public/demos/x.wav --out public/mv/x.json
-  python3 deck/tools/mv/analyze.py --bpm-hint 90                     # 템포를 반으로/두 배로 잘못 잡을 때
+  python3 tools/analyze.py                                   # 감성 힙합 초안 (mv/ 안에서)
+  python3 tools/analyze.py --wav ../deck/public/demos/x.wav --out public/x.json
+  python3 tools/analyze.py --bpm-hint 90                     # 템포를 반으로/두 배로 잘못 잡을 때
 
 뽑는 것
   beats      박. 스펙트럼 변화량(onset)에 템포를 맞춘 동적 계획법(Ellis 2007)
@@ -13,16 +13,16 @@
   peaks      곡 전체 파형 개요
 
 구간 이름(벌스·훅)은 붙이지 않는다. 귀로 확인하기 전에는 에너지 순위만 적는다.
-결과: public/mv/hiphop-analysis.json (numpy만 쓴다)
+결과: public/hiphop-analysis.json (numpy만 쓴다)
 """
 import argparse, base64, json, wave
 from pathlib import Path
 import numpy as np
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = Path(__file__).resolve().parents[1]
 p = argparse.ArgumentParser()
-p.add_argument('--wav', default=str(ROOT / 'public/demos/emotional-hiphop-draft.wav'))
-p.add_argument('--out', default=str(ROOT / 'public/mv/hiphop-analysis.json'))
+p.add_argument('--wav', default=str(ROOT.parent / 'deck/public/demos/emotional-hiphop-draft.wav'))
+p.add_argument('--out', default=str(ROOT / 'public/hiphop-analysis.json'))
 p.add_argument('--fps', type=int, default=30)
 p.add_argument('--bpm-hint', type=float, default=88, help='템포 사전분포의 중심. 힙합은 대개 70~100')
 p.add_argument('--bands', type=int, default=32)
@@ -230,7 +230,7 @@ out = {
 }
 Path(a.out).parent.mkdir(parents=True, exist_ok=True)
 Path(a.out).write_text(json.dumps(out, ensure_ascii=False, separators=(',', ':')))
-print(f'{Path(a.out).relative_to(ROOT)}  {DUR:.1f}s  {BPM:.2f} BPM  박 {len(beats)}  마디 {len(downbeats)}  구간 {len(sections)}'
+print(f'{Path(a.out).resolve().relative_to(ROOT) if Path(a.out).resolve().is_relative_to(ROOT) else a.out}  {DUR:.1f}s  {BPM:.2f} BPM  박 {len(beats)}  마디 {len(downbeats)}  구간 {len(sections)}'
       f"  {'일정 격자' if GRID else '추적 박'}(잔차 {resid.std() * 1000:.0f}ms)")
 for s in sections:
     print(f"  {s['start']:7.2f} ~ {s['end']:7.2f}  energy {s['energy']:.2f}")

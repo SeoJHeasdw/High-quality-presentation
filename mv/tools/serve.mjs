@@ -1,17 +1,20 @@
 /**
  * 뮤비 시안 미리보기 서버.  `npm run mv`  →  http://localhost:5185
  *
- * vite 없이 돈다. src/mv/*.ts는 타입만 벗겨서(node:module stripTypeScriptTypes,
- * 없으면 typescript) 그대로 보내고, 나머지는 public/에서 준다. 오디오를 앞뒤로
- * 옮길 수 있게 Range 요청을 받는다. render.mjs도 이 서버를 띄워 프레임을 받는다.
+ * vite 없이 돈다. src/*.ts는 타입만 벗겨서(node:module stripTypeScriptTypes,
+ * 없으면 typescript) 그대로 보내고, 나머지는 public/에서 준다. 곡(/demos)과 글꼴(/fonts)은
+ * 덱과 같은 파일을 쓰므로 ../deck/public에서 준다. 오디오를 앞뒤로 옮길 수 있게 Range
+ * 요청을 받는다. render.mjs도 이 서버를 띄워 프레임을 받는다.
  */
 import http from "node:http";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
-const PAGE = path.join(ROOT, "tools/mv/index.html");
+export const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+export const DECK_PUBLIC = path.resolve(ROOT, "../deck/public");
+const PAGE = path.join(ROOT, "tools/index.html");
+const SHARED = ["/demos/", "/fonts/"];
 const TYPES = {
   ".html": "text/html; charset=utf-8", ".js": "text/javascript", ".ts": "text/javascript",
   ".json": "application/json", ".wav": "audio/wav", ".m4a": "audio/mp4", ".mp3": "audio/mpeg",
@@ -39,7 +42,10 @@ export async function startServer(port = 5185) {
   const server = http.createServer((req, res) => {
     const url = new URL(req.url, "http://x");
     const rel = decodeURIComponent(url.pathname);
-    const file = rel === "/" ? PAGE : rel.startsWith("/src/mv/") ? inside(path.join(ROOT, "src"), rel.slice(4)) : inside(path.join(ROOT, "public"), rel);
+    const file = rel === "/" ? PAGE
+      : rel.startsWith("/src/") ? inside(path.join(ROOT, "src"), rel.slice(4))
+      : SHARED.some((d) => rel.startsWith(d)) ? inside(DECK_PUBLIC, rel)
+      : inside(path.join(ROOT, "public"), rel);
     if (!file || !fs.existsSync(file) || fs.statSync(file).isDirectory()) {
       res.writeHead(404).end();
       return;

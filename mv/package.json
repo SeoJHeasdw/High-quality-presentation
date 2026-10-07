@@ -1,0 +1,16 @@
+{
+  "name": "tel-mv",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "node tools/serve.mjs",
+    "typecheck": "tsc --noEmit",
+    "render": "node tools/render.mjs",
+    "analyze": "python3 tools/analyze.py"
+  },
+  "devDependencies": {
+    "playwright": "^1.62.0",
+    "typescript": "^5.8.3"
+  }
+}

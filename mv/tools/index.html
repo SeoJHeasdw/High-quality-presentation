@@ -23,8 +23,8 @@
 <pre id="debug"></pre>
 <audio id="audio" src="/demos/emotional-hiphop-draft.wav" preload="none"></audio>
 <script type="module">
-  import { createMusicVideo, Song } from "/src/mv/mv.ts";
-  import { createPaintedFilm } from "/src/mv/paint/film.ts";
+  import { createMusicVideo, Song } from "/src/mv.ts";
+  import { createPaintedFilm } from "/src/paint/film.ts";
 
   const params = new URLSearchParams(location.search);
   const renderMode = params.has("render");
@@ -33,10 +33,10 @@
   async function boot() {
     const font = new FontFace("Pretendard Variable", "url(/fonts/PretendardVariable.woff2)", { weight: "45 920" });
     document.fonts.add(await font.load());
-    const analysis = await (await fetch("/mv/hiphop-analysis.json")).json();
+    const analysis = await (await fetch("/hiphop-analysis.json")).json();
     let lyrics = [];
     try {
-      const r = await fetch("/mv/hiphop-lyrics.json");
+      const r = await fetch("/hiphop-lyrics.json");
       if (r.ok) lyrics = await r.json();
     } catch {}
     const song = new Song(analysis);
@@ -54,7 +54,7 @@
   const ready = boot();
 
   if (renderMode) {
-    // tools/mv/render.mjs가 프레임 시각을 하나씩 넘긴다
+    // tools/render.mjs가 프레임 시각을 하나씩 넘긴다
     window.__mv = {
       ready: ready.then((s) => ({ duration: s.song.duration, shots: s.mv.shots })),
       async frame(t, quality = .92) {
