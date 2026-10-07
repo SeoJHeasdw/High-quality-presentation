@@ -164,49 +164,6 @@ export function cloudBands(c: CanvasRenderingContext2D, tq: number, seed: number
   }
 }
 
-/** 몽글한 구름 바다(위가 밝다) */
-export function cloudSea(c: CanvasRenderingContext2D, y: number, tq: number, seed: number, scroll = 0, tint = "#5a5596", shade = "#2a2a68") {
-  for (let row = 0; row < 3; row++) {
-    const yy = y + row * 70;
-    const g = c.createLinearGradient(0, yy - 90, 0, yy + 120);
-    g.addColorStop(0, tint);
-    g.addColorStop(1, shade);
-    c.fillStyle = g;
-    c.beginPath();
-    c.moveTo(-200, H + 200);
-    const step = 150 + row * 40;
-    const off = ((scroll * (0.5 + row * .35) + tq * (4 + row * 3)) % step + step) % step;
-    for (let x = -200 - off; x < W + 400; x += step) {
-      const r = step * (.55 + .25 * hash(Math.floor((x + off) / step) + row * 50, seed));
-      c.arc(x, yy, r, Math.PI, 0);
-    }
-    c.lineTo(W + 400, H + 200);
-    c.closePath();
-    c.fill();
-    tint = mixHex(tint, shade, .35);
-  }
-}
-
-function mixHex(a: string, b: string, w: number) {
-  const pa = parseInt(a.slice(1), 16), pb = parseInt(b.slice(1), 16);
-  const ch = (s: number) => Math.round(mix((pa >> s) & 255, (pb >> s) & 255, w));
-  return `#${((ch(16) << 16) | (ch(8) << 8) | ch(0)).toString(16).padStart(6, "0")}`;
-}
-
-export function moonDisc(c: CanvasRenderingContext2D, x: number, y: number, r: number) {
-  const g = c.createRadialGradient(x - r * .3, y - r * .3, r * .1, x, y, r);
-  g.addColorStop(0, "#f6ecd2");
-  g.addColorStop(1, "#c9bfa6");
-  c.fillStyle = g;
-  c.beginPath(); c.arc(x, y, r, 0, Math.PI * 2); c.fill();
-  c.fillStyle = "rgba(150,140,130,.35)";
-  for (let i = 0; i < 7; i++) {
-    c.beginPath();
-    c.arc(x + (hash(i, 81) - .5) * r * 1.2, y + (hash(i, 82) - .5) * r * 1.2, r * (.08 + hash(i, 83) * .14), 0, Math.PI * 2);
-    c.fill();
-  }
-}
-
 /** 도시: 건물과 창. 켜진 비율 lit(0~1) */
 export function cityBody(c: CanvasRenderingContext2D, k: Kit, lit: number) {
   for (const b of k.city.buildings) {
@@ -222,11 +179,11 @@ export function cityBody(c: CanvasRenderingContext2D, k: Kit, lit: number) {
   }
 }
 
-type Roof = { x: number; w: number; dy: number; kind: number };
+export type Roof = { x: number; w: number; dy: number; kind: number };
 const roofCache = new Map<number, Roof[]>();
 
 /** 지붕 조각들(세계 좌표). 씨앗마다 한 번 만들어 둔다 */
-function roofSegs(seed: number) {
+export function roofSegs(seed: number) {
   let segs = roofCache.get(seed);
   if (!segs) {
     segs = [];
@@ -239,28 +196,6 @@ function roofSegs(seed: number) {
     roofCache.set(seed, segs);
   }
   return segs;
-}
-
-/** 지붕 줄. scroll만큼 왼쪽으로 흐른다. gapAt(화면 x)이 있으면 거기서 끊긴다 */
-export function roofs(c: CanvasRenderingContext2D, y: number, scroll: number, seed: number, gapAt?: number) {
-  for (const r of roofSegs(seed)) {
-    const x = r.x - scroll;
-    if (x > W + 400 || x + r.w < -400) continue;
-    if (gapAt !== undefined && x >= gapAt) continue;
-    const right = gapAt !== undefined ? Math.min(x + r.w, gapAt) : x + r.w;
-    c.fillStyle = "#0b0d2a";
-    c.fillRect(x, y + r.dy, right - x - 8, H - y + 400);
-    c.fillStyle = "#2a2e6c";
-    c.fillRect(x, y + r.dy, right - x - 8, 7);
-    c.fillStyle = "#0f1234";
-    if (r.kind < .3 && x + r.w * .3 + 86 < right) {
-      c.fillRect(x + r.w * .3, y + r.dy - 90, 70, 90);
-      c.fillRect(x + r.w * .3 - 8, y + r.dy - 100, 86, 14);
-    } else if (r.kind < .55 && x + r.w * .6 < right) {
-      c.fillRect(x + r.w * .6, y + r.dy - 160, 5, 160);
-      c.fillRect(x + r.w * .6 - 30, y + r.dy - 140, 65, 4);
-    }
-  }
 }
 
 /** 지붕 높이(roofs와 같은 조각). 화면 x에서 발을 디딜 y */
@@ -282,11 +217,13 @@ export function windowGlow(c: CanvasRenderingContext2D, k: Kit, lit: number, sin
   c.globalAlpha = 1;
 }
 
-export function moth(c: CanvasRenderingContext2D, k: Kit, x: number, y: number, size: number, tq: number, ph: number, alpha = 1) {
-  const flap = .25 + .75 * Math.abs(Math.sin(tq * 8 + ph));
+export function moth(c: CanvasRenderingContext2D, k: Kit, x: number, y: number, size: number, tq: number, ph: number, alpha = 1, rot = 0, halo = 1, open = .25) {
+  // open: 날개가 가장 접혔을 때의 벌어짐(0.25 = 힘차게 퍼덕, 높을수록 활짝 편 채 살랑인다)
+  const flap = open + (1 - open) * Math.abs(Math.sin(tq * 8 + ph));
   c.save();
   c.translate(x, y);
-  c.globalAlpha = .55 * alpha;
+  if (rot) c.rotate(rot);
+  c.globalAlpha = .55 * alpha * halo;
   c.drawImage(k.glowGold, -size * 2.2, -size * 2.2, size * 4.4, size * 4.4);
   c.globalAlpha = alpha;
   for (const s of [-1, 1]) {
@@ -301,21 +238,6 @@ export function moth(c: CanvasRenderingContext2D, k: Kit, x: number, y: number, 
   c.fillStyle = "#fff4d6";
   c.fillRect(-size * .07, -size * .4, size * .14, size * .8);
   c.restore();
-}
-
-export function starGlow(c: CanvasRenderingContext2D, k: Kit, x: number, y: number, r: number, a = 1) {
-  c.globalAlpha = .7 * a;
-  c.drawImage(k.glowGold, x - r * 3, y - r * 3, r * 6, r * 6);
-  c.globalAlpha = a;
-  c.drawImage(k.glowWhite, x - r, y - r, r * 2, r * 2);
-  // 빛살 네 갈래
-  c.strokeStyle = `rgba(255,240,205,${.55 * a})`;
-  c.lineWidth = Math.max(1.5, r * .06);
-  c.beginPath();
-  c.moveTo(x - r * 2.4, y); c.lineTo(x + r * 2.4, y);
-  c.moveTo(x, y - r * 2.4); c.lineTo(x, y + r * 2.4);
-  c.stroke();
-  c.globalAlpha = 1;
 }
 
 /** 빛나는 선(실). 넓고 옅은 빛 → 가늘고 밝은 심 */
@@ -335,29 +257,6 @@ export function glowLine(c: CanvasRenderingContext2D, pts: { x: number; y: numbe
 
 function wob(hold: number, i: number, amt: number) {
   return (hash(hold * 31 + i, 501) - .5) * amt;
-}
-
-/** 점선 궤적 + 끝의 X 표시(레퍼런스의 파란 점선) */
-export function dotted(c: CanvasRenderingContext2D, pts: { x: number; y: number }[], hold: number, a = 1, cross = true) {
-  c.save();
-  c.globalAlpha = a;
-  c.strokeStyle = P.dotted;
-  c.lineWidth = 3;
-  c.setLineDash([2, 12]);
-  c.lineCap = "round";
-  c.beginPath();
-  pts.forEach((p, i) => (i ? c.lineTo(p.x + wob(hold, i, 2), p.y + wob(hold, i + 50, 2)) : c.moveTo(p.x, p.y)));
-  c.stroke();
-  c.setLineDash([]);
-  if (cross && pts.length) {
-    const e = pts[pts.length - 1];
-    c.lineWidth = 3.5;
-    c.beginPath();
-    c.moveTo(e.x - 11, e.y - 11); c.lineTo(e.x + 11, e.y + 11);
-    c.moveTo(e.x + 11, e.y - 11); c.lineTo(e.x - 11, e.y + 11);
-    c.stroke();
-  }
-  c.restore();
 }
 
 export function bang(c: CanvasRenderingContext2D, x: number, y: number, s: number, hold: number, a = 1) {
@@ -436,16 +335,118 @@ export function sparkle(c: CanvasRenderingContext2D, x: number, y: number, s: nu
   c.restore();
 }
 
-export function speedLines(c: CanvasRenderingContext2D, x: number, y: number, dir: number, len: number, hold: number, a = 1) {
+/** 착지 먼지: 땅에서 양옆으로 퍼지며 사라지는 먼지 구름(age 0~1). 동그라미가 아니라 울퉁불퉁한 덩이, 바깥 윤곽만 그어 손으로 그린 듯 */
+export function dust(c: CanvasRenderingContext2D, x: number, y: number, s: number, age: number, a = 1) {
+  if (age <= 0 || age >= 1) return;
   c.save();
-  c.globalAlpha = a;
-  c.strokeStyle = P.ink;
-  c.lineCap = "round";
-  c.lineWidth = 3;
-  for (let i = 0; i < 4; i++) {
-    const yy = y + (i - 1.5) * 26 + wob(hold, i, 8);
-    const l = len * (.6 + .4 * hash(i + hold, 77));
-    c.beginPath(); c.moveTo(x - dir * 20, yy); c.lineTo(x - dir * (20 + l), yy); c.stroke();
+  c.lineJoin = "round";
+  for (let i = 0; i < 6; i++) {
+    const side = i % 2 ? 1 : -1, k = Math.floor(i / 2);
+    const px = x + side * s * (.2 + k * .36) * (.5 + 1.1 * age), py = y - s * (.07 + k * .06) * (1 - age * .4) - age * s * .22 * (k + 1);
+    const r = s * (.15 + k * .06) * (.6 + .9 * age);
+    const al = a * (1 - age) * .9;
+    // 덩이: 다섯 개의 둥근 혹이 겹친 모양. 먼저 채우고(안쪽 경계 없이), 한 번에 윤곽을 긋는다
+    const blob = () => {
+      c.beginPath();
+      for (let j = 0; j < 5; j++) {
+        const th = j / 5 * Math.PI * 2 + i, rr = r * (.55 + .2 * hash(i * 5 + j, 3));
+        const cx = px + Math.cos(th) * r * .55, cy = py + Math.sin(th) * r * .45;
+        c.moveTo(cx + rr, cy);
+        c.arc(cx, cy, rr, 0, Math.PI * 2);
+      }
+    };
+    c.globalAlpha = al;
+    c.fillStyle = "rgba(196,202,250,.62)";
+    blob(); c.fill();
+    c.globalAlpha = al * .55;
+    c.strokeStyle = "rgba(244,231,198,.9)";
+    c.lineWidth = Math.max(2, s * .022);
+    c.globalCompositeOperation = "source-over";
+    blob(); c.stroke();
   }
   c.restore();
+}
+
+/** 별 모양 충격 표시(반짝) 여러 개가 머리 둘레를 도는 어지러움 */
+export function dizzy(c: CanvasRenderingContext2D, x: number, y: number, s: number, tq: number, a = 1) {
+  for (let i = 0; i < 3; i++) {
+    const th = tq * 4 + i * Math.PI * 2 / 3;
+    sparkle(c, x + Math.cos(th) * s, y + Math.sin(th) * s * .35, s * .22, a);
+  }
+}
+
+/**
+ * 붓 점으로 그린 궤적(깨끗한 장면용). 붓질 뒤에 얹는 가는 점선은 그림체와 따로 놀아서,
+ * 장면 안에 굵은 붓 점으로 칠해 붓질 패스를 통과시킨다. 끝의 X도 굵은 붓 두 획.
+ */
+export function dabLine(c: CanvasRenderingContext2D, pts: { x: number; y: number }[], hold: number, a = 1, opt: { r?: number; gap?: number; cross?: boolean; color?: string } = {}) {
+  if (a <= 0 || pts.length < 2) return;
+  const r = opt.r ?? 13, gap = opt.gap ?? 54, color = opt.color ?? "196,214,255";
+  c.save();
+  c.lineCap = "round";
+  let acc = gap * .5;
+  for (let i = 1; i < pts.length; i++) {
+    const p0 = pts[i - 1], p1 = pts[i], seg = Math.hypot(p1.x - p0.x, p1.y - p0.y);
+    let s = 0;
+    while (acc + (seg - s) >= gap) {
+      s += gap - acc; acc = 0;
+      const q = s / seg, k = i * 31 + Math.floor(s);
+      const x = mix(p0.x, p1.x, q), y = mix(p0.y, p1.y, q);
+      const rr = r * (.9 + .3 * hash(k, 13));
+      c.fillStyle = `rgba(${color},${a * (.75 + .25 * hash(k, 14))})`;
+      c.beginPath(); c.ellipse(x, y, rr * 1.15, rr * .9, hash(k, 15) * 3, 0, Math.PI * 2); c.fill();
+    }
+    acc += seg - s;
+  }
+  if (opt.cross !== false) {
+    const e = pts[pts.length - 1], d = r * 1.9;
+    c.strokeStyle = `rgba(${color},${a})`;
+    c.lineWidth = r * 1.05;
+    c.beginPath();
+    c.moveTo(e.x - d, e.y - d); c.lineTo(e.x + d, e.y + d);
+    c.moveTo(e.x + d, e.y - d); c.lineTo(e.x - d, e.y + d);
+    c.stroke();
+  }
+  c.restore();
+}
+
+/**
+ * 바람결(깨끗한 장면용): 옆으로 빨리 흐르는 굵고 옅은 붓 한 획들. 날아가는 속도감을 붓질 안에서 낸다.
+ * (붓질 뒤에 얹는 가는 속도선은 그림체와 따로 논다)
+ */
+export function windStreaks(c: CanvasRenderingContext2D, t: number, seed: number, n: number, y0: number, y1: number, speed: number, dir = -1, color = "170,190,255", alpha = .2) {
+  c.save();
+  c.lineCap = "round";
+  for (let i = 0; i < n; i++) {
+    const len = 260 + hash(i, seed + 1) * 520, wd = 6 + hash(i, seed + 2) * 12;
+    const sp = speed * (.7 + .6 * hash(i, seed + 3));
+    const span = W + len + 400;
+    const x = (((hash(i, seed + 4) * span + dir * -1 * 0 + dir * t * sp) % span) + span) % span - len - 200;
+    const y = y0 + hash(i, seed + 5) * (y1 - y0);
+    c.strokeStyle = `rgba(${color},${alpha * (.5 + hash(i, seed + 6))})`;
+    c.lineWidth = wd;
+    c.beginPath(); c.moveTo(x, y); c.quadraticCurveTo(x + len / 2, y + (hash(i, seed + 7) - .5) * 24, x + len, y); c.stroke();
+  }
+  c.restore();
+}
+
+/**
+ * 달에서 내려온 한 가닥의 실: 가는 직선 하나는 도식처럼 보여서, 굽이치는 두 가닥이 서로 감기고
+ * 굽이의 폭이 아래(아이 쪽)로 갈수록 커지게 하며 빛 알갱이가 타고 오르내린다. 빛 층에서 부른다.
+ */
+export function lightThread(c: CanvasRenderingContext2D, k: Kit, a: { x: number; y: number }, b: { x: number; y: number }, tq: number, o: { amp?: number; w?: number; ph?: number; a?: number; beads?: number } = {}) {
+  const amp = o.amp ?? 44, w = o.w ?? 2.4, ph = o.ph ?? 0, al = o.a ?? 1, n = 40;
+  const len = Math.hypot(b.x - a.x, b.y - a.y) || 1, nx = -(b.y - a.y) / len, ny = (b.x - a.x) / len;
+  const at = (v: number, off: number) => {
+    // 아이 쪽(a)에서 멀어질수록 굽이가 가라앉는다
+    const sway = Math.sin(v * 7 - tq * 3.2 + ph + off) * amp * Math.sin(Math.min(1, v * 1.4) * Math.PI * .5) * (1 - v * .55);
+    return { x: mix(a.x, b.x, v) + nx * sway, y: mix(a.y, b.y, v) + ny * sway };
+  };
+  glowLine(c, Array.from({ length: n }, (_, i) => at(i / (n - 1), 0)), w, al);
+  glowLine(c, Array.from({ length: n }, (_, i) => at(i / (n - 1), 1.7)), w * .55, al * .75);
+  for (let j = 0; j < (o.beads ?? 4); j++) {
+    const v = (hash(j, 17) + tq * .22) % 1, p = at(v, 0);
+    c.save(); c.globalCompositeOperation = "lighter"; c.globalAlpha = .9 * al;
+    c.drawImage(k.glowGold, p.x - 13, p.y - 13, 26, 26); c.restore();
+  }
 }

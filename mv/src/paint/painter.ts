@@ -29,14 +29,35 @@ export const BRUSHES: Brush[] = [
   { cell: 6, len: 13, width: 4, detail: 22, alpha: .85 },
 ];
 
+/** 붓이 한 점 둘레를 돌게 하는 소용돌이(화면 좌표). 달·별 둘레의 고흐풍 동심원 붓질에 쓴다 */
+export type Swirl = {
+  x: number;
+  y: number;
+  /** 소용돌이가 미치는 반지름(px). 안쪽일수록 세게 돈다 */
+  r: number;
+  /** +1 시계 방향 / -1 반시계 */
+  spin?: number;
+  /** 접선에서 안쪽으로 기울이는 각(라디안). 0이면 완전한 동심원, 조금 주면 나선 */
+  pitch?: number;
+};
+
 export type PaintOptions = {
   /** 흐름장의 씨앗(장면마다 다르게) */
   flowSeed: number;
   /** 소용돌이 크기. 작을수록 큰 소용돌이 */
   flowScale?: number;
+  /** 흐름장 각도의 폭(π의 배수, 기본 2.6). 작을수록 붓결이 길고 고르게 이어진다 */
+  flowTurns?: number;
   /** 붓 흔들림 정도(칸 크기 대비) */
   boil?: number;
+  /** 붓결을 한 점 둘레로 돌리는 소용돌이들 */
+  swirls?: Swirl[];
 };
+
+/** 붓 방향의 바탕 흐름장(화면 좌표). 하늘의 빛줄기를 같은 방향으로 깔 때도 쓴다 */
+export function flowAngle(x: number, y: number, seed: number, scale = .0022, turns = 2.6) {
+  return vnoise(x * scale, y * scale, seed) * Math.PI * turns;
+}
 
 export function paint(dst: CanvasRenderingContext2D, src: HTMLCanvasElement, hold: number, o: PaintOptions) {
   const W = dst.canvas.width, H = dst.canvas.height;
@@ -44,7 +65,9 @@ export function paint(dst: CanvasRenderingContext2D, src: HTMLCanvasElement, hol
   const k = sw / W;
   const data = src.getContext("2d")!.getImageData(0, 0, sw, sh).data;
   const fs = o.flowScale ?? .0022;
+  const turns = o.flowTurns ?? 2.6;
   const boil = o.boil ?? .2;
+  const swirls = o.swirls ?? [];
 
   dst.save();
   dst.filter = "blur(5px)";
@@ -70,9 +93,18 @@ export function paint(dst: CanvasRenderingContext2D, src: HTMLCanvasElement, hol
       const gy = lum(sx, sy + 1.5) - lum(sx, sy - 1.5);
       const mag = Math.hypot(gx, gy);
       if (mag < b.detail) continue;
-      const a = mag > 9
+      let a = mag > 9
         ? Math.atan2(gy, gx) + Math.PI / 2
-        : vnoise(x * fs, y * fs, o.flowSeed) * Math.PI * 2.6 + (hash(id, 3) - .5) * .25;
+        : flowAngle(x, y, o.flowSeed, fs, turns) + (hash(id, 3) - .5) * .25;
+      if (mag <= 9) for (const v of swirls) {
+        const dx = x - v.x, dy = y - v.y, d = Math.hypot(dx, dy);
+        if (d >= v.r) continue;
+        // 가장자리는 부드럽게 바탕 흐름과 섞고, 안쪽은 접선(+약간의 나선)을 따른다
+        const wgt = Math.min(1, (1 - d / v.r) * 2.2);
+        const ta = Math.atan2(dy, dx) + (v.spin ?? 1) * (Math.PI / 2 - (v.pitch ?? 0));
+        const vx = Math.cos(a) * (1 - wgt) + Math.cos(ta) * wgt, vy = Math.sin(a) * (1 - wgt) + Math.sin(ta) * wgt;
+        a = Math.atan2(vy, vx);
+      }
       const xi = Math.min(sw - 1, Math.max(0, sx | 0)), yi = Math.min(sh - 1, Math.max(0, sy | 0));
       const p = (yi * sw + xi) * 4;
       const f = .95 + .1 * hash(id, 4);
