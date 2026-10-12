@@ -27,7 +27,6 @@ export const NEXT_MARKET_SOURCES = {
 const FILM = "/house-scroll/film.mp4";
 const LOOP_FILM = "/house-scroll/street-loop.mp4";
 const STREET = 7;
-const NAV: [string, number, number][] = [["문제 해결", 0, 3], ["시장", 4, 5], ["판단", 6, 7], ["다음", 8, 8]];
 
 /** 교차로의 판단 둘. 좌표와 순간(반복 영상의 프레임)은 Blender가 내보낸다. 선택지와 고른 답은 설명용 도식이다. */
 type Decision = { id: keyof typeof track.street.decisions; question: string; options: [string, string]; pick: 0 | 1; side: "up" | "left" };
@@ -135,7 +134,6 @@ const clamp = (v: number, a = 0, b = 1) => Math.min(b, Math.max(a, v));
 const smooth = (t: number) => { t = clamp(t); return t * t * (3 - 2 * t); };
 /** 단계 k를 중심으로 폭 w 안에서 떠오르는 값. 가운데 40%는 온전히 보인다. */
 const window1 = (p: number, k: number, w: number) => smooth((w - Math.abs(p - k)) / (w * .6));
-const navPos = (p: number) => (p <= 3 ? 0 : p < 4 ? p - 3 : p <= 5 ? 1 : p < 6 ? p - 4 : p <= 7 ? 2 : p < 8 ? p - 5 : 3);
 
 type Mode = "idle" | "wheel" | "play" | "tween";
 
@@ -149,8 +147,6 @@ export default function NextMarket({ step }: { step: number }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const secRefs = useRef<(HTMLElement | null)[]>([]);
   const labelRefs = useRef<(HTMLDivElement | null)[]>([]);
-  const navRefs = useRef<(HTMLSpanElement | null)[]>([]);
-  const barRef = useRef<HTMLElement>(null);
   const railRef = useRef<HTMLDivElement>(null);
   const hintRef = useRef<HTMLDivElement>(null);
   const [ready, setReady] = useState(false);
@@ -228,14 +224,6 @@ export default function NextMarket({ step }: { step: number }) {
         el.style.visibility = o > 0 ? "visible" : "hidden";
         el.style.transform = `translate3d(${x}px,${y}px,0)`;
       });
-      const n = navPos(p), i = Math.min(NAV.length - 2, Math.floor(n)), t = n - i;
-      const a = navRefs.current[i], b = navRefs.current[i + 1];
-      if (a && b && barRef.current) {
-        const left = a.offsetLeft + (b.offsetLeft - a.offsetLeft) * t, width = a.offsetWidth + (b.offsetWidth - a.offsetWidth) * t;
-        barRef.current.style.transform = `translate3d(${left.toFixed(1)}px,0,0)`;
-        barRef.current.style.width = `${width.toFixed(1)}px`;
-      }
-      navRefs.current.forEach((el, k) => el?.toggleAttribute("data-on", Math.round(n) === k));
       if (railRef.current) railRef.current.style.setProperty("--fill", (p / LAST_STEP).toFixed(4));
       railRef.current?.querySelectorAll("i").forEach((dot, k) => dot.toggleAttribute("data-on", Math.round(p) === k));
       if (hintRef.current) hintRef.current.style.opacity = clamp(1 - p * 6).toFixed(3);
@@ -382,10 +370,6 @@ export default function NextMarket({ step }: { step: number }) {
           {sec.body}
         </section>)}
       </div>
-      <nav className="nm-nav" aria-label="페이지 구간">
-        {NAV.map(([name], k) => <span key={name} ref={(el) => { navRefs.current[k] = el; }}>{name}</span>)}
-        <b ref={barRef} className="nm-nav-bar"/>
-      </nav>
       <div className="nm-rail" ref={railRef} aria-hidden="true">{Array.from({ length: LAST_STEP + 1 }, (_, k) => <i key={k} style={{ "--k": k * 8 / LAST_STEP } as CSSProperties}/>)}</div>
       <div className="nm-hint" ref={hintRef} aria-hidden="true"><span className="nm-mouse"><i/></span>스크롤</div>
     </div>

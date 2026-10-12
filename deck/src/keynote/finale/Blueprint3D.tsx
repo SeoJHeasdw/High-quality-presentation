@@ -14,32 +14,26 @@ type Tone = "gold" | "ice" | "mute";
 type LabelId = Exclude<RoomId, "field">;
 type Label = { id: LabelId; name: ReactNode; sub?: string; tag?: string; tone: Tone; dir?: "up" | "down" | "left" | "right"; lift?: number };
 const BUILT: Label[] = [
-  { id: "tts", name: "TTS", sub: "목소리 · 강의 영상", tag: "개발 중", tone: "gold" },
-  { id: "assets", name: "ASSETS", sub: "이미지 · 3D", tag: "개발 중", tone: "gold" },
-  { id: "music", name: "MUSIC", sub: "음악", tag: "개발 중", tone: "gold" },
-  { id: "rice", name: "RICE", sub: "로컬 업무 에이전트", tag: "만듦", tone: "gold" },
+  // 방마다 "개발 중"·"만듦" 딱지는 달지 않는다(제목과 아래 범례가 이미 말한다).
+  { id: "tts", name: "TTS", sub: "목소리 · 강의 영상", tone: "gold" },
+  { id: "assets", name: "ASSETS", sub: "이미지 · 3D", tone: "gold" },
+  { id: "music", name: "MUSIC", sub: "음악", tone: "gold" },
+  // 20번에서 Agent OS라고 부른 자리가 RICE다. 앱은 만들었고, 방들을 잇는 길만 아직 점선이다.
+  { id: "rice", name: "RICE", sub: "Agent OS · 로컬 업무 에이전트", tone: "gold" },
   // Personal CIO의 라벨은 넓어서 바로 왼쪽 MUSIC 라벨의 윗모서리를 덮는다. 조금 더 높이 단다.
-  { id: "cio", name: "Personal CIO", sub: "주식 판단 기록 · 주문은 제가 결정", tag: "만듦", tone: "gold", lift: 32 },
+  { id: "cio", name: "Personal CIO", sub: "주식 판단 기록 · 주문은 제가 결정", tone: "gold", lift: 32 },
 ];
 const ME: Label = { id: "door", name: "나", tone: "gold", dir: "left" };
-const CASES: Label[] = [
-  { id: "caseCast", name: "주식 방송", sub: "목소리 × 영상 × Personal CIO", tag: "가능성", tone: "gold" },
-  { id: "caseSell", name: "주식 프로그램 판매", sub: "Personal CIO를 제품으로", tag: "가능성", tone: "gold" },
-  { id: "caseData", name: "프로그램 공개 · 데이터 판매", sub: "동의받은 익명 데이터를 금융회사에", tag: "가능성", tone: "gold" },
-];
-const CASE_IDS = new Set<LabelId>(["caseCast", "caseSell", "caseData"]);
 function labelsFor(phase: number): Label[] {
-  if (phase === 0) return [...BUILT, { id: "os", name: "Agent OS", sub: "제 맥락으로 잇는 부분", tag: "구상", tone: "ice" }, ME];
+  if (phase === 0) return [...BUILT, { id: "os", name: "연결", sub: "방들을 잇는 길", tag: "구상", tone: "ice" }, ME];
   // 조합 단계: 빛이 나가는 방(TTS·ASSETS·Personal CIO)만 흐린 이름을 남긴다. RICE 이름은 조합 라벨과 같은 자리에 겹친다.
   if (phase === 1) return [
     ...BUILT.filter((l) => l.id === "tts" || l.id === "assets" || l.id === "cio").map((l) => ({ ...l, sub: undefined, tag: undefined, lift: undefined, tone: "mute" as Tone })),
-    { id: "comboStock", name: "주식 분석 영상 · 분석 서비스 · 제 투자 판단 기록", sub: "영상 공장 × Personal CIO", tag: "가능성", tone: "gold" },
+    { id: "comboStock", name: "제 투자 판단을 영상 기록으로", sub: "영상 공장 × Personal CIO", tag: "가능성", tone: "gold" },
     { id: "comboLecture", name: "강의 채널", sub: "목소리 × 강의", tag: "이미 하는 일", tone: "gold", dir: "left" },
   ];
   // 번져 가는 방: 이름 대신 왼쪽의 조합의 수가 이야기한다. 모든 거리는 현관(나)에서 시작한다.
   if (phase === 3) return [ME];
-  // 방 하나(Personal CIO)에서 뻗는 갈래. 줄이 닿는 순서대로 하나씩 맺힌다(reveal).
-  if (phase >= 4) return [ME, { id: "cio", name: "Personal CIO", tone: "gold", dir: "right" }, ...CASES];
   // 사무직의 방: 뒷줄(엑셀·PDF)과 문서는 지붕 위로, 앞줄 브라우저는 방 앞 바닥 아래로 단다(blueprint.ts의 BELOW).
   return [
     { id: "excel", name: "엑셀 자동화", tag: "가정", tone: "ice" },
@@ -48,10 +42,10 @@ function labelsFor(phase: number): Label[] {
     { id: "doc", name: "문서 가로 ↔ 세로", tag: "가정", tone: "ice" },
   ];
 }
-const IDS: LabelId[] = ["caseCast", "caseSell", "caseData", "tts", "assets", "music", "rice", "cio", "os", "door", "comboStock", "comboLecture", "excel", "browser", "pdf", "doc"];
+const IDS: LabelId[] = ["tts", "assets", "music", "rice", "cio", "os", "door", "comboStock", "comboLecture", "excel", "browser", "pdf", "doc"];
 
 /** 단계가 끝났을 때 선 방의 수(처음 그릴 때와 모션을 끈 화면의 숫자) */
-const FINAL_N = [5, 5, 9, 40, 40];
+const FINAL_N = [5, 5, 9, 40];
 /** 26 · 502 · 65,519 · 104만 · 1.3억 · 1.1조처럼 읽히는 단위로 */
 function formatCount(v: number) {
   if (v < 1e5) return v.toLocaleString("en-US");
@@ -107,8 +101,6 @@ export default function Blueprint3D({ step, fallback }: { step: number; fallback
           const { x, y, visible } = live.project(id);
           el.style.transform = `translate3d(${x.toFixed(1)}px,${y.toFixed(1)}px,0)`;
           el.style.visibility = visible ? "" : "hidden";
-          // 사례는 금색 줄이 닿는 순간에 맞춰 3D가 직접 켠다(CSS의 늦은 전환을 쓰지 않는다)
-          if (CASE_IDS.has(id)) { el.style.transition = "none"; el.style.opacity = live.reveal(id).toFixed(3); }
         }
       });
       addEventListener("pointermove", move);

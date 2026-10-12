@@ -26,13 +26,18 @@
 .fn-kicker::before { content: ""; width: 34px; height: 1px; background: #e8c996; opacity: .8; }
 .finale h1 { font-size: 62px; line-height: 1.2; font-weight: 650; letter-spacing: -.045em; color: #f7f3ec; text-shadow: 0 2px 30px #05070c; }
 .fn-lead { margin-top: 20px; font-size: 25px; line-height: 1.5; color: #bfc6cf; }
+/* 43-0 · 남아 있는 문제 셋. 제목 아래 왼쪽 단에 차례로 선다(설계도의 점선판에 닿지 않는 너비). */
+.fn-notes { list-style: none; margin: 34px 0 0; padding: 0; width: 640px; display: grid; gap: 14px; }
+.fn-notes li { display: grid; grid-template-columns: 96px 1fr; align-items: baseline; padding-left: 16px; border-left: 2px solid #9fd6ff99; font-size: 23px; line-height: 1.45; color: #dde2e7; text-shadow: 0 2px 16px #05070c; animation: fn-rise .7s ease both; animation-delay: calc(1.2s + var(--i) * .3s); }
+.fn-notes b { font-size: 17px; font-weight: 600; letter-spacing: .06em; color: #9fd6ff; }
 @keyframes fn-rise { from { opacity: 0; transform: translateY(18px); filter: blur(8px); } to { opacity: 1; transform: none; filter: none; } }
 
 /* 41 · 목줄(묶음의 첫 장). 마무리의 새벽 배경은 아직 보이지 않는다. */
 .finale-pre .fn-sky { opacity: 0; }
 /* 42-0 · 41번의 캔버스가 이어서 새벽 집을 그린다(leash/world.ts). WebGL을 쓸 수 없을 때만 선명한 배경 사진을 보인다. */
 .finale--bridge:has(.ls[data-fallback]) .fn-plate--blue { filter: brightness(.72); transform: none; }
-.finale--bridge h1 em { font-style: normal; color: #ffd899; text-shadow: 0 0 36px #ffb45e44; }
+/* 제목 안의 금색 낱말: 42-0의 "제 집", 43-3의 "다 할 수 있다"(17번의 금색 낱말을 회수) */
+.finale h1 em { font-style: normal; color: #ffd899; text-shadow: 0 0 36px #ffb45e44; }
 .finale--bridge .fn-lead { color: #e1d5c2; animation: fn-rise 1s cubic-bezier(.16,1,.3,1) 3.9s both; }
 
 /* 42 · 바뀌는 것과 남는 것 */
@@ -124,8 +129,8 @@
 /* 44 · 해 뜨는 아침의 질문 */
 .finale--2 .fn-head h1 { font-size: 54px; }
 .finale--2 .closing-choices { position: absolute; left: -26px; right: -26px; bottom: 96px; z-index: 3; }
-.fn-final { position: absolute; left: 0; bottom: 0; z-index: 3; margin: 0; font-size: 25px; line-height: 1.5; color: #e9dfcf; text-shadow: 0 2px 20px #05070c; animation: fn-rise 1s ease 1.4s both; }
-.fn-final b { color: #ffd899; font-weight: 620; }
+/* 두 마음을 여는 한 줄: 두 칸 바로 위에 선다(제목은 에세이의 답이 맡는다) */
+.fn-ask { position: absolute; left: 0; top: 288px; z-index: 3; margin: 0; font-size: 27px; font-weight: 520; color: #f1e7d6; letter-spacing: -.02em; text-shadow: 0 2px 20px #05070c; animation: fn-rise 1s ease 1.4s both; }
 
 .deck-keynote[data-motion="off"] .finale *, .deck-keynote[data-motion="off"] .finale *::before, .deck-keynote[data-motion="off"] .finale *::after { animation-delay: 0s !important; animation-duration: 0s !important; animation-iteration-count: 1 !important; transition: none !important; }
 .deck-keynote[data-motion="off"] .fs-model { animation: none !important; }

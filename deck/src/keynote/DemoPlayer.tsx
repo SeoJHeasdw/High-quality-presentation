@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import { Briefing } from "./KeynoteFrame";
 import musicWave from "./data/music-waveform-hiphop.json";
 
+/** 31번 · 뮤직비디오(../mv/render/hiphop-mv-tel.mp4). 로컬 발표 서버가 내보내며, 파일이 없으면 링크를 띄우지 않는다. */
+const MV="/__javis/mv/hiphop-mv-tel.mp4";
 const DEMOS={
  tts:{title:"제가 만든 강의, 제 목소리로 들어보면",name:"실물 1 / TTS Engine",lead:"기존 강의 영상에서 가져온 24초 구간입니다.",src:"/demos/tts-lecture.mp4",poster:"/demos/tts-lecture.jpg",caption:"실제 생성된 강의 영상 · 원본 00:25–00:49",description:"대본과 화면을 받아 음성·자막·영상으로 만든 결과",audio:false},
  assets:{title:"장면을 만들고, 카메라를 움직여봅니다",name:"실물 2 / Assets Engine",lead:"로컬 엔진이 만든 15초 프리비즈입니다. 구도와 움직임을 먼저 확인하는 스케치입니다.",src:"/demos/assets-previz.mp4",poster:"/demos/assets-previz.jpg",caption:"실제 프리비즈 출력 · 2026.09.22 · 15초",description:"장면 배치와 카메라 움직임이 영상으로 이어진 결과",audio:false},
@@ -13,6 +15,15 @@ export default function DemoPlayer({kind}:{kind:keyof typeof DEMOS}){
  const [playing,setPlaying]=useState(false),[muted,setMuted]=useState(kind==='assets'),[time,setTime]=useState(0),[error,setError]=useState("");
  const launchPending=useRef(false);
  const [launching,setLaunching]=useState(false),[launchMessage,setLaunchMessage]=useState("");
+ const [hasMv,setHasMv]=useState(false);
+ useEffect(()=>{
+  if(kind!=='music')return;
+  let cancelled=false;
+  fetch(MV,{method:'HEAD'}).then(r=>{if(!cancelled)setHasMv(r.ok&&(r.headers.get('content-type')??'').startsWith('video/'))}).catch(()=>{});
+  return()=>{cancelled=true};
+ },[kind]);
+ // 새 탭에서 뮤직비디오가 소리와 함께 재생되므로, 이 장의 음원은 멈춘다.
+ const openMv=()=>{if(autoStart.current!==null){window.clearTimeout(autoStart.current);autoStart.current=null}ref.current?.pause()};
  const engineName=kind==='tts'?'TTS':kind==='assets'?'Assets':'Music';
  const launchEngine=async()=>{
   if(launchPending.current)return;
@@ -43,6 +54,6 @@ export default function DemoPlayer({kind}:{kind:keyof typeof DEMOS}){
    {demo.audio?<><audio ref={ref as React.RefObject<HTMLAudioElement>} src={demo.src} preload="auto" muted={muted} {...events}/><div className="music-wave" aria-label="실제 음원의 파형">{musicWave.peaks.map((height,i)=><i key={i} data-played={time/duration>=i/musicWave.peaks.length||undefined} style={{height:`${Math.max(5,height*220)}px`}}/>)}</div><span className="music-time">{time.toFixed(1)}<small> / {duration.toFixed(1)} s</small></span></>:<video ref={ref as React.RefObject<HTMLVideoElement>} src={demo.src} poster={demo.poster} preload="auto" playsInline muted={muted} {...events}/>}
    <span className="demo-caption">{demo.caption}</span>
   </div>
-  <div className="demo-controls" onKeyDown={e=>{if(e.key===' ')e.stopPropagation()}}><button type="button" onClick={toggle}>{playing?"일시정지":"재생"} <kbd>P</kbd></button>{kind!=='assets'&&<button type="button" onClick={sound}>{muted?"소리 켜기":"소리 끄기"} <kbd>A</kbd></button>}<span role="status">{launchMessage||error||demo.description}</span><button type="button" className="demo-launch" onClick={()=>void launchEngine()} disabled={launching} aria-busy={launching}>{launching?"앱 여는 중…":`${engineName} 엔진 실행`} <b aria-hidden="true">↗</b></button></div>
+  <div className="demo-controls" onKeyDown={e=>{if(e.key===' ')e.stopPropagation()}}><button type="button" onClick={toggle}>{playing?"일시정지":"재생"} <kbd>P</kbd></button>{kind!=='assets'&&<button type="button" onClick={sound}>{muted?"소리 켜기":"소리 끄기"} <kbd>A</kbd></button>}<span role="status">{launchMessage||error||demo.description}</span>{hasMv&&<a className="demo-launch demo-mv" href={MV} target="_blank" rel="noreferrer" onClick={openMv}>뮤직비디오 <b aria-hidden="true">↗</b></a>}<button type="button" className="demo-launch" onClick={()=>void launchEngine()} disabled={launching} aria-busy={launching}>{launching?"앱 여는 중…":`${engineName} 엔진 실행`} <b aria-hidden="true">↗</b></button></div>
  </Briefing>;
 }

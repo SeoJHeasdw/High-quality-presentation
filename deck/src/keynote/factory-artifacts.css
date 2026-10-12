@@ -5,7 +5,9 @@
 .factory-film-caption[data-ready] { opacity: 1; transform: none; transition: opacity .35s ease, transform .45s ease; }
 .factory-film-label { display: block; font-size: 20px; letter-spacing: .13em; color: #e3c895; margin-bottom: 16px; }
 .kn-factory-film .factory-film-caption h1 { font-size: 56px; line-height: 1.2; letter-spacing: -.035em; font-weight: 570; }
-.factory-film-caption p { font-size: 25px; color: #bac5ce; line-height: 1.45; margin-top: 17px; }
+.factory-film-caption p { font-size: 25px; color: #bac5ce; line-height: 1.45; margin-top: 17px; opacity: 0; }
+/* 설명 줄은 멈춘 화면에서 나온다(재생되는 동안에는 이름과 제목만) */
+.factory-film-caption[data-held] p { opacity: 1; transition: opacity .35s ease; }
 .factory-film-phase-0 .factory-film-caption, .factory-film-phase-4 .factory-film-caption { text-align: center; }
 .factory-film-phase-2 .factory-film-caption { text-align: right; }
 .factory-film-cues { position: absolute; z-index: 3; left: 100px; bottom: 96px; display: flex; gap: 9px; }

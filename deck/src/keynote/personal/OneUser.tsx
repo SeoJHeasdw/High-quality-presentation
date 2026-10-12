@@ -6,14 +6,16 @@ import "../incident/incident.css";
 import "./personal.css";
 
 /*
- * 17~20번은 하나의 공간이다(묶음 one-user).
- *   17번 두 단계 → phase 0~1, 18번 세 단계 → 2~4, 19번 세 단계 → 5~7, 20번 두 단계 → 8~9.
+ * 19~22번은 하나의 공간이다(묶음 one-user).
+ *   19번 두 단계 → phase 0~1, 20번 세 단계 → 2~4, 21번 세 단계 → 5~7, 22번 세 단계 → 8~10.
  * 3D는 personal/world.ts, 요구사항 표·설명·라벨은 여기의 DOM이 맡는다.
  * 19번(공장 안)의 모델 이름은 각 엔진 README의 제작 모델이다(FACT-CHECK 18행). 스테이션은 개발 중이다.
  * 위계(프론티어 모델 = 임원 → RICE = 현장 관리자 → 스테이션)에서 RICE가 일을 나누고 프론티어가 지켜보다 직접 내려오는 흐름은 구상이다.
+ * 22번은 "결국 영상 만드는 거 아닌가요?"에 답한다: 기업이었다면 같은 공장에 다른 스테이션이 선다(22-1, 발표자의 가정) → 저는 개인이라 제 것을 넣었다(22-2).
  */
 type Tone = "ice" | "amber" | "gold" | "mute" | "white" | "teal";
-type Label = { id: AnchorId; name: ReactNode; sub?: string; tone?: Tone; tag?: string; dir?: "up" | "left" | "right" | "down"; fade?: boolean; size?: "lg" };
+/** at: 단계가 시작되고 몇 초 뒤에 나타나는지. 3D 장면에서 그 일이 일어나는 때에 맞춘다(world.ts). */
+type Label = { id: AnchorId; name: ReactNode; sub?: string; tone?: Tone; tag?: string; dir?: "up" | "left" | "right" | "down"; fade?: boolean; size?: "lg"; at?: number };
 const STATIONS: { id: AnchorId; name: string; model: string }[] = [
   { id: "stVoice", name: "목소리", model: "Qwen3-TTS + 제 목소리 어댑터" },
   { id: "stStt", name: "받아쓰기 검수", model: "Whisper large-v3-turbo" },
@@ -34,13 +36,19 @@ function labelsFor(p: number): Label[] {
   if (p === 6) return [{ ...frontier, sub: "구독과 추가 사용량 · 월 20만원 이상" }, { id: "rentCodex", name: <>₩159,000<small>/월</small></>, sub: "Codex · Pro 플랜", tone: "white", dir: "down", size: "lg" }, { id: "rentClaude", name: <>US$72.77</>, sub: "Claude · 이번 달 추가 사용량 · 한도 US$76", tone: "white", dir: "down", size: "lg" }];
   if (p === 7) return [...stations("ice", false), { ...frontier, sub: "판단하고 지켜봅니다" }, { ...rice, name: "RICE", sub: "일을 나눕니다", tag: "현장 관리자" }];
   if (p === 8) return [];
-  return [
-    { id: "betOut", name: "01 사람이 보고 듣는 결과물", sub: "목소리·영상·2D·3D·음악은 계속 값을 받습니다", tone: "gold", dir: "right" },
-    { id: "betMe", name: "02 과도기엔 이름이 포트폴리오", sub: "무엇을 만드는 사람인지 보여줍니다", tone: "gold", dir: "left" },
-    { id: "betFactory", name: "03 스테이션은 갈아 끼웁니다", sub: "공장이 본체입니다", tone: "gold", dir: "up" },
+  // 22-1 · 기업이었다면(가정). 쉬운 이름을 위에, 기술 이름을 아래에 둔다. at은 핵이 내려앉는 때(world.ts SWAP_AT + SWAP_DUR)다.
+  if (p === 9) return [
+    { id: "stMusic", name: "데이터 조회", sub: "Text-to-SQL", tone: "white", dir: "left", at: 1.5 },
+    { id: "stAssets", name: "문서 검색", sub: "RAG", tone: "white", dir: "up", at: 1.9 },
+    { id: "stStt", name: "회의 정리", sub: "STT · Teams 회의 받아쓰기", tone: "white", dir: "up", at: 2.2 },
+    { id: "stVoice", name: "＋ 다음 업무", sub: "필요해지면 하나 더", tone: "mute", dir: "right", at: 2.7 },
+    { ...frontier, sub: "판단하고 지켜봅니다" },
+    { ...rice, name: "관리자 Agent", sub: "엔진에 일을 나눕니다", tag: "현장 관리자" },
   ];
+  // 22-2 · 저는 개인이라: 제 스테이션으로 돌아온다
+  return [...stations("gold", false), { ...frontier, sub: "판단하고 지켜봅니다" }, { ...rice, name: "RICE", sub: "일을 나눕니다", tag: "현장 관리자" }];
 }
-const ALL_IDS: AnchorId[] = ["me", "crowd", "os", "factory", "out", "redo", "stVoice", "stStt", "stAssets", "stMusic", "rice", "frontier", "rentCodex", "rentClaude", "betOut", "betMe", "betFactory"];
+const ALL_IDS: AnchorId[] = ["me", "crowd", "os", "factory", "out", "redo", "stVoice", "stStt", "stAssets", "stMusic", "rice", "frontier", "rentCodex", "rentClaude"];
 
 const SPECS: [string, string, string, string][] = [
   ["속도", "빠르게", "조금 느려도 괜찮습니다", "기다리는 건 저니까요."],
@@ -53,11 +61,16 @@ const FLOW = [
   "Factory · 제작 엔진이 맡은 결과를 하나씩 내놓습니다.",
   "저는 · 완성된 영상을 듣고, 틀린 곳만 다시 맡깁니다.",
 ];
-/** 19번의 제목. 20번은 따로 그린다. */
+/** 21번의 제목 */
 const FACTORY_HEAD: { kicker: string; title: ReactNode; lead: ReactNode }[] = [
   { kicker: "Factory 안", title: <>프론티어는 임원,<br/>RICE는 현장 관리자</>, lead: <>일은 RICE가 엔진에 나눠 주고, 프론티어는 지켜봅니다.<br/>RICE가 막히면 그때 직접 내려옵니다.</> },
   { kicker: "디지털 월세", title: <>비싼 지능은<br/>판단에만 빌려 씁니다</>, lead: <>만드는 데만 이만큼 나갑니다.<br/>모든 일을 임원에게 시키면 토큰이 남아나지 않습니다.</> },
   { kicker: "그래서 공장입니다", title: <>각자<br/>자기 일만 합니다</>, lead: <>임원은 판단하고, 관리자는 나누고, 스테이션은 만듭니다.<br/>새 일이 생기면 스테이션을 하나 더 들이면 됩니다.</> },
+];
+/** 22번의 답 두 단계: 기업이었다면(phase 9) → 저는 개인이라(phase 10) */
+const ANSWER_HEAD: { kicker: string; title: ReactNode; lead: ReactNode }[] = [
+  { kicker: "맞습니다. 저 한 명에게 맞췄습니다", title: <>기업이었다면<br/>스테이션이 달랐을 겁니다</>, lead: <>쓰는 사람이 바뀌면 들어가는 엔진이 바뀝니다.<br/>임원 · 관리자 · 스테이션의 구조는 그대로입니다.</> },
+  { kicker: "저는 개인이라", title: <>제가 쓸 것을<br/>넣었습니다</>, lead: <>스테이션은 갈아 끼우면 됩니다.<br/>남는 것은 공장입니다.</> },
 ];
 
 export default function OneUserStory({ part, step }: { part: 0 | 1 | 2 | 3; step: number }) {
@@ -76,11 +89,11 @@ export default function OneUserStory({ part, step }: { part: 0 | 1 | 2 | 3; step
     let w: OneUserWorld | null = null, cancelled = false;
     const lost = () => setFailed(true);
     const move = (e: PointerEvent) => w?.setPointer(e.clientX / innerWidth * 2 - 1, e.clientY / innerHeight * 2 - 1);
-    const images = ["/demos/tts-lecture.jpg", "/rent/codex-plan.png", "/rent/claude-usage.png", "/factory-film/03-image.jpg", "/factory-film/04-music.jpg"].map((src) => { const im = new Image(); im.src = src; return im; });
+    const images = ["/demos/tts-lecture.jpg", "/rent/codex-plan.png", "/rent/claude-usage.png"].map((src) => { const im = new Image(); im.src = src; return im; });
     Promise.all([import("./world"), ...images.map((im) => im.decode()), document.fonts.ready]).then(([mod]) => {
       if (cancelled) return;
       const { createOneUserWorld } = mod as typeof import("./world");
-      try { w = createOneUserWorld(canvas, { lecture: images[0], codex: images[1], claude: images[2], image: images[3], music: images[4] }, phaseRef.current, motionRef.current); }
+      try { w = createOneUserWorld(canvas, { lecture: images[0], codex: images[1], claude: images[2] }, phaseRef.current, motionRef.current); }
       catch { setFailed(true); return; }
       world.current = w;
       const live = w;
@@ -102,7 +115,7 @@ export default function OneUserStory({ part, step }: { part: 0 | 1 | 2 | 3; step
   useEffect(() => { world.current?.setMotion(motion); }, [motion]);
 
   const active = new Map(labelsFor(phase).map((l) => [l.id, l]));
-  const names = ["사지 않고 만들어 씁니다", "자비스에 맡기고 싶은 일", "공장 안", "제가 건 것"];
+  const names = ["사지 않고 만들어 씁니다", "자비스에 맡기고 싶은 일", "공장 안", "기업이었다면"];
   return <Frame n={16 + part} name={names[part]} step={step} className={`personal-v2 one-user one-user--${part}`}>
     <div className="iw ou" data-fallback={failed || undefined} data-phase={phase} aria-hidden="true">
       <canvas ref={canvasRef} className="iw-canvas" width={1920} height={1080}/>
@@ -110,7 +123,8 @@ export default function OneUserStory({ part, step }: { part: 0 | 1 | 2 | 3; step
       <div className="iw-labels" ref={labelsRef}>
         {ALL_IDS.map((id) => {
           const l = active.get(id);
-          return <div key={id} ref={(el) => { labelRefs.current[id] = el; }} className="iw-label" data-on={(l && !failed) || undefined} data-fade={l?.fade || undefined} data-tone={l?.tone ?? "ice"} data-dir={l?.dir ?? "up"} data-size={l?.size}>
+          return <div key={id} ref={(el) => { labelRefs.current[id] = el; }} className="iw-label" data-on={(l && !failed) || undefined} data-fade={l?.fade || undefined} data-tone={l?.tone ?? "ice"} data-dir={l?.dir ?? "up"} data-size={l?.size}
+            style={l?.at ? { transitionDelay: `${l.at}s` } : undefined}>
             <i className="iw-label-dot"/>
             <div className="iw-label-box">
               {l?.tag && <span className="iw-label-tag">{l.tag}</span>}
@@ -160,16 +174,18 @@ export default function OneUserStory({ part, step }: { part: 0 | 1 | 2 | 3; step
       <p className="ou-status of-status" data-phase={phase}>{phase === 6 ? <>2026.09.23 캡처 · 코딩 에이전트 사용분<span>매일 반복하는 생산 비용이 아닙니다</span></> : <>스테이션은 개발 중<span>RICE가 일을 나누고 프론티어가 지켜보는 흐름은 구상입니다</span></>}</p>
     </>}
     {part === 3 && <>
-      <blockquote className="ob-question" data-on={phase === 8 || undefined} data-small={phase === 9 || undefined}>“결국 영상 만드는 거 아닌가요?”</blockquote>
-      {phase === 9 && <div className="ou-heading ob-heading" data-on key="h9">
-        <p className="pv-eyebrow">발표자의 판단</p>
-        <h1>제가 건 것은<br/>세 가지입니다</h1>
+      <blockquote className="ob-question" data-on={phase === 8 || undefined} data-small={phase >= 9 || undefined}>“결국 영상 만드는 거 아닌가요?”</blockquote>
+      {phase >= 9 && <div className="ou-heading of-heading ob-heading" data-on key={`h${phase}`}>
+        <p className="pv-eyebrow">{ANSWER_HEAD[phase - 9].kicker}</p>
+        <h1>{ANSWER_HEAD[phase - 9].title}</h1>
+        <p className="of-lead">{ANSWER_HEAD[phase - 9].lead}</p>
       </div>}
-      <p className="ob-next" data-on={phase === 9 || undefined}>그래서 먼저 만든 스테이션들의 결과물입니다 <b aria-hidden="true">→</b></p>
+      <p className="of-note ob-note" data-on={phase === 9 || undefined}>스테이션만 다른 <b>Compound AI System</b>입니다<span>모델 하나가 아니라, 일마다 맞춘 엔진이 나눠 맡습니다</span></p>
+      <p className="ob-next" data-on={phase === 10 || undefined}>그래서 먼저 만든 스테이션들의 결과물입니다 <b aria-hidden="true">→</b></p>
     </>}
     {failed && part < 2 && <div className="ou-fallback">{part === 0 ? <b>1명</b> : <b>Agent OS → Factory → 저</b>}</div>}
     {failed && part === 2 && phase !== 6 && <ul className="ob-fallback">{STATIONS.map((st) => <li key={st.id}>{st.name}<span>{st.model}</span></li>)}</ul>}
     {failed && part === 2 && phase === 6 && <ul className="ob-fallback"><li>₩159,000/월<span>Codex · Pro 플랜</span></li><li>US$72.77<span>Claude · 이번 달 추가 사용량 · 한도 US$76</span></li></ul>}
-    {failed && phase === 9 && <ul className="ob-fallback">{labelsFor(9).map((l) => <li key={l.id}>{l.name}<span>{l.sub}</span></li>)}</ul>}
+    {failed && phase >= 9 && <ul className="ob-fallback ob-fallback--answer">{labelsFor(phase).filter((l) => l.id !== "frontier").map((l) => <li key={l.id}>{l.name}<span>{l.sub}</span></li>)}</ul>}
   </Frame>;
 }

@@ -13,6 +13,8 @@ import "./personal.css";
  *   자막  단어 단위 정렬 시각 (data/tts-alignment.json)
  *   영상  같은 구간의 프레임 (public/demos/tts-strip.jpg)
  * 재생 헤드는 오른쪽 위 영상의 재생 위치를 따른다. 모션을 끄면 한 지점에 멈춘 화면을 보여준다.
+ * 누가 했는지(발표자 확인 2026-10-12): 발표자는 어떤 강의를 하고 무엇을 전할지를 줬고, 보고 들은 뒤 피드백을 줬다(금색).
+ * 대본 쓰기 · 목소리 · 자막 · 고치기는 AI가 했다(네 줄 전체).
  */
 const DUR = 24;
 const STILL = 2.4; // 모션을 끌 때 멈춰 보여줄 시각: "AI가"를 읽는 순간
@@ -66,7 +68,7 @@ export default function ProductionTimeline() {
       <p className="pv-eyebrow">제가 고른 일 · 예를 들면 강의 한 편</p>
       <h1>저는 쓸 일이 있는 도구부터<br/>만들고 있습니다</h1>
       <p className="p14-lead">좋은 AI가 나오면, 이런 작업에 가져다 써보는 겁니다.</p>
-      <p className="p14-model"><span>제 컴퓨터에서 도는 모델</span><b>Qwen3-TTS 1.7B</b><i>+</i><b>제 목소리 어댑터</b></p>
+      <p className="p14-model p14-mine"><span>제가 준 것</span><b>어떤 강의를, 무엇을 전할지</b><i>+</i><b>보고, 듣고, 피드백</b></p>
     </div>
 
     <figure className="p14-monitor">
@@ -75,9 +77,10 @@ export default function ProductionTimeline() {
     </figure>
 
     <div className="p14-timeline" ref={root} data-motion={motion || undefined}>
+      <p className="pt-by">AI가 한 일</p>
       <div className="pt-ruler" aria-hidden="true">{Array.from({ length: DUR / 2 + 1 }, (_, i) => <span key={i} style={at(i * 2)}>{i * 2}s</span>)}</div>
       <div className="pt-track pt-track--script" style={{ "--order": 0 } as CSSProperties}>
-        <header><b>대본</b><span>제가 쓴 내용</span></header>
+        <header><b>대본</b><span>방향을 받아 쓰기</span></header>
         <div className="pt-lane">{SENTENCES.map((s, i) => <div key={i} className="pt-sentence" data-clipped={s.clipped || undefined} style={span(s.t0, s.t1)}>
           <span>{s.text}</span>{s.say && <em>읽기 · {s.say.replace(/[.]$/, "")}</em>}
         </div>)}</div>
@@ -94,11 +97,11 @@ export default function ProductionTimeline() {
         <div className="pt-lane">{WORDS.map((w, i) => <span key={i} className="pt-word" data-read={w.say ? "true" : undefined} style={span(w.t0, w.t1)}>{w.text}</span>)}</div>
       </div>
       <div className="pt-track pt-track--video" style={{ "--order": 3 } as CSSProperties}>
-        <header><b>강의 영상</b><span>보고, 듣고, 고치기</span></header>
+        <header><b>강의 영상</b><span>피드백대로 고치기</span></header>
         <div className="pt-lane pt-strip" aria-hidden="true"/>
       </div>
       <div className="pt-head" aria-hidden="true"><span ref={clock}>0.0s</span><b ref={said}/></div>
     </div>
-    <p className="p14-source">local-tts-engine 제작 기록의 실제 시각 · 문장·단어 정렬, 파형, 프레임은 같은 24초 구간</p>
+    <p className="p14-source">local-tts-engine 제작 기록의 실제 시각 · 문장·단어 정렬, 파형, 프레임은 같은 24초 구간 · 목소리는 Qwen3-TTS 1.7B + 제 목소리 어댑터</p>
   </Frame>;
 }

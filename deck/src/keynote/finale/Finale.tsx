@@ -53,49 +53,53 @@ function Strata() {
 function Blueprint() {
   // 방 = 만들고 있는 것, 점선 = 아직 그리기만 한 것. 13번 청사진 선의 언어를 이어 쓴다.
   return <div className="fb">
-    <svg className="fb-plan" viewBox="0 0 980 600" aria-label="자비스 설계도: 세 엔진은 개발 중, Agent OS와 연결은 아직 설계">
+    <svg className="fb-plan" viewBox="0 0 980 600" aria-label="자비스 설계도: 엔진 세 개는 지은 방, 방들을 잇는 연결은 아직 점선">
       <defs><pattern id="fb-grid" width="28" height="28" patternUnits="userSpaceOnUse"><path d="M28 0H0V28" fill="none" stroke="#6fb6e61a" strokeWidth="1"/></pattern></defs>
       <rect x="0" y="0" width="980" height="600" fill="url(#fb-grid)"/>
       <path className="fb-wall" d="M40 60H940V560H40Z"/>
       {/* 엔진 세 개: 지어진 방 */}
       {[["TTS", 70, 330], ["ASSETS", 330, 330], ["MUSIC", 590, 330]].map(([n, x, y], i) => <g key={n as string} className="fb-room fb-room--built" style={{ "--i": i } as CSSProperties}>
-        <rect x={x as number} y={y as number} width="230" height="190"/><text x={(x as number) + 22} y={(y as number) + 44}>{n}</text><text className="fb-sub" x={(x as number) + 22} y={(y as number) + 76}>개발 중</text></g>)}
-      {/* Agent OS: 아직 설계 */}
-      <g className="fb-room fb-room--plan"><rect x="330" y="90" width="490" height="170"/><text x="352" y="134">Agent OS</text><text className="fb-sub" x="352" y="166">구상</text></g>
+        <rect x={x as number} y={y as number} width="230" height="190"/><text x={(x as number) + 22} y={(y as number) + 44}>{n}</text></g>)}
+      {/* 연결: RICE(Agent OS)가 방들을 잇는 길은 아직 설계 */}
+      <g className="fb-room fb-room--plan"><rect x="330" y="90" width="490" height="170"/><text x="352" y="134">연결</text><text className="fb-sub" x="352" y="166">구상</text></g>
       {/* 연결: 점선 복도 */}
       <path className="fb-link" d="M185 330V200H330M445 330V260M705 330V260M820 175H900V470H820"/>
       {/* 현관: 저 */}
       <g className="fb-door"><path d="M40 440H14"/><circle cx="40" cy="440" r="12"/></g>
     </svg>
-    <ul className="fb-notes">
-      <li style={{ "--i": 0 } as CSSProperties}><b>01 연결</b>각 엔진을 제 맥락으로 이어 쓰는 흐름은 아직 설계입니다.</li>
-      <li style={{ "--i": 1 } as CSSProperties}><b>02 품질</b>만드는 것만큼 고르고 고치는 데에도 제 시간이 듭니다.</li>
-      <li style={{ "--i": 2 } as CSSProperties}><b>03 생활</b>시스템을 만드는 시간이 쓸모 있는 결과로 이어져야 합니다.</li>
-    </ul>
   </div>;
 }
 
 /** 43번은 단계마다 제목이 바뀐다(0 지금, 1 조합, 2 사무직이었다면, 3 계속 늘어나는 방, 4 방 하나에서 뻗는 사례). */
-const UNFINISHED: { kicker: string; title: ReactNode; lead: string }[] = [
-  { kicker: "아직 남아 있는 문제", title: <>완성된 자비스까지는<br/>갈 길이 있습니다</>, lead: "지금은 방마다 기능을 만들고, 실제로 쓰다 막히는 부분을 고치는 단계입니다." },
-  { kicker: "방과 방을 이으면", title: <>조합하면<br/>새 일이 생깁니다</>, lead: "같은 설계가 목소리, 업무, 주식 판단에 들어가 있습니다. 조합은 아직 가능성입니다." },
+/** 43-0 · 남아 있는 문제 셋. 이 장에서 가장 중요한 말이라 제목과 함께 화면에 둔다. */
+const PROBLEMS: [string, string][] = [
+  ["01 연결", "RICE가 방들을 제 맥락으로 잇는 길은 아직 점선입니다."],
+  ["02 품질", "만드는 만큼, 고르고 고치는 데에도 제 시간이 듭니다."],
+  ["03 쓸모", "만드는 일에 빠지지 않고, 쓸모가 있는지 계속 확인합니다."],
+];
+const UNFINISHED: { kicker: string; title: ReactNode; lead: string; notes?: [string, string][] }[] = [
+  { kicker: "아직 남아 있는 문제", title: <>만들 수 있다는 것과<br/>매일 쓸 만하다는 것은<br/>다릅니다</>, lead: "", notes: PROBLEMS },
+  { kicker: "방과 방을 이으면", title: <>조합하면<br/>할 수 있는 일이 늘어납니다</>, lead: "같은 설계가 목소리, 업무, 주식 판단에 들어가 있습니다. 조합은 아직 가능성입니다." },
   { kicker: "제가 사무직이었다면", title: <>이 방들부터<br/>지었을 겁니다</>, lead: "엑셀, 브라우저, PDF와 PPT, 문서 방향. 전부 제 가정입니다." },
-  { kicker: "방 하나를 더 지으면", title: <>그리고 방은<br/>계속 늘어납니다</>, lead: "방이 하나 늘 때마다, 이을 수 있는 조합은 두 배 넘게 늘어납니다." },
-  { kicker: "Personal CIO 방 하나만 봐도", title: <>조합 하나하나가<br/>일이 됩니다</>, lead: "전부 제 가정입니다. 방 하나에서만 이만큼 뻗습니다." },
+  // 마지막 단계: 17번의 "다 할 수 있다"(과도기의 희열)를 회수한다. 파는 이야기로 읽히지 않게 사례는 두지 않는다.
+  { kicker: "방 하나를 더 지을 때마다", title: <><em>다 할 수 있다</em>는 말은<br/>여기까지 넓어집니다</>, lead: "방이 하나 늘 때마다, 이을 수 있는 조합은 두 배 넘게 늘어납니다." },
 ];
 const HEAD: { name: string; kicker: string; title: ReactNode; lead: string }[] = [
   { name: "30년 동안 쌓을 것", kicker: "30년 동안 쌓을 것", title: <>모델이 바뀌어도<br/>제 작업은 남기고 싶습니다</>, lead: "더 좋은 AI가 나오면, 이미 만든 기반 위에서 받아들일 수 있도록 합니다." },
-  { name: "아직 남아 있는 문제", kicker: "아직 남아 있는 문제", title: <>완성된 자비스까지는<br/>갈 길이 있습니다</>, lead: "지금은 방마다 기능을 만들고, 실제로 쓰다 막히는 부분을 고치는 단계입니다." },
-  { name: "팀과 나누고 싶은 질문", kicker: "팀과 나누고 싶은 질문", title: <>내 일 하나를 맡겨본다면,<br/>무엇부터 바꿔볼 수 있을까요?</>, lead: "" },
+  { name: "아직 남아 있는 문제", kicker: "아직 남아 있는 문제", title: <>만들 수 있다는 것과<br/>매일 쓸 만하다는 것은<br/>다릅니다</>, lead: "" },
+  // 44 · 에세이의 끝. 16번의 질문("앞으로 30년, 저는 뭘 하며 살까요?")을 다시 띄우고 답한다. 표지의 "나는 자비스를 만들고 있다"로 돌아온다.
+  //      그 아래에는 처음의 두 마음(희열 · 두려움)이 같은 크기로 선다.
+  { name: "서제호의 30년", kicker: "앞으로 30년, 저는 뭘 하며 살까요?", title: <>아직은 모릅니다.<br/>그래서 <em>제 자비스</em>를 만들고 있습니다</>, lead: "" },
 ];
 
 /** 42-0 · 41번에서 넘어오는 이음새의 제목 */
-const BRIDGE = { name: "30년 동안 쌓을 것", kicker: "제가 할 수 있는 것", title: <>목줄이 걸릴지는 모릅니다.<br/>제가 할 수 있는 건<br/><em>제 집</em>을 짓는 일입니다</>, lead: "비싼 신은 꼭 필요할 때만 부르고요." };
+const BRIDGE = { name: "30년 동안 쌓을 것", kicker: "제가 할 수 있는 것", title: <>목줄이 걸릴지는 모릅니다.<br/>제가 할 수 있는 건<br/><em>제 집</em>을 짓는 일입니다</>, lead: "그날이 오든, 늦게 오든, 안 오든 남는 집으로요." };
 
 /** part -1은 41번(신에게 목줄), 0~2는 42~44번. 네 장이 같은 틀을 이어 쓰도록 자식의 자리를 맞춘다. */
 export default function FinaleStory({ part, step = 0 }: { part: -1 | 0 | 1 | 2; step?: number }) {
   const leash = part === -1, bridge = part === 0 && step === 0;
-  const head = leash ? null : bridge ? BRIDGE : part === 1 ? { ...HEAD[1], ...UNFINISHED[Math.min(4, step)] } : HEAD[part];
+  const head: { name: string; kicker: string; title: ReactNode; lead: string; notes?: [string, string][] } | null =
+    leash ? null : bridge ? BRIDGE : part === 1 ? { ...HEAD[1], ...UNFINISHED[Math.min(3, step)] } : HEAD[part];
   // 41·42번의 3D 단계: 41번 -1~1, 42번 2~3
   const phase = leash ? step - 1 : 2 + step;
   const className = leash ? "personal-v2 leash finale-pre" : `finale finale--${part}${bridge ? " finale--bridge" : ""}${part === 2 ? " kn-closing" : ""}`;
@@ -111,12 +115,13 @@ export default function FinaleStory({ part, step = 0 }: { part: -1 | 0 | 1 | 2; 
       <p className="fn-kicker">{head.kicker}</p>
       <h1>{head.title}</h1>
       {head.lead && <p className="fn-lead">{head.lead}</p>}
+      {head.notes && <ul className="fn-notes">{head.notes.map(([name, text], i) => <li key={name} style={{ "--i": i } as CSSProperties}><b>{name}</b>{text}</li>)}</ul>}
     </div> : <LeashCopy step={step}/>}
     {part === 0 && step === 1 && <Strata/>}
     {part === 1 && <><Blueprint3D step={step} fallback={<Blueprint/>}/><p className="fn-legend"><span><i/>실선 · 만든 방</span><span><i data-dash/>점선 · 구상·가정</span></p></>}
     {part === 2 && <>
+      <p className="fn-ask">처음의 두 마음은, 지금도 그대로입니다.</p>
       <ClosingChoices/>
-      <p className="fn-final">저는 앞으로 30년을 준비하는 방법으로,<br/><b>제 자비스를 만들고 있습니다.</b></p>
     </>}
   </Frame>;
 }

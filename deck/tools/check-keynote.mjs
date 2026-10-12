@@ -84,7 +84,7 @@ report.leashTo41=await page.evaluate(n=>document.querySelector('.kn-slide').data
 const leashOk=report.leash.map(b=>b.step).join(',')==='0,1,2'&&report.leash.every(b=>b.same)&&report.leash[0].title.includes('말이었습니다')&&report.leashTo41;
 // 7~8, 19~22 · 묶인 3D 공간: 장이 바뀌어도 같은 캔버스가 이어지고, 모든 단계가 그려지며, 뒤로 가면 처음 단계로 돌아온다.
 report.groups={};
-for(const [name,first,beats] of [['agentWeb','story-web-door',5],['oneUser','manifesto-requirements',10]]){
+for(const [name,first,beats] of [['agentWeb','story-web-door',5],['oneUser','manifesto-requirements',11]]){
  await go(slideNumber(first));await page.waitForSelector('.iw-canvas[data-ready]',{timeout:10000});await page.waitForTimeout(400);
  await page.evaluate(()=>{window.__groupCanvas=document.querySelector('.iw-canvas')});
  const phases=[];for(let i=0;i<beats;i++){if(i){await page.keyboard.press('ArrowRight');await page.waitForTimeout(1800)}phases.push(await page.evaluate(()=>Number(document.querySelector('.iw').dataset.phase)))}
@@ -92,7 +92,7 @@ for(const [name,first,beats] of [['agentWeb','story-web-door',5],['oneUser','man
  for(let i=1;i<beats;i++)await page.keyboard.press('ArrowLeft');await page.waitForTimeout(900);
  report.groups[name]={phases:phases.join(','),same,reverse:await page.evaluate(()=>Number(document.querySelector('.iw').dataset.phase))===0,fallback:await page.locator('.iw[data-fallback]').count()===0};
 }
-const groupsOk=Object.values(report.groups).every(g=>g.phases===Array.from({length:g.phases.split(',').length},(_,i)=>i).join(',')&&g.same&&g.reverse&&g.fallback)&&report.groups.oneUser.phases.split(',').length===10;
+const groupsOk=Object.values(report.groups).every(g=>g.phases===Array.from({length:g.phases.split(',').length},(_,i)=>i).join(',')&&g.same&&g.reverse&&g.fallback)&&report.groups.oneUser.phases.split(',').length===11;
 // 16·17 · 같은 집과 30년 눈금: 17번 세 단계 동안 배경과 눈금을 다시 그리지 않고, 뒤로 가면 16번 글이 돌아온다.
 await go(slideNumber('manifesto-person'));await page.waitForTimeout(500);
 await page.evaluate(()=>{window.__ruler=document.querySelector('.p13-years')});
@@ -107,8 +107,8 @@ await page.evaluate(()=>{window.__finaleSky=document.querySelector('.fn-sky')});
 const sunOpacity=()=>page.evaluate(()=>Number(getComputedStyle(document.querySelector('.fn-plate--sun')).opacity));
 report.finale={beforeSun:await sunOpacity()};
 report.finale.bridge=await page.waitForSelector('.ls-canvas[data-ready]',{timeout:10000}).then(()=>true,()=>false);
-// 42번은 두 단계(이음새 → 세 겹)다. 42·0 → 42·1 → 43·0 → 43·1 → 43·2 → 43·3 → 43·4 → 44
-for(let i=0;i<7;i++){await page.keyboard.press('ArrowRight');await page.waitForTimeout(i===2?1200:500);if(i===2)report.finale.blueprint=await page.evaluate(()=>!!document.querySelector('.fb3-canvas[data-ready]')&&document.querySelector('.fn-sky')===window.__finaleSky)}
+// 42번은 두 단계(이음새 → 세 겹)다. 42·0 → 42·1 → 43·0 → 43·1 → 43·2 → 43·3 → 44
+for(let i=0;i<6;i++){await page.keyboard.press('ArrowRight');await page.waitForTimeout(i===2?1200:500);if(i===2)report.finale.blueprint=await page.evaluate(()=>!!document.querySelector('.fb3-canvas[data-ready]')&&document.querySelector('.fn-sky')===window.__finaleSky)}
 await page.waitForTimeout(2900);
 Object.assign(report.finale,{same:await page.evaluate(()=>document.querySelector('.fn-sky')===window.__finaleSky),afterSun:await sunOpacity(),choices:await page.locator('.kn-slide .rb-true-focus__item').count()});
 const finaleOk=report.finale.same&&report.finale.bridge&&report.finale.blueprint&&report.finale.beforeSun===0&&report.finale.afterSun>.99&&report.finale.choices===2;

@@ -170,12 +170,12 @@ export function createWorstWorld(canvas: HTMLCanvasElement, assets: WorstAssets,
     const p = pc.phase, t = pc.t, time = pc.clock, u = (s: number, d: number) => pc.ev(s, d);
     let rin = 0, streamK = 0, gather = 0, flow = 0, reach = 0, tickA = 0;
     if (p >= 1) {
-      // 단어가 선 뒤 잠시 머물렀다가 화면 테두리로 모인다
-      rin = p === 1 ? easeOut(u(0.2, 1.4)) : 1;
-      streamK = p === 1 ? u(1.0, 2.0) : 1;
-      gather = p === 1 ? easeInOut(u(4.3, 1.4)) : 1;
-      flow = p === 1 ? 0.3 * smooth(5.4, 7.0, t) : 0.3;
-      tickA = p === 1 ? smooth(6.0, 7.2, t) : 1;
+      // 단어가 선 뒤 화면 테두리로 모인다. 제목까지 4초 남짓에 끝난다(worst.css의 지연과 같은 시간표).
+      rin = p === 1 ? easeOut(u(0.1, 0.8)) : 1;
+      streamK = p === 1 ? u(0.5, 1.1) : 1;
+      gather = p === 1 ? easeInOut(u(2.0, 0.9)) : 1;
+      flow = p === 1 ? 0.3 * smooth(2.7, 3.5, t) : 0.3;
+      tickA = p === 1 ? smooth(2.9, 3.6, t) : 1;
     }
     if (p >= 2) { flow = 0.3 + 0.28 * easeInOut(u(0.2, 2.2)); reach = easeInOut(u(0.2, 2.4)); }
     tileMat.uniforms.uIn.value = rin; tileMat.uniforms.uTime.value = time;

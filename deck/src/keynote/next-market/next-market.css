@@ -144,13 +144,6 @@
 .nm-label strong { font-size: 24px; font-weight: 620; color: #f2f5f7; letter-spacing: -.03em; }
 .nm-label span { font-size: 17px; color: var(--tone); letter-spacing: -.01em; }
 
-/* 사이트 머리: 지금 읽는 구간 */
-.nm-nav { position: absolute; left: 50%; top: 34px; transform: translateX(-50%); z-index: 8; display: flex; gap: 4px; padding: 6px; border-radius: 999px;
-  background: #0a111ab3; border: 1px solid #ffffff17; backdrop-filter: blur(14px); box-shadow: 0 8px 30px #0006; }
-.nm-nav span { position: relative; z-index: 1; font-size: 18px; letter-spacing: -.01em; color: #8ea0ae; padding: 10px 22px 11px; border-radius: 999px; transition: color .3s; }
-.nm-nav span[data-on] { color: #f5f3ee; }
-.nm-nav-bar { position: absolute; left: 0; bottom: 7px; height: 2px; border-radius: 1px; background: #e2c795; box-shadow: 0 0 10px #e2c795; transform-origin: left; }
-
 /* 오른쪽 진행 막대 */
 .nm-rail { position: absolute; right: 44px; top: 350px; height: 380px; width: 2px; z-index: 6; background: #ffffff1c; --fill: 0; }
 .nm-rail::before { content: ""; position: absolute; left: 0; top: 0; width: 2px; height: 100%; background: linear-gradient(180deg, #e2c795, #f5e3bd); transform: scaleY(var(--fill)); transform-origin: top; }

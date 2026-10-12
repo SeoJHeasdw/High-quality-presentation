@@ -80,7 +80,7 @@
 
 연출: 낱말 조각이 모여 사람의 형태가 되는 장면은 비유입니다. 특정 모델이나 로봇을 나타내지 않습니다.
 ### 2
-그런데 신에게 목줄이 걸릴까요? 우리를 움직여 온 그 언어에, 우리가 지금 몸을 만들어 주고 있는 건 아닐까요? 실제로 로봇의 두뇌도 언어 모델에서 출발합니다. 구글 딥마인드의 Gemini Robotics는 언어 모델 위에 로봇을 움직이는 출력을 더한 모델입니다. 머스크는 2014년에 AI를 두고 악마를 소환하는 일이라고 했습니다. 악마를 다스릴 수 있다고 확신하는 사람의 이야기는 잘 끝나지 않는다고요. 저도 답은 모릅니다.
+그런데 신에게 목줄이 걸릴까요? 우리를 움직여 온 그 언어에, 우리가 지금 몸을 만들어 주고 있는 건 아닐까요? 실제로 로봇의 두뇌도 언어 모델에서 출발합니다. 구글 딥마인드의 Gemini Robotics는 언어 모델 위에 로봇을 움직이는 출력을 더한 모델입니다. 일론 머스크는 2014년에 AI를 두고 악마를 소환하는 일이라고 했습니다. 악마를 다스릴 수 있다고 확신하는 사람의 이야기는 잘 끝나지 않는다고요. 저도 답은 모릅니다.
 
 근거: 목줄과 몸에 대한 질문은 발표자의 질문이며 출처를 붙이지 않습니다.
 Gemini Robotics: Google DeepMind, 2025-03-12 — "advanced vision-language-action (VLA) model that was built on Gemini 2.0 with the addition of physical actions as a new output modality for the purpose of directly controlling robots." https://deepmind.google/discover/blog/gemini-robotics-brings-ai-into-the-physical-world/

@@ -67,11 +67,11 @@ const ordered = [
  byId("manifesto-person"),
  {id:"manifesto-transition",scriptKey:"manifesto-transition",steps:2,group:"person-ruler",render:({step})=><PersonalIntro part={1} step={step}/>},
  byId("manifesto-compute"),
- // 19~22 · 한 사람을 둘러싼 흐름에서 Factory 안으로 들어가 제 베팅까지 한 공간이다(묶음 one-user).
+ // 19~22 · 한 사람을 둘러싼 흐름에서 Factory 안으로 들어가, "기업이었다면"의 스테이션과 제 스테이션까지 한 공간이다(묶음 one-user).
  {id:"manifesto-requirements",scriptKey:"manifesto-requirements",steps:1,group:"one-user",render:({step})=><OneUserStory part={0} step={step}/>},
  {id:"manifesto-system",scriptKey:"manifesto-system",steps:2,group:"one-user",render:({step})=><OneUserStory part={1} step={step}/>},
  {id:"manifesto-factory",scriptKey:"manifesto-factory",steps:2,group:"one-user",render:({step})=><OneUserStory part={2} step={step}/>},
- {id:"manifesto-bets",scriptKey:"manifesto-bets",steps:1,group:"one-user",render:({step})=><OneUserStory part={3} step={step}/>},
+ {id:"manifesto-company",scriptKey:"manifesto-company",steps:2,group:"one-user",render:({step})=><OneUserStory part={3} step={step}/>},
  byId("factory-repositories"),
  ...OriginalDeck.slides.filter(slide=>slide.group==="factory-flight"),
  ...(["tts","assets","music"] as const).map(kind=>({id:`demo-${kind}`,scriptKey:`demo-${kind}`,render:()=> <DemoPlayer kind={kind}/>})),
@@ -79,7 +79,7 @@ const ordered = [
  ...ABUSE_SLIDES,
  // 41~44 · 목줄에서 새벽으로. 41번의 3D 장면이 42번 첫 단계까지 이어지고, 배경은 네 장 동안 다시 그리지 않는다(묶음 finale).
  {id:"abuse-leash",scriptKey:"abuse-leash",group:"finale",steps:2,render:({step})=><FinaleStory part={-1} step={step}/>},
- ...(["manifesto-remains","tel-unfinished","tel-invitation"] as const).map((id,part)=>({id,scriptKey:id,group:"finale",steps:id==="tel-unfinished"?4:id==="manifesto-remains"?1:undefined,render:({step}:{step:number})=><FinaleStory part={part as 0|1|2} step={step}/>})),
+ ...(["manifesto-remains","tel-unfinished","tel-invitation"] as const).map((id,part)=>({id,scriptKey:id,group:"finale",steps:id==="tel-unfinished"?3:id==="manifesto-remains"?1:undefined,render:({step}:{step:number})=><FinaleStory part={part as 0|1|2} step={step}/>})),
 ];
 const KeynoteDeck:DeckModule={className:"deck-keynote",slides:ordered.map((slide,index)=>({...slide,render:ctx=><SlidePosition.Provider value={{index,total:ordered.length}}>{slide.render(ctx)}</SlidePosition.Provider>}))};
 export default KeynoteDeck;

@@ -1,15 +1,18 @@
-/* 44번 · 새벽의 두 갈래. 왼쪽은 넓고 낮게, 오른쪽은 좁고 높게: 초점 틀이 멀리, 모양을 바꿔 움직인다. */
+/* 44번 · 처음의 두 마음. 두 칸은 같은 크기로 나란히 선다(초점 틀이 같은 모양으로 옮겨 간다). */
 .closing-choices {
   display: grid;
-  grid-template-columns: minmax(0, 1.25fr) minmax(0, .85fr);
-  gap: 90px;
-  align-items: end;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 70px;
+  align-items: stretch;
   width: 100%;
 }
 .closing-choices .rb-true-focus__item { padding: 20px 26px 24px; border-radius: 4px; transition: background .35s ease; }
 .closing-choices__num { display: block; font-size: 20px; font-weight: 600; letter-spacing: .12em; color: #ffe2b0; opacity: .8; }
 .closing-choices__word { display: block; margin-top: 4px; font-size: 150px; line-height: 1; font-weight: 700; letter-spacing: -.06em; color: #fff6e8; text-shadow: 0 6px 60px #0009; transition: color .3s ease, text-shadow .3s ease; }
-.closing-choices .rb-true-focus__item:nth-child(2) .closing-choices__word { font-size: 124px; }
+/* 희열은 금색, 두려움은 파랑(17번과 같은 색). 초점이 가면 더 밝아진다. */
+.closing-choices .rb-true-focus__item:nth-child(1) .closing-choices__word { color: #ffe6bd; }
+/* 두려움은 세 글자라 같은 크기면 희열보다 커 보인다. 글자만 줄이고, 줄인 만큼 위를 띄워 아래 줄들은 두 칸이 같은 높이에 오게 한다. */
+.closing-choices .rb-true-focus__item:nth-child(2) .closing-choices__word { color: #cfeeff; font-size: 124px; margin-top: 30px; }
 .closing-choices__title { display: block; margin-top: 22px; font-size: 36px; line-height: 1.3; font-weight: 600; letter-spacing: -.035em; color: #fff0da; word-break: keep-all; }
 .closing-choices__description { display: block; margin-top: 12px; font-size: 25px; line-height: 1.55; color: #e4d6c3; word-break: keep-all; text-shadow: 0 2px 20px #0008; }
 .closing-choices .rb-true-focus__item[data-active] { background: #0c070566; }

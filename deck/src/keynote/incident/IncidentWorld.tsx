@@ -42,12 +42,12 @@ function labelsFor(p: number): Label[] {
     { id: "globe", name: "바깥 인터넷", sub: "7월 8일 · 막아둔 벽 밖으로", tone: "amber", tag: "선 ②", dir: "left", at: 3.6 },
     { id: "serviceSide", name: "Hugging Face", sub: "7월 11~13일 · 실서비스 일부", tone: "amber", tag: "선 ③", dir: "right", at: 5.2 },
   );
-  // 14번 · 신호 세 번과 결론. 신호는 고리가 켜지는 때(world.ts SIG_AT + 1.1초)에 맞춘다.
+  // 14번 · 신호 세 번과 결론. 신호는 고리가 켜지는 때(world.ts SIG_AT + SIG_DUR)에 맞춘다.
   if (p === 8) out.push(
-    { id: "desk", name: "OpenAI", sub: "세 번 모두 사람이 봤다", tone: "gold", tag: "사람", dir: "up", at: 0.3 },
-    { id: "sig0", name: "5월 26일", sub: "게시판 활동을 봤다", tone: "gold", dir: "left", at: 1.6 },
-    { id: "sig1", name: "6월 27일", sub: "경보 · 멈출 필요 없음", tone: "gold", dir: "left", at: 3.3 },
-    { id: "sig2", name: "7월 5일", sub: "서버 장애 · 서버를 내림", tone: "gold", dir: "right", at: 4.6 },
+    { id: "desk", name: "OpenAI", sub: "보는 사람은 있었다", tone: "gold", tag: "사람", dir: "up", at: 0.2 },
+    { id: "sig0", name: "5월 26일", sub: "게시판 활동을 봤다", tone: "gold", dir: "left", at: 1.2 },
+    { id: "sig1", name: "6월 27일", sub: "경보 · 멈출 필요 없음", tone: "gold", dir: "left", at: 1.9 },
+    { id: "sig2", name: "7월 5일", sub: "서버 장애 · 서버를 내림", tone: "gold", dir: "right", at: 2.6 },
   );
   if (p === 9) out.push(
     { id: "fence", name: "범위", sub: "어디까지 닿게 할지", tone: "gold", dir: "up", at: 1.4 },

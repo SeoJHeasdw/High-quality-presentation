@@ -2,20 +2,21 @@ import TrueFocus, { type TrueFocusItem } from "../reactbits/TrueFocus/TrueFocus"
 import { usePerformanceMotion } from "./usePerformanceMotion";
 import "./ClosingChoices.css";
 
-// 44번 · 두 갈래의 답. 큰 낱말(만들기·맡기기)이 주인공이고, 원래의 뜻은 그 아래에 둔다.
+// 44번 · 처음의 두 마음(17번의 금색 "다 할 수 있다"와 파란 "대체될 수 있다", 표지의 "희열과 두려움")을 마지막에 다시 세운다.
+// 큰 낱말이 마음이고, 그 아래가 그 마음으로 하는 일이다. 두 칸을 이어 읽으면 "방은 하나씩 짓고, 판단은 제가 쥡니다"가 된다.
 const CHOICES: readonly TrueFocusItem[] = [
   {
-    id: "creation", label: "만들기 · 계속 미루던 제작",
-    content: <><span className="closing-choices__num">01</span><span className="closing-choices__word">만들기</span><span className="closing-choices__title">계속 미루던 제작</span><span className="closing-choices__description">혼자 하기엔 일이 많아서<br/>시작하지 못했던 것</span></>,
+    id: "joy", label: "희열 · 다 할 수 있다",
+    content: <><span className="closing-choices__num">01</span><span className="closing-choices__word">희열</span><span className="closing-choices__title">다 할 수 있다</span><span className="closing-choices__description">방은 하나씩 짓고,</span></>,
   },
   {
-    id: "repetition", label: "맡기기 · 반복해서 하는 작업",
-    content: <><span className="closing-choices__num">02</span><span className="closing-choices__word">맡기기</span><span className="closing-choices__title">반복해서 하는 작업</span><span className="closing-choices__description">내 기준은 분명한데<br/>매번 손이 가는 것</span></>,
+    id: "fear", label: "두려움 · 대체될 수 있다",
+    content: <><span className="closing-choices__num">02</span><span className="closing-choices__word">두려움</span><span className="closing-choices__title">대체될 수 있다</span><span className="closing-choices__description">판단은 제가 쥡니다.</span></>,
   },
 ];
 
 export default function ClosingChoices() {
   const motionEnabled = usePerformanceMotion();
-  return <TrueFocus items={CHOICES} label="내 일 하나를 맡겨본다면" className="closing-choices"
+  return <TrueFocus items={CHOICES} label="처음의 두 마음" className="closing-choices"
     motionEnabled={motionEnabled}/>;
 }

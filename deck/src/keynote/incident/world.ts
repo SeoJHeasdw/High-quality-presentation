@@ -819,8 +819,10 @@ export function createIncidentWorld(canvas: HTMLCanvasElement, initialPhase: num
   const SIG_FROM = [BOARD_POS.clone().add(new THREE.Vector3(3.6, 0.2, 0.75)), ROOM_POS[0].clone().setY(2.9), SERVER_POS.clone().add(new THREE.Vector3(0.98, 2.3, 0.3))];
   /** 라벨 자리: 게시판은 왼쪽 위 모서리, 실행 환경은 방 A, 서버는 오른쪽 옆 */
   const SIG_LABEL = [BOARD_POS.clone().add(new THREE.Vector3(-3.9, 1.5, 0.6)), ROOM_POS[0].clone().setY(2.95), SERVER_POS.clone().add(new THREE.Vector3(1.0, 1.6, 0.8))];
-  /** 신호마다 그리기 시작하는 때. 1.1초 뒤(1.6 · 3.3 · 4.6초)에 고리가 켜진다. */
-  const SIG_AT = [0.5, 2.2, 3.5];
+  /** 신호마다 그리기 시작하는 때. SIG_DUR 뒤(1.2 · 1.9 · 2.6초)에 고리가 켜진다. 말을 줄여도 화면이 먼저 끝나도록 4초 남짓에 맞췄다. */
+  const SIG_AT = [0.4, 1.1, 1.8], SIG_DUR = 0.8;
+  /** 14-0으로 들어올 때의 카메라 이동 시간. 라벨은 카메라가 멈춰야 나오므로(labelAlpha) 다른 단계(2.4초)보다 짧게 둔다. */
+  const SIG_CAM = 1.4;
   const signals = SIG_FROM.map((from, i) => {
     const tube = makeTube(arcTo(from, DESK_POS.clone().setY(LAMP_Y[i]).add(new THREE.Vector3(-0.42, 0, -0.3)), 2.4 - i * 0.5), GOLD, 0.042);
     tube.mat.uniforms.uBase.value = 0; tube.mesh.visible = false;
@@ -851,7 +853,7 @@ export function createIncidentWorld(canvas: HTMLCanvasElement, initialPhase: num
   /** 둘째 선이 방화벽을 지나는 때. 방화벽은 그 선 길이의 47% 자리에 있다. */
   const WALL_AT = LEG_AT[1][0] + LEG_AT[1][1] * (1 - Math.cbrt(1 - 0.47));
   /** 14-0에서 선이 다시 빛나는 때: 6.26은 첫 신호 뒤, 7.8·7.11~13은 셋째 신호와 평가 재개 뒤 */
-  const LEG_PULSE = [1.9, 5.3, 5.7];
+  const LEG_PULSE = [1.4, 3.0, 3.3];
 
   /* 14-1 · 감시: 기둥에서 방마다 내려가는 금색 선 */
   const watchLines = rooms.map((r) => { const t = makeTube(arcTo(DESK_POS.clone().setY(3.5), r.top.clone(), 1.4), GOLD, 0.035); t.mat.uniforms.uBase.value = 0; t.mesh.visible = false; return { ...t, head: goldHead() }; });
@@ -1187,7 +1189,7 @@ export function createIncidentWorld(canvas: HTMLCanvasElement, initialPhase: num
     deskPool.mat.opacity = 0.22 * deskVis; deskLight.intensity = deskVis * 7;
     // 8번: 신호 세 번. 9번에는 고리 셋이 켜진 채로 남는다(지켜보는 자리).
     signals.forEach((sg, i) => {
-      const s = p === 8 ? ev(SIG_AT[i], 1.1) : 0;
+      const s = p === 8 ? ev(SIG_AT[i], SIG_DUR) : 0;
       const lit = approach(`sig${i}`, p === 8 ? 1 : 0, dt, 3);
       sg.mesh.visible = lit > 0.01 && s > 0;
       sg.mat.uniforms.uDraw.value = Math.max(0.001, easeOut(s));
@@ -1195,7 +1197,7 @@ export function createIncidentWorld(canvas: HTMLCanvasElement, initialPhase: num
       sg.mat.uniforms.uHead.value = p === 8 && s < 1 ? 1 : 0;
       sg.curve.getPoint(Math.max(0.001, easeOut(s)), tmp); sg.head.position.copy(tmp);
       (sg.head.material as THREE.SpriteMaterial).opacity = p === 8 && s > 0 && s < 1 ? 1 : 0;
-      const born = since - SIG_AT[i], landed = born - 1.1;
+      const born = since - SIG_AT[i], landed = born - SIG_DUR;
       sg.spark.opacity = p === 8 && played && born > 0 ? Math.exp(-born * 2.2) * 0.9 : 0;
       const on = approach(`lamp${i}`, p === 8 ? (s >= 1 ? 1 : 0) : p === 9 ? 1 : 0, dt, 6) * deskVis;
       lamps[i].mat.color.copy(GOLD).multiplyScalar(0.3 + on * 2.3); lamps[i].mat.opacity = deskVis * (0.3 + 0.7 * on);
@@ -1304,7 +1306,7 @@ export function createIncidentWorld(canvas: HTMLCanvasElement, initialPhase: num
       // Camera always travels; the story beat replays only when moving forward.
       cam.from.copy(camera.position); cam.fromLook.copy(lookNow);
       cam.eye.set(...poseOf(next).eye); cam.look.set(...poseOf(next).look);
-      cam.arc = poseOf(next).arc ?? 0; cam.t0 = clock; cam.dur = forward ? 2.4 : 1.6;
+      cam.arc = poseOf(next).arc ?? 0; cam.t0 = clock; cam.dur = forward ? (next === 8 ? SIG_CAM : 2.4) : 1.6;
       intro = 1;
       if (next === 4 && phase < 4) S.board = 1;
       const standing = (q: number) => q >= 0;
