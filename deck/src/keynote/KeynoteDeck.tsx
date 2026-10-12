@@ -23,7 +23,7 @@ const OriginalDeck: DeckModule = {
  className:"deck-keynote",
  slides:[
   {id:"manifesto-cover",scriptKey:"manifesto-cover",render:()=> <Frame n={1} name="제가 살아가려는 방식" scene="uncertain" className="kn-cover">
-   <p className="kn-kicker">AI Engineer의 개인 실험</p><h1>나는 자비스를<br/>만들고 있다</h1><p className="hero-note">앞으로 30년, 제 일과 삶을 어떻게 바꿔갈 것인가</p>
+   <p className="kn-kicker">95년생 서울 사는 서제호의 에세이</p><h1>나는 자비스를<br/>만들고 있다</h1><p className="hero-note">AI를 만난 희열과 두려움, 그리고 앞으로의 30년</p>
   </Frame>},
   {id:"manifesto-person",scriptKey:"manifesto-person",group:"person-ruler",render:()=> <PersonalIntro part={0}/>},
   {id:"manifesto-thirty",scriptKey:"manifesto-thirty",render:()=> <Briefing n={3} name="시간의 범위" title="앞으로 30년을 생각했습니다" lead="지금의 직업과 도구가 그대로일 것이라고 가정하기 어렵습니다.">
@@ -47,9 +47,6 @@ const OriginalDeck: DeckModule = {
   {id:"factory-revision",scriptKey:"factory-revision",steps:1,render:({step})=> <Briefing n={17} name="만든 뒤의 작업" title="한 번 생성하고 끝내지 않습니다" lead="결과를 고르고 수정할 수 있어야, 제 작업에 계속 쓸 수 있습니다." step={step} className="brief-evidence">
    <div className="evidence-copy"><Reveal><h2>후보를 비교하고<br/>필요한 곳을 다시 만든다</h2><p>원본과 선택 기록을 남깁니다.</p></Reveal><Reveal order={1} on={step>=1}><h2>최종 판단은 직접 한다</h2><p>발음, 음악성, 에셋 품질을<br/>자동 검사만으로 승인하지 않습니다.</p></Reveal></div>
    <figure className="evidence-shot" data-focus={step}><img src="/engines/tts-editing.png" alt="Local TTS Engine의 페이지 범위 음성 재생성 화면"/><figcaption>Local TTS Engine 개발 중 화면</figcaption></figure>
-  </Briefing>},
-  {id:"tel-this-presentation",scriptKey:"tel-this-presentation",steps:1,render:({step})=> <Briefing n={30} name="지금 보고 계신 것도" title="이 발표도 AI와 함께 만들었습니다" lead="원하는 경험을 말하고, Opus 5.5·Astra와 구현하고, 실제로 보며 다시 고쳤습니다." step={step}>
-   <Reveal className="actual-request"><span className="column-label">제가 요청한 것</span><blockquote>“→를 누르면 안으로 빨려 들어가면서<br/>실제 엔진들이 나타나면 좋겠어요.”</blockquote></Reveal><Reveal on={step>=1} className="request-result"><span>방금 지나온 장면</span><p>그 요청을 코드와 움직임으로 만들고,<br/>보이는 결과를 기준으로 수정했습니다.</p></Reveal>
   </Briefing>},
  ],
 };
@@ -79,11 +76,10 @@ const ordered = [
  ...OriginalDeck.slides.filter(slide=>slide.group==="factory-flight"),
  ...(["tts","assets","music"] as const).map(kind=>({id:`demo-${kind}`,scriptKey:`demo-${kind}`,render:()=> <DemoPlayer kind={kind}/>})),
  {id:"manifesto-worst-model",scriptKey:"manifesto-worst-model",steps:2,render:({step})=><WorstModelStory step={step}/>},
- byId("tel-this-presentation"),
  ...ABUSE_SLIDES,
- // 42~46 · 목줄에서 새벽으로. 42번의 3D 장면이 43번 첫 단계까지 이어지고, 배경은 다섯 장 동안 다시 그리지 않는다(묶음 finale).
+ // 41~44 · 목줄에서 새벽으로. 41번의 3D 장면이 42번 첫 단계까지 이어지고, 배경은 네 장 동안 다시 그리지 않는다(묶음 finale).
  {id:"abuse-leash",scriptKey:"abuse-leash",group:"finale",steps:2,render:({step})=><FinaleStory part={-1} step={step}/>},
- ...(["manifesto-remains","tel-sharing","tel-unfinished","tel-invitation"] as const).map((id,part)=>({id,scriptKey:id,group:"finale",steps:id==="tel-unfinished"?4:id==="manifesto-remains"?1:undefined,render:({step}:{step:number})=><FinaleStory part={part as 0|1|2|3} step={step}/>})),
+ ...(["manifesto-remains","tel-unfinished","tel-invitation"] as const).map((id,part)=>({id,scriptKey:id,group:"finale",steps:id==="tel-unfinished"?4:id==="manifesto-remains"?1:undefined,render:({step}:{step:number})=><FinaleStory part={part as 0|1|2} step={step}/>})),
 ];
 const KeynoteDeck:DeckModule={className:"deck-keynote",slides:ordered.map((slide,index)=>({...slide,render:ctx=><SlidePosition.Provider value={{index,total:ordered.length}}>{slide.render(ctx)}</SlidePosition.Provider>}))};
 export default KeynoteDeck;

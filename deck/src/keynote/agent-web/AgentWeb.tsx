@@ -12,6 +12,7 @@ import "./agent-web.css";
 export const AGENT_WEB_SOURCES = {
   webmcp: "https://developer.chrome.com/blog/webmcp-epp",
   aside: "https://aside.com/",
+  muse: "https://www.geekwire.com/2026/amazon-blocks-metas-muse-ai-assistant-in-new-standoff-over-agentic-shopping/",
 };
 
 type Tone = "ice" | "amber" | "gold" | "mute";
@@ -118,11 +119,12 @@ export default function AgentWebStory({ part, step }: { part: 0 | 1; step: numbe
       {NARRATION[phase]}
     </p>
     {phase === 1 && <p className="aw-aside" key="aside"><b>Aside</b>사람과 에이전트가 함께 쓰는 브라우저도 나왔습니다</p>}
+    {phase === 4 && <p className="aw-aside" key="muse"><b>2026.09.20</b>Amazon은 Meta의 에이전트 Muse가 대신 구매하는 것을 막았습니다</p>}
     {failed && <AgentWebFallback phase={phase}/>}
 
     {part === 0
       ? <aside className="story-source aw-source"><a href={AGENT_WEB_SOURCES.webmcp} target="_blank" rel="noreferrer">Chrome · WebMCP early preview · 2026.02.10 ↗</a><a href={AGENT_WEB_SOURCES.aside} target="_blank" rel="noreferrer">Aside 공식 소개 ↗</a><span>도구 이름은 설명용 예시</span></aside>
-      : <aside className="story-source aw-source"><span>가상 금액과 조건 · 판매자 신뢰와 나머지 조건은 같다고 가정 · 가격 전략은 발표자의 가설</span></aside>}
+      : <aside className="story-source aw-source">{phase === 4 && <a href={AGENT_WEB_SOURCES.muse} target="_blank" rel="noreferrer">GeekWire · Amazon의 Muse 차단 · 2026.09.20 ↗</a>}<span>가상 금액과 조건 · 판매자 신뢰와 나머지 조건은 같다고 가정 · 가격 전략은 발표자의 가설</span></aside>}
   </Frame>;
 }
 

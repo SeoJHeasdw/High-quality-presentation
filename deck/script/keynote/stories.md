@@ -55,10 +55,13 @@ WebMCP는 사이트가 허용한 기능을 제공하는 방식이며, 기존 접
 ### 1
 이 조건이면 B를 고르겠죠. 같은 물건을 2만 원 싸게 삽니다. 저는 두 쇼핑몰을 직접 둘러볼 필요가 없습니다.
 ### 2
-판매자 입장에서는 어떨까요? 제 눈에 띄려고 쓰던 광고비를 줄여서, 가격을 낮추는 편이 더 잘 팔릴 수도 있겠습니다. 에이전트가 구매를 맡는 일이 늘어나면 이런 선택도 생기지 않을까 생각합니다.
+판매자 입장에서는 어떨까요? 제 눈에 띄려고 쓰던 광고비를 줄여서, 가격을 낮추는 편이 더 잘 팔릴 수도 있겠습니다. 에이전트가 구매를 맡는 일이 늘어나면 이런 선택도 생기지 않을까 생각합니다. 가격이 정말 내려갈지는 아직 모릅니다. 다만 에이전트가 대신 사는 일을 두고는 벌써 실제로 부딪히고 있습니다. 지난 9월 20일, Amazon은 Meta의 에이전트 Muse가 사람 대신 Amazon에서 물건을 사는 것을 막았습니다. 허락받지 않은 AI 에이전트의 접근은 이용 약관 위반이라는 이유였습니다.
 
 이 장표의 상품·판매처·금액·조건은 모두 가상 예시이며 실제 가격 조사 결과가 아닙니다.
 가격 선택은 동일 상품·배송·반품·판매자 신뢰를 가정한 결과입니다. 광고비와 가격에 관한 설명은 발표자의 가설입니다.
+근거: GeekWire 2026-09-20 보도 — Amazon이 Meta의 개인 에이전트 Muse가 Amazon.com에서 고객 대신 구매하는 것을 막았습니다. Muse로 Amazon에 가면 뜨는 안내: "Continued access by an unauthorized AI agent violates Amazon's Conditions of Use, to which our customers have agreed." Amazon 대변인: "we've requested that Meta remove Amazon from the experience." https://www.geekwire.com/2026/amazon-blocks-metas-muse-ai-assistant-in-new-standoff-over-agentic-shopping/
+GeekWire 원문은 자동 접근이 막혀(403) 이를 인용한 mixed-news(2026-09-22)와 PPC Land(2026-10-08)로 확인했습니다. 막힌 것은 Muse 전체가 아니라 Amazon에서의 대리 구매입니다. Muse가 AI임을 밝히지 않는다는 것은 Amazon의 주장이며, Meta는 Muse가 비밀번호와 결제 수단을 볼 수 없다고 설명합니다.
+질문이 나오면: Amazon이 든 이유는 약관과 보안이며 광고가 아닙니다. 광고 사업(2025년 약 686억 달러, 사람들이 페이지를 둘러보며 광고 상품을 보는 데 달려 있음)을 짚은 것은 보도의 해석입니다. 이 일이 가격이 내려간다는 증거는 아니므로 화면의 "발표자의 가설" 표시는 그대로 둡니다.
 연출: 7번의 판매처 화면이 그대로 8번의 판매처 A가 됩니다. 광고판과 가격표로 흘러내리는 빛은 가설을 나타내는 표현이며 실제 가격 변화나 광고 효과 데이터가 아닙니다.
 
 ## story-closed-door

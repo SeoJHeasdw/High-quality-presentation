@@ -1,12 +1,13 @@
 # 발표 사례의 근거
 
-확인일: 2026-09-22, 2026-09-23(38 → 43장 확장, 8·10번 사이 연결 장면을 넣어 44장), 2026-10-05(사건의 13·14번을 더해 46장, 같은 날 13·14번을 지시 → 선 셋 → 신호 세 번 → 결론으로 다시 씀). 장표 번호는 46장 기준이다. 본문에서는 현상과 관찰을 짧게 말하고, 해석은 발표자 관점으로 구분한다.
+확인일: 2026-09-22, 2026-09-23(38 → 43장 확장, 8·10번 사이 연결 장면을 넣어 44장), 2026-10-05(사건의 13·14번을 더해 46장, 같은 날 13·14번을 지시 → 선 셋 → 신호 세 번 → 결론으로 다시 씀), 2026-10-12(33번 "이 발표의 제작 과정"과 44번 "공개하는 기록"을 빼 44장, 8번에 Amazon의 Muse 차단 한 줄을 더함). 장표 번호는 44장 기준이다. 본문에서는 현상과 관찰을 짧게 말하고, 해석은 발표자 관점으로 구분한다.
 
 | 사례 | 확인한 범위 | 원문 |
 | --- | --- | --- |
 | Cloudflare | 2025.12.02 HTML 요청에서 사람 47%, AI가 아닌 봇(non-AI bots) 44%. Googlebot은 연말 5%("ending with a 5% share"). 자동화 53%(100-47)와 AI 봇 등 ≈4%(100-47-44-5)는 반올림된 비중의 나머지로 계산했고, 같은 보고서의 2025년 AI 봇 평균은 4.2%. 고객 사이트 관측이며 인구·사용 시간·현재 전체 HTTP 비중이 아님. 봇 모두가 AI라는 뜻도, AI 봇이 모두 사람 대신 일하는 에이전트라는 뜻도 아님. 6번의 점 16,000개는 이 비중대로 나눴고, 점이 흐르는 경로와 웹페이지·관측 지점은 설명용 연출. | [Year in Review](https://blog.cloudflare.com/radar-2025-year-in-review/) |
 | WebMCP | 사이트가 브라우저 에이전트에 구조화된 동작을 제공하는 early preview 발표. CAPTCHA의 완전 폐지를 뜻하지 않음. | [Chrome 발표](https://developer.chrome.com/blog/webmcp-epp) |
 | Aside | 사람과 에이전트가 함께 쓰는 브라우저를 표방. 제품 소개의 순위·절대적 보안 주장을 재인용하지 않음. | [공식 소개](https://aside.com/) |
+| Amazon의 Muse 차단 (8-2) | 2026-09-20 Amazon이 Meta의 개인 에이전트 Muse가 Amazon.com에서 고객 대신 구매하는 것을 막았다(9월 20일 밤부터 적용). Muse로 Amazon에 가면 뜨는 안내: "Continued access by an unauthorized AI agent violates Amazon's Conditions of Use, to which our customers have agreed." Amazon 대변인: "we've requested that Meta remove Amazon from the experience." 막힌 것은 Muse 전체가 아니라 Amazon에서의 대리 구매다. Muse가 AI임을 밝히지 않고 계정 화면에 닿는다는 것은 Amazon의 주장이며, Meta는 Muse가 비밀번호·결제 수단을 볼 수 없다고 설명한다. Amazon이 든 이유는 약관과 보안이고, 광고 사업(2025년 약 686억 달러)을 짚은 것은 보도의 해석이라 화면에 쓰지 않는다. 가격이 내려간다는 증거가 아니므로 "발표자의 가설" 표시는 그대로 둔다. 다른 판매처가 Muse를 받아들였다는 보도(CNBC)는 원문을 열지 못해 쓰지 않았다. GeekWire 원문은 자동 접근이 막혀(403) 이를 인용한 두 기사로 확인했다(2026-10-12). | [GeekWire · 2026.09.20](https://www.geekwire.com/2026/amazon-blocks-metas-muse-ai-assistant-in-new-standoff-over-agentic-shopping/), [mixed-news · 2026.09.22](https://mixed-news.com/en/amazon-blocks-meta-muse-agent-shopping-conditions-of-use/), [PPC Land · 2026.10.08](https://ppc.land/amazon-blocks-metas-muse-ai-agent-from-shopping-on-its-site/) |
 | Brood War Bench | 범용 모델·하니스 간 경기, 저자의 경제·전투 행동 관찰. 저자는 모두 초보 수준이라고 평가. 특정 경기용 추가 학습이 없었다는 단정은 하지 않음. | [벤치마크 보고서](https://bw.swerdlow.dev/report) |
 | 공개 게임 화면 | G027 Fable의 프로토스 시점 14:15. Astra와의 직접 경기 화면이라고 주장하지 않음. | [리플레이](https://bw.swerdlow.dev/benchmark/replay?duration=185&focus=guest-base&game=G027&seat=1&start=840) |
 | 초기 훈련 | 5/8 Google Drive 자료가 필요한 과제. 최초 SSRF 시도 실패 중 공유 파일 작성. 5/12 이후 메모/게시판. 초기 쓰기는 공유 자격증명으로 가능했으며 권한 탈취를 선행 조건으로 묘사하지 않음. 5/26 외부 연결 성공. | [OpenAI 기술 보고서 III.A](https://cdn.openai.com/pdf/67869394-cb91-4c12-888c-5cbd85c7814c/OpenAI-Hugging-Face%20Incident-Technical-Report.pdf) |
@@ -37,7 +38,7 @@ AGI 도달 여부를 위 사례만으로 판정하지 않는다. 사건 그림�
 | 2~3 | 고양이 사진의 화소 부조, 금색 입자로 된 "고양이" | 기존 사진(`public/shots/cat1.png`, 550×378)을 2배로 다시 샘플링한 `cat1@2x.jpg`를 쓴다. 부조와 입자는 "사진 → 단어 하나"를 보여주는 연출이며 특정 인식 모델의 내부 값·신뢰도가 아니다. 숫자를 붙이지 않는다. |
 | 3 | 실제 강의 영상과 음성 파형 | `public/demos/tts-lecture.mp4`(원본 00:25–00:49)와 같은 구간의 파형 `tts-waveform.json`. 소리는 끄고 재생한다. |
 | 7 | 판매처 화면, 사람 확인, WebMCP 도구 세 줄 | Chrome 발표(2026.02.10)는 WebMCP를 "구조화된 도구를 사이트가 에이전트에게 제공하는 표준 방식"으로 소개하고, 선언형(HTML 폼)·명령형(JavaScript) 두 API와 전자상거래의 상품 구성·결제 탐색을 사용 예로 든다. 화면의 도구 이름(상품 검색·옵션 선택·주문하기)과 `store-a.example` 주소는 설명용 예시다. 사람 확인을 우회하는 장면으로 그리지 않는다. |
-| 8 | 두 판매처, 광고판, 가격표로 흐르는 빛 | 금액·조건·광고판 문구는 가상 예시. 광고비가 가격으로 옮겨가는 빛은 발표자의 가설을 나타내는 연출이다. |
+| 8 | 두 판매처, 광고판, 가격표로 흐르는 빛 | 금액·조건·광고판 문구는 가상 예시. 광고비가 가격으로 옮겨가는 빛은 발표자의 가설을 나타내는 연출이다. 마지막 단계 오른쪽 아래의 한 줄(2026.09.20 Amazon의 Muse 대리 구매 차단)만 실제로 있었던 일이다(위 표의 "Amazon의 Muse 차단" 행). |
 | 16 | 불 켜진 집과 30년 눈금 | 15번 마지막 정지 이미지(`public/house-scroll/a7.jpg`, Blender 렌더)를 그대로 이어 쓴다. 1995년생·31세는 발표자가 제시한 값이다. 눈금은 2026년 31세부터 2056년 61세까지다. |
 | 18 | 대본·목소리·자막·영상 네 줄과 재생 헤드 | local-tts-engine의 `CH00 전체.timeline.json`에서 00:25–00:49 구간의 원문 문장, 읽기 문장(예: "AI가" → "에이아이가"), 단어 단위 정렬 시각을 뽑아 `src/keynote/data/tts-alignment.json`에 저장했다. 걸친 문장(앞 0.46초, 뒤 1.04초)은 흐리게 표시한다. 모델 표기는 같은 파일의 provider(`mlx-community/Qwen3-TTS-12Hz-1.7B-Base-bf16`, 어댑터 `jaeho-ko-r16-v1`)를 따른다. 프레임 띠는 같은 영상에서 2초 간격으로 뽑았다(`public/demos/tts-strip.jpg`). |
 | 19 | 많은 점, 느슨해지는 고리, 요구사항 표 | 점과 고리는 도식이며 사용자 수나 성능 수치가 아니다. 표의 "보통의 서비스" 쪽 문구(빠르게·늘 켜 두기 등)는 비교를 위한 일반적 표현이다. |
@@ -47,15 +48,15 @@ AGI 도달 여부를 위 사례만으로 판정하지 않는다. 사건 그림�
 서비스 결과물의 원본 경로는 `public/demos/provenance.json`에 기록했다.
 음악 후보는 project.json의 humanReview가 unreviewed이므로 발표에도 개발 후보로 표시했다.
 
-## 악용 사례 구간 · 34~41번
+## 악용 사례 구간 · 33~40번
 
 | 내용 | 확인한 범위 | 근거 |
 | --- | --- | --- |
-| 제가 녹음한 적 없는 문장 (34) | 29번 강의 영상의 한 문장(원본 00:38.8–00:44.4)은 녹음이 아니라 대본을 `jaeho-ko-r16-v1` 어댑터로 읽힌 합성 음성이다(`CH00 전체.timeline.json`의 provider). | 로컬 `local-tts-engine/output/edits/2026-09-08/…/CH00 전체.timeline.json` |
-| 12.3분 · 35.3초 · 약 67MB (34) | 승인한 92클립·12.252분 중 train 82개, rank 16 LoRA, 60 optimizer step, 학습 35.3초, 어댑터 약 67MB(2026-08-25 실행 기록). 과거 한 번의 실행이며 성능 보증이 아니다. 녹음·정제·청취 승인 시간은 포함하지 않는다고 화면과 대본에 밝힌다. | 로컬 `local-tts-engine/docs/DECISIONS.md` |
-| 공개 모델의 "3초" (31, 29) | Qwen3-TTS 공개 저장소: "Base model capable of 3-second rapid voice clone from user audio input", 2026.1.22 공개, Apache-2.0. 개발사의 설명이며 발표에서 따로 검증하지 않았다. | [Qwen3-TTS](https://github.com/QwenLM/Qwen3-TTS) (2026-09-23 열람) |
-| 새벽의 사칭 전화 (38) | 번호·시각·자막 문장은 가상이다. "짧은 음성과 음성 복제 프로그램", 급하다는 재촉, 나만 도울 수 있다는 말, 비밀 요구는 FTC가 설명한 수법을 따랐다. 실제 사칭 음성을 만들거나 재생하지 않았다. | [FTC · 2023.09](https://consumer.ftc.gov/articles/scammers-use-fake-emergencies-steal-your-money) |
-| 확인하는 방법 (41) | 재촉에 바로 응하지 않기, 알고 있는 번호로 다시 연락하기, 비밀로 하라고 해도 다른 가족에게 확인하기는 FTC 권고다. 다시 건 통화의 대사는 가상이다. | 같은 FTC 문서 |
+| 제가 녹음한 적 없는 문장 (33) | 29번 강의 영상의 한 문장(원본 00:38.8–00:44.4)은 녹음이 아니라 대본을 `jaeho-ko-r16-v1` 어댑터로 읽힌 합성 음성이다(`CH00 전체.timeline.json`의 provider). | 로컬 `local-tts-engine/output/edits/2026-09-08/…/CH00 전체.timeline.json` |
+| 12.3분 · 35.3초 · 약 67MB (33) | 승인한 92클립·12.252분 중 train 82개, rank 16 LoRA, 60 optimizer step, 학습 35.3초, 어댑터 약 67MB(2026-08-25 실행 기록). 과거 한 번의 실행이며 성능 보증이 아니다. 녹음·정제·청취 승인 시간은 포함하지 않는다고 화면과 대본에 밝힌다. | 로컬 `local-tts-engine/docs/DECISIONS.md` |
+| 공개 모델의 "3초" (33, 32) | Qwen3-TTS 공개 저장소: "Base model capable of 3-second rapid voice clone from user audio input", 2026.1.22 공개, Apache-2.0. 개발사의 설명이며 발표에서 따로 검증하지 않았다. | [Qwen3-TTS](https://github.com/QwenLM/Qwen3-TTS) (2026-09-23 열람) |
+| 새벽의 사칭 전화 (37) | 번호·시각·자막 문장은 가상이다. "짧은 음성과 음성 복제 프로그램", 급하다는 재촉, 나만 도울 수 있다는 말, 비밀 요구는 FTC가 설명한 수법을 따랐다. 실제 사칭 음성을 만들거나 재생하지 않았다. | [FTC · 2023.09](https://consumer.ftc.gov/articles/scammers-use-fake-emergencies-steal-your-money) |
+| 확인하는 방법 (40) | 재촉에 바로 응하지 않기, 알고 있는 번호로 다시 연락하기, 비밀로 하라고 해도 다른 가족에게 확인하기는 FTC 권고다. 다시 건 통화의 대사는 가상이다. 대본 끝의 동의 확인(다른 사람의 목소리나 모습이 들어가는 결과물은 당사자의 동의를 먼저 확인)은 발표자의 약속이며 화면에는 없다. | 같은 FTC 문서 |
 | 현재 TTS 제작 과정 | Qwen3-TTS 생성 뒤 독립 Whisper 받아쓰기로 대본과 대조하고 재생성한다. STT는 말의 내용·누락을 확인하며 화자 신원이나 완벽한 음색 복제를 입증하지 않는다. 직접 듣고 고르는 과정이 별도로 있다. | 로컬 `local-tts-engine/docs/QUALITY.md` |
 | 다음 모델과 사용 문턱 | Qwen 4·5는 다음 세대를 가정한 이름이다. 출시·성능에 대한 사실 주장이 아니다. 지금 어렵다는 설명은 발표자의 통합 제작 과정에 한정하며, 일반인이 아직 음성 복제를 할 수 없다는 뜻이 아니다. | 발표자의 경험과 전망 |
 | 통화 녹음 | 기기·지역에 따라 기능이 다르다. 모든 휴대전화가 자동 녹음을 지원한다고 주장하지 않는다. | 조건부 가상 상황 |
@@ -63,24 +64,22 @@ AGI 도달 여부를 위 사례만으로 판정하지 않는다. 사건 그림�
 | 외도 증거를 가장한 음성 | 발표자가 제시한 가상 상황이며 확인된 사건으로 소개하지 않는다. 사칭·허위 증거·괴롭힘의 일반적인 위험은 Europol 보고서에 근거한다. | [Europol](https://www.europol.europa.eu/publications-events/publications/facing-reality-law-enforcement-and-challenge-of-deepfakes) |
 | 동의 없는 합성 이미지·영상 | 일상 사진·영상을 성적인 내용으로 조작해 괴롭히거나 협박한 피해가 보고됐다. 2D·3D 도구가 불법이라고 주장하지 않으며, 당사자의 동의 없는 조작과 악용을 다룬다. | [FBI IC3 · 2023-06-05](https://www.ic3.gov/PSA/2023/PSA230605) |
 
-화면의 파형·메시지·이미지 확산은 설명용 개념도다. 37번의 벽과 사람, 40번의 사진 칸과 "퍼진 사본" 숫자는 도식이며 실제 사람 수나 공유 수가 아니다. 40번의 사진은 모자이크한 가상의 인물을 코드로 그린 것이다. 38·39·41번의 휴대전화와 방은 Blender 렌더다. 배경 얼굴은 식별 가능한 실제 인물을 표현하지 않는 생성 이미지다. 실제 사칭 음성이나 유해한 합성물은 제작하지 않았다.
+화면의 파형·메시지·이미지 확산은 설명용 개념도다. 36번의 벽과 사람, 39번의 사진 칸과 "퍼진 사본" 숫자는 도식이며 실제 사람 수나 공유 수가 아니다. 39번의 사진은 모자이크한 가상의 인물을 코드로 그린 것이다. 37·38·40번의 휴대전화와 방은 Blender 렌더다. 배경 얼굴은 식별 가능한 실제 인물을 표현하지 않는 생성 이미지다. 실제 사칭 음성이나 유해한 합성물은 제작하지 않았다.
 
-## 마무리 구간 · 43~46번
+## 마무리 구간 · 42~44번
 
 | 내용 | 확인한 범위 | 근거 |
 | --- | --- | --- |
-| 몸이 집이 되는 이음새 (43-0) | 42번의 입자 몸·금색 고리를 다시 그리고, 입자의 목표점과 색을 `public/house-dawn/blue.jpg`의 불 켜진 창과 윤곽에서 뽑았다. 비유 연출이며 데이터가 아니다. "비싼 신은 꼭 필요할 때만"은 22번 공장 안(판단에만 부르는 프론티어 모델)을 다시 가리킨다. | `leash/world.ts` 단계 2 |
-| 새벽과 아침의 집 (43~46) | 15번 Blender 장면의 마지막 구도(프레임 570)를 시간대만 바꿔 다시 렌더했다(`--time blue`·`--time sunrise`). 창의 불, 해의 방향, 대기는 연출이며 실제 장소가 아니다. | `tools/render-house-scroll.py`, `public/house-dawn/` |
-| 바뀌는 것 · 모델 (43) | 지금 쓰는 모델은 Qwen3-TTS 1.7B Base다. "다음 모델"·"그다음 모델"은 가정이라고 화면에 표시한다. 2026 → 2056 축은 발표자의 30년 계획이다. | 로컬 `local-tts-engine/README.md`, `docs/DECISIONS.md` 라이선스 표 |
-| 작업 방식 세 줄 (43) | 대본 → 목소리 → 받아쓰기 대조 → 다시 만들기는 현재 TTS 검수 과정이다. 앱 데모는 화면을 먼저 찍고 대본을 쓴 뒤 편집이 대본 길이에 화면을 맞춘다. 장면마다 목소리 후보를 만들고 사람이 듣고 고른다. | 로컬 `local-tts-engine/docs/QUALITY.md`, `docs/APP-DEMO-DESIGN.md` 2~3절 |
-| 판단의 기록 네 개 (43) | 08.23 로컬 제작·A/B 청취로 Qwen 채택, 08.25 어댑터 강도 0.60, 09.03 같은 계열 자기평가 대신 독립 Whisper 판독, 09.21 영어 목소리 표본 미채택. 날짜는 모두 2026년이다. | 로컬 `local-tts-engine/docs/DECISIONS.md` |
-| 결과물 네 장 (43) | 29번 강의 영상의 한 장면, 23번 갤러리와 같은 두 장(Local Assets Engine으로 만든 새 이미지, 실제 음악 후보의 파형을 표현한 Blender 장면 · 음악은 청취 승인 전 개발 후보), 15번 집 렌더. "46장"은 이 발표의 장표 수이며 덱의 장표 수에서 읽는다. | `public/demos/provenance.json`, `PersonalSlides.tsx`, 이 덱 |
-| 잘 안됐던 과정 여섯 줄 (44) | 09.21 화면 녹화 음성 포함 미사용(마이크 입력이 소리의 약 13%를 놓침, 09.18 측정). 09.21 영어 목소리 표본 미채택. 09.20 RICE가 "알아이씨이"로 들린다는 지적 → 철자를 `Rice`로 보내 해결("문제는 목소리가 아니라 철자였다"). 09.18 playwright 1.63.0에서 4K 프레임 95개 → 65개라 1.62.0 고정(3초짜리 합성 화면 시험, 각 3회 측정이며 강의 전체의 4K 성능 보증이 아니다. 화면에 "3초 시험"을 적었다). 09.09 영어 낱말 단위 전환 샘플 4개 모두 거절. 08.25 1.00 대신 0.60 채택. | 로컬 `local-tts-engine/docs/DECISIONS.md` |
-| 함께할 사람의 점 (44) | 점과 선은 도식이며 실제 사람·연락처·협업 약속이 아니다. 동의 확인은 발표자의 약속이다. | 발표자의 계획 |
-| 설계도 (45) | 실선 방(TTS·ASSETS·MUSIC)은 "개발 중", 점선 방(Agent OS)과 복도는 "구상"으로 표시한다. 20번의 구분과 같다. 방의 크기는 진척도가 아니다. | 19번과 같은 기준 |
-| 만들기 · 맡기기 (46) | 기존 마지막 장의 질문(계속 미루던 제작, 반복해서 하는 작업)의 문구를 그대로 두고 큰 낱말만 붙였다. | 발표자의 질문 |
+| 몸이 집이 되는 이음새 (42-0) | 41번의 입자 몸·금색 고리를 다시 그리고, 입자의 목표점과 색을 `public/house-dawn/blue.jpg`의 불 켜진 창과 윤곽에서 뽑았다. 비유 연출이며 데이터가 아니다. "비싼 신은 꼭 필요할 때만"은 22번 공장 안(판단에만 부르는 프론티어 모델)을 다시 가리킨다. | `leash/world.ts` 단계 2 |
+| 새벽과 아침의 집 (42~44) | 15번 Blender 장면의 마지막 구도(프레임 570)를 시간대만 바꿔 다시 렌더했다(`--time blue`·`--time sunrise`). 창의 불, 해의 방향, 대기는 연출이며 실제 장소가 아니다. | `tools/render-house-scroll.py`, `public/house-dawn/` |
+| 바뀌는 것 · 모델 (42) | 지금 쓰는 모델은 Qwen3-TTS 1.7B Base다. "다음 모델"·"그다음 모델"은 가정이라고 화면에 표시한다. 2026 → 2056 축은 발표자의 30년 계획이다. | 로컬 `local-tts-engine/README.md`, `docs/DECISIONS.md` 라이선스 표 |
+| 작업 방식 세 줄 (42) | 대본 → 목소리 → 받아쓰기 대조 → 다시 만들기는 현재 TTS 검수 과정이다. 앱 데모는 화면을 먼저 찍고 대본을 쓴 뒤 편집이 대본 길이에 화면을 맞춘다. 장면마다 목소리 후보를 만들고 사람이 듣고 고른다. | 로컬 `local-tts-engine/docs/QUALITY.md`, `docs/APP-DEMO-DESIGN.md` 2~3절 |
+| 판단의 기록 네 개 (42) | 08.23 로컬 제작·A/B 청취로 Qwen 채택, 08.25 어댑터 강도 0.60, 09.03 같은 계열 자기평가 대신 독립 Whisper 판독, 09.21 영어 목소리 표본 미채택. 날짜는 모두 2026년이다. 대본에서만 말하는 철자 일화는 09.20 기록이다: RICE가 "알아이씨이"로 들린다는 지적 → 네 철자를 3회씩 비교, `Rice`로 보내 해결("문제는 목소리가 아니라 철자였다"). | 로컬 `local-tts-engine/docs/DECISIONS.md` |
+| 결과물 네 장 (42) | 29번 강의 영상의 한 장면, 23번 갤러리와 같은 두 장(Local Assets Engine으로 만든 새 이미지, 실제 음악 후보의 파형을 표현한 Blender 장면 · 음악은 청취 승인 전 개발 후보), 15번 집 렌더. "44장"은 이 발표의 장표 수이며 덱의 장표 수에서 읽는다. | `public/demos/provenance.json`, `PersonalSlides.tsx`, 이 덱 |
+| 설계도 (43) | 실선 방(TTS·ASSETS·MUSIC)은 "개발 중", 점선 방(Agent OS)과 복도는 "구상"으로 표시한다. 20번의 구분과 같다. 방의 크기는 진척도가 아니다. | 19번과 같은 기준 |
+| 만들기 · 맡기기 (44) | 기존 마지막 장의 질문(계속 미루던 제작, 반복해서 하는 작업)의 문구를 그대로 두고 큰 낱말만 붙였다. | 발표자의 질문 |
 
-## 38 → 43장 확장에서 새로 쓴 자료 · 17·21·22·32·42·45번
+## 38 → 43장 확장에서 새로 쓴 자료 · 17·21·22·32·41·43번
 
 확인일: 2026-09-23. 원문을 확인하지 못한 표현은 화면에 쓰지 않았다.
 
@@ -101,14 +100,14 @@ AGI 도달 여부를 위 사례만으로 판정하지 않는다. 사건 그림�
 | 가장 멍청한 모델 (32) | Kevin Weil(당시 OpenAI 최고제품책임자), Lenny's Podcast 2025-04-10, 01:16:27: "The AI models that you're using today is the worst AI model you will ever use for the rest of your life." 같은 계열의 말로 Ethan Mollick 『Co-Intelligence』(2024)의 원칙 "Assume this is the worst AI you will ever use"가 있다. 화면의 한국어는 발표자의 옮김이다. | [Lenny's Newsletter](https://www.lennysnewsletter.com/p/kevin-weil-open-ai) |
 | 고양이 회수 (32) | 2~3번과 같은 사진·입자 연출을 다시 쓴다. 고양이 사진에 연도를 붙이지 않는다. "1년 뒤? 2년 뒤?"는 질문이며 예측 수치가 아니다. | 2~3번 행과 같음 |
 | 해마다 10배 (32) | a16z Guido Appenzeller "Welcome to LLMflation"(2024-11-12): "For an LLM of equivalent performance, the cost is decreasing by 10x every year." MMLU 42점을 내는 가장 싼 모델 기준 2021-11 GPT-3 100만 토큰당 60달러 → Llama 3.2 3B 0.06달러(3년 1,000배). MMLU 83점 기준으로는 GPT-4 출시 뒤 약 62배. 투자사의 추정이며 기준에 따라 폭이 크게 다르다고 화면에 함께 적는다. | [a16z](https://a16z.com/llmflation-llm-inference-cost/) |
-| 가짜였던 말 (42-0) | 39번 가상 통화 자막(`NightPhone.tsx`의 FAKE_LINES) 네 줄을 다시 쓴다. 통화는 가상 상황이다. 붉은 글자가 파랑 낱말로 흩어지는 장면은 "말이 사람을 움직인다"는 비유이며 사칭 수법의 데이터가 아니다. | 39번 행과 같음 |
-| 신에게 목줄 (42) | 발표자의 질문이다(어디서 들은 이야기에 발표자의 생각을 더한 것). 출처를 붙이지 않고 "발표자의 질문"으로 표시한다. 낱말이 모여 사람의 형태가 되는 장면은 비유다. | 발표자의 질문 |
-| 언어 모델에서 출발한 로봇 (42) | Google DeepMind(2025-03-12): Gemini Robotics는 "advanced vision-language-action (VLA) model that was built on Gemini 2.0 with the addition of physical actions as a new output modality for the purpose of directly controlling robots." | [Google DeepMind](https://deepmind.google/discover/blog/gemini-robotics-brings-ai-into-the-physical-world/) |
-| 악마를 소환하는 일 (39, 대본) | MIT AeroAstro 100주년 심포지엄(2014-10-24): "With artificial intelligence, we are summoning the demon. … he's sure he can control the demon? It doesn't work out." 화면에는 쓰지 않는다. | [Washington Post · 2014.10.24](https://www.washingtonpost.com/news/innovations/wp/2014/10/24/elon-musk-with-artificial-intelligence-we-are-summoning-the-demon/) |
-| RICE (45) | README 한 줄: "일하며 만든 업무 방식을 재사용 가능한 자산으로 축적하고, 검증된 자산을 조직 실행으로 확장하는 AI 업무 시스템". 같은 줄의 괄호 속 사내용 표기는 인용하지 않는다(오픈소스 공개 예정). | 로컬 `bob/rice/README.md` |
-| RICE 소개 영상 (45) | 29.16초 전체를 1280×720으로 다시 인코딩했다(`public/demos/rice-demo.mp4`, 포스터는 6초 지점). Local TTS Engine의 앱 데모 과정으로 화면을 찍고 대본을 붙이고 발표자의 목소리로 만든 결과이며 2026-09-21 목소리 승인. 화면에서는 소리를 끈 채 재생한다. | 로컬 `local-tts-engine/output/edits/2026-09-21/rice-first-run/`, `docs/DECISIONS.md`, `public/demos/provenance.json` |
-| Personal CIO (45) | README 문장: "좋은 모델일수록 더 나은 판단을 하도록 데이터와 과거 평가를 로컬 자산으로 남긴다. GPT와 Claude를 포함한 모델은 교체할 수 있고…", 역할 표 "사용자 · … 실제 주문을 최종 결정한다", "실제 주문 기능은 없으며". 거래내역·수익률·종목은 화면에 쓰지 않는다. | 로컬 `/Users/jaehoseo/Desktop/vswrk/money/README.md` |
-| 조합과 사무직의 빈 방 (45) | 영상 공장 × Personal CIO 같은 조합과 엑셀·브라우저·PDF↔PPT·문서 가로↔세로 방은 "가능성"·"가정"으로 표시한 발표자의 구상이다. 유료 종목 토론방과 수익 규모는 다루지 않는다. | 발표자의 구상 |
+| 가짜였던 말 (41-0) | 37번 가상 통화 자막(`NightPhone.tsx`의 FAKE_LINES) 네 줄을 다시 쓴다. 통화는 가상 상황이다. 붉은 글자가 파랑 낱말로 흩어지는 장면은 "말이 사람을 움직인다"는 비유이며 사칭 수법의 데이터가 아니다. | 37번 행과 같음 |
+| 신에게 목줄 (41) | 발표자의 질문이다(어디서 들은 이야기에 발표자의 생각을 더한 것). 출처를 붙이지 않고 "발표자의 질문"으로 표시한다. 낱말이 모여 사람의 형태가 되는 장면은 비유다. | 발표자의 질문 |
+| 언어 모델에서 출발한 로봇 (41) | Google DeepMind(2025-03-12): Gemini Robotics는 "advanced vision-language-action (VLA) model that was built on Gemini 2.0 with the addition of physical actions as a new output modality for the purpose of directly controlling robots." | [Google DeepMind](https://deepmind.google/discover/blog/gemini-robotics-brings-ai-into-the-physical-world/) |
+| 악마를 소환하는 일 (41, 대본) | MIT AeroAstro 100주년 심포지엄(2014-10-24): "With artificial intelligence, we are summoning the demon. … he's sure he can control the demon? It doesn't work out." 화면에는 쓰지 않는다. | [Washington Post · 2014.10.24](https://www.washingtonpost.com/news/innovations/wp/2014/10/24/elon-musk-with-artificial-intelligence-we-are-summoning-the-demon/) |
+| RICE (43) | README 한 줄: "일하며 만든 업무 방식을 재사용 가능한 자산으로 축적하고, 검증된 자산을 조직 실행으로 확장하는 AI 업무 시스템". 같은 줄의 괄호 속 사내용 표기는 인용하지 않는다(오픈소스 공개 예정). | 로컬 `bob/rice/README.md` |
+| RICE 소개 영상 (43) | 29.16초 전체를 1280×720으로 다시 인코딩했다(`public/demos/rice-demo.mp4`, 포스터는 6초 지점). Local TTS Engine의 앱 데모 과정으로 화면을 찍고 대본을 붙이고 발표자의 목소리로 만든 결과이며 2026-09-21 목소리 승인. 화면에서는 소리를 끈 채 재생한다. | 로컬 `local-tts-engine/output/edits/2026-09-21/rice-first-run/`, `docs/DECISIONS.md`, `public/demos/provenance.json` |
+| Personal CIO (43) | README 문장: "좋은 모델일수록 더 나은 판단을 하도록 데이터와 과거 평가를 로컬 자산으로 남긴다. GPT와 Claude를 포함한 모델은 교체할 수 있고…", 역할 표 "사용자 · … 실제 주문을 최종 결정한다", "실제 주문 기능은 없으며". 거래내역·수익률·종목은 화면에 쓰지 않는다. | 로컬 `/Users/jaehoseo/Desktop/vswrk/money/README.md` |
+| 조합과 사무직의 빈 방 (43) | 영상 공장 × Personal CIO 같은 조합과 엑셀·브라우저·PDF↔PPT·문서 가로↔세로 방은 "가능성"·"가정"으로 표시한 발표자의 구상이다. 유료 종목 토론방과 수익 규모는 다루지 않는다. | 발표자의 구상 |
 | Personal CIO에서 뻗는 사례 (43·4) | 주식 방송, 주식 프로그램 판매, 프로그램 공개 후 동의받은 익명 데이터를 금융회사에 판매. 세 가지 모두 "가능성"으로 표시한 발표자의 가정이며 하고 있는 일이 아니다. 실제로 하려면 투자 정보의 유료 제공·판단 대행은 자본시장법(투자자문업·유사투자자문업), 사용자 데이터의 제3자 제공은 개인정보보호법·신용정보법 검토가 필요하다. 그래서 화면과 대본은 "동의받은 익명 데이터"로 말하고 법 확인이 먼저라고 밝힌다. | 발표자의 가정 |
-| 조합의 수 (45) | 방 n개에서 둘 이상을 고르는 경우의 수 2ⁿ − n − 1. 방 5개 26, 9개 502, 40개 1,099,511,627,735(약 1.1조). 방이 하나 늘면 2배 + n이 되므로 "두 배 넘게"라고 말한다. 이론상의 경우의 수이며 쓸모 있는 조합의 수가 아니다. 화면에 "이론상"으로, 대본에 "전부 쓸모 있지는 않다"로 밝힌다. 40개의 방 중 31개는 발표자의 가정이다. | 산술 |
+| 조합의 수 (43) | 방 n개에서 둘 이상을 고르는 경우의 수 2ⁿ − n − 1. 방 5개 26, 9개 502, 40개 1,099,511,627,735(약 1.1조). 방이 하나 늘면 2배 + n이 되므로 "두 배 넘게"라고 말한다. 이론상의 경우의 수이며 쓸모 있는 조합의 수가 아니다. 화면에 "이론상"으로, 대본에 "전부 쓸모 있지는 않다"로 밝힌다. 40개의 방 중 31개는 발표자의 가정이다. | 산술 |
 | 무대에서 뺀 것 | 유료 종목 토론방·리딩방: 2024-08-14 시행 개정 자본시장법은 SNS·오픈채팅방 같은 양방향 채널의 유료 회원제 영업을 투자자문업으로 규율한다(유사투자자문업 신고만으로는 할 수 없고 등록이 필요). 사기 구간과 겹쳐 오해를 부르므로 무대에서 다루지 않는다. | [KDI 경제교육·정보센터(금융위원회 안내)](https://eiec.kdi.re.kr/policy/materialView.do?num=250091), [머니투데이 · 2024.04](https://news.mt.co.kr/mtview.php?no=2024040620354931326) |

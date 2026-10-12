@@ -6,12 +6,12 @@ import Blueprint3D from "./Blueprint3D";
 import "./finale.css";
 
 /*
- * 41~44번 · 새벽. 14번의 밤, 36~39번의 새벽 2시 47분 뒤에 같은 집이 푸른 새벽(41~43)을 지나 해 뜨는 아침(44)이 된다.
- * 배경은 13번 Blender 장면의 마지막 구도를 시간대만 바꿔 다시 렌더한 것(tools/render-house-scroll.py --time).
- * 네 장이 한 묶음(finale)이라 배경은 다시 그리지 않고 밝아진다.
- * 40번(신에게 목줄)도 이 묶음의 첫 장이다(part -1). 40번의 3D 장면(leash/)이 41번 첫 단계까지 같은 캔버스로 이어져,
+ * 42~44번 · 새벽. 15번의 밤, 37~40번의 새벽 2시 47분 뒤에 같은 집이 푸른 새벽(42·43)을 지나 해 뜨는 아침(44)이 된다.
+ * 배경은 15번 Blender 장면의 마지막 구도를 시간대만 바꿔 다시 렌더한 것(tools/render-house-scroll.py --time).
+ * 세 장이 한 묶음(finale)이라 배경은 다시 그리지 않고 밝아진다.
+ * 41번(신에게 목줄)도 이 묶음의 첫 장이다(part -1). 41번의 3D 장면(leash/)이 42번 첫 단계까지 같은 캔버스로 이어져,
  * 입자 몸과 목줄이 풀려 집이 되고 그 집이 새벽 사진이 된다. 장이 바뀌어도 화면이 깜빡이지 않는다.
- * 판단·실패 기록은 local-tts-engine/docs/DECISIONS.md의 실제 기록이다.
+ * 판단의 기록은 local-tts-engine/docs/DECISIONS.md의 실제 기록이다.
  */
 
 const WAYS = ["대본 → 목소리 → 받아쓰기 대조 → 다시 만들기", "화면 먼저 찍기 → 대본 → 목소리 후보 → 길이 맞춰 편집", "후보를 직접 듣고 고르기"];
@@ -46,36 +46,6 @@ function Strata() {
       <div className="fs-layer" style={{ "--i": 2 } as CSSProperties}><span className="fs-lane-label"><b>결과물</b></span>
         <div className="fs-items">{RESULTS.map(([src, t]) => <figure key={t} className="fs-thumb"><img src={src} alt=""/><figcaption>{t === "이 발표" ? `이 발표 · ${total}장` : t}</figcaption></figure>)}</div></div>
       <span className="fs-future">앞으로 30년 동안 쌓을 자리</span>
-    </div>
-  </div>;
-}
-
-const LOG: { date: string; what: string; result: string; tone: "no" | "fix" | "yes" }[] = [
-  { date: "09.21", what: "화면 녹화에 마이크 소리 함께 담기", result: "소리의 약 13%를 놓쳐 쓰지 않기로", tone: "no" },
-  { date: "09.21", what: "영어 목소리 표본", result: "직접 듣고 미채택", tone: "no" },
-  { date: "09.20", what: "“RICE”가 “알아이씨이”로 들림", result: "문제는 목소리가 아니라 철자였다", tone: "fix" },
-  { date: "09.18", what: "브라우저 새 판본", result: "4K 3초 시험에서 프레임 95개 → 65개, 이전 판본으로 고정", tone: "no" },
-  { date: "09.09", what: "영어 낱말만 따로 합성한 샘플 4개", result: "모두 거절", tone: "no" },
-  { date: "08.25", what: "제 목소리 어댑터 강도", result: "1.00 대신 0.60 채택", tone: "yes" },
-];
-const TONE = { no: "안 됨", fix: "고침", yes: "채택" };
-
-function OpenLog() {
-  return <div className="fo">
-    <div className="fo-log">
-      <header><span>보여줄 것 · 실제로 만든 결과와 잘 안됐던 과정</span><small>local-tts-engine 결정 기록</small></header>
-      <ol>{LOG.map((e, i) => <li key={i} data-tone={e.tone} style={{ "--i": i } as CSSProperties}>
-        <time>{e.date}</time><div><strong>{e.what}</strong><span>{e.result}</span></div><b>{TONE[e.tone]}</b>
-      </li>)}</ol>
-    </div>
-    <div className="fo-reach">
-      <span className="fo-reach__label">기대하는 것 · 함께할 사람과 다음에 해볼 일</span>
-      <svg className="fo-net" viewBox="0 0 640 380" aria-hidden="true">
-        {[[520, 70], [590, 180], [470, 300], [360, 110], [330, 260], [560, 330], [420, 40]].map(([x, y], i) => <g key={i} style={{ "--i": i } as CSSProperties}>
-          <line x1="90" y1="190" x2={x} y2={y}/><circle cx={x} cy={y} r="7"/></g>)}
-        <circle className="fo-me" cx="90" cy="190" r="16"/>
-      </svg>
-      <p className="fo-pledge"><b>약속</b>다른 사람의 목소리나 모습이 들어가는 결과물은 당사자의 동의를 먼저 확인합니다.</p>
     </div>
   </div>;
 }
@@ -115,22 +85,21 @@ const UNFINISHED: { kicker: string; title: ReactNode; lead: string }[] = [
 ];
 const HEAD: { name: string; kicker: string; title: ReactNode; lead: string }[] = [
   { name: "30년 동안 쌓을 것", kicker: "30년 동안 쌓을 것", title: <>모델이 바뀌어도<br/>제 작업은 남기고 싶습니다</>, lead: "더 좋은 AI가 나오면, 이미 만든 기반 위에서 받아들일 수 있도록 합니다." },
-  { name: "밖으로도 이어갈 계획", kicker: "밖으로도 이어갈 계획", title: <>만드는 과정도<br/>공개하려고 합니다</>, lead: "새로운 일이 생겼을 때, 제가 무엇을 할 수 있는 사람인지 알 수 있도록 합니다." },
   { name: "아직 남아 있는 문제", kicker: "아직 남아 있는 문제", title: <>완성된 자비스까지는<br/>갈 길이 있습니다</>, lead: "지금은 방마다 기능을 만들고, 실제로 쓰다 막히는 부분을 고치는 단계입니다." },
   { name: "팀과 나누고 싶은 질문", kicker: "팀과 나누고 싶은 질문", title: <>내 일 하나를 맡겨본다면,<br/>무엇부터 바꿔볼 수 있을까요?</>, lead: "" },
 ];
 
-/** 41-0 · 40번에서 넘어오는 이음새의 제목 */
+/** 42-0 · 41번에서 넘어오는 이음새의 제목 */
 const BRIDGE = { name: "30년 동안 쌓을 것", kicker: "제가 할 수 있는 것", title: <>목줄이 걸릴지는 모릅니다.<br/>제가 할 수 있는 건<br/><em>제 집</em>을 짓는 일입니다</>, lead: "비싼 신은 꼭 필요할 때만 부르고요." };
 
-/** part -1은 40번(신에게 목줄), 0~3은 41~44번. 다섯 장이 같은 틀을 이어 쓰도록 자식의 자리를 맞춘다. */
-export default function FinaleStory({ part, step = 0 }: { part: -1 | 0 | 1 | 2 | 3; step?: number }) {
+/** part -1은 41번(신에게 목줄), 0~2는 42~44번. 네 장이 같은 틀을 이어 쓰도록 자식의 자리를 맞춘다. */
+export default function FinaleStory({ part, step = 0 }: { part: -1 | 0 | 1 | 2; step?: number }) {
   const leash = part === -1, bridge = part === 0 && step === 0;
-  const head = leash ? null : bridge ? BRIDGE : part === 2 ? { ...HEAD[2], ...UNFINISHED[Math.min(4, step)] } : HEAD[part];
-  // 40·41번의 3D 단계: 40번 -1~1, 41번 2~3
+  const head = leash ? null : bridge ? BRIDGE : part === 1 ? { ...HEAD[1], ...UNFINISHED[Math.min(4, step)] } : HEAD[part];
+  // 41·42번의 3D 단계: 41번 -1~1, 42번 2~3
   const phase = leash ? step - 1 : 2 + step;
-  const className = leash ? "personal-v2 leash finale-pre" : `finale finale--${part}${bridge ? " finale--bridge" : ""}${part === 3 ? " kn-closing" : ""}`;
-  return <Frame n={41 + part} name={head?.name ?? "신에게 목줄"} step={step} className={className}>
+  const className = leash ? "personal-v2 leash finale-pre" : `finale finale--${part}${bridge ? " finale--bridge" : ""}${part === 2 ? " kn-closing" : ""}`;
+  return <Frame n={42 + part} name={head?.name ?? "신에게 목줄"} step={step} className={className}>
     <div className="fn-sky" aria-hidden="true">
       <img className="fn-plate fn-plate--blue" src="/house-dawn/blue.jpg" alt=""/>
       <img className="fn-plate fn-plate--sun" src="/house-dawn/sunrise.jpg" alt=""/>
@@ -138,15 +107,14 @@ export default function FinaleStory({ part, step = 0 }: { part: -1 | 0 | 1 | 2 |
       <div className="fn-shade"/>
     </div>
     {part <= 0 && <LeashLayer phase={phase}/>}
-    {head ? <div className="fn-head" key={`h${part}-${part === 0 || part === 2 ? step : 0}`}>
+    {head ? <div className="fn-head" key={`h${part}-${part === 0 || part === 1 ? step : 0}`}>
       <p className="fn-kicker">{head.kicker}</p>
       <h1>{head.title}</h1>
       {head.lead && <p className="fn-lead">{head.lead}</p>}
     </div> : <LeashCopy step={step}/>}
     {part === 0 && step === 1 && <Strata/>}
-    {part === 1 && <OpenLog/>}
-    {part === 2 && <><Blueprint3D step={step} fallback={<Blueprint/>}/><p className="fn-legend"><span><i/>실선 · 만든 방</span><span><i data-dash/>점선 · 구상·가정</span></p></>}
-    {part === 3 && <>
+    {part === 1 && <><Blueprint3D step={step} fallback={<Blueprint/>}/><p className="fn-legend"><span><i/>실선 · 만든 방</span><span><i data-dash/>점선 · 구상·가정</span></p></>}
+    {part === 2 && <>
       <ClosingChoices/>
       <p className="fn-final">저는 앞으로 30년을 준비하는 방법으로,<br/><b>제 자비스를 만들고 있습니다.</b></p>
     </>}
