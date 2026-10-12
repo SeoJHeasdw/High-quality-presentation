@@ -16,7 +16,7 @@ import "./next-market.css";
  */
 
 export const NEXT_MARKET_SOURCES = {
-  swe: "https://www.anthropic.com/news/claude-opus-4-5",
+  swe: "https://www.vals.ai/benchmarks/swebench",
   a16z: "https://a16z.com/the-trillion-dollar-ai-software-development-stack/",
   bofa: "https://fortune.com/2025/06/26/agentic-ai-spending-155-billion-by-2030-cfo-bofa-analysts",
   jev: "https://typesafe.ai/blog/introducing-system-one-models-and-jev",
@@ -78,9 +78,10 @@ const SECTIONS: { cls: string; body: ReactNode }[] = [
     <h1>에이전트는<br/>문제를 푸는 방법을<br/>익혔습니다</h1>
     <div className="nm-bars">
       <div style={{ "--v": .332 } as CSSProperties}><span>2024.8 · GPT-4o</span><i/><b>33<small>%</small></b></div>
-      <div className="is-now" style={{ "--v": .809 } as CSSProperties}><span>2025.11 · Claude Opus 4.5</span><i/><b>81<small>%</small></b></div>
+      <div className="is-now" style={{ "--v": .97 } as CSSProperties}><span>2026.9 · Claude Opus 5</span><i/><b>97<small>%</small></b></div>
     </div>
-    <Src href={NEXT_MARKET_SOURCES.swe}>SWE-bench Verified · 사람이 확인한 실제 이슈 500개 · OpenAI 2024.8.13, Anthropic 2025.11.24</Src>
+    <p className="nm-note">점수가 꽉 차서, 새 모델에는 이 시험을 더 돌리지 않습니다</p>
+    <Src href={NEXT_MARKET_SOURCES.swe}>SWE-bench Verified · 사람이 확인한 실제 이슈 500개 · OpenAI 2024.8.13, Vals.ai 2026.9.1</Src>
   </> },
   { cls: "nm-s3", body: <>
     <p className="nm-kicker">코드 밖으로</p>

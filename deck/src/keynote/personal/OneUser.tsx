@@ -139,7 +139,7 @@ export default function OneUserStory({ part, step }: { part: 0 | 1 | 2 | 3; step
     {part === 0 && <>
       {phase === 0
         ? <div className="ou-heading" key="h0"><p className="pv-eyebrow">사는 소프트웨어에서, 만드는 소프트웨어로</p><h1>이제는 사지 않고, 만들어 씁니다</h1></div>
-        : <div className="ou-heading" key="h1"><p className="pv-eyebrow">제 강의 음성 도구의 요구사항</p><h1>쓰는 사람은 저 한 명입니다</h1></div>}
+        : <div className="ou-heading" key="h1"><p className="pv-eyebrow">제 도구의 요구사항</p><h1>쓰는 사람은 저 한 명입니다</h1></div>}
       <div className="ou-brief" data-on={phase === 0 || undefined}>
         <span>코드 값이 싸졌습니다</span>
         <h2>포토샵이 필요하면?<br/><em>쓸 기능만 직접 만듭니다</em></h2>

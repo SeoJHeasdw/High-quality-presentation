@@ -4,9 +4,9 @@ import { FONT, GLSL_SAFE, PhaseClock, canvasTexture, createStage, easeInOut, eas
 
 /*
  * 6번 · 웹에 오는 요청. 점 하나가 요청 하나다.
- *   0  어둠 속 웹페이지로 요청이 흘러든다. 페이지 앞 관측 지점을 지나면 사람(금색)과 자동화(하늘색)로 나뉜다.
+ *   0  어둠 속 웹페이지로 요청이 흘러든다. 페이지 앞 관측 지점을 지나면 사람(금색)과 봇(하늘색)으로 나뉜다.
  *      흐름이 멈추면 점들이 떠올라 숫자 53%와 47%, 그 아래 비율 막대가 된다.
- *   1  숫자가 풀려 막대로 내려앉고, 막대가 두꺼워지며 자동화 53이 AI가 아닌 봇 44 · Googlebot 5 · AI 봇 등 4로 나뉜다.
+ *   1  숫자가 풀려 막대로 내려앉고, 막대가 두꺼워지며 봇 53이 그 밖의 봇 49 · AI 봇 등 4로 나뉜다.
  *      AI 봇 등만 밝게 남는다. 제목과 설명은 DOM이 맡는다.
  * 카메라는 z=0 평면의 1단위가 화면 1px이 되도록 고정한다(2~3번과 같다). DOM과 3D가 같은 좌표를 쓴다.
  * 점의 개수는 비중과 정확히 같다(Cloudflare 2025.12.02 HTML 요청, FACT-CHECK.md).
@@ -95,7 +95,7 @@ export function createBotsWorld(canvas: HTMLCanvasElement, glyphs: { auto: [numb
   const pageMat = new THREE.MeshBasicMaterial({ map: pageTex, transparent: true, opacity: 0, depthWrite: false, color: new THREE.Color(0.8, 0.8, 0.8) });
   const page = new THREE.Mesh(new THREE.PlaneGeometry(L.w, L.h), pageMat); site.add(page);
 
-  // 관측 지점: 흐름을 가로질러 비스듬히 선 얇은 막. 요청은 여기를 지나며 사람과 자동화로 나뉜다.
+  // 관측 지점: 흐름을 가로질러 비스듬히 선 얇은 막. 요청은 여기를 지나며 사람과 봇으로 나뉜다.
   const gateGroup = new THREE.Group();
   gateGroup.position.copy(toWorld(GL.x, GL.y)); gateGroup.rotation.y = GL.rotY; scene.add(gateGroup); gateGroup.updateMatrixWorld(true);
   const gateMat = new THREE.ShaderMaterial({
@@ -117,22 +117,22 @@ export function createBotsWorld(canvas: HTMLCanvasElement, glyphs: { auto: [numb
   const gateTop = gateGroup.localToWorld(new THREE.Vector3(0, GL.h / 2, 0));
 
   /* 요청 ------------------------------------------------------------------- */
-  // 길은 두 토막이다. 출발점 → 관측 지점(진행도 KG) → 페이지. 관측 지점을 지나면 자동화는 위로, 사람은 아래로 갈라진다.
+  // 길은 두 토막이다. 출발점 → 관측 지점(진행도 KG) → 페이지. 관측 지점을 지나면 봇은 위로, 사람은 아래로 갈라진다.
   const KG = 0.5, TAILS = 3;
   const base = { from: new Float32Array(N * 3), ca: new Float32Array(N * 3), gate: new Float32Array(N * 3), cb: new Float32Array(N * 3), end: new Float32Array(N * 3), num: new Float32Array(N * 3), slab: new Float32Array(N * 3), meta: new Float32Array(N * 4) };
   {
     const r = rand(61), v = new THREE.Vector3(), n = new THREE.Vector3(0, 0, 1).applyQuaternion(gateGroup.quaternion);
-    const bounds = [SHARES[0], SHARES[0] + SHARES[1], AUTO].map((s) => Math.round(N * s / 100));
+    const bounds = [SHARES[0], AUTO].map((s) => Math.round(N * s / 100));
     let ia = 0, ih = 0;
     const barFrac = 0.22;
     for (let i = 0; i < N; i++) {
-      const cls = i < bounds[0] ? 0 : i < bounds[1] ? 1 : i < bounds[2] ? 2 : 3, human = cls === 3, sd = r();
+      const cls = i < bounds[0] ? 0 : i < bounds[1] ? 1 : 2, human = cls === 2, sd = r();
       // 출발: 화면 왼쪽 바깥, 넓게
       const s = toWorld(-260 + r() * 200, GL.y + (r() - .5) * 460).setZ(-420 + r() * 520);
       // 관측 지점을 지나는 곳: 막 안쪽
       const g = gateGroup.localToWorld(v.set((r() - .5) * GL.w * .8, (r() - .5) * GL.h * .78, 0)).clone();
       const ca = g.clone().addScaledVector(n, -(260 + r() * 120)).add(new THREE.Vector3(0, (r() - .5) * 60, 0));
-      // 페이지: 자동화는 위쪽, 사람은 아래쪽
+      // 페이지: 봇은 위쪽, 사람은 아래쪽
       const e = site.localToWorld(v.set((r() - .5) * L.w * .9, (human ? -1 : 1) * (0.08 + r() * 0.4) * L.h, 2)).clone();
       const cb = g.clone().addScaledVector(n, 220 + r() * 120).add(new THREE.Vector3(0, (human ? -1 : 1) * (120 + r() * 100), 0));
       base.from.set([s.x, s.y, s.z], i * 3); base.ca.set([ca.x, ca.y, ca.z], i * 3); base.gate.set([g.x, g.y, g.z], i * 3);
@@ -168,18 +168,18 @@ export function createBotsWorld(canvas: HTMLCanvasElement, glyphs: { auto: [numb
     uniforms: {
       uFlow: { value: 0 }, uReveal: { value: 0 }, uGate: { value: 0 }, uGather: { value: 0 }, uSlab: { value: 0 }, uFocus: { value: 0 }, uTime: { value: 0 }, uD: { value: camD },
       uNeutral: { value: NEUTRAL.clone() }, uIce: { value: ICE.clone() }, uGold: { value: GOLD.clone() },
-      uSteel: { value: new THREE.Color("#5e86a6") }, uGoogle: { value: new THREE.Color("#8fc4e8") }, uAgent: { value: new THREE.Color("#e6f6ff") },
+      uSteel: { value: new THREE.Color("#5e86a6") }, uAgent: { value: new THREE.Color("#e6f6ff") },
     },
     vertexShader: `${GLSL_SAFE}
       attribute vec3 aFrom; attribute vec3 aCa; attribute vec3 aGateP; attribute vec3 aCb; attribute vec3 aEnd; attribute vec3 aNum; attribute vec3 aSlab;
       attribute vec4 aMeta; attribute float aTail;
       uniform float uFlow,uReveal,uGate,uGather,uSlab,uFocus,uTime,uD;
-      uniform vec3 uNeutral,uIce,uGold,uSteel,uGoogle,uAgent;
+      uniform vec3 uNeutral,uIce,uGold,uSteel,uAgent;
       varying vec3 vC; varying float vA;
       vec3 bz(vec3 a,vec3 b,vec3 c,float t){ return mix(mix(a,b,t),mix(b,c,t),t); }
       void main(){
         float cls=aMeta.x, seed=aMeta.y, dur=aMeta.z;
-        float human=step(2.5,cls), agent=step(1.5,cls)*(1.-human);
+        float human=step(1.5,cls), agent=step(.5,cls)*(1.-human);
         vec3 col=mix(uIce,uGold,human);
         // 흐름: 머리 뒤의 꼬리는 조금 앞선 시간의 자리
         float k=fract(uFlow/dur+seed)-aTail*.007;
@@ -201,7 +201,7 @@ export function createBotsWorld(canvas: HTMLCanvasElement, glyphs: { auto: [numb
         p=mix(mix(p,mid2,s),mix(mid2,aSlab,s),s);
         float live=g*(1.-s)+s*(1.+agent*uFocus*2.);
         p+=vec3(sin(uTime*1.1+seed*37.),cos(uTime*.9+seed*23.),sin(uTime*.7+seed*11.)*4.)*1.3*live;
-        vec3 seg=cls<.5?uSteel:cls<1.5?uGoogle:cls<2.5?uAgent:uGold;
+        vec3 seg=cls<.5?uSteel:cls<1.5?uAgent:uGold;
         float tw=.8+.3*sin(uTime*3.1+seed*60.);
         seg*=mix(1.,mix(.42,.95*tw,agent),uFocus);
         vec3 c=mix(cFlow,col*1.15,g);
@@ -225,7 +225,7 @@ export function createBotsWorld(canvas: HTMLCanvasElement, glyphs: { auto: [numb
     const mesh = new THREE.Mesh(new THREE.PlaneGeometry(w, h), m); mesh.position.copy(toWorld(x, y)).setZ(-140); scene.add(mesh); return m;
   };
   const autoPool = pool("#3f7fb0", 1100, 560, 330, 560), humanPool = pool("#a8854e", 1000, 560, LAYOUT.num.human.x + 230, 560);
-  const agentSeg = LAYOUT.slab.segments[2];
+  const agentSeg = LAYOUT.slab.segments[1];
   const agentPool = pool("#9fd6ff", 300, 380, (agentSeg.x0 + agentSeg.x1) / 2, LAYOUT.slab.y + LAYOUT.slab.h / 2);
 
   /* 떠다니는 먼지 */

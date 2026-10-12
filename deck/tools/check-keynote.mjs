@@ -51,14 +51,14 @@ report.cat.lecturePlays=await page.evaluate(()=>{const v=document.querySelector(
 report.cat.singleHeading=await page.locator('.op-heading').count()===1;
 for(let i=0;i<3;i++)await page.keyboard.press('ArrowLeft');await page.waitForTimeout(1300);
 report.cat.reverse=await cue()===0&&await page.evaluate(()=>document.querySelector('.op-canvas')===window.__opening&&document.querySelector('.op-screen video').paused);
-// 6 · 요청의 흐름이 숫자가 되고, 다음 큐에서 자동화가 세 칸으로 나뉜다. 같은 캔버스가 두 큐를 지나고 뒤로 가면 숫자로 돌아온다.
+// 6 · 요청의 흐름이 숫자가 되고, 다음 큐에서 봇이 두 칸으로 나뉜다. 같은 캔버스가 두 큐를 지나고 뒤로 가면 숫자로 돌아온다.
 await go(slideNumber('story-bots'));await page.waitForSelector('.bt-canvas[data-ready]',{timeout:10000});
 await page.evaluate(()=>{window.__bots=document.querySelector('.bt-canvas')});
 await page.waitForTimeout(5000);
 report.bots={numbers:await page.evaluate(()=>document.querySelector('.bt').dataset.cue==='0'&&Number(getComputedStyle(document.querySelector('.bt-group')).opacity)>.99)};
-// 질문은 칸이 나뉜 뒤 3.3초에 떠올라 4.2초에 다 선다(bots.css).
+// 질문은 칸이 나뉜 뒤 3.0초에 떠올라 3.9초에 다 선다(bots.css).
 await page.keyboard.press('ArrowRight');await page.waitForTimeout(4600);
-report.bots.parts=await page.evaluate(()=>document.querySelector('.bt').dataset.cue==='1'&&document.querySelectorAll('.bt-part').length===3&&Number(getComputedStyle(document.querySelector('.bt-question')).opacity)>.99);
+report.bots.parts=await page.evaluate(()=>document.querySelector('.bt').dataset.cue==='1'&&document.querySelectorAll('.bt-part').length===2&&Number(getComputedStyle(document.querySelector('.bt-question')).opacity)>.99);
 await page.keyboard.press('ArrowLeft');await page.waitForTimeout(600);
 report.bots.reverse=await page.evaluate(()=>document.querySelector('.bt-canvas')===window.__bots&&document.querySelector('.bt').dataset.cue==='0'&&!document.querySelector('.bt-part')&&!document.querySelector('.bt[data-fallback]'));
 // 9 → 10 · 연결 장면에서 사건 공간으로. 같은 캔버스가 이어지고(-2 → -1 → 0), 라벨이 제목을 덮지 않으며, 뒤로 가면 연결 장면으로 돌아온다.

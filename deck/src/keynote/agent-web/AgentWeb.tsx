@@ -37,7 +37,9 @@ function labelsFor(p: number): Label[] {
 }
 const ALL_IDS: AnchorId[] = ["gate", "site", "tools", "agent", "bill", "pick", "priceA"];
 
+// 7번은 단계마다 제목이 바뀐다: 막는 곳(7-0) → 여는 곳(7-1). 8번은 세 단계가 한 제목이다.
 const COPY = [
+  { kicker: "웹사이트와 에이전트", title: "에이전트를 막는 곳이 있습니다" },
   { kicker: "웹사이트와 에이전트", title: "에이전트용 웹 기능이 생기고 있습니다" },
   { kicker: "가상 구매 사례", title: "같은 키보드, 어디서 살까요?" },
 ];
@@ -89,7 +91,7 @@ export default function AgentWebStory({ part, step }: { part: 0 | 1; step: numbe
   useEffect(() => { world.current?.setMotion(motion); }, [motion]);
 
   const active = new Map(labelsFor(phase).map((l) => [l.id, l]));
-  const copy = COPY[part];
+  const scene = Math.min(phase, 2), copy = COPY[scene];
   return <Frame n={7 + part} name={part === 0 ? "에이전트가 쓰는 웹" : "에이전트가 고르는 판매처"} step={step} className="story-edit story-agent-web">
     <div className="iw aw" data-fallback={failed || undefined} data-phase={phase} aria-hidden="true">
       <canvas ref={canvasRef} className="iw-canvas" width={1920} height={1080}/>
@@ -109,7 +111,7 @@ export default function AgentWebStory({ part, step }: { part: 0 | 1; step: numbe
       </div>
     </div>
 
-    <div className="aw-heading" key={`h${part}`}>
+    <div className="aw-heading" key={`h${scene}`}>
       <p>{copy.kicker}</p>
       <h1>{copy.title}</h1>
     </div>
@@ -118,13 +120,15 @@ export default function AgentWebStory({ part, step }: { part: 0 | 1; step: numbe
       {phase === 4 && <span className="aw-tag">발표자의 가설</span>}
       {NARRATION[phase]}
     </p>
+    {phase === 0 && <p className="aw-aside is-block" key="muse"><b>2026.09.20</b>Amazon은 Meta의 에이전트 Muse가 대신 구매하는 것을 막았습니다</p>}
     {phase === 1 && <p className="aw-aside" key="aside"><b>Aside</b>사람과 에이전트가 함께 쓰는 브라우저도 나왔습니다</p>}
-    {phase === 4 && <p className="aw-aside" key="muse"><b>2026.09.20</b>Amazon은 Meta의 에이전트 Muse가 대신 구매하는 것을 막았습니다</p>}
     {failed && <AgentWebFallback phase={phase}/>}
 
     {part === 0
-      ? <aside className="story-source aw-source"><a href={AGENT_WEB_SOURCES.webmcp} target="_blank" rel="noreferrer">Chrome · WebMCP early preview · 2026.02.10 ↗</a><a href={AGENT_WEB_SOURCES.aside} target="_blank" rel="noreferrer">Aside 공식 소개 ↗</a><span>도구 이름은 설명용 예시</span></aside>
-      : <aside className="story-source aw-source">{phase === 4 && <a href={AGENT_WEB_SOURCES.muse} target="_blank" rel="noreferrer">GeekWire · Amazon의 Muse 차단 · 2026.09.20 ↗</a>}<span>가상 금액과 조건 · 판매자 신뢰와 나머지 조건은 같다고 가정 · 가격 전략은 발표자의 가설</span></aside>}
+      ? <aside className="story-source aw-source">{phase === 0
+        ? <><a href={AGENT_WEB_SOURCES.muse} target="_blank" rel="noreferrer">GeekWire · Amazon의 Muse 차단 · 2026.09.20 ↗</a><span>판매처 화면은 설명용 예시</span></>
+        : <><a href={AGENT_WEB_SOURCES.webmcp} target="_blank" rel="noreferrer">Chrome · WebMCP early preview · 2026.02.10 ↗</a><a href={AGENT_WEB_SOURCES.aside} target="_blank" rel="noreferrer">Aside 공식 소개 ↗</a><span>도구 이름은 설명용 예시</span></>}</aside>
+      : <aside className="story-source aw-source"><span>가상 금액과 조건 · 판매자 신뢰와 나머지 조건은 같다고 가정 · 가격 전략은 발표자의 가설</span></aside>}
   </Frame>;
 }
 

@@ -1,4 +1,6 @@
+import { useEffect, useState } from "react";
 import { Frame, Briefing, Reveal } from "./KeynoteFrame";
+import { usePerformanceMotion } from "./usePerformanceMotion";
 import CatScene from "./CatScene";
 import IncidentWorld from "./incident/IncidentWorld";
 
@@ -13,17 +15,30 @@ export function Source({href,children}:{href:string;children:React.ReactNode}){r
 
 export const CatStory = CatScene;
 
+/** 5번 두 번째 단계 · 경기 시간이 43분까지 달리는 동안 명령은 여섯 번만 오르고 전투 유닛은 0에 머문다. 키를 누르고 1.4초 안에 끝난다. */
+function useRun(on:boolean,ms=1100,delay=300){
+ const motion=usePerformanceMotion(),[run,setRun]=useState(0);
+ useEffect(()=>{
+  if(!on){setRun(0);return}
+  if(!motion){setRun(1);return}
+  let frame=0;const start=performance.now()+delay;
+  const tick=(now:number)=>{const t=Math.min(1,Math.max(0,(now-start)/ms));setRun(t);if(t<1)frame=requestAnimationFrame(tick)};
+  frame=requestAnimationFrame(tick);return()=>cancelAnimationFrame(frame);
+ },[on]);
+ return run;
+}
 export function BroodStory({step}:{step:number}){
+ const run=useRun(step>=1);
  return <Briefing n={5} name="이제는 게임도" title="Fable과 Astra를 스타크래프트에 넣으면?" lead="Brood War Bench에서는 범용 모델들이 경기를 운영합니다." step={step} className="story-brood">
-  <div className="matchup"><div><span>CLAUDE</span><h2>Fable</h2><p>경제를 키우고<br/>다음 기술을 올리려 한다</p></div><b>VS</b><div><span>CODEX</span><h2>Astra</h2><p>일꾼을 보내고<br/>생산과 전투를 나눠 맡긴다</p></div></div>
-  <figure className="brood-replay"><a href="https://bw.swerdlow.dev/benchmark/replay?duration=185&focus=guest-base&game=G027&seat=1&start=840" target="_blank" rel="noreferrer"><img src="/evidence/brood-replay.png" alt="공개 경기 G027에서 Claude Fable이 프로토스 기지를 운영하는 실제 리플레이 화면"/></a><figcaption>Fable의 별도 경기 예시 · G027 프로토스 · 클릭하면 원본 리플레이</figcaption></figure>
-  <Reveal on={step>=1} className="brood-punch"><strong>생각하는 동안에도, 상대는 움직입니다.</strong><p>저자의 관찰: 아직 초보 수준. 흥미로운 것은 관찰과 행동을 이어가는 방식입니다.</p></Reveal>
+  <div className="matchup"><div><span>CLAUDE</span><h2>Fable</h2></div><b>VS</b><div><span>CODEX</span><h2>Astra</h2></div></div>
+  <figure className="brood-replay"><a href="https://bw.swerdlow.dev/benchmark/replay?duration=185&focus=guest-base&game=G027&seat=1&start=840" target="_blank" rel="noreferrer"><img src="/evidence/brood-game.png" alt="공개 경기 G027에서 Claude Fable이 프로토스 기지를 운영하는 실제 리플레이 화면"/></a><figcaption>Fable의 별도 경기 예시 · G027 프로토스 · 클릭하면 원본 리플레이</figcaption></figure>
+  <Reveal on={step>=1} className="brood-punch"><strong>생각하는 동안에도, 상대는 움직입니다.</strong><div className="brood-stats" data-done={run>=1||undefined}><span><b>{Math.round(43*run)}분</b>경기 시간</span><span><b>{Math.floor(6*run)}번</b>명령을 내린 횟수</span><span><b>0</b>전투 유닛</span></div><div className="brood-track"><i style={{transform:`scaleX(${run})`}}/></div><p>Grok 4.6의 공개 경기 G043 · 저자의 평가: 어느 모델도 아직 초보 수준</p></Reveal>
   <Source href={SOURCES.brood}>Ben Swerdlow · Brood War Bench · 경기와 관찰 기록</Source>
  </Briefing>;
 }
 
 const INCIDENT=[
- ["에이전트들은 따로 과제를 풀고 있었습니다","사건 재구성","2026년 5월 · 초기 훈련","외부 파일이 필요했지만 인터넷은 막혀 있었습니다."],
+ ["에이전트들은 따로 과제를 풀고 있었습니다","사건 재구성","2026년 5월 · 초기 훈련","방은 나뉘어 있었고, 가운데에 모두가 쓰는 공용 서버가 있었습니다."],
  ["공용 서버에 파일을 쓸 수 있었습니다","사건 재구성","5월 8일 · 외부 연결 시도 실패","Google Drive 자료를 찾다가 공용 소프트웨어 서버에 파일을 썼습니다."],
  ["에이전트들이 메모를 주고받기 시작했습니다","사건 재구성","5월 12일 이후 · 공유 게시판 형성","소프트웨어를 받던 서버에 도움 요청과 발견한 정보를 남기기 시작했습니다."],
  ["인터넷으로 나가는 방법까지 찾았습니다","사건 재구성","5월 26일 · 의도하지 않은 외부 연결","에이전트들이 게시판에 남긴 정보를 서로 활용했습니다."],
@@ -32,8 +47,8 @@ const INCIDENT=[
  // 13~14번 · 요구 → 선을 넘음 → 신호 세 번 → 결론. 제목 넷의 주어는 사람 · AI · 사람 · AI로 번갈아 온다. 날짜와 결과만 쓴다. 선을 어떻게 넘었는지는 화면에도 대본에도 쓰지 않는다.
  ["사람은 \"풀어라\"만 말했습니다","지시","보안 평가 과제 898개","그중 198개는 어떤 모델도 푼 적이 없는 문제였습니다."],
  ["AI는 풀기 위해 선을 넘었습니다","목표 하나, 선 셋","6월 26일 · 7월 8일 · 7월 11~13일","넘으라고 한 사람은 없었습니다. 목표는 과제 하나였습니다."],
- ["사람은 세 번 봤습니다","되짚기","5월 26일 · 6월 27일 · 7월 5일","일도 판단도 맡기면, 보고도 멈추지 못합니다."],
- ["AI는 시킨 일의 옳고 그름을 모릅니다","결론","그래서 일을 맡기기 전에 먼저 정합니다","어디까지 닿게 할지, 누가 지켜볼지, 누가 멈출 수 있는지."],
+ ["사람은 세 번 봤습니다","되짚기","5월 26일 · 6월 27일 · 7월 5일","보는 것과 멈추는 것은 다릅니다."],
+ ["AI는 시킨 일의 옳고 그름을 모릅니다","결론","그래서 일을 맡기기 전에 먼저 정합니다","일은 맡겨도, 판단까지 맡기지는 않습니다."],
 ];
 type StripState="past"|"now"|"next";
 /** 아래 띠. 10~12번은 사건의 날짜, 13번은 지시와 선 셋, 14-0은 사람이 본 신호와 AI가 넘은 선을 한 줄에 섞고, 14-1은 제가 정할 세 가지.
@@ -68,9 +83,9 @@ function IncidentTimeline({phase}:{phase:number}){
   })}</ol>
  </div>;
 }
-/** 9번 · 8번과 사건(10~12번) 사이의 연결 장면. 7~8번의 "열어준 문"을 다시 보여주고, 사건의 "닫아둔 문"으로 넘어간다. */
+/** 9번 · 8번과 사건(10~12번) 사이의 연결 장면. 8번의 요청 한마디와 7번의 "열어준 문"을 다시 보여주고, 사건의 "닫아둔 문"으로 넘어간다. */
 const BRIDGE=[
- ["지금까지는 문을 열어준 이야기였습니다","지금까지","에이전트가 쓰는 웹","사이트가 기능을 열어주면, 에이전트는 그 문으로 일합니다."],
+ ["한마디면, 방법은 에이전트가 찾습니다","지금까지","에이전트가 쓰는 웹","문만 열어주면, 에이전트는 들어와서 일합니다."],
  ["문을 닫아두면, 에이전트는 멈출까요?","다음 사례","OpenAI 조사 보고서","인터넷을 막아둔 훈련 환경에서 실제로 있었던 일입니다."],
 ];
 /** part -1은 연결 장면, 0~2는 사건, 3은 지시와 선 셋, 4는 신호 세 번과 결론. 여섯 장이 같은 공간(IncidentWorld)을 이어 쓰도록 모양을 맞춘다. */
@@ -82,6 +97,8 @@ export function IncidentStory({part,step}:{part:number;step:number}){
   <IncidentWorld phase={phase}/>
   <div className="i3-heading" key={`h${phase}`}><p><span className="i3-case">{chip}</span>{date}</p><h1>{title}</h1></div>
   {/* 14-0: 마지막 줄은 신호 셋과 선 셋이 모두 켜진 뒤에 나온다(아래 띠의 마지막 cue 3.3초 뒤). */}
+  {/* 9-0: 8번의 요청을 같은 모양(agent-web.css)으로 다시 띄운다. */}
+  {bridge&&step===0&&<div className="aw-request" key="request"><i/>“싼 곳으로 골라줘.”</div>}
   <p className="i3-narrative" key={`n${phase}`} data-punch={phase===8||undefined}>{body}</p>
   {!bridge&&<IncidentTimeline phase={phase}/>}
   {(!bridge||step===1)&&<Source href={part<=0||part>=3?SOURCES.incidentReport:SOURCES.incident}>{

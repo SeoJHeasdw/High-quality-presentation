@@ -30,6 +30,9 @@
 .aw-tag { flex: none; font-size: 16px; letter-spacing: .08em; font-weight: 600; color: #ffc27a; padding: 6px 11px 5px; border: 1px solid #ffc27a66; border-radius: 6px; background: #1d140ab0; }
 .story-agent-web .aw-aside { position: absolute; right: 0; bottom: 44px; margin: 0; z-index: 3; display: flex; align-items: baseline; gap: 16px; font-size: 21px; color: #9fb3c3; letter-spacing: -.015em; animation: i3-line-in .8s cubic-bezier(.16,1,.3,1) 3.6s both; }
 .story-agent-web .aw-aside b { font-size: 25px; color: #bfe6ff; font-weight: 620; }
+/* 7-0 · 막힌 일 한 줄. 에이전트가 확인 앞에서 멈추는 때(3초)에 맞춰 뜬다. */
+.story-agent-web .aw-aside.is-block { color: #c3ced6; animation-delay: 3s; }
+.story-agent-web .aw-aside.is-block b { color: #ffc27a; }
 
 /* 출처: 오른쪽 아래. 위쪽은 공간의 라벨이 쓴다. */
 .story-agent-web .aw-source { top: auto; bottom: -6px; left: auto; right: 0; display: flex; gap: 22px; align-items: baseline; font-size: 16px; z-index: 4; }
@@ -47,5 +50,6 @@
 .deck-keynote[data-motion="off"] .story-agent-web .aw-heading,
 .deck-keynote[data-motion="off"] .story-agent-web .aw-narrative,
 .deck-keynote[data-motion="off"] .story-agent-web .aw-request,
+.deck-keynote[data-motion="off"] .story-incident-3d .aw-request,
 .deck-keynote[data-motion="off"] .story-agent-web .aw-aside { animation: none!important; }
-@media (prefers-reduced-motion: reduce) { .story-agent-web .aw-heading, .story-agent-web .aw-narrative, .story-agent-web .aw-request, .story-agent-web .aw-aside { animation: none!important; } }
+@media (prefers-reduced-motion: reduce) { .story-incident-3d .aw-request, .story-agent-web .aw-heading, .story-agent-web .aw-narrative, .story-agent-web .aw-request, .story-agent-web .aw-aside { animation: none!important; } }
