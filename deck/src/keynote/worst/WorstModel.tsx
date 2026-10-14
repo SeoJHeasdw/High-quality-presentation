@@ -11,32 +11,14 @@ import "./worst.css";
  * 3D는 worst/world.ts(2~3번과 같은 입자 문법), 글·눈금 라벨·근거는 여기의 DOM이 맡는다. 좌표는 world.ts의 LAYOUT과 같다.
  */
 /* 32-2 · 지금의 프론티어 모델이 만든 사이트 두 개(../opus-site, ../astra-site)로 가는 링크.
-   이 장에 들어서면 로컬 발표 서버가 꺼져 있던 사이트 서버를 켜 두고(tools/engine-launcher.mjs), 켜진 사이트만 링크가 열린다.
-   발표 서버가 없는 정적 배포에서는 링크를 띄우지 않는다. 사이트 설명과 비용은 발표자가 말로 한다. */
-type Sites = Record<"claude" | "astra", { url: string; up: boolean }>;
-const SITE_NAMES: [keyof Sites, string][] = [["claude", "Claude"], ["astra", "Astra"]];
-function useSites() {
-  const [sites, setSites] = useState<Sites | null>(null);
-  useEffect(() => {
-    let cancelled = false, timer = 0, tries = 0;
-    const read = async (start: boolean) => {
-      try {
-        const r = await fetch("/__javis/sites", start ? { method: "POST", headers: { "X-Javis-Launch": "1" } } : undefined);
-        if (!r.ok || !(r.headers.get("content-type") ?? "").includes("json")) return;
-        const next = await r.json() as Sites;
-        if (cancelled) return;
-        setSites(next);
-        if (++tries < 40 && Object.values(next).some((s) => !s.up)) timer = window.setTimeout(() => void read(false), 1000);
-      } catch { /* 발표 서버가 없으면 링크를 띄우지 않는다 */ }
-    };
-    void read(true);
-    return () => { cancelled = true; window.clearTimeout(timer); };
-  }, []);
-  return sites;
-}
+   각 사이트는 HTML 파일 하나로 묶어(npm run build:single) public/sites/에 두었다. 서버를 띄우지 않고 새 탭에서 바로 열린다.
+   사이트 설명과 비용은 발표자가 말로 한다. */
+const SITES = [
+  { name: "Claude", href: "/sites/opus-site.html" },
+  { name: "Astra", href: "/sites/astra-site.html" },
+];
 
 export default function WorstModelStory({ step }: { step: number }) {
-  const sites = useSites();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const world = useRef<WorstWorld | null>(null);
   const [failed, setFailed] = useState(false);
@@ -98,8 +80,8 @@ export default function WorstModelStory({ step }: { step: number }) {
     <div className="wm-evidence" data-on={step === 2 || undefined}>
       <p><b>같은 성능을 쓰는 값 · 해마다 약 10분의 1</b><span>a16z 추정 · 2021~2024 · MMLU 같은 점수를 내는 가장 싼 모델 기준, 과제에 따라 폭이 다릅니다</span></p>
       <p><b>제가 쓰는 Qwen3-TTS · 2026년 1월 공개</b><span>“3초 음성으로 목소리 복제”는 개발사의 설명입니다</span></p>
-      {sites && <p className="wm-sites"><b>지금의 프론티어 모델이 만든 사이트</b><span>{SITE_NAMES.map(([key, name]) =>
-        <a key={key} href={sites[key].url} target="_blank" rel="noreferrer" aria-disabled={!sites[key].up || undefined} onClick={(e) => { if (!sites[key].up) e.preventDefault(); }}>{name} <i aria-hidden="true">↗</i></a>)}</span></p>}
+      <p className="wm-sites"><b>지금의 프론티어 모델이 만든 사이트</b><span>{SITES.map(({ name, href }) =>
+        <a key={name} href={href} target="_blank" rel="noreferrer">{name} <i aria-hidden="true">↗</i></a>)}</span></p>
     </div>
   </Frame>;
 }

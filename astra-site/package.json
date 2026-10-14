@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite --host 0.0.0.0",
     "build": "tsc --noEmit && vite build",
-    "preview": "vite preview --host 0.0.0.0"
+    "preview": "vite preview --host 0.0.0.0",
+    "build:single": "node tools/make-single-html.mjs ../out/astra-site.html"
   },
   "dependencies": {
     "react": "^19.1.1",

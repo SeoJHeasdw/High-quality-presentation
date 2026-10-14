@@ -58,7 +58,6 @@
 .wm-sites a { padding: 3px 14px 4px; border: 1px solid #8b7653; border-radius: 4px; background: #29251e; color: #e4cca4; font-size: 17px; text-decoration: none; }
 .wm-sites a:hover { background: #393125; }
 .wm-sites a:focus-visible { outline: 2px solid #e0c18e; outline-offset: 3px; }
-.wm-sites a[aria-disabled] { opacity: .4; cursor: default; }
 .wm-sites a i { font-style: normal; margin-left: 6px; }
 
 .deck-keynote[data-motion="off"] .worst *, .deck-keynote[data-motion="off"] .worst *::before, .deck-keynote[data-motion="off"] .worst *::after { animation-delay: 0s!important; animation-duration: 0s!important; transition: none!important; }
