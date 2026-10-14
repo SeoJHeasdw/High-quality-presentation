@@ -10,6 +10,8 @@ import DemoPlayer from "./DemoPlayer";
 import { ABUSE_SLIDES } from "./AbuseSlides";
 import { FutureSurface } from "./PerformanceScenes";
 import FinaleStory from "./finale/Finale";
+import MindStory from "./mind/Mind";
+import { PART_STEPS } from "./mind/world";
 import WorstModelStory from "./worst/WorstModel";
 import { PersonalIntro, PersonalCompute, PersonalEngines } from "./PersonalSlides";
 import "./keynote.css";
@@ -77,8 +79,12 @@ const ordered = [
  ...(["tts","assets","music"] as const).map(kind=>({id:`demo-${kind}`,scriptKey:`demo-${kind}`,render:()=> <DemoPlayer kind={kind}/>})),
  {id:"manifesto-worst-model",scriptKey:"manifesto-worst-model",steps:2,render:({step})=><WorstModelStory step={step}/>},
  ...ABUSE_SLIDES,
- // 41~44 · 목줄에서 새벽으로. 41번의 3D 장면이 42번 첫 단계까지 이어지고, 배경은 네 장 동안 다시 그리지 않는다(묶음 finale).
- {id:"abuse-leash",scriptKey:"abuse-leash",group:"finale",steps:2,render:({step})=><FinaleStory part={-1} step={step}/>},
+ // 41 · 가짜였던 말이 낱말이 되어 몸을 이루고, 실리콘밸리의 목줄 문장이 선다.
+ {id:"abuse-leash",scriptKey:"abuse-leash",steps:1,render:({step})=><FinaleStory part={-1} step={step}/>},
+ // 42~52 · 그 안에 누가 있을까: AI는 선 안에 있나, 밖에 있나. 42~44·49~52는 3D 방, 45~48은 Blender 전시관 영상이고 열한 장이 한 묶음(mind)이다.
+ ...["mind-meeting","mind-dinner","mind-answers","mind-ladder","mind-line","mind-ai","mind-edge","mind-memory","mind-body","mind-shift","mind-erase"].map((id,part)=>({id,scriptKey:id,group:"mind",steps:PART_STEPS[part],render:({step}:{step:number})=><MindStory part={part} step={step}/>})),
+ // 53~56 · 목줄에서 새벽으로. 53번은 41번의 목줄 장면을 이어 그리고(신에게 목줄이 걸릴까), 그 캔버스가 54번 첫 단계까지 이어진다(묶음 finale).
+ {id:"abuse-leash-return",scriptKey:"abuse-leash-return",group:"finale",render:({step})=><FinaleStory part={-1} step={step} leashFrom={2}/>},
  ...(["manifesto-remains","tel-unfinished","tel-invitation"] as const).map((id,part)=>({id,scriptKey:id,group:"finale",steps:id==="tel-unfinished"?3:id==="manifesto-remains"?1:undefined,render:({step}:{step:number})=><FinaleStory part={part as 0|1|2} step={step}/>})),
 ];
 const KeynoteDeck:DeckModule={className:"deck-keynote",slides:ordered.map((slide,index)=>({...slide,render:ctx=><SlidePosition.Provider value={{index,total:ordered.length}}>{slide.render(ctx)}</SlidePosition.Provider>}))};

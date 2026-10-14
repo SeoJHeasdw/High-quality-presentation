@@ -6,10 +6,10 @@ import Blueprint3D from "./Blueprint3D";
 import "./finale.css";
 
 /*
- * 42~44번 · 새벽. 15번의 밤, 37~40번의 새벽 2시 47분 뒤에 같은 집이 푸른 새벽(42·43)을 지나 해 뜨는 아침(44)이 된다.
+ * 54~56번 · 새벽. 15번의 밤, 37~40번의 새벽 2시 47분 뒤에 같은 집이 푸른 새벽(42·43)을 지나 해 뜨는 아침(44)이 된다.
  * 배경은 15번 Blender 장면의 마지막 구도를 시간대만 바꿔 다시 렌더한 것(tools/render-house-scroll.py --time).
  * 세 장이 한 묶음(finale)이라 배경은 다시 그리지 않고 밝아진다.
- * 41번(신에게 목줄)도 이 묶음의 첫 장이다(part -1). 41번의 3D 장면(leash/)이 42번 첫 단계까지 같은 캔버스로 이어져,
+ * 53번(신에게 목줄이 걸릴까)도 이 묶음의 첫 장이다(part -1, leashFrom 2). 그 3D 장면(leash/)이 54번 첫 단계까지 같은 캔버스로 이어져,
  * 입자 몸과 목줄이 풀려 집이 되고 그 집이 새벽 사진이 된다. 장이 바뀌어도 화면이 깜빡이지 않는다.
  * 판단의 기록은 local-tts-engine/docs/DECISIONS.md의 실제 기록이다.
  */
@@ -92,18 +92,20 @@ const HEAD: { name: string; kicker: string; title: ReactNode; lead: string }[] =
   { name: "서제호의 30년", kicker: "앞으로 30년, 저는 뭘 하며 살까요?", title: <>아직은 모릅니다.<br/>그래서 <em>제 자비스</em>를 만들고 있습니다</>, lead: "" },
 ];
 
-/** 42-0 · 41번에서 넘어오는 이음새의 제목 */
+/** 54-0 · 53번에서 넘어오는 이음새의 제목 */
 const BRIDGE = { name: "30년 동안 쌓을 것", kicker: "제가 할 수 있는 것", title: <>목줄이 걸릴지는 모릅니다.<br/>제가 할 수 있는 건<br/><em>제 집</em>을 짓는 일입니다</>, lead: "그날이 오든, 늦게 오든, 안 오든 남는 집으로요." };
 
-/** part -1은 41번(신에게 목줄), 0~2는 42~44번. 네 장이 같은 틀을 이어 쓰도록 자식의 자리를 맞춘다. */
-export default function FinaleStory({ part, step = 0 }: { part: -1 | 0 | 1 | 2; step?: number }) {
-  const leash = part === -1, bridge = part === 0 && step === 0;
+/** part -1은 41번과 53번(신에게 목줄), 0~2는 54~56번. 53~56번 네 장이 같은 틀을 이어 쓰도록 자식의 자리를 맞춘다. */
+export default function FinaleStory({ part, step = 0, leashFrom = 0 }: { part: -1 | 0 | 1 | 2; step?: number; leashFrom?: number }) {
+  // 목줄 장면은 둘로 나뉜다: 41번(낱말 → 몸, 목줄의 문장)과, 42~52번(그 안에 누가 있을까)을 지나 돌아오는 53번(신에게 목줄이 걸릴까).
+  // 53번은 41번의 셋째 단계부터 이어 그린다(leashFrom = 2).
+  const leash = part === -1, bridge = part === 0 && step === 0, ls = step + leashFrom;
   const head: { name: string; kicker: string; title: ReactNode; lead: string; notes?: [string, string][] } | null =
     leash ? null : bridge ? BRIDGE : part === 1 ? { ...HEAD[1], ...UNFINISHED[Math.min(3, step)] } : HEAD[part];
   // 41·42번의 3D 단계: 41번 -1~1, 42번 2~3
-  const phase = leash ? step - 1 : 2 + step;
+  const phase = leash ? ls - 1 : 2 + step;
   const className = leash ? "personal-v2 leash finale-pre" : `finale finale--${part}${bridge ? " finale--bridge" : ""}${part === 2 ? " kn-closing" : ""}`;
-  return <Frame n={42 + part} name={head?.name ?? "신에게 목줄"} step={step} className={className}>
+  return <Frame n={54 + part} name={head?.name ?? "신에게 목줄"} step={step} className={className}>
     <div className="fn-sky" aria-hidden="true">
       <img className="fn-plate fn-plate--blue" src="/house-dawn/blue.jpg" alt=""/>
       <img className="fn-plate fn-plate--sun" src="/house-dawn/sunrise.jpg" alt=""/>
@@ -116,7 +118,7 @@ export default function FinaleStory({ part, step = 0 }: { part: -1 | 0 | 1 | 2; 
       <h1>{head.title}</h1>
       {head.lead && <p className="fn-lead">{head.lead}</p>}
       {head.notes && <ul className="fn-notes">{head.notes.map(([name, text], i) => <li key={name} style={{ "--i": i } as CSSProperties}><b>{name}</b>{text}</li>)}</ul>}
-    </div> : <LeashCopy step={step}/>}
+    </div> : <LeashCopy step={ls}/>}
     {part === 0 && step === 1 && <Strata/>}
     {part === 1 && <><Blueprint3D step={step} fallback={<Blueprint/>}/><p className="fn-legend"><span><i/>실선 · 만든 방</span><span><i data-dash/>점선 · 구상·가정</span></p></>}
     {part === 2 && <>

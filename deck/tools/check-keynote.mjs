@@ -72,16 +72,33 @@ report.bridge=[];
 for(let i=0;i<3;i++){if(i)await page.keyboard.press('ArrowRight');await page.waitForTimeout(i?3400:3800);report.bridge.push(await bridgeBeat())}
 await page.keyboard.press('ArrowLeft');await page.waitForTimeout(2600);report.bridge.push(await bridgeBeat());
 const bridgeOk=report.bridge.map(b=>b.phase).join(',')==='-2,-1,0,-1'&&report.bridge.every(b=>b.same&&b.labels>0&&!b.covers);
-// 41 · 40번의 가짜 말이 풀려 낱말이 되는 이음새(-1)에서 몸(0)과 목줄(1)까지 같은 캔버스가 세 단계를 지난다.
+// 41 · 40번의 가짜 말이 풀려 낱말이 되는 이음새(-1)에서 몸(0)까지 같은 캔버스가 두 단계를 지난다.
+const leashBeat=()=>page.evaluate(()=>({step:Number(document.querySelector('.ls-copy').dataset.step),same:document.querySelector('.ls-canvas')===window.__leash,title:document.querySelector('.ls-copy h1').textContent}));
 await go(slideNumber('abuse-leash'));await page.waitForSelector('.ls-canvas[data-ready]',{timeout:10000});
 await page.evaluate(()=>{window.__leash=document.querySelector('.ls-canvas')});
-const leashBeat=()=>page.evaluate(()=>({step:Number(document.querySelector('.ls-copy').dataset.step),same:document.querySelector('.ls-canvas')===window.__leash,title:document.querySelector('.ls-copy h1').textContent}));
 report.leash=[await leashBeat()];
-for(let i=0;i<2;i++){await page.keyboard.press('ArrowRight');await page.waitForTimeout(1500);report.leash.push(await leashBeat())}
-// 42번 첫 단계는 41번의 캔버스가 이어서 그린다(묶음 finale). 장이 바뀌어도 캔버스가 새로 생기지 않아 화면이 깜빡이지 않는다.
+await page.keyboard.press('ArrowRight');await page.waitForTimeout(1500);report.leash.push(await leashBeat());
+// 42~52 · 그 안에 누가 있을까: 열한 장이 한 캔버스(묶음 mind)로 43단계를 지나고, 뒤로 가면 처음 단계로 돌아온다.
+// 45~48(단계 10~25)은 Blender 전시관 영상이다. 앞으로 넘기면 조각을 틀고, 끝나면 그 단계의 정지 지점(단계 - 9)에 멈춘다.
+await page.keyboard.press('ArrowRight');await page.waitForSelector('.mw-canvas[data-ready]',{timeout:10000});
+await page.evaluate(()=>{window.__mind=document.querySelector('.mw-canvas')});
+const mindPhases=[],hallHeld=[];
+for(let i=0;i<43;i++){
+ if(i){await page.keyboard.press('ArrowRight');await page.waitForTimeout(500)}
+ const p=await page.evaluate(()=>Number(document.querySelector('.mw').dataset.phase));mindPhases.push(p);
+ if(p>=10&&p<=25){await page.waitForFunction(k=>{const h=document.querySelector('.mh'),img=h.querySelector('.mh-still');return h.dataset.status==='held'&&img.complete&&img.src.endsWith(`/mind-hall/a-${k}.jpg`)},p-9,{timeout:8000}).catch(()=>{});
+  hallHeld.push(await page.evaluate(k=>{const h=document.querySelector('.mh'),img=h.querySelector('.mh-still');return h.dataset.status==='held'&&h.dataset.anchor===String(k)&&img.complete&&img.naturalWidth===1920&&img.src.endsWith(`/mind-hall/a-${k}.jpg`)},p-9))}
+}
+report.mind={phases:mindPhases.join(','),hall:hallHeld,same:await page.evaluate(()=>document.querySelector('.mw-canvas')===window.__mind),fallback:await page.locator('.mw[data-fallback]').count()===0};
+await go(slideNumber('mind-meeting'));report.mind.start=await page.evaluate(()=>Number(document.querySelector('.mw').dataset.phase))===0;
+const mindOk=report.mind.phases===Array.from({length:43},(_,i)=>i).join(',')&&report.mind.hall.length===16&&report.mind.hall.every(Boolean)&&report.mind.same&&report.mind.fallback&&report.mind.start;
+// 53 · 목줄 장면으로 돌아와 고리가 걸리지 않는다(41번의 셋째 단계). 54번 첫 단계는 53번의 캔버스가 이어서 그린다(묶음 finale).
+await go(slideNumber('abuse-leash-return'));await page.waitForSelector('.ls-canvas[data-ready]',{timeout:10000});
+await page.evaluate(()=>{window.__leash=document.querySelector('.ls-canvas')});
+report.leash.push(await leashBeat());
 await page.keyboard.press('ArrowRight');await page.waitForTimeout(400);
 report.leashTo41=await page.evaluate(n=>document.querySelector('.kn-slide').dataset.slide===String(n)&&document.querySelector('.ls-canvas')===window.__leash&&document.querySelector('.ls').dataset.phase==='2',slideNumber('manifesto-remains'));
-const leashOk=report.leash.map(b=>b.step).join(',')==='0,1,2'&&report.leash.every(b=>b.same)&&report.leash[0].title.includes('말이었습니다')&&report.leashTo41;
+const leashOk=report.leash.map(b=>b.step).join(',')==='0,1,2'&&report.leash[1].same&&report.leash[0].title.includes('말이었습니다')&&report.leashTo41&&mindOk;
 // 7~8, 19~22 · 묶인 3D 공간: 장이 바뀌어도 같은 캔버스가 이어지고, 모든 단계가 그려지며, 뒤로 가면 처음 단계로 돌아온다.
 report.groups={};
 for(const [name,first,beats] of [['agentWeb','story-web-door',5],['oneUser','manifesto-requirements',11]]){

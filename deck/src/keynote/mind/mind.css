@@ -1,0 +1,75 @@
+/* 42~49 · 그 안에 누가 있을까. 어두운 서재 같은 방. 분필 금빛(사람·동물)과 파랑(AI)만 쓴다. kn-body의 원점은 화면 (100, 162)이다. */
+.mind { background: #0b0806; --chalk: #f2d9ae; --gold: #ffcf86; --ice: #8fd0ff; --dim: #9c8c78; }
+.mind .kn-chrome, .mind .kn-footer { z-index: 6; }
+.mind .kn-body { z-index: 3; }
+.mw { position: absolute; left: -100px; top: -162px; width: 1920px; height: 1080px; z-index: 0; pointer-events: none; }
+.mw-canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; opacity: 0; transition: opacity 1.1s ease; }
+.mw-canvas[data-ready] { opacity: 1; }
+.mw-shade { position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(90deg, #0b0806f2 0%, #0b0806c4 30%, #0b080600 50%), linear-gradient(0deg, #0b0806d0 0%, #0b080600 16%); }
+/* 43~46 · 전시관 영상 동안 캔버스는 걷히고, 영상(HallLayer)이 그 자리를 채운다 */
+.mw { transition: opacity .7s ease; }
+.mw[data-room="-1"] { opacity: 0; }
+.mh { position: absolute; left: -100px; top: -162px; width: 1920px; height: 1080px; z-index: 1; pointer-events: none; opacity: 0; transition: opacity .7s ease; background: #050403; }
+.mh[data-on] { opacity: 1; }
+.mh-still, .mh-video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+.mh-video { opacity: 0; }
+.mh-video[data-visible] { opacity: 1; }
+.mh-shade { position: absolute; inset: 0; background: linear-gradient(90deg, #050403cc 0%, #05040380 26%, #05040300 46%), linear-gradient(0deg, #05040399 0%, #05040300 14%); }
+.mw[data-fallback] .mw-canvas { display: none; }
+
+.mn-copy { position: absolute; left: 0; top: 30px; z-index: 3; width: 820px; animation: pv-rise 1.1s cubic-bezier(.16,1,.3,1) .35s both; }
+.mn-copy[data-delay] { animation-delay: 1.15s; }
+.mn-copy .pv-eyebrow { color: #e8b27a; }
+.mn-copy .pv-eyebrow::before { background: #e8b27a; }
+.mn-copy h1 { font-size: 68px; line-height: 1.22; color: #f3ede4; }
+.mn-copy h1 em { font-style: normal; color: var(--gold); text-shadow: 0 0 40px #ffb45e40; }
+.mn-copy[data-narrow] { width: 640px; }
+.mn-copy[data-narrow] h1 { font-size: 56px; }
+.mn-lead { margin-top: 34px; font-size: 27px; line-height: 1.55; color: #c8b8a2; letter-spacing: -.02em; opacity: 0; animation: pv-rise 1s cubic-bezier(.16,1,.3,1) 1.3s both; }
+.mn-copy[data-delay] .mn-lead { animation-delay: 2.2s; }
+.mn-copy[data-narrow] .mn-lead { font-size: 23px; margin-top: 26px; }
+
+.mn-labels { position: absolute; inset: 0; z-index: 2; pointer-events: none; }
+/* 43-1 · 51-2 · 한 줄씩 서는 목록(글 단 안) */
+.mn-list { margin: 34px 0 0; padding: 0; list-style: none; counter-reset: mn; }
+.mn-list li { position: relative; margin-bottom: 18px; padding-left: 54px; font-size: 32px; line-height: 1.4; color: #efe4d4; letter-spacing: -.02em; opacity: 0; animation: pv-rise .9s cubic-bezier(.16,1,.3,1) calc(1.1s + var(--i) * .9s) both; }
+.mn-list li::before { counter-increment: mn; content: counter(mn); position: absolute; left: 0; top: 4px; width: 34px; height: 34px; border: 1px solid #e8b27a88; border-radius: 50%; font-size: 18px; line-height: 34px; text-align: center; color: #e8b27a; }
+.mn-copy[data-delay] .mn-list li { animation-delay: calc(2s + var(--i) * .9s); }
+.mn-labels > * { position: absolute; margin: 0; opacity: 0; transition: opacity .35s ease; color: var(--chalk); letter-spacing: -.015em; }
+.mn-labels > [data-on] { opacity: 1; transition: opacity .8s ease var(--d, .3s); }
+
+/* 42-2 · 세 대답 */
+.mn-answer { width: 280px; text-align: center; }
+.mn-answer b { display: block; font-size: 44px; font-weight: 650; color: var(--gold); letter-spacing: -.04em; text-shadow: 0 0 30px #ffb45e33; }
+.mn-answer span { display: block; margin-top: 8px; font-size: 16px; color: #c7b49a; }
+.mn-answer span, .mn-answer q { text-shadow: 0 0 10px #0b0806, 0 0 3px #0b0806, 0 0 18px #0b0806cc; }
+.mn-answer q { display: block; margin-top: 14px; font-size: 18px; line-height: 1.5; color: #e1d3bf; quotes: none; word-break: keep-all; }
+
+.mn-ask { width: 200px; text-align: center; font-size: 22px; font-weight: 560; color: #e9d6b8; }
+/* 50-2~3 · 두 빈칸 */
+.mn-gap { width: 320px; font-size: 30px; font-weight: 600; line-height: 1.1; color: var(--ice); }
+.mn-gap small { display: block; margin-top: 8px; font-size: 17px; font-weight: 400; color: #7fa9c6; }
+
+/* 47 · 기억 */
+.mn-tag { font-size: 17px; color: var(--dim); white-space: nowrap; }
+.mn-tag--ai { width: 120px; text-align: center; font-size: 18px; font-weight: 600; color: var(--ice); }
+.mn-diary { font-size: 29px; font-weight: 520; color: var(--chalk); white-space: nowrap; }
+.mn-diary time { margin-right: 22px; font-size: 22px; color: var(--gold); font-variant-numeric: tabular-nums; }
+.mn-diary::after { content: ""; position: absolute; left: -6px; right: -10px; top: 54%; height: 2px; background: var(--chalk); transform-origin: left; transform: scaleX(0); }
+.mn-diary[data-on]::after { transform: scaleX(1); transition: transform .22s ease var(--x, 2s); }
+.mn-cards { width: 360px; padding: 0; list-style: none; }
+.mn-cards li { display: flex; gap: 14px; align-items: baseline; margin-bottom: 30px; padding: 12px 16px; border: 1px solid #f2d9ae44; border-radius: 10px; background: #18110bcc; font-size: 19px; color: #e7d8c2; }
+.mn-cards li time { font-size: 15px; color: var(--gold); font-variant-numeric: tabular-nums; }
+.mn-cards .mn-cards__head { display: block; padding: 0; border: 0; background: none; margin-bottom: 14px; font-size: 15px; color: var(--dim); }
+
+/* 48 · 몸 */
+.mn-case { width: 390px; font-size: 18px; line-height: 1.45; color: #d9e8f2; }
+.mn-case b { display: block; margin-bottom: 4px; font-size: 22px; color: var(--ice); }
+.mn-case small { display: block; margin-top: 6px; font-size: 14px; color: #7f95a6; }
+
+/* 49 · 30년 눈금 */
+.mn-year { width: 80px; text-align: center; font-size: 17px; color: #d9c6aa; font-variant-numeric: tabular-nums; }
+
+.deck-keynote[data-motion="off"] .mind *, .deck-keynote[data-motion="off"] .mind *::before, .deck-keynote[data-motion="off"] .mind *::after { animation-delay: 0s!important; animation-duration: 0s!important; transition: none!important; }
+@media (prefers-reduced-motion: reduce) { .mind *, .mind *::before, .mind *::after { animation-delay: 0s!important; animation-duration: 0s!important; transition: none!important; } }
