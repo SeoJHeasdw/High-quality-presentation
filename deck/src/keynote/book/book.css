@@ -1,0 +1,18 @@
+/* 15번 · 『몫: 인간의 자리』. 영상은 화면 전체(1920×1080), 글은 책이 비워 둔 오른쪽에 선다. */
+.book { --gold: #ffcf86; background: #08080e; }
+.bk-film { position: absolute; left: -100px; top: -162px; width: 1920px; height: 1080px; z-index: 1; pointer-events: none; background: #08080e; }
+.bk-still, .bk-video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+.bk-video { opacity: 0; }
+.bk-video[data-visible] { opacity: 1; }
+/* 오른쪽 글 뒤를 아주 조금 눌러 둔다. 책 쪽(왼쪽)은 건드리지 않는다. */
+.bk-shade { position: absolute; inset: 0; background: linear-gradient(270deg, #06060bb3 0%, #06060b66 34%, #06060b00 56%); }
+
+.bk-copy { position: absolute; left: 920px; top: 210px; z-index: 3; width: 740px; animation: pv-rise 1.1s cubic-bezier(.16,1,.3,1) .15s both; }
+.bk-copy[data-hold] { animation: none; opacity: 0; }
+.bk-copy .pv-eyebrow { color: #e8b27a; }
+.bk-copy .pv-eyebrow::before { background: #e8b27a; }
+.bk-copy h1 { font-size: 76px; line-height: 1.2; font-weight: 650; letter-spacing: -.045em; color: #f3ede4; text-shadow: 0 2px 30px #05080d; }
+.bk-copy h1 em { font-style: normal; color: var(--gold); text-shadow: 0 0 40px #ffb45e40; }
+.bk-copy[data-quote] { top: 120px; }
+.bk-copy[data-quote] h1 { font-size: 52px; line-height: 1.42; font-weight: 580; letter-spacing: -.04em; }
+.bk-source { margin-top: 34px; font-size: 21px; color: #9aa3b5; letter-spacing: -.01em; }

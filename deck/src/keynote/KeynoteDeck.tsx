@@ -11,6 +11,7 @@ import { ABUSE_SLIDES } from "./AbuseSlides";
 import { FutureSurface } from "./PerformanceScenes";
 import FinaleStory from "./finale/Finale";
 import MindStory from "./mind/Mind";
+import BookStory from "./book/Book";
 import { PART_STEPS } from "./mind/world";
 import WorstModelStory from "./worst/WorstModel";
 import { PersonalIntro, PersonalCompute, PersonalEngines } from "./PersonalSlides";
@@ -64,12 +65,14 @@ const ordered = [
  {id:"story-price",scriptKey:"story-price",steps:2,group:"agent-web",render:({step})=><AgentWebStory part={1} step={step}/>},
  // 9~14 · 열어준 문에서 닫아둔 문으로 넘어와, 같은 공간에서 사건을 재구성하고(10~12) 지시·선 셋·신호·결론까지 본다(13·14, 묶음 incident-rooms).
  ...["story-closed-door","story-rooms","story-board","story-boundary","story-lines","story-signals"].map((id,i)=>({id,scriptKey:id,steps:1,group:"incident-rooms",render:({step})=><IncidentStory part={i-1} step={step}/>})),
+ // 15 · 14번의 "누가 멈출 수 있는지"를 백승헌 전무의 책 『몫: 인간의 자리』가 이어받는다(Blender 영상, tools/render-book.py).
+ {id:"story-book",scriptKey:"story-book",steps:1,render:({step})=><BookStory step={step}/>},
  {id:"story-next-market",scriptKey:"story-next-market",steps:8,render:({step})=><NextMarket step={step}/>},
- // 16·17 · 같은 집과 30년 눈금 위에서 이어진다(묶음 person-ruler).
+ // 17·18 · 같은 집과 30년 눈금 위에서 이어진다(묶음 person-ruler).
  byId("manifesto-person"),
  {id:"manifesto-transition",scriptKey:"manifesto-transition",steps:2,group:"person-ruler",render:({step})=><PersonalIntro part={1} step={step}/>},
  byId("manifesto-compute"),
- // 19~22 · 한 사람을 둘러싼 흐름에서 Factory 안으로 들어가, "기업이었다면"의 스테이션과 제 스테이션까지 한 공간이다(묶음 one-user).
+ // 20~23 · 한 사람을 둘러싼 흐름에서 Factory 안으로 들어가, "기업이었다면"의 스테이션과 제 스테이션까지 한 공간이다(묶음 one-user).
  {id:"manifesto-requirements",scriptKey:"manifesto-requirements",steps:1,group:"one-user",render:({step})=><OneUserStory part={0} step={step}/>},
  {id:"manifesto-system",scriptKey:"manifesto-system",steps:2,group:"one-user",render:({step})=><OneUserStory part={1} step={step}/>},
  {id:"manifesto-factory",scriptKey:"manifesto-factory",steps:2,group:"one-user",render:({step})=><OneUserStory part={2} step={step}/>},
@@ -79,11 +82,11 @@ const ordered = [
  ...(["tts","assets","music"] as const).map(kind=>({id:`demo-${kind}`,scriptKey:`demo-${kind}`,render:()=> <DemoPlayer kind={kind}/>})),
  {id:"manifesto-worst-model",scriptKey:"manifesto-worst-model",steps:2,render:({step})=><WorstModelStory step={step}/>},
  ...ABUSE_SLIDES,
- // 41 · 가짜였던 말이 낱말이 되어 몸을 이루고, 실리콘밸리의 목줄 문장이 선다.
+ // 42 · 가짜였던 말이 낱말이 되어 몸을 이루고, 실리콘밸리의 목줄 문장이 선다.
  {id:"abuse-leash",scriptKey:"abuse-leash",steps:1,render:({step})=><FinaleStory part={-1} step={step}/>},
- // 42~52 · 그 안에 누가 있을까: AI는 선 안에 있나, 밖에 있나. 42~44·49~52는 3D 방, 45~48은 Blender 전시관 영상이고 열한 장이 한 묶음(mind)이다.
+ // 43~53 · 그 안에 누가 있을까: AI는 선 안에 있나, 밖에 있나. 43~45·50~53은 3D 방, 46~49는 Blender 전시관 영상이고 열한 장이 한 묶음(mind)이다.
  ...["mind-meeting","mind-dinner","mind-answers","mind-ladder","mind-line","mind-ai","mind-edge","mind-memory","mind-body","mind-shift","mind-erase"].map((id,part)=>({id,scriptKey:id,group:"mind",steps:PART_STEPS[part],render:({step}:{step:number})=><MindStory part={part} step={step}/>})),
- // 53~56 · 목줄에서 새벽으로. 53번은 41번의 목줄 장면을 이어 그리고(신에게 목줄이 걸릴까), 그 캔버스가 54번 첫 단계까지 이어진다(묶음 finale).
+ // 54~57 · 목줄에서 새벽으로. 54번은 42번의 목줄 장면을 이어 그리고(신에게 목줄이 걸릴까), 그 캔버스가 55번 첫 단계까지 이어진다(묶음 finale).
  {id:"abuse-leash-return",scriptKey:"abuse-leash-return",group:"finale",render:({step})=><FinaleStory part={-1} step={step} leashFrom={2}/>},
  ...(["manifesto-remains","tel-unfinished","tel-invitation"] as const).map((id,part)=>({id,scriptKey:id,group:"finale",steps:id==="tel-unfinished"?3:id==="manifesto-remains"?1:undefined,render:({step}:{step:number})=><FinaleStory part={part as 0|1|2} step={step}/>})),
 ];

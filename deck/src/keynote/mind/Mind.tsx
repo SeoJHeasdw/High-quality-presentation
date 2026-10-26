@@ -164,7 +164,7 @@ function MindLabels({ phase }: { phase: number }) {
     <p className="mn-diary" data-on={on(27)} style={{ ...px(DIARY.x0, DIARY.rule0 - 40), "--d": `${DIARY.first}s`, "--x": `${DIARY.first + DIARY.gap}s` } as CSSProperties}><time>8:31</time>이제 정말, 완전히 깨어났다.</p>
     <span className="mn-tag" data-on={on(27)} style={{ ...px(1080, 890), "--d": "2.2s" } as CSSProperties}>일기의 첫 줄만 옮기고, 나머지는 알아볼 수 없는 손글씨로 그렸습니다</span>
     <ul className="mn-cards" data-on={on(28, 29)} style={px(LAYOUT.cards.x - 360, LAYOUT.cards.ys[0] - 30)}>
-      <li className="mn-cards__head">판단의 기록 · 54번에서 보여 드릴 실제 기록</li>
+      <li className="mn-cards__head">판단의 기록 · 55번에서 보여 드릴 실제 기록</li>
       {DECISIONS.map(([d, t], i) => <li key={d} style={{ "--i": i } as CSSProperties}><time>{d}</time>{t}</li>)}
     </ul>
     {/* 50 · 몸 */}
