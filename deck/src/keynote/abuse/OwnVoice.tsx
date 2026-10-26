@@ -3,6 +3,7 @@ import { Frame } from "../KeynoteFrame";
 import { usePerformanceMotion } from "../usePerformanceMotion";
 import sample from "../data/english-narration.json";
 import "./abuse-v2.css";
+import { shortcutKey } from "../../components/keys";
 
 /*
  * 32번 · 제가 녹음한 적 없는 문장.
@@ -45,7 +46,7 @@ export default function OwnVoice({ step }: { step: number }) {
     const v = audio.current!;
     const onKey = (e: KeyboardEvent) => {
       if (e.ctrlKey || e.metaKey || e.altKey) return;
-      const k = e.key.toLowerCase();
+      const k = shortcutKey(e);
       if (k === "p" && step === 0) { e.preventDefault(); if (autoStart.current !== null) { window.clearTimeout(autoStart.current); autoStart.current = null; } if (v.paused) playSample(); else v.pause(); }
       if (k === "a") { e.preventDefault(); v.muted = !v.muted; setMuted(v.muted); }
     };

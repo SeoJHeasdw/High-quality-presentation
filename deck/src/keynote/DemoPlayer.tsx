@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 import { Briefing } from "./KeynoteFrame";
 import musicWave from "./data/music-waveform-hiphop.json";
+import { shortcutKey } from "../components/keys";
 
 /** 31번 · 뮤직비디오(../mv/render/hiphop-mv-tel.mp4). 로컬 발표 서버가 내보내며, 파일이 없으면 링크를 띄우지 않는다. */
 const MV="/__javis/mv/hiphop-mv-tel.mp4";
 const DEMOS={
- tts:{title:"제가 만든 강의, 제 목소리로 들어보면",name:"실물 1 / TTS Engine",lead:"기존 강의 영상에서 가져온 24초 구간입니다.",src:"/demos/tts-lecture.mp4",poster:"/demos/tts-lecture.jpg",caption:"실제 생성된 강의 영상 · 원본 00:25–00:49",description:"대본과 화면을 받아 음성·자막·영상으로 만든 결과",audio:false},
+ tts:{title:"회사 일로 만든 영상, 제 목소리로 들어보면",name:"실물 1 / TTS Engine",lead:"IBM Bob 데모 영상에서 Bob이 직접 일하는 26초입니다.",src:"/demos/bob-work.mp4",poster:"/demos/bob-work.jpg",caption:"실제 만든 IBM Bob 데모 영상 · 원본 2:49–3:15",description:"대본과 작업 화면을 받아 음성·자막·영상으로 만든 결과",audio:false},
  assets:{title:"장면을 만들고, 카메라를 움직여봅니다",name:"실물 2 / Assets Engine",lead:"로컬 엔진이 만든 15초 프리비즈입니다. 구도와 움직임을 먼저 확인하는 스케치입니다.",src:"/demos/assets-previz.mp4",poster:"/demos/assets-previz.jpg",caption:"실제 프리비즈 출력 · 2026.09.22 · 15초",description:"장면 배치와 카메라 움직임이 영상으로 이어진 결과",audio:false},
  music:{title:"이번에는, 설명 대신 잠깐 들어보겠습니다",name:"실물 3 / Music Engine",lead:"제가 만든 감성 힙합 초안을 들어보겠습니다.",src:"/demos/emotional-hiphop-draft.wav",poster:"",caption:"감성 힙합 초안 · 3분",description:"가사와 음악 지시로 만든 곡",audio:true},
 };
@@ -44,7 +45,7 @@ export default function DemoPlayer({kind}:{kind:keyof typeof DEMOS}){
  useEffect(()=>{
   const media=ref.current;
   autoStart.current=window.setTimeout(()=>{autoStart.current=null;if(media) void media.play().catch(()=>{if(media.paused)setError("자동 재생이 차단되었습니다. 재생을 눌러주세요.")})},kind==='assets'?0:1000);
-  const onKey=(e:KeyboardEvent)=>{if(e.ctrlKey||e.metaKey||e.altKey||e.target instanceof HTMLInputElement)return;if(e.key.toLowerCase()==='p'){e.preventDefault();toggle()}if(e.key.toLowerCase()==='a'){e.preventDefault();sound()}};
+  const onKey=(e:KeyboardEvent)=>{if(e.ctrlKey||e.metaKey||e.altKey||e.target instanceof HTMLInputElement)return;if(shortcutKey(e)==='p'){e.preventDefault();toggle()}if(shortcutKey(e)==='a'){e.preventDefault();sound()}};
   window.addEventListener('keydown',onKey);return()=>{window.removeEventListener('keydown',onKey);if(autoStart.current!==null)window.clearTimeout(autoStart.current);media?.pause()};
  },[]);
  const events={onPlay:()=>{setPlaying(true);setError("")},onPause:()=>setPlaying(false),onEnded:()=>setPlaying(false),onTimeUpdate:()=>setTime(ref.current?.currentTime??0),onError:()=>setError("미디어를 불러오지 못했습니다. 로컬 서버를 확인해주세요.")};

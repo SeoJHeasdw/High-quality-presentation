@@ -1,4 +1,4 @@
-/* 2~3 · 사진 한 장에서 강의 영상까지. 3D 공간이 화면 전체를 채우고, 글은 비어 있는 가장자리에 놓는다.
+/* 2~3 · 사진 한 장에서 영상 한 편까지. 3D 공간이 화면 전체를 채우고, 글은 비어 있는 가장자리에 놓는다.
    좌표는 opening/world.ts의 LAYOUT과 같다(화면 px). kn-body의 원점은 화면 (100, 162)이다. */
 .opening { background: #05080d; }
 .opening .kn-chrome, .opening .kn-footer { z-index: 6; }
@@ -56,7 +56,7 @@
 @keyframes op-blink { 50% { opacity: 0; } }
 @keyframes op-breathe { 50% { box-shadow: 0 0 0 11px #ffd89914, 0 0 34px #ffcf7f; } }
 
-/* 3 · 실제 강의 영상 */
+/* 3 · 실제 IBM Bob 데모 영상 */
 .op-screen { position: absolute; left: 292px; top: 130px; width: 1136px; z-index: 3; pointer-events: none; }
 .op-screen__frame { position: relative; width: 1136px; height: 639px; margin: 0; overflow: hidden; border-radius: 16px; background: #04070c;
   border: 1px solid #b9d6ee38; box-shadow: 0 50px 140px #000d, 0 0 0 1px #000a, 0 0 120px #5f9fd41f;

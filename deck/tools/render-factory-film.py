@@ -16,7 +16,7 @@ OUT = ROOT/'public/factory-film'
 WORK = ROOT/'render/blender-film'
 TEX = WORK/'textures'
 BIRD = ROOT/'public/engines/factory-assets/hummingbird.png'
-LECTURE = ROOT/'public/demos/tts-lecture.jpg'
+DEMO = ROOT/'public/demos/bob-demo.jpg'
 PEAKS = json.loads((ROOT/'src/keynote/data/music-waveform.json').read_text())['peaks']
 NAMES = {18:'01-enter',19:'02-voice',20:'03-image',21:'04-music',22:'05-reveal'}
 ARGS = sys.argv[sys.argv.index('--')+1:] if '--' in sys.argv else []
@@ -127,7 +127,7 @@ def linearize():
         except Exception:pass
 
 def setup():
-    global CAM,DARK,GOLD,TEAL,CREAM,GLOW,STEEL,BIRDMAT,LECTUREMAT
+    global CAM,DARK,GOLD,TEAL,CREAM,GLOW,STEEL,BIRDMAT,DEMOMAT
     bpy.ops.wm.read_factory_settings(use_empty=True);s=bpy.context.scene
     s.render.engine='CYCLES' if False else 'BLENDER_EEVEE'
     s.render.resolution_x=640 if a.mode=='samples' else 960 if a.mode=='preview' else 1280
@@ -149,7 +149,7 @@ def setup():
     GLOW=material('Teal luminous inlay',(.04,.64,.57),.2,.26,2)
     STEEL=material('Titanium',(.25,.3,.32),.82,.22)
     BIRDMAT=image_material(BIRD,'Actual generated hummingbird',.86)
-    LECTUREMAT=image_material(LECTURE,'Actual TTS lecture',.95)
+    DEMOMAT=image_material(DEMO,'Actual TTS demo video',.95)
     bpy.ops.object.camera_add();CAM=bpy.context.object;CAM.name='Cinematography';s.camera=CAM;CAM.data.clip_start=.035;CAM.data.clip_end=400;CAM.data.dof.use_dof=True
     # Restrained bloom in the final composite; original footage remains legible.
     try:
@@ -179,7 +179,7 @@ def workshop():
         for xx in [x-2.66,x+2.66]:cube('Brass upright',(xx,.43,5),(.05,.52,9.65),GOLD,.012)
         cube('Portal footing',(x,.4,.24),(5.8,1.6,.4),DARK,.08)
         cube('Light in floor',(x,-.8,.005),(4.9,.03,.018),GLOW)
-    framed_screen('01 VOICE preview',(0,.24,5.3),4.95,2.785,LECTUREMAT)
+    framed_screen('01 VOICE preview',(0,.24,5.3),4.95,2.785,DEMOMAT)
     framed_screen('02 IMAGE preview',(-7,.24,5.5),4.7,4.7,BIRDMAT)
     # Wall-mounted radial record preview is physical brass relief, not an icon.
     for j in range(36):
@@ -206,11 +206,11 @@ def voice_stage():
     for k in range(5):
         points=[(-4.4+8.8*i/80,2.3+k*3,4.2+.42*math.sin(i*.3+k)*math.sin(math.pi*i/80)) for i in range(81)]
         curve('Suspended spoken cadence',points,TEAL,.025)
-    framed_screen('Finished voice lecture',(0,28,7.3),16,9,LECTUREMAT)
-    for x in [-8.4,8.4]:cube('Lecture vertical light',(x,28.1,7.3),(.04,.07,10.5),GLOW)
-    text_obj('01 / SPOKEN INTO A FINISHED LECTURE',(-8,27.9,12.3),.15,mat=CREAM)
+    framed_screen('Finished voice video',(0,28,7.3),16,9,DEMOMAT)
+    for x in [-8.4,8.4]:cube('Video vertical light',(x,28.1,7.3),(.04,.07,10.5),GLOW)
+    text_obj('01 / SPOKEN INTO A FINISHED VIDEO',(-8,27.9,12.3),.15,mat=CREAM)
     area('Voice ceiling',(0,13,12),(0,12,4),(1,.63,.32),1500,7)
-    area('Lecture rim',(0,26,13),(0,25,2),(.2,.8,.72),1800,8)
+    area('Video rim',(0,26,13),(0,25,2),(.2,.8,.72),1800,8)
     return group_since(before)
 
 def image_stage():
@@ -259,8 +259,8 @@ def music_stage():
 def montage_stage():
     before=all_objects()
     cube('Projection hall floor',(110,0,-.4),(75,75,.5),DARK)
-    paths=sorted(TEX.glob('tts-*.png'))
-    sources=[LECTURE,BIRD]+paths
+    paths=sorted(TEX.glob('bob-*.png'))
+    sources=[DEMO,BIRD]+paths
     # A spatial editing timeline: real frames at multiple depths, not objects on plinths.
     poses=[(-8,8,5.8,7.3,4.1,0),(0,11,8.5,9.4,5.3,0),(9,14,6.5,7.2,4.05,-12),(-11,20,10.2,6.2,3.5,10),(1,25,4.5,7.2,4.05,0),(11,27,12,6.8,3.83,-8),(-1,34,14,7.8,4.39,0),(-13,32,5.4,5.7,3.2,8),(16,39,6.7,7.5,4.22,-10)]
     for i,(x,y,z,w,h,rot) in enumerate(poses):
@@ -331,7 +331,7 @@ def build(phase):
                 q=(f-left[0])/(right[0]-left[0]);q=q*q*(3-2*q)
                 loc=Vector(left[1]).lerp(Vector(right[1]),q);target=Vector(left[2]).lerp(Vector(right[2]),q)
                 key_camera(f,loc,target,left[3]+(right[3]-left[3])*q,0,10)
-        # The gold lecture frame is a match cut to an image-frame edge.
+        # The gold video frame is a match cut to an image-frame edge.
         key_camera(27,(30.859,1.59,7.7),(30.859,1.854,7.7),40,0,10)
         key_camera(38,(34,-3,9.5),(40,10,8.3),32,-5,5)
         key_camera(48,(43,-6.8,9),(40,10,8.3),38,2,6)
@@ -405,9 +405,10 @@ def prepare_textures():
     for name,source,filter_ in recipes:
         dst=TEX/name
         if not dst.exists():subprocess.run(['ffmpeg','-hide_banner','-loglevel','error','-y','-i',str(source),'-vf',filter_,'-frames:v','1',str(dst)],check=True)
-    for name,t in [('tts-01-workflow.png',4),('tts-02-agent.png',14),('tts-03-document.png',22),('tts-04-document-explained.png',23.4)]:
+    # IBM Bob demo video made with the TTS engine: the title, then Bob at work (deck slide 29's excerpt).
+    for name,clip,t in [('bob-01-title.png','bob-demo.mp4',10),('bob-02-work.png','bob-work.mp4',1.5),('bob-03-files.png','bob-work.mp4',13),('bob-04-approve.png','bob-work.mp4',25.2)]:
         dst=TEX/name
-        if not dst.exists():subprocess.run(['ffmpeg','-hide_banner','-loglevel','error','-y','-ss',str(t),'-i',str(ROOT/'public/demos/tts-lecture.mp4'),'-frames:v','1',str(dst)],check=True)
+        if not dst.exists():subprocess.run(['ffmpeg','-hide_banner','-loglevel','error','-y','-ss',str(t),'-i',str(ROOT/'public/demos'/clip),'-frames:v','1',str(dst)],check=True)
 
 prepare_textures()
 
@@ -423,12 +424,12 @@ for phase in phases:
 
 if a.mode=='final':
     clips=[]
-    transitions={18:'architectural lateral crane',19:'opening portal / forward plunge through voice relief',20:'lecture-frame / image-frame surface match cut',21:'wing-edge whip / physical shutter to overhead record',22:'record-center iris / rising reveal of actual-media montage'}
+    transitions={18:'architectural lateral crane',19:'opening portal / forward plunge through voice relief',20:'video-frame / image-frame surface match cut',21:'wing-edge whip / physical shutter to overhead record',22:'record-center iris / rising reveal of actual-media montage'}
     for phase,name in NAMES.items():
         path=OUT/f'{name}.mp4'
         if path.exists():
             probe=json.loads(subprocess.check_output(['ffprobe','-v','quiet','-show_format','-of','json',str(path)]))
-            clips.append({'phase':phase,'src':f'/factory-film/{name}.mp4','poster':f'/factory-film/{name}.jpg','duration':float(probe['format']['duration']),'fps':24,'width':1280,'height':720,'transition':transitions[phase],'hold':'final frame','sources':['/demos/tts-lecture.jpg','/demos/tts-lecture.mp4','/engines/factory-assets/hummingbird.png','src/keynote/data/music-waveform.json']})
+            clips.append({'phase':phase,'src':f'/factory-film/{name}.mp4','poster':f'/factory-film/{name}.jpg','duration':float(probe['format']['duration']),'fps':24,'width':1280,'height':720,'transition':transitions[phase],'hold':'final frame','sources':['/demos/bob-demo.jpg','/demos/bob-demo.mp4','/demos/bob-work.mp4','/engines/factory-assets/hummingbird.png','src/keynote/data/music-waveform.json']})
     manifest=OUT/'manifest.rendering.json'
     manifest.write_text(json.dumps({'renderer':'Blender EEVEE','clips':clips},indent=2)+'\n')
     manifest.replace(OUT/'manifest.json')

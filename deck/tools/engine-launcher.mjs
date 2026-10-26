@@ -8,6 +8,8 @@ const launchers = {
   tts: fileURLToPath(new URL('../demo-launchers/TTS.command', import.meta.url)),
   assets: fileURLToPath(new URL('../demo-launchers/Assets.command', import.meta.url)),
   music: fileURLToPath(new URL('../demo-launchers/Music.command', import.meta.url)),
+  // 32번 · 발표자의 업무 에이전트 RICE. 이미 떠 있으면 그 창을 앞으로 가져온다.
+  rice: fileURLToPath(new URL('../demo-launchers/RICE.command', import.meta.url)),
 };
 const loopback = new Set(['127.0.0.1', '::1', '::ffff:127.0.0.1']);
 
@@ -16,9 +18,9 @@ function reply(res, status, body) {
   res.end(JSON.stringify(body));
 }
 
-async function openLauncher(launcher) {
+/* 실행 파일과 그 안의 `cd` 경로에 실행 가능한 app.sh가 있어야 이 컴퓨터에 엔진이 있는 것이다. */
+async function checkEngine(launcher) {
   await access(launcher, constants.X_OK);
-  // 실행 전에 엔진 위치도 확인한다. 앱의 초기 준비와 로그는 터미널에서 볼 수 있다.
   const source = await readFile(launcher, 'utf8');
   const root = source.match(/^cd (.+)$/m)?.[1];
   if (!root) throw new Error('엔진 실행 파일의 경로를 확인해주세요.');
@@ -27,6 +29,11 @@ async function openLauncher(launcher) {
   } catch {
     throw new Error('엔진 폴더에서 실행 가능한 app.sh를 찾지 못했습니다.');
   }
+}
+
+async function openLauncher(launcher) {
+  // 실행 전에 엔진 위치도 확인한다. 앱의 초기 준비와 로그는 터미널에서 볼 수 있다.
+  await checkEngine(launcher);
   const env = { ...process.env };
   delete env.ELECTRON_RUN_AS_NODE;
   await new Promise((resolve, reject) => {
@@ -40,6 +47,14 @@ export function createEngineLaunchMiddleware(launch = openLauncher) {
   return async (req, res, next) => {
     const pathname = new URL(req.url ?? '/', 'http://localhost').pathname;
     if (!pathname.startsWith(prefix)) return next();
+
+    // 실행하지 않고 이 컴퓨터에 엔진이 있는지만 알려 준다. 32번 RICE 버튼은 없으면 정적 사본을 여는 링크가 된다.
+    const available = pathname.match(/^\/__javis\/engines\/(tts|assets|music|rice)\/available$/);
+    if (available && req.method === 'GET') {
+      if (!loopback.has(req.socket.remoteAddress)) return reply(res, 403, { error: '이 컴퓨터의 로컬 발표 화면에서 확인해주세요.' });
+      const installed = process.platform === 'darwin' && await checkEngine(launchers[available[1]]).then(() => true, () => false);
+      return reply(res, 200, { ok: true, available: installed });
+    }
     if (req.method !== 'POST') return reply(res, 405, { error: '실행 버튼으로 요청해주세요.' });
 
     // 같은 컴퓨터의 덱 화면에서만 고정된 세 실행 파일을 열 수 있다.
@@ -53,7 +68,7 @@ export function createEngineLaunchMiddleware(launch = openLauncher) {
       return reply(res, 403, { error: '이 컴퓨터의 로컬 발표 화면에서 실행해주세요.' });
     }
 
-    const match = pathname.match(/^\/__javis\/engines\/(tts|assets|music)\/launch$/);
+    const match = pathname.match(/^\/__javis\/engines\/(tts|assets|music|rice)\/launch$/);
     if (!match) return reply(res, 404, { error: '해당 엔진을 찾지 못했습니다.' });
     if (process.platform !== 'darwin') return reply(res, 501, { error: '엔진 실행 버튼은 macOS에서 사용할 수 있습니다.' });
     try {

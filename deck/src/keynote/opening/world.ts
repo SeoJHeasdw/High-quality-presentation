@@ -2,11 +2,11 @@ import * as THREE from "three";
 import { GLSL_SAFE, PhaseClock, W, H, createStage, easeInOut, easeOut, pixelCamera, rand, smooth, toWorld } from "../stage3d/runtime";
 
 /*
- * 2~3번 · 사진 한 장에서 강의 영상까지.
+ * 2~3번 · 사진 한 장에서 영상 한 편까지.
  *   0  10여 년 전: 사진 한 장이 어둠 속에 떠 있다.
  *   1  기계가 본 사진: 주사선이 지나가며 사진이 화소의 부조가 되고, 화소가 흘러가 단어 "고양이"가 된다.
  *   2  지금: 부조와 단어가 흩어진다. 요청 문장은 DOM이 맡는다.
- *   3  흩어진 빛이 화면의 테두리로 모이고, 그 자리에 실제 강의 영상이 열린다(DOM).
+ *   3  흩어진 빛이 화면의 테두리로 모이고, 그 자리에 실제 IBM Bob 데모 영상이 열린다(DOM).
  * 카메라는 z=0 평면의 1단위가 화면 1px이 되도록 고정한다. 그래서 DOM과 3D의 위치가 같은 좌표를 쓴다.
  */
 

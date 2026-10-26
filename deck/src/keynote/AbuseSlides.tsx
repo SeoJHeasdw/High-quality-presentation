@@ -84,6 +84,6 @@ export const ABUSE_SLIDES: SlideDef[] = [
   { id: "abuse-threshold", scriptKey: "abuse-threshold", steps: 1, render: ({ step }) => <ThresholdScene step={step}/> },
   { id: "abuse-voice", scriptKey: "abuse-voice", steps: 2, group: "night-phone", render: ({ step }) => <PhoneStory part={0} step={step}/> },
   { id: "abuse-trust", scriptKey: "abuse-trust", steps: 1, group: "night-phone", render: ({ step }) => <PhoneStory part={1} step={step}/> },
-  { id: "abuse-media", scriptKey: "abuse-media", steps: 1, render: ({ step }) => <MediaScene step={step}/> },
+  { id: "abuse-media", scriptKey: "abuse-media", steps: 2, render: ({ step }) => <MediaScene step={step}/> },
   { id: "abuse-question", scriptKey: "abuse-question", steps: 1, render: ({ step }) => <VerifyStory step={step}/> },
 ];

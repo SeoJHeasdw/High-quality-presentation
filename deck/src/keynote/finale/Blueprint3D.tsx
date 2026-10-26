@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 
 import { usePerformanceMotion } from "../usePerformanceMotion";
 import { combosOf, type BlueprintWorld, type RoomId } from "./blueprint";
 import "../incident/incident.css";
+import { shortcutKey } from "../../components/keys";
 
 /*
  * 43번 · 방은 계속 늘어나고 조합은 두 배 넘게 는다(다섯 단계). 마지막 단계는 방 하나에서 뻗는 사례 세 개다. 3D는 finale/blueprint.ts, 방 이름·상태 라벨과 조합의 수는 여기의 DOM이 맡는다.
@@ -15,7 +16,7 @@ type LabelId = Exclude<RoomId, "field">;
 type Label = { id: LabelId; name: ReactNode; sub?: string; tag?: string; tone: Tone; dir?: "up" | "down" | "left" | "right"; lift?: number };
 const BUILT: Label[] = [
   // 방마다 "개발 중"·"만듦" 딱지는 달지 않는다(제목과 아래 범례가 이미 말한다).
-  { id: "tts", name: "TTS", sub: "목소리 · 강의 영상", tone: "gold" },
+  { id: "tts", name: "TTS", sub: "목소리 · 영상", tone: "gold" },
   { id: "assets", name: "ASSETS", sub: "이미지 · 3D", tone: "gold" },
   { id: "music", name: "MUSIC", sub: "음악", tone: "gold" },
   // 20번에서 Agent OS라고 부른 자리가 RICE다. 앱은 만들었고, 방들을 잇는 길만 아직 점선이다.
@@ -118,8 +119,8 @@ export default function Blueprint3D({ step, fallback }: { step: number; fallback
     const onKey = (e: KeyboardEvent) => {
       if (e.ctrlKey || e.metaKey || e.altKey) return;
       const v = videoRef.current; if (!v) return;
-      if (e.key.toLowerCase() === "p") { e.preventDefault(); if (v.paused) void v.play().catch(() => {}); else v.pause(); }
-      if (e.key.toLowerCase() === "a") { e.preventDefault(); v.muted = !v.muted; }
+      if (shortcutKey(e) === "p") { e.preventDefault(); if (v.paused) void v.play().catch(() => {}); else v.pause(); }
+      if (shortcutKey(e) === "a") { e.preventDefault(); v.muted = !v.muted; }
     };
     addEventListener("keydown", onKey);
     return () => removeEventListener("keydown", onKey);

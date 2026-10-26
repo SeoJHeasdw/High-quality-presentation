@@ -3,6 +3,7 @@ import { Frame } from "../KeynoteFrame";
 import { MediaInspection } from "../AbuseInteractive";
 import { usePerformanceMotion } from "../usePerformanceMotion";
 import "./abuse-v2.css";
+import { shortcutKey } from "../../components/keys";
 
 /* 35·38번의 캔버스 장면. 점과 사진 칸은 도식이며 사람 수·공유 수 같은 데이터가 아니다. */
 const rand = (seed: number) => { let s = seed >>> 0; return () => { s = (s * 1664525 + 1013904223) >>> 0; return s / 4294967296; }; };
@@ -111,8 +112,8 @@ function ThresholdAudio({ active }: { active: boolean }) {
     if (!active) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.ctrlKey || e.metaKey || e.altKey) return;
-      if (e.key.toLowerCase() === "p") { e.preventDefault(); toggle(); }
-      if (e.key.toLowerCase() === "a") { e.preventDefault(); toggleSound(); }
+      if (shortcutKey(e) === "p") { e.preventDefault(); toggle(); }
+      if (shortcutKey(e) === "a") { e.preventDefault(); toggleSound(); }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -203,6 +204,10 @@ function Copies({ run }: { run: number }) {
   </>;
 }
 
+/* 39-2 · 악의 없는 합성의 실제 사례. 한 팬 채널이 리센느 원이의 얼굴로 만든 AI 뮤비(2026-08-30, YouTube).
+   앞의 성적 합성물·괴롭힘과 같은 단계에 두지 않고, 답을 정하지 않은 질문으로 따로 묻는다. */
+const WONI_MV = "https://www.youtube.com/watch?v=CHh0Fy2kfhw";
+
 export function MediaScene({ step }: { step: number }) {
   const [inspecting, setInspecting] = useState(false);
   const original = useRef<HTMLCanvasElement | null>(null);
@@ -223,7 +228,13 @@ export function MediaScene({ step }: { step: number }) {
       <div className="av-copy av-copy--right">
         <p className="av-eyebrow"><span className="av-tag">가상 상황 03</span>동의 없는 합성</p>
         <h1>만든 영상이<br/>한 사람을<br/><em>따라다닌다면</em></h1>
-        <p className="md-line" data-on={step >= 1 || undefined}>가짜라고 밝혀도,<br/>이미 퍼진 것까지 지우기는 어렵습니다.</p>
+        {step >= 2
+          ? <div className="md-case">
+              <p className="md-case-tag"><span className="av-tag">실제 사례</span>팬이 만든 AI 뮤비 · 조회 158만</p>
+              <p className="md-case-q">응원일까요,<br/>동의 없는 합성일까요?</p>
+              <a href={WONI_MV} target="_blank" rel="noreferrer">WONI(원이) - Like WONI · 이노래뭐임 ↗</a>
+            </div>
+          : <p className="md-line" data-on={step >= 1 || undefined}>가짜라고 밝혀도,<br/>이미 퍼진 것까지 지우기는 어렵습니다.</p>}
       </div>
       <p className="av-note"><span>동의 없는 조작과 유포는 괴롭힘·협박에도 쓰입니다 · 사진 칸과 숫자는 도식</span><a href="https://www.ic3.gov/PSA/2023/PSA230605" target="_blank" rel="noreferrer">FBI · 조작된 이미지·영상 ↗</a></p>
     </div>

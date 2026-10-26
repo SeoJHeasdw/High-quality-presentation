@@ -22,7 +22,7 @@ const DECISIONS: [string, string][] = [
   ["09.21", "영어 목소리 미채택"],
 ];
 const RESULTS: [string, string][] = [
-  ["/demos/tts-lecture.jpg", "제 목소리 강의"],
+  ["/demos/bob-demo.jpg", "제 목소리 영상"],
   ["/factory-film/03-image.jpg", "새로 만든 이미지"],
   ["/factory-film/04-music.jpg", "음악 후보"],
   ["/house-scroll/a4.jpg", "이 발표"],

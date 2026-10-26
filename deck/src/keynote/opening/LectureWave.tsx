@@ -1,7 +1,7 @@
 import { useEffect, useRef, type RefObject } from "react";
 import wave from "../data/tts-waveform.json";
 
-/** 실제 강의 영상의 음성 파형. 재생 위치를 따라 금색으로 채워진다. */
+/** 실제 영상의 음성 파형. 재생 위치를 따라 금색으로 채워진다. */
 export default function LectureWave({ video, bars = 128, className = "" }: { video: RefObject<HTMLVideoElement | null>; bars?: number; className?: string }) {
   const root = useRef<HTMLDivElement>(null);
   const time = useRef<HTMLSpanElement>(null);
@@ -32,6 +32,6 @@ export default function LectureWave({ video, bars = 128, className = "" }: { vid
       <div className="lecture-wave__bars lecture-wave__bars--on">{peaks.map(bar)}</div>
       <b className="lecture-wave__head"/>
     </div>
-    <span className="lecture-wave__time" ref={time}>0:00 / 0:24</span>
+    <span className="lecture-wave__time" ref={time}>0:00 / 0:{String(Math.round(wave.duration)).padStart(2, "0")}</span>
   </div>;
 }

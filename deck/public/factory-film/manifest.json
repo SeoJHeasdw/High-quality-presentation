@@ -12,8 +12,9 @@
       "transition": "architectural lateral crane",
       "hold": "final frame",
       "sources": [
-        "/demos/tts-lecture.jpg",
-        "/demos/tts-lecture.mp4",
+        "/demos/bob-demo.jpg",
+        "/demos/bob-demo.mp4",
+        "/demos/bob-work.mp4",
         "/engines/factory-assets/hummingbird.png",
         "src/keynote/data/music-waveform.json"
       ]
@@ -29,8 +30,9 @@
       "transition": "opening portal / forward plunge through voice relief",
       "hold": "final frame",
       "sources": [
-        "/demos/tts-lecture.jpg",
-        "/demos/tts-lecture.mp4",
+        "/demos/bob-demo.jpg",
+        "/demos/bob-demo.mp4",
+        "/demos/bob-work.mp4",
         "/engines/factory-assets/hummingbird.png",
         "src/keynote/data/music-waveform.json"
       ]
@@ -43,11 +45,12 @@
       "fps": 24,
       "width": 1280,
       "height": 720,
-      "transition": "lecture-frame / image-frame surface match cut",
+      "transition": "video-frame / image-frame surface match cut",
       "hold": "final frame",
       "sources": [
-        "/demos/tts-lecture.jpg",
-        "/demos/tts-lecture.mp4",
+        "/demos/bob-demo.jpg",
+        "/demos/bob-demo.mp4",
+        "/demos/bob-work.mp4",
         "/engines/factory-assets/hummingbird.png",
         "src/keynote/data/music-waveform.json"
       ]
@@ -63,8 +66,9 @@
       "transition": "wing-edge whip / physical shutter to overhead record",
       "hold": "final frame",
       "sources": [
-        "/demos/tts-lecture.jpg",
-        "/demos/tts-lecture.mp4",
+        "/demos/bob-demo.jpg",
+        "/demos/bob-demo.mp4",
+        "/demos/bob-work.mp4",
         "/engines/factory-assets/hummingbird.png",
         "src/keynote/data/music-waveform.json"
       ]
@@ -80,8 +84,9 @@
       "transition": "record-center iris / rising reveal of actual-media montage",
       "hold": "final frame",
       "sources": [
-        "/demos/tts-lecture.jpg",
-        "/demos/tts-lecture.mp4",
+        "/demos/bob-demo.jpg",
+        "/demos/bob-demo.mp4",
+        "/demos/bob-work.mp4",
         "/engines/factory-assets/hummingbird.png",
         "src/keynote/data/music-waveform.json"
       ]

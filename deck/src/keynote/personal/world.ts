@@ -6,7 +6,7 @@ import { FONT, GLSL_SAFE, PhaseClock, canvasTexture, clamp01, createStage, easeI
  *   0  (17) 많은 사용자의 점들이 가라앉고, 금색 점 하나(저)만 남는다.
  *   1  (17) 저를 둘러싼 조건의 고리들이 느슨해진다. 가장 안쪽의 금색 고리(원본과 작업 기록)만 그대로다.
  *   2  (18) 카메라가 물러나며 고리 위의 흐름이 드러난다. 요청이 Agent OS(구상)로 간다.
- *   3  (18) Agent OS가 Factory의 엔진으로 일을 넘기고, 강의 영상이 나온다.
+ *   3  (18) Agent OS가 Factory의 엔진으로 일을 넘기고, 영상이 나온다.
  *   4  (18) 결과가 저에게 돌아오고, "이 페이지 발음만 다시" 요청이 TTS로 되돌아간다.
  *   5  (19) 카메라가 Factory 안으로 들어간다. 엔진이 호를 따라 스테이션 넷으로 늘어서고, 그 위에 현장 관리자 RICE, 맨 위에 임원인 문(프론티어 모델)이 선다.
  *          문이 RICE에 일을 맡기고 RICE가 스테이션에 나눠 준다. RICE가 막히면 문이 직접 스테이션으로 내려온다("나와 봐, 내가 할게").
@@ -127,7 +127,7 @@ export type OneUserWorld = {
   project: (id: AnchorId) => { x: number; y: number; visible: boolean }; labelAlpha: () => number; onFrame: (cb: () => void) => void; dispose: () => void;
 };
 
-export type OneUserImages = { lecture: HTMLImageElement; codex: HTMLImageElement; claude: HTMLImageElement };
+export type OneUserImages = { result: HTMLImageElement; codex: HTMLImageElement; claude: HTMLImageElement };
 
 /** 21-0에서 되풀이하는 일. 문(임원)이 RICE에 맡기고(JOB_DOWN초), RICE가 스테이션에 나눠 준다(JOB_OUT초).
  *  마지막 일(음악)은 RICE가 막히고, 문이 RICE를 거치지 않고 그 스테이션으로 직접 내려온다. */
@@ -141,7 +141,7 @@ const REQ_CYCLE = TAKE_AT + TAKE_RUN + 3.0;
 const SWAP_AT = [0.8, 1.2, 1.6, 2.0], SWAP_DUR = 0.8, BACK_AT = 0.3, BACK_DUR = 0.7;
 
 export function createOneUserWorld(canvas: HTMLCanvasElement, images: OneUserImages, initialPhase: number, initialMotion: boolean): OneUserWorld {
-  const { lecture } = images;
+  const { result } = images;
   const stage = createStage(canvas, { background: "#05080d", fog: 0.03, fov: 34, bloom: [0.7, 0.55, 0.8], lostEvent: "oneuser-lost" });
   const { scene, camera, glow } = stage;
   const pc = new PhaseClock(Math.max(0, Math.min(PHASES - 1, initialPhase)), initialMotion);
@@ -342,10 +342,10 @@ export function createOneUserWorld(canvas: HTMLCanvasElement, images: OneUserIma
   /* 요청의 빛 */
   const packets = Array.from({ length: 4 }, () => { const s = glowSprite(ICE.clone().multiplyScalar(2.4), 0.8); scene.add(s); return s; });
 
-  /* 결과: 실제 강의 화면 */
-  const lectureTex = imageTexture(lecture);
+  /* 결과: 실제 IBM Bob 데모 영상 화면 */
+  const resultTex = imageTexture(result);
   const outG = new THREE.Group(); outG.position.copy(OUT); scene.add(outG);
-  const outMat = new THREE.MeshBasicMaterial({ map: lectureTex, transparent: true, opacity: 0, toneMapped: false });
+  const outMat = new THREE.MeshBasicMaterial({ map: resultTex, transparent: true, opacity: 0, toneMapped: false });
   const outW = 2.3, outH = outW * 9 / 16;
   const outScreen = new THREE.Mesh(new THREE.PlaneGeometry(outW, outH), outMat); outG.add(outScreen);
   const outFrameMat = new THREE.LineBasicMaterial({ color: GOLD.clone().multiplyScalar(1.4), transparent: true, opacity: 0 });

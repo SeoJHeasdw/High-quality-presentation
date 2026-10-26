@@ -89,11 +89,11 @@ export default function OneUserStory({ part, step }: { part: 0 | 1 | 2 | 3; step
     let w: OneUserWorld | null = null, cancelled = false;
     const lost = () => setFailed(true);
     const move = (e: PointerEvent) => w?.setPointer(e.clientX / innerWidth * 2 - 1, e.clientY / innerHeight * 2 - 1);
-    const images = ["/demos/tts-lecture.jpg", "/rent/codex-plan.png", "/rent/claude-usage.png"].map((src) => { const im = new Image(); im.src = src; return im; });
+    const images = ["/demos/bob-demo.jpg", "/rent/codex-plan.png", "/rent/claude-usage.png"].map((src) => { const im = new Image(); im.src = src; return im; });
     Promise.all([import("./world"), ...images.map((im) => im.decode()), document.fonts.ready]).then(([mod]) => {
       if (cancelled) return;
       const { createOneUserWorld } = mod as typeof import("./world");
-      try { w = createOneUserWorld(canvas, { lecture: images[0], codex: images[1], claude: images[2] }, phaseRef.current, motionRef.current); }
+      try { w = createOneUserWorld(canvas, { result: images[0], codex: images[1], claude: images[2] }, phaseRef.current, motionRef.current); }
       catch { setFailed(true); return; }
       world.current = w;
       const live = w;
@@ -160,7 +160,7 @@ export default function OneUserStory({ part, step }: { part: 0 | 1 | 2 | 3; step
       </div>
     </>}
     {part === 1 && <>
-      <div className="ou-heading ou-heading--quote" key="h1"><p className="pv-eyebrow">이 도구들을 어떻게 묶을까</p><h1>“이 대본으로 강의 영상을 만들어줘”</h1></div>
+      <div className="ou-heading ou-heading--quote" key="h1"><p className="pv-eyebrow">이 도구들을 어떻게 묶을까</p><h1>“이 대본으로 데모 영상을 만들어줘”</h1></div>
       <p className="ou-flow" key={`f${phase}`} data-step={phase - 2}>{FLOW[phase - 2]}</p>
       <p className="ou-status">이렇게 이어서 쓰는 게 목표입니다<span>지금은 각 엔진을 따로 개발하고 있습니다</span></p>
     </>}

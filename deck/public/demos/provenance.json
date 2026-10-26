@@ -1,8 +1,27 @@
 {
   "tts": {
-    "source": "/Users/jaehoseo/Desktop/vswrk/javis/local-tts-engine/output/edits/2026-09-08/ch00-restart-repair-172747/CH00 전체.mp4",
-    "excerptStart": 25,
-    "excerptDuration": 24
+    "source": "/Users/jaehoseo/Desktop/vswrk/javis/local-tts-engine/output/edits/2026-10-15/demo-builder-final/IBM Bob Demo Builder - 서제호 v2.mp4",
+    "copy": "~/Desktop/IBM Bob Demo Builder - 서제호.mp4 (same bytes)",
+    "excerptStart": 0,
+    "excerptDuration": 17,
+    "files": [
+      "bob-demo.mp4",
+      "bob-demo.jpg (poster at 15.8s)",
+      "bob-strip.jpg (12 frames)"
+    ],
+    "usedOn": "3, 18 (with src/keynote/data/tts-alignment.json, tts-waveform.json), poster on 20, 23, 32, 54 and in the Blender factory film (24 gallery, 25 corridor screen, 26 match cut, 28 montage)",
+    "encode": "1280x720 h264 crf22 25fps + aac 128k"
+  },
+  "ttsWork": {
+    "source": "/Users/jaehoseo/Desktop/vswrk/javis/local-tts-engine/output/edits/2026-10-15/demo-builder-final/IBM Bob Demo Builder - 서제호 v2.mp4",
+    "excerptStart": 168.6,
+    "excerptEnd": 194.98,
+    "files": [
+      "bob-work.mp4",
+      "bob-work.jpg (poster at 193.8s)"
+    ],
+    "usedOn": "29, and frames in the Blender montage (28)",
+    "note": "polaris-build part 47.0–73.3 s: Bob writes 45 files, installs, verifies; ends on the human-approval sentence"
   },
   "assets": {
     "source": "/Users/jaehoseo/Desktop/vswrk/javis/local-assets-engine/output/jobs/20260922-103231-1368/previz/sequence.mp4",

@@ -32,7 +32,7 @@ const OriginalDeck: DeckModule = {
    <div className="life-timeline">{[["2026","지금 만드는 것"],["2031","5년 뒤의 일"],["2056","30년 뒤의 삶"]].map(([year,label],i)=><Reveal key={year} order={i}><strong>{year}</strong><span>{label}</span></Reveal>)}</div><p className="brief-takeaway">일이 바뀔 때마다, 처음부터 다시 시작하고 싶지는 않습니다.</p>
   </Briefing>},
   {id:"manifesto-unknown",scriptKey:"manifesto-unknown",render:()=> <Frame n={4} name="5년 뒤" className="future-question">
-   <p className="future-eyebrow">사진 한 장을 알아보던 AI가 여기까지 왔습니다</p><h1>5년 뒤에는<br/><em>무슨 일을</em><br/>맡기게 될까?</h1><FutureSurface/><p className="future-baseline"><span>2026</span>지금은 강의 영상을 만들고 있습니다.</p>
+   <p className="future-eyebrow">사진 한 장을 알아보던 AI가 여기까지 왔습니다</p><h1>5년 뒤에는<br/><em>무슨 일을</em><br/>맡기게 될까?</h1><FutureSurface/><p className="future-baseline"><span>2026</span>지금은 회사 일로 쓸 영상을 만들고 있습니다.</p>
   </Frame>},
   {id:"tel-personal-change",scriptKey:"tel-personal-change",steps:1,render:({step})=> <Briefing n={5} name="우리에게 익숙한 이야기" title="AI가 중요하다는 것은 알고 있습니다" lead="제가 더 해보고 싶은 것은, 그 변화에 맞춰 제 생활을 바꾸는 일입니다." step={step}>
    <div className="brief-columns"><Reveal><span className="column-label">업무에서 보는 변화</span><h2>기업에 미치는 영향<br/>기술과 산업의 방향</h2><p>우리 팀이 계속 살피고 있는 문제입니다.</p></Reveal><Reveal order={1} on={step>=1}><span className="column-label">제가 직접 바꿔볼 것</span><h2>시간을 쓰는 방식<br/>혼자 만들 수 있는 범위</h2><p>그래서 제 일을 하나씩 맡겨보기 시작했습니다.</p></Reveal></div>

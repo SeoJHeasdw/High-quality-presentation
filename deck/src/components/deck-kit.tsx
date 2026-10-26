@@ -9,6 +9,7 @@ import {
 } from "react";
 import { gsap } from "gsap";
 import { courseMotionPolicy, registerCourseMotion } from "./course-motion";
+import { shortcutKey } from "./keys";
 
 /* ── 배경 이펙트 안전망 ─────────────────────────────────
    react-bits 의 배경들은 WebGL(ogl)을 쓴다. GPU 프로세스가 죽거나
@@ -352,7 +353,7 @@ export function useDeckNav(slides: SlideDef[], deckId: string) {
   useEffect(() => {
     const onAnnotationKey = (e: KeyboardEvent) => {
       const editable = (e.target as Element | null)?.closest?.("input, textarea, select, [contenteditable='true']");
-      const open = e.key.toLowerCase() === "w" && !e.ctrlKey && !e.metaKey && !e.altKey && !editable;
+      const open = shortcutKey(e) === "w" && !e.ctrlKey && !e.metaKey && !e.altKey && !editable;
       const close = e.key === "Escape" && annotationModeRef.current;
       if (!annotationModeRef.current && !open) return;
       e.stopImmediatePropagation();
@@ -446,7 +447,7 @@ export function useDeckNav(slides: SlideDef[], deckId: string) {
         return;
       }
 
-      switch (e.key) {
+      switch (shortcutKey(e)) {
         case "ArrowRight":
         case "ArrowDown":
         case " ":
@@ -483,12 +484,10 @@ export function useDeckNav(slides: SlideDef[], deckId: string) {
           break;
 
         case "r":
-        case "R":
           go((s) => ({ ...s, step: 0, runKey: s.runKey + 1 }));
           break;
 
-        case "t":
-        case "T": {
+        case "t": {
           // 녹화 시작 버튼 누르는 순간에 같이 눌러 타이머를 0으로
           e.preventDefault();
           const now = Date.now();
@@ -497,8 +496,7 @@ export function useDeckNav(slides: SlideDef[], deckId: string) {
           break;
         }
 
-        case "m":
-        case "M": {
+        case "m": {
           e.preventDefault();
           setMotion((v) => {
             post({ type: "motion", on: !v });
@@ -507,8 +505,7 @@ export function useDeckNav(slides: SlideDef[], deckId: string) {
           break;
         }
 
-        case "h":
-        case "H": {
+        case "h": {
           // H로 조작 바를 토글한다. 발표자 창에서도 녹화 화면과 상태를 맞춘다.
           e.preventDefault();
           setHudHidden((v) => {
@@ -518,8 +515,7 @@ export function useDeckNav(slides: SlideDef[], deckId: string) {
           break;
         }
 
-        case "s":
-        case "S": {
+        case "s": {
           // 제작 중에만 쓰는 자막 안전영역 가이드. 녹화 전에는 반드시 OFF.
           e.preventDefault();
           setCaptionGuide((v) => {

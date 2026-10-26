@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 
 import plate from "../../../public/abuse/night-phone.json";
 import { quadMatrix3d } from "./homography";
 import { usePerformanceMotion } from "../usePerformanceMotion";
+import { shortcutKey } from "../../components/keys";
 
 /*
  * 36·37·39번의 무대. Blender로 렌더한 한밤중 협탁(public/abuse/night-phone.jpg) 위에서
@@ -97,7 +98,7 @@ export default function NightPhone({ mode, tone = "cold", children }: { mode: Ph
   useEffect(() => {
     if (mode !== "incoming") return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.ctrlKey || e.metaKey || e.altKey || e.key.toLowerCase() !== "a") return;
+      if (e.ctrlKey || e.metaKey || e.altKey || shortcutKey(e) !== "a") return;
       e.preventDefault(); setSound((v) => !v);
     };
     window.addEventListener("keydown", onKey); return () => window.removeEventListener("keydown", onKey);

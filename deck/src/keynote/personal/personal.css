@@ -121,7 +121,7 @@
 .tr-evidence__line { font-size: 23px; color: #b9c8d3; letter-spacing: -.02em; padding: 14px 0 16px; border-top: 1px solid #ffffff0f; }
 .tr-evidence footer { font-size: 16px; color: #7d92a2; letter-spacing: 0; }
 
-/* 16 · 강의 한 편이 만들어지는 실제 기록 -------------------------------------- */
+/* 18 · 영상 한 편이 만들어지는 실제 기록 -------------------------------------- */
 .p14-copy { position: absolute; left: 0; top: 0; width: 860px; z-index: 2; animation: pv-rise 1s cubic-bezier(.16,1,.3,1) both; }
 .p14 h1 { font-size: 64px; line-height: 1.22; }
 .p14-lead { margin-top: 26px; font-size: 28px; line-height: 1.5; color: #b9c5cf; letter-spacing: -.02em; }
@@ -179,7 +179,7 @@
 .pt-word[data-past] { background: #e2c7953a; border-color: #e2c79555; }
 .pt-word[data-now] { background: #ffd899; border-color: #ffd899; box-shadow: 0 0 14px #ffd899aa; }
 
-.pt-strip { border-radius: 8px; background: url(/demos/tts-strip.jpg) 0 0 / 100% 100% no-repeat; box-shadow: inset 0 0 0 1px #ffffff14; }
+.pt-strip { border-radius: 8px; background: url(/demos/bob-strip.jpg) 0 0 / 100% 100% no-repeat; box-shadow: inset 0 0 0 1px #ffffff14; }
 .pt-strip::after { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, #05080d00 calc(var(--t, 0) * 100%), #05080d8c calc(var(--t, 0) * 100%)); }
 
 .pt-head { position: absolute; top: 30px; bottom: 12px; left: calc(250px + var(--t, 0) * var(--lane)); width: 2px; margin-left: -1px; background: #fff2d6; box-shadow: 0 0 14px #ffd899, 0 0 2px #fff; pointer-events: none; opacity: 0; animation: pv-tick .4s ease 1.4s both; }

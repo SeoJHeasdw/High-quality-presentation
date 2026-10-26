@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { shortcutKey } from "../../components/keys";
 
 /** A short, explicitly fictional cue. It ends when the presenter changes beat. */
 export default function PhoneAudio({ src, active, label, delayMs = 500 }: { src: string; active: boolean; label: string; delayMs?: number }) {
@@ -25,8 +26,8 @@ export default function PhoneAudio({ src, active, label, delayMs = 500 }: { src:
     const onKey = (e: KeyboardEvent) => {
       if (e.ctrlKey || e.metaKey || e.altKey) return;
       const el = audio.current; if (!el) return;
-      if (e.key.toLowerCase() === "p") { e.preventDefault(); if (autoStart.current !== null) { window.clearTimeout(autoStart.current); autoStart.current = null; } if (el.paused) play(); else el.pause(); }
-      if (e.key.toLowerCase() === "a") { e.preventDefault(); el.muted = !el.muted; setMuted(el.muted); }
+      if (shortcutKey(e) === "p") { e.preventDefault(); if (autoStart.current !== null) { window.clearTimeout(autoStart.current); autoStart.current = null; } if (el.paused) play(); else el.pause(); }
+      if (shortcutKey(e) === "a") { e.preventDefault(); el.muted = !el.muted; setMuted(el.muted); }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);

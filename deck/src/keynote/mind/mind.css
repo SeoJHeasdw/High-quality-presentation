@@ -24,11 +24,17 @@
 .mn-copy .pv-eyebrow::before { background: #e8b27a; }
 .mn-copy h1 { font-size: 68px; line-height: 1.22; color: #f3ede4; }
 .mn-copy h1 em { font-style: normal; color: var(--gold); text-shadow: 0 0 40px #ffb45e40; }
+/* 44-0~2 · 49-1 · 제목 위에 다시 세운 질문(44는 42-1과 같은 말). 대답(제목)보다 한 단계 작게, 왼쪽 금색 선으로 묶는다. */
+.mn-ask-echo { margin: 30px 0 18px; padding-left: 20px; border-left: 3px solid #e8b27a88; font-size: 36px; font-weight: 600; line-height: 1.3; color: #e6dccd; letter-spacing: -.02em; }
+.mn-ask-echo em { font-style: normal; color: var(--gold); }
 .mn-copy[data-narrow] { width: 640px; }
 .mn-copy[data-narrow] h1 { font-size: 56px; }
 .mn-lead { margin-top: 34px; font-size: 27px; line-height: 1.55; color: #c8b8a2; letter-spacing: -.02em; opacity: 0; animation: pv-rise 1s cubic-bezier(.16,1,.3,1) 1.3s both; }
 .mn-copy[data-delay] .mn-lead { animation-delay: 2.2s; }
 .mn-copy[data-narrow] .mn-lead { font-size: 23px; margin-top: 26px; }
+/* 45 · 단계마다 그 동물을 본 연구의 출처. 작은 각주로 둔다. */
+.mn-source { margin-top: 22px; font-size: 18px; line-height: 1.4; color: #9a8a76; letter-spacing: -.01em; white-space: pre; text-shadow: 0 0 10px #000, 0 1px 2px #000; opacity: 0; animation: pv-rise 1s cubic-bezier(.16,1,.3,1) 1.6s both; }
+.mn-copy[data-delay] .mn-source { animation-delay: 2.5s; }
 
 .mn-labels { position: absolute; inset: 0; z-index: 2; pointer-events: none; }
 /* 43-1 · 51-2 · 한 줄씩 서는 목록(글 단 안) */

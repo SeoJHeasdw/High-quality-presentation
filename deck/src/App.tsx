@@ -14,6 +14,7 @@ import { PerformanceMotionProvider } from "./keynote/usePerformanceMotion";
 import CourseMotionBoundary from "./components/CourseMotionBoundary";
 import "./styles/base.css";
 import "./styles/course-motion.css";
+import { shortcutKey } from "./components/keys";
 
 export type DeckKey = "keynote" | "course";
 
@@ -69,7 +70,7 @@ function DeckView({ id }: { id: DeckKey }) {
   useEffect(() => {
     let timeout: number | undefined;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key.toLowerCase() !== "f" || e.ctrlKey || e.metaKey || e.altKey) return;
+      if (shortcutKey(e) !== "f" || e.ctrlKey || e.metaKey || e.altKey) return;
       setFullscreenHint(document.fullscreenElement ? "전체화면 종료" : "전체화면: F · 나가기: Esc");
       window.clearTimeout(timeout);
       timeout = window.setTimeout(() => setFullscreenHint(""), 2400);
@@ -257,7 +258,7 @@ export default function App() {
   /* 전체화면은 F. H는 deck-kit.tsx에서 조작 바를 토글한다. */
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key.toLowerCase() === "f" && !e.ctrlKey && !e.metaKey && !e.altKey) {
+      if (shortcutKey(e) === "f" && !e.ctrlKey && !e.metaKey && !e.altKey) {
         e.preventDefault();
         if (document.fullscreenElement) document.exitFullscreen();
         else document.documentElement.requestFullscreen?.();

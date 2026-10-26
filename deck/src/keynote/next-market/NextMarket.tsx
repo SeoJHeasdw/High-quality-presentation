@@ -22,6 +22,7 @@ export const NEXT_MARKET_SOURCES = {
   jev: "https://typesafe.ai/blog/introducing-system-one-models-and-jev",
   openai: "https://openai.com/index/devday-2026-recap/",
   clef: "https://blog.cloudflare.com/clef-decision-models/",
+  microduck: "https://youtube.com/shorts/dbnZ5FjITrM",
 };
 
 const FILM = "/house-scroll/film.mp4";
@@ -123,7 +124,7 @@ const SECTIONS: { cls: string; body: ReactNode }[] = [
     <p className="nm-kicker">길 위로</p>
     <h1>판단이 싸지면<br/>화면 밖으로 나갑니다</h1>
     <p className="nm-lead">자율주행차가 오른쪽으로 갈지, 로봇이 계단을 오를지.<br/>이런 작은 판단이 싸질수록 피지컬 AI도 빨라집니다.</p>
-    <Src>발표자의 관점 · 차와 로봇, 판단 카드와 빛은 설명용 장면</Src>
+    <p className="nm-source">발표자의 관점 · 차와 로봇, 판단 카드와 빛은 설명용 장면 · <a href={NEXT_MARKET_SOURCES.microduck} target="_blank" rel="noreferrer">젠슨 황의 AI 오리 로봇 · NVIDIA GTC 베를린 2026.10 ↗</a></p>
   </> },
   { cls: "nm-s8", body: <>
     <h1>이제 우리 일로<br/>넘어옵니다</h1>

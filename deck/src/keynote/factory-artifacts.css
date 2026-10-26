@@ -1,6 +1,8 @@
 /* Five authored shots. The player owns their timing; copy appears on the final hold. */
 .kn-factory-film .kn-body { inset: 0; }
 .kn-factory-film .kn-body::after { content: ""; position: absolute; inset: 0; z-index: 1; background: linear-gradient(0deg, #050a13d9, transparent 36%, transparent 83%, #050a1370); pointer-events: none; }
+/* 25 · 통로 끝 화면(IBM Bob 데모 영상)이 밝은 크림색이라 왼쪽 아래 글 뒤만 더 어둡게 깐다. 오른쪽 영상 자막은 가리지 않는다. */
+.factory-film-phase-1 .kn-body::after { background: radial-gradient(ellipse 46% 42% at 20% 84%, #050a13f0, #050a13b8 50%, transparent), linear-gradient(0deg, #050a13d9, transparent 36%, transparent 83%, #050a1370); }
 .factory-film-caption { position: absolute; left: 100px; right: 100px; bottom: 146px; z-index: 3; opacity: 0; transform: translateY(14px); transition: none; pointer-events: none; }
 .factory-film-caption[data-ready] { opacity: 1; transform: none; transition: opacity .35s ease, transform .45s ease; }
 .factory-film-label { display: block; font-size: 20px; letter-spacing: .13em; color: #e3c895; margin-bottom: 16px; }

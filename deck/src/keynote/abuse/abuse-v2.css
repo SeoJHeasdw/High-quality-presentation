@@ -139,6 +139,16 @@
 .md-deleted { position: absolute; z-index: 6; white-space: nowrap; left: 50%; top: 50%; padding: 14px 26px; border: 3px solid #ff4a4a; border-radius: 10px; color: #ff6b63; background: #140404d8; font-size: 34px; font-weight: 800; letter-spacing: .08em; transform: translate(-50%, -50%) rotate(-8deg); opacity: 0; pointer-events: none; }
 .md[data-deleted] ~ .md-original .md-deleted, .md-original:has(~ .av-copy .md-line[data-on]) .md-deleted { opacity: 1; }
 .av-copy--right { left: auto; right: 0; top: 40px; width: 600px; }
+/* 39-2 · 실제 사례. 가상 상황(빨강)과 구분되는 중립색으로, 설명 줄 자리에 들어온다 */
+.md-case { margin-top: 36px; animation: md-case-in .9s cubic-bezier(.16,1,.3,1) .3s both; }
+.md-case-tag { display: flex; align-items: center; gap: 12px; margin: 0 0 18px; font-size: 20px; color: #d8cdc0; }
+.md-case .av-tag { color: #eadcc0; border-color: #eadcc066; background: #1a1409c0; }
+.md-case-q { margin: 0 0 24px; font-size: 32px; line-height: 1.5; color: #efe6e6; }
+.md-case a { display: inline-block; padding: 5px 14px 6px; border: 1px solid #6e5a4a; border-radius: 4px; background: #1b120dcc; color: #ead6c4; font-size: 17px; text-decoration: none; }
+.md-case a:hover { background: #2a1d14; }
+.md-case a:focus-visible { outline: 2px solid #e0c18e; outline-offset: 3px; }
+@keyframes md-case-in { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+.deck-keynote[data-motion="off"] .md-case { animation: none; }
 .md-line { margin-top: 36px; font-size: 32px; line-height: 1.5; color: #efe6e6; opacity: 0; transform: translateY(12px); transition: none; }
 .md-line[data-on] { opacity: 1; transform: none; transition: opacity .8s ease .9s, transform .8s ease .9s; }
 
