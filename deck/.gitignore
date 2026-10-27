@@ -1,3 +1,6 @@
 node_modules/
 dist/
 .DS_Store
+
+# 발표자 컴퓨터에만 두는 음성과 그 기록. 공개 저장소에는 올리지 않는다(src/keynote/abuse/localAudio.ts).
+local-only/

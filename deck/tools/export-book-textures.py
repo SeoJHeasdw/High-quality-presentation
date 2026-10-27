@@ -78,3 +78,68 @@ stack("행동하는 AI 시대", 6, 21, beige, 490, 23)               # Bold
 stack("백승헌 지음", 0, 16, (196, 198, 206), 742, 22)           # Regular
 sp.save(OUT / "spine.png")
 print("spine", sp.size, "foil", foil.shape, "beige", beige)
+
+# ── 펼친 면: 240·241쪽과 넘어가는 낱장 ─────────────────────────────────────
+# 진짜 글자는 241쪽의 인용 한 문장(에필로그 「결국, 우리의 몫」, YES24 책 속으로 발췌)과 쪽 번호·머리글뿐이다.
+# 나머지 글줄은 읽히지 않는 회색 단어 덩어리로 그려, 책에 없는 문장을 만들지 않는다. 쪽의 배치는 연출이다.
+PW, PH = 1100, 1584                                            # 145 × 210mm의 낱장
+SERIF = "/System/Library/Fonts/Supplemental/AppleMyungjo.ttf"
+PAPER, INK, GREY = (238, 233, 222), (40, 38, 36), (150, 145, 136)
+QUOTE = "몫은 기술이 우리에게 남겨주는 것이 아니라, 우리가 무엇을 맡기고 무엇을 책임질지 정하면서 만들어지는 것이다."
+BODY, LEAD = 27, 47                                            # 본문 글자 크기와 줄 간격(px)
+
+def page(right, seed, number=None, header=None, quote_at=None, scale=1):
+    rnd = np.random.default_rng(seed)
+    im = Image.new("RGB", (PW * scale, PH * scale), PAPER); d = ImageDraw.Draw(im, "RGBA")
+    if scale != 1:
+        # 같은 배치를 scale배로: 좌표계를 늘린 그리기 함수로 감싼다.
+        class Scaled:
+            def __init__(self, d): self.d = d
+            def text(self, xy, s, font, fill): self.d.text((xy[0] * scale, xy[1] * scale), s, font=ImageFont.truetype(font.path, int(font.size * scale)), fill=fill)
+            def textlength(self, s, font): return self.d.textlength(s, font=font)
+            def rounded_rectangle(self, box, r, fill): self.d.rounded_rectangle([v * scale for v in box], r * scale, fill=fill)
+        d = Scaled(d)
+    inner, outer, top = 130, 100, 150
+    x0, x1 = (inner, PW - outer) if right else (outer, PW - inner)
+    body = ImageFont.truetype(SERIF, BODY); small = ImageFont.truetype(SERIF, 21)
+    if header:
+        w = d.textlength(header, font=small)
+        d.text((x1 - w if right else x0, 88), header, font=small, fill=(*GREY, 255))
+    if number:
+        w = d.textlength(number, font=small)
+        d.text((x1 - w if right else x0, PH - 104), number, font=small, fill=(*GREY, 255))
+    lines = (PH - top - 170) // LEAD
+    quote_lines = []
+    if quote_at is not None:
+        # 인용을 본문 폭에 맞춰 줄로 나눈다.
+        words, cur = QUOTE.split(" "), ""
+        for wd in words:
+            test = (cur + " " + wd).strip()
+            if d.textlength(test, font=body) > x1 - x0: quote_lines.append(cur); cur = wd
+            else: cur = test
+        quote_lines.append(cur)
+    for i in range(lines):
+        y = top + i * LEAD
+        k = i - quote_at if quote_at is not None else -1
+        if 0 <= k < len(quote_lines):
+            w = d.textlength(quote_lines[k], font=body)
+            d.rounded_rectangle([x0 - 8, y - 6, x0 + w + 8, y + BODY + 10], 6, fill=(242, 190, 92, 120))   # 형광펜
+            d.text((x0, y), quote_lines[k], font=body, fill=(*INK, 255))
+            continue
+        if rnd.random() < 0.06 and i: continue                  # 문단 사이 빈 줄
+        end = x1 if rnd.random() > 0.12 else x0 + (x1 - x0) * rnd.uniform(0.3, 0.8)
+        x = x0 + (BODY * 1.0 if rnd.random() < 0.15 else 0)
+        while x < end - 20:
+            w = min(end - x, BODY * rnd.uniform(1.6, 4.4))
+            h = rnd.uniform(-1.5, 1.5)
+            d.rounded_rectangle([x, y + 10 + h, x + w, y + BODY - 6 + h], 2, fill=(*GREY, int(rnd.uniform(70, 105))))
+            x += w + BODY * 0.42
+    return im.filter(ImageFilter.GaussianBlur(0.5 * scale))
+
+# 241쪽은 카메라가 문장 바로 위까지 내려가므로 두 배로 그린다(같은 배치를 2배 해상도로).
+p241 = page(True, 241, "241", "에필로그 · 결국, 우리의 몫", quote_at=9, scale=2)
+p241.save(OUT / "page-241.png")
+page(False, 240, "240", "몫 : 인간의 자리").save(OUT / "page-240.png")
+for i in range(4):
+    page(i % 2 == 0, 300 + i).save(OUT / f"leaf-{i}.png")
+print("pages", PW, PH)

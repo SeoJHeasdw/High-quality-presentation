@@ -1,14 +1,19 @@
 #!/usr/bin/env python3
 """Keynote 15 · 『몫: 인간의 자리』(백승헌, 파지트 2026.11.1). 14번의 "누가 멈출 수 있는지" 다음 장.
 
-표지의 빛(문, 사람의 그림자, 입자 얼굴, 데이터 격자)을 점 수십만 개로 공간에 흩어 둔다. 점마다 한 카메라 자리에서 본
+0단계(0~120): 표지의 빛(문, 사람의 그림자, 입자 얼굴, 데이터 격자)을 점 수십만 개로 공간에 흩어 둔다. 점마다 한 카메라 자리에서 본
 표지의 그 픽셀 위에 놓여 있어서, 카메라가 그 자리에 닿는 순간 흩어진 점들이 표지 그림으로 맞춰진다.
 그 자리에서 표지 글자가 찍히며 책이 단단해지고, 카메라가 왼쪽으로 돌아 책등을 보이며 책을 화면 왼쪽에 세운다.
 글자(제목·부제·저자·출판사)는 점으로 만들지 않는다. 책이 단단해질 때 표지와 함께 나타난다.
+1단계(120~260): 책이 뒤로 눕고, 가운데가 펼쳐지며 낱장이 촤라락 넘어간다. 카메라가 올라가 펼친 면(240·241쪽)을 내려다보고,
+241쪽에 형광펜을 칠한 인용 문장으로 빨려 들어가 종이가 하얗게 찬다. 그 흰빛이 표지 속 문의 빛이 되어, 문 앞에 선 사람을 뒤에서 보는
+점의 복도(0단계의 첫 장면)로 빠져나온다. 오른쪽에 덱의 인용 글이 선다.
+꼬리(261~680): 덱은 쓰지 않는다. 책 소개 영상(tools/build-book-promo.mjs)이 인용과 끝 화면을 띄우는 동안 문 쪽으로 천천히 다가간다.
 
   blender -b --python tools/render-book.py -- --mode still --frames 12,40,70,92,120 --scale 50
-  blender -b --python tools/render-book.py -- --mode final          # render/book/frames/f0000.png …
-  tools/encode-book.sh                                              # public/book/seg-0.mp4, a-0.jpg, a-1.jpg
+  blender -b --python tools/render-book.py -- --mode final          # render/book/frames/f0000.png … f0260.png
+  blender -b --python tools/render-book.py -- --mode final --frames 261-680   # 꼬리(책 소개 영상만)
+  tools/encode-book.sh                                              # public/book/seg-0·1.mp4, a-0·1·2.jpg
 """
 import bpy, bmesh, math, sys, argparse, time
 import numpy as np
@@ -28,12 +33,18 @@ ap.add_argument("--save", action="store_true")
 A = ap.parse_args(ARGS)
 
 FPS = 30
-# 정지 지점: 0은 14번에서 들어오는 어둠, 1은 책이 왼쪽에 선 마지막 화면(src/keynote/book/book.json과 같아야 한다).
-ANCHORS = [0, 120]
-LAST = ANCHORS[-1]
+# 정지 지점: 0은 14번에서 들어오는 어둠, 1은 책이 왼쪽에 선 화면(0단계 끝), 2는 문 앞의 사람(1단계 끝). tools/encode-book.sh와 같아야 한다.
+ANCHORS = [0, 120, 260]
+END0, LAST = ANCHORS[1], ANCHORS[-1]
 ALIGN = 70           # 흩어진 점이 표지로 맞춰지는 프레임
 SOLID = (76, 92)     # 표지 글자가 찍히며 책이 단단해지는 구간
-TURN = (86, LAST)    # 카메라가 돌아 책을 왼쪽에 세우는 구간
+TURN = (86, END0)    # 카메라가 돌아 책을 왼쪽에 세우는 구간
+TIP = (122, 146)     # 1단계: 책이 뒤로 눕는다(146~154 작게 튀었다 멈춘다)
+OPEN = (150, 168)    # 가운데가 펼쳐진다(앞 절반이 책등을 축으로 넘어간다)
+RIFFLE = (158, 1.1, 10)  # 낱장이 넘어가기 시작하는 프레임, 낱장 사이 간격, 한 장이 넘어가는 길이
+TOP = 190            # 카메라가 펼친 면을 위에서 내려다본다
+DIVE = 228           # 인용 문장으로 빨려 들어가 하얗게 찬 마지막 프레임. 다음 프레임은 복도다
+TAIL, PUSH = 420, 2.5  # 꼬리 프레임 수와 그동안 문 쪽으로 다가가는 거리(문이 약 11% 커진다)
 
 # ── 장면 ─────────────────────────────────────────────────────────────
 bpy.ops.wm.read_factory_settings(use_empty=True)
@@ -171,9 +182,9 @@ def build_points():
     em = nt.nodes.new("ShaderNodeEmission"); nt.links.new(at.outputs["Color"], em.inputs["Color"])
     tr = nt.nodes.new("ShaderNodeBsdfTransparent"); mix = nt.nodes.new("ShaderNodeMixShader")
     nt.links.new(tr.outputs[0], mix.inputs[1]); nt.links.new(em.outputs[0], mix.inputs[2]); nt.links.new(mix.outputs[0], out.inputs[0])
-    # 책이 선 뒤에는 뒤의 점을 낮춰 책이 먼저 읽히게 한다.
-    key_input(em.inputs["Strength"], [(TURN[0], 1.0), (TURN[0] + 22, 0.3), (LAST, 0.1)])
-    key_input(mix.inputs[0], [(0, 1.0)])
+    # 책이 단단해지는 동안(책이 점을 다 가린다) 점을 걷는다. 남겨 두면 카메라가 돌 때 얼굴·격자가 시차로 어긋나
+    # 책에서 떨어져 나가는 표지 사본처럼 보인다. 1단계 끝의 복도에서 다시 켠다.
+    key_input(mix.inputs[0], [(TURN[0] - 1, 1.0), (TURN[0] + 6, 0.0), (DIVE, 0.0), (DIVE + 1, 1.0)])
     ng = bpy.data.node_groups.new("Points", "GeometryNodeTree")
     ng.interface.new_socket(name="Geometry", in_out="INPUT", socket_type="NodeSocketGeometry")
     ng.interface.new_socket(name="Geometry", in_out="OUTPUT", socket_type="NodeSocketGeometry")
@@ -187,7 +198,7 @@ def build_points():
     print(f"points {xs.size:,} ({time.time() - t0:.1f}s)  door {door.sum():,} floor {floor.sum():,} side {side.sum():,} face {face.sum():,}")
     return ob
 
-build_points()
+POINTS = build_points()
 
 # ── 책 ───────────────────────────────────────────────────────────────
 def cover_material():
@@ -257,9 +268,141 @@ def build_book():
     sm, snt, sout, spp = spine_material(); solid_mix(sm, snt, sout, spp.outputs[0])
     for m in (cm, bm_, pm, sm): me.materials.append(m)
     bv = ob.modifiers.new("Bevel", "BEVEL"); bv.width = 0.004; bv.segments = 2; bv.harden_normals = True
-    return ob
+    return ob, (cm, bm_, pm, sm)
 
-build_book()
+# 책이 눕는 축: 뒤표지의 아래 모서리. 닫힌 책(0단계에서 쓴 상자)과 펼칠 책의 조각이 모두 여기에 매달린다.
+ROOT = link(bpy.data.objects.new("BookRoot", None)); ROOT.location = (0, YB + BT, -BH / 2)
+def hang(ob, parent=None):
+    parent = parent or ROOT
+    ob.parent = parent; ob.matrix_parent_inverse = parent.matrix_world.inverted(); return ob
+
+def visible(ob, keys):
+    """keys: [(frame, 보임?)] 사이는 앞 값 그대로."""
+    for f, on in keys:
+        ob.hide_render = not on; ob.keyframe_insert("hide_render", frame=f)
+    if ob.animation_data:
+        for fc in fcurves_of(ob):
+            for kp in fc.keyframe_points: kp.interpolation = "CONSTANT"
+
+def fcurves_of(idb):
+    """Blender 5의 계층 액션과 예전 액션 모두에서 F-curve를 꺼낸다."""
+    act = idb.animation_data.action if idb.animation_data else None
+    if act is None: return []
+    if hasattr(act, "fcurves") and len(act.fcurves): return list(act.fcurves)
+    out = []
+    for layer in getattr(act, "layers", []):
+        for strip in layer.strips:
+            for bag in strip.channelbags: out.extend(bag.fcurves)
+    return out
+
+BOOK, BOOK_MATS = build_book()
+ROOT.matrix_world  # 행렬을 갱신해 둔다
+bpy.context.view_layer.update()
+hang(BOOK)
+visible(BOOK, [(0, True), (OPEN[0], False), (DIVE + 1, False)])
+visible(POINTS, [(0, True), (TURN[0] + 7, False), (DIVE + 1, True)])
+
+# ── 펼칠 책: 앞 절반(앞표지 + 왼쪽 쪽들), 뒤 절반(뒤표지 + 오른쪽 쪽들), 그 사이의 낱장 ─────────────
+# 닫혀 있을 때 0단계의 상자와 같은 자리·같은 겉모양이다. 펼치기 시작하는 프레임에 상자와 바꿔 끼운다.
+# 경첩은 책등 쪽 가운데 두께(x = -BW/2, y = YH)다. 앞 절반과 낱장은 이 축으로 -180도 돌아 왼쪽에 눕는다.
+N_LEAF, LEAF_T = 24, 0.0012
+YH = YB + BT / 2
+Y_FRONT = YH - N_LEAF * LEAF_T                     # 앞 절반의 안쪽 면. 낱장들이 이 사이를 채운다
+
+def page_material(name, front, back=None):
+    """낱장의 양면. back이 있으면 뒷면(+Y 쪽)에 그 그림을 좌우 뒤집어 붙인다(넘어간 뒤 왼쪽 쪽이 된다)."""
+    m = bpy.data.materials.new(name); nt, out = nodes_of(m)
+    uv = nt.nodes.new("ShaderNodeUVMap")
+    p = nt.nodes.new("ShaderNodeBsdfPrincipled"); p.inputs["Roughness"].default_value = 0.8
+    ta = nt.nodes.new("ShaderNodeTexImage"); ta.image = bpy.data.images.load(str(WORK / front)); ta.interpolation = "Cubic"
+    nt.links.new(uv.outputs[0], ta.inputs["Vector"])
+    col = ta.outputs["Color"]
+    if back:
+        tb = nt.nodes.new("ShaderNodeTexImage"); tb.image = bpy.data.images.load(str(WORK / back)); tb.interpolation = "Cubic"
+        sep = nt.nodes.new("ShaderNodeSeparateXYZ"); comb = nt.nodes.new("ShaderNodeCombineXYZ"); inv = nt.nodes.new("ShaderNodeMath"); inv.operation = "SUBTRACT"
+        inv.inputs[0].default_value = 1.0
+        nt.links.new(uv.outputs[0], sep.inputs[0]); nt.links.new(sep.outputs[0], inv.inputs[1])
+        nt.links.new(inv.outputs[0], comb.inputs[0]); nt.links.new(sep.outputs[1], comb.inputs[1]); nt.links.new(comb.outputs[0], tb.inputs["Vector"])
+        geo = nt.nodes.new("ShaderNodeNewGeometry"); mx = nt.nodes.new("ShaderNodeMix"); mx.data_type = "RGBA"
+        nt.links.new(geo.outputs["Backfacing"], mx.inputs["Factor"]); nt.links.new(ta.outputs["Color"], mx.inputs[6]); nt.links.new(tb.outputs["Color"], mx.inputs[7])
+        col = mx.outputs[2]
+    nt.links.new(col, p.inputs["Base Color"])
+    nt.links.new(p.outputs[0], out.inputs[0])
+    return m
+
+def box_part(name, y0, y1, mats, spine=True, faces=("front", "back", "spine", "edge", "top", "bottom")):
+    """닫힌 책의 한 조각(y0~y1 두께). mats: 면 이름 → 재질 번호. 책등 면의 UV는 0단계 상자와 같아 이어 붙인다."""
+    me = bpy.data.meshes.new(name); bm = bmesh.new()
+    x0, x1, z0, z1 = -BW / 2, BW / 2, -BH / 2, BH / 2
+    v = [bm.verts.new(c) for c in ((x0, y0, z0), (x1, y0, z0), (x1, y0, z1), (x0, y0, z1), (x0, y1, z0), (x1, y1, z0), (x1, y1, z1), (x0, y1, z1))]
+    quads = {"front": (0, 1, 2, 3), "back": (5, 4, 7, 6), "spine": (4, 0, 3, 7), "edge": (1, 5, 6, 2), "top": (3, 2, 6, 7), "bottom": (4, 5, 1, 0)}
+    uv = bm.loops.layers.uv.new("UV")
+    for key in faces:
+        f = bm.faces.new([v[i] for i in quads[key]]); f.material_index = mats[key]
+        for loop in f.loops:
+            c = loop.vert.co
+            if key in ("front", "back"): loop[uv].uv = ((c.x - x0) / BW, (c.z - z0) / BH)
+            elif key == "spine": loop[uv].uv = ((YB + BT - c.y) / BT, (c.z - z0) / BH)
+            else: loop[uv].uv = (0.0, 0.0)
+    bm.to_mesh(me); bm.free()
+    return link(bpy.data.objects.new(name, me))
+
+def build_open_book():
+    cm, bm_, pm, sm = BOOK_MATS
+    p241 = page_material("Page241", "page-241.png"); solid_mix(p241, p241.node_tree, p241.node_tree.nodes["Material Output"], p241.node_tree.nodes["Principled BSDF"].outputs[0])
+    pleft = page_material("PageLeft", "leaf-1.png"); solid_mix(pleft, pleft.node_tree, pleft.node_tree.nodes["Material Output"], pleft.node_tree.nodes["Principled BSDF"].outputs[0])
+    mats = [cm, bm_, pm, sm, p241, pleft]                          # 0 표지, 1 판지, 2 종이 단면, 3 책등, 4 241쪽, 5 왼쪽 첫 쪽
+    hinge = hang(link(bpy.data.objects.new("Hinge", None)))
+    hinge.location = ROOT.matrix_world.inverted() @ Vector((-BW / 2, YH, 0))
+    hinge.matrix_parent_inverse.identity()
+    front = box_part("FrontHalf", YB, Y_FRONT, {"front": 0, "back": 5, "spine": 3, "edge": 2, "top": 2, "bottom": 2})
+    back = box_part("BackHalf", YH, YB + BT, {"front": 4, "back": 1, "spine": 3, "edge": 2, "top": 2, "bottom": 2})
+    filler = box_part("LeafBlock", Y_FRONT, YH, {"spine": 3, "edge": 2, "top": 2, "bottom": 2}, faces=("spine", "edge", "top", "bottom"))
+    for ob in (front, back, filler):
+        for m in mats: ob.data.materials.append(m)
+    bpy.context.view_layer.update()
+    hang(back); hang(filler); hang(front, hinge)
+    # 앞 절반이 넘어간다: 천천히 들렸다가 빨라지고, 왼쪽에 닿을 때 다시 느려진다.
+    for f in range(OPEN[0], OPEN[1] + 1):
+        hinge.rotation_euler.z = -math.pi * smooth(ramp(f, *OPEN)); hinge.keyframe_insert("rotation_euler", index=2, frame=f)
+    for ob in (front, back): visible(ob, [(0, False), (OPEN[0], True), (DIVE + 1, False)])
+    visible(filler, [(0, False), (OPEN[0], True), (OPEN[0] + 3, False)])
+    # 낱장: 오른쪽 더미의 맨 위(앞 절반 쪽)부터 한 장씩 넘어간다. 넘어가는 동안 종이가 휘었다 펴진다.
+    leaf_mats = [page_material(f"Leaf{i}", f"leaf-{i}.png", f"leaf-{(i + 1) % 4}.png") for i in range(4)]
+    last_mat = page_material("LeafLast", "leaf-0.png", "page-240.png")
+    for m in leaf_mats + [last_mat]:
+        solid_mix(m, m.node_tree, m.node_tree.nodes["Material Output"], m.node_tree.nodes["Principled BSDF"].outputs[0])
+    start, gap, dur = RIFFLE
+    for k in range(N_LEAF):
+        me = bpy.data.meshes.new(f"Leaf{k}"); bm = bmesh.new(); uv = bm.loops.layers.uv.new("UV")
+        nx, w, zh = 16, BW - 0.012, BH / 2 - 0.008
+        dy = -(k + 0.5) * LEAF_T
+        verts = [[bm.verts.new((0.004 + w * i / nx, dy, z)) for z in (-zh, zh)] for i in range(nx + 1)]
+        for i in range(nx):
+            f = bm.faces.new((verts[i][0], verts[i + 1][0], verts[i + 1][1], verts[i][1]))
+            for loop, (u, vv) in zip(f.loops, ((i / nx, 0), ((i + 1) / nx, 0), ((i + 1) / nx, 1), (i / nx, 1))): loop[uv].uv = (u, vv)
+        bm.to_mesh(me); bm.free()
+        leaf = link(bpy.data.objects.new(f"Leaf{k}", me)); leaf.data.materials.append(last_mat if k == 0 else leaf_mats[k % 4])
+        pivot = hang(link(bpy.data.objects.new(f"LeafPivot{k}", None)))
+        pivot.location = ROOT.matrix_world.inverted() @ Vector((-BW / 2, YH, 0)); pivot.matrix_parent_inverse.identity()
+        bpy.context.view_layer.update()
+        leaf.location = (0, 0, 0); leaf.parent = pivot
+        bd = leaf.modifiers.new("Curl", "SIMPLE_DEFORM"); bd.deform_method = "BEND"; bd.deform_axis = "Z"
+        order = N_LEAF - 1 - k                                    # 맨 위(k가 큰 것)부터
+        f0 = start + order * gap
+        for f in range(int(f0) - 1, int(f0 + dur) + 2):
+            t = max(0.0, min(1.0, (f - f0) / dur))
+            pivot.rotation_euler.z = -math.pi * smooth(t); pivot.keyframe_insert("rotation_euler", index=2, frame=f)
+            bd.angle = math.radians(55) * math.sin(math.pi * t); bd.keyframe_insert("angle", frame=f)
+        visible(leaf, [(0, False), (OPEN[0], True), (DIVE + 1, False)])
+    return hinge
+
+build_open_book()
+# 책이 뒤로 눕는다: 처음엔 천천히, 바닥에 닿을 때 가장 빠르고, 작게 튀었다 멈춘다.
+for f in range(TIP[0], TIP[1] + 9):
+    if f <= TIP[1]: a = -(math.pi / 2) * ((f - TIP[0]) / (TIP[1] - TIP[0])) ** 2
+    else: a = -(math.pi / 2) + 0.045 * math.sin(math.pi * (f - TIP[1]) / 8) * (1 - (f - TIP[1]) / 9)
+    ROOT.rotation_euler.x = a; ROOT.keyframe_insert("rotation_euler", index=0, frame=f)
 
 # 책이 설 때 켜는 빛. 맞춰지는 순간에는 꺼져 있어 표지가 파일 그대로 보인다.
 # Key는 카메라 쪽(왼쪽 앞)에서 책등과 표지를 비추고, Glint는 오른쪽 앞에서 금박에 되비친다(카메라가 돌며 빛이 글자를 훑는다).
@@ -279,13 +422,17 @@ def build_floor():
     p.inputs["Specular IOR Level"].default_value = 0.8
     tr = nt.nodes.new("ShaderNodeBsdfTransparent"); mix = nt.nodes.new("ShaderNodeMixShader")
     nt.links.new(tr.outputs[0], mix.inputs[1]); nt.links.new(p.outputs[0], mix.inputs[2]); nt.links.new(mix.outputs[0], out.inputs[0])
-    key_input(mix.inputs[0], [(TURN[0], 0.0), (TURN[0] + 18, 1.0)])
+    key_input(mix.inputs[0], [(TURN[0], 0.0), (TURN[0] + 18, 1.0), (DIVE, 1.0), (DIVE + 1, 0.0)])
     ob.data.materials.append(m)
 
 build_floor()
-area("Key", (-3.6, YB - 3.0, 1.7), BOOK_C, (3.0, 2.0), [(TURN[0], 0.0), (TURN[0] + 22, 150.0)])
-area("Glint", (2.4, YB - 3.8, 0.9), BOOK_C, (1.2, 2.4), [(TURN[0], 0.0), (TURN[0] + 22, 170.0)], color=(1.0, 0.92, 0.82))
-area("Rim", (-1.2, YB + 2.6, 1.8), BOOK_C + Vector((-0.6, 0, 0)), (1.6, 0.6), [(TURN[0], 0.0), (TURN[0] + 22, 140.0)], color=(0.55, 0.75, 1.0))
+# 책이 누우면 세 빛을 낮추고 위의 창(Top)으로 넘긴다.
+area("Key", (-3.6, YB - 3.0, 1.7), BOOK_C, (3.0, 2.0), [(TURN[0], 0.0), (TURN[0] + 22, 150.0), (TIP[0], 150.0), (TIP[1], 45.0)])
+area("Glint", (2.4, YB - 3.8, 0.9), BOOK_C, (1.2, 2.4), [(TURN[0], 0.0), (TURN[0] + 22, 170.0), (TIP[0], 170.0), (TIP[1], 0.0)], color=(1.0, 0.92, 0.82))
+area("Rim", (-1.2, YB + 2.6, 1.8), BOOK_C + Vector((-0.6, 0, 0)), (1.6, 0.6), [(TURN[0], 0.0), (TURN[0] + 22, 140.0), (TIP[0], 140.0), (TIP[1], 0.0)], color=(0.55, 0.75, 1.0))  # 누우면 끈다(거울 바닥에 네모로 비친다)
+# 누운 책의 펼친 면을 위에서 고르게 비추는 큰 창(1단계).
+TOP_C = Vector((-BW / 2, YB + BT + BH / 2, -BH / 2 + BT / 2))
+area("Top", TOP_C + Vector((0.4, -0.8, 4.2)), TOP_C, (4.5, 4.5), [(TIP[0], 0.0), (TIP[1] + 4, 100.0)], color=(1.0, 0.97, 0.92)).visible_glossy = False  # 거울 바닥에 빛의 네모가 비치지 않게
 
 # ── 카메라 ───────────────────────────────────────────────────────────
 cd = bpy.data.cameras.new("Cam"); cd.lens = LENS; cd.sensor_width = SENSOR; cd.sensor_fit = "HORIZONTAL"; cd.clip_start = 0.05; cd.clip_end = 400
@@ -302,7 +449,68 @@ def look(eye, target, yaw=0.0):
     if yaw: d = Quaternion((0, 0, 1), -yaw) @ d
     return d.to_track_quat("-Z", "Y")
 
+def frame_quat(forward):
+    """시선과 위쪽 힌트로 카메라 회전을 만든다. 거의 수직으로 내려다볼 때는 화면 위가 책머리(+Y)를 향한다."""
+    fw = forward.normalized()
+    w = max(0.0, min(1.0, (abs(fw.z) - 0.5) / 0.4))
+    hint = (Vector((0, 0, 1)) * (1 - w) + Vector((0, 1, 0)) * w).normalized()
+    right = fw.cross(hint).normalized(); up = right.cross(fw)
+    from mathutils import Matrix
+    return Matrix((right, up, -fw)).transposed().to_quaternion()
+
+def hermite(f, keys):
+    """keys: [(frame, 값, 기울기)]. 구간마다 3차 에르미트로 잇는다(속도가 끊기지 않는다)."""
+    for (f0, v0, m0), (f1, v1, m1) in zip(keys, keys[1:]):
+        if f0 <= f <= f1:
+            h = f1 - f0; t = (f - f0) / h
+            return (2*t**3 - 3*t**2 + 1) * v0 + (t**3 - 2*t**2 + t) * h * m0 + (-2*t**3 + 3*t**2) * v1 + (t**3 - t**2) * h * m1
+    return keys[-1][1]
+
+def catmull_path(pts, s):
+    """pts를 지나는 캐트멀-롬 곡선 위의 점. s는 0~len(pts)-1."""
+    i = min(int(s), len(pts) - 2); t = s - i
+    p0, p1, p2, p3 = pts[max(i - 1, 0)], pts[i], pts[i + 1], pts[min(i + 2, len(pts) - 1)]
+    return 0.5 * ((2 * p1) + (-p0 + p2) * t + (2 * p0 - 5 * p1 + 4 * p2 - p3) * t * t + (-p0 + 3 * p1 - 3 * p2 + p3) * t ** 3)
+
+# 1단계의 자리들. 책은 ROOT를 축으로 눕는다: 누운 뒤 앞표지는 위를 보고, 책머리는 +Y를 향한다.
+LYING_TOP = -BH / 2 + BT                               # 닫힌 채 누운 책의 윗면 높이
+SPREAD_Z = -BH / 2 + BT / 2                            # 펼친 면의 높이
+def lying(u, v):
+    """241쪽(뒤 절반의 안쪽 면) 위의 점. u: 책등 쪽 0 → 바깥 1, v: 아래 0 → 위 1."""
+    return Vector((-BW / 2 + u * BW, YB + BT + v * BH, SPREAD_Z))
+Q = lying(0.5, 1 - 610 / 1584)                        # 형광펜을 칠한 인용 두 줄의 가운데(export-book-textures.py의 page-241, 9·10번째 줄)
+SPREAD = Vector((-BW / 2, YB + BT + BH / 2, SPREAD_Z))
+LYING_C = Vector((0, YB + BT + BH / 2, LYING_TOP))
+K1 = Vector((-1.7, YB - 2.3, 1.9))                     # 쓰러지는 책을 왼쪽 앞 위에서 본다
+K2 = SPREAD + Vector((0.0, -0.25, 4.1))                # 펼친 면 전체를 위에서 내려다본다(둘레에 바닥이 남는다)
+K3 = Q + Vector((0.0, -0.01, 1.25))                    # 인용 두 줄이 화면 폭을 채운다(한 박자 읽힌다)
+K4 = Q + Vector((0.0, 0.0, 0.05))                      # 문장 속으로
+READ = 214
+S_KEYS = [(END0, 0.0, 0.0), (152, 1.0, 0.026), (TOP, 2.0, 0.03), (READ, 3.0, 0.008), (DIVE, 4.0, 0.16)]
+E0 = DOOR_C + Vector((0.0, -8.5, 0.25))                # 흰 막이 걷히는 자리: 문 앞(점이 서로 겹쳐 보이는 거리)
+F_END = Vector((-0.4, 15.2, -1.3))                     # 0단계 첫 장면 가까이, 문 앞의 사람을 뒤에서
+
 def cam_at(f):
+    if f > LAST:
+        # 꼬리: 마지막 자리의 시선 그대로 문 쪽으로 다가간다. 시선이 같아 문은 화면의 같은 자리에서 커진다.
+        p = F_END + (DOOR_C - F_END).normalized() * PUSH * smooth((f - LAST) / TAIL)
+        return p, look(F_END, DOOR_C, LEFT_THIRD * 0.9), 60.0, (DOOR_C - p).length
+    if f > DIVE:
+        t = 1 - (1 - (f - DIVE - 1) / (LAST - DIVE - 1)) ** 3
+        p = E0.lerp(F_END, t)
+        q = look(E0, DOOR_C).slerp(look(F_END, DOOR_C, LEFT_THIRD * 0.9), t)
+        return p, q, 60.0, (DOOR_C - p).length
+    if f > END0:
+        p0, q0, _, _ = cam_at(END0)
+        d0 = q0 @ Vector((0, 0, -1))
+        down = Vector((0, 0.02, -1)).normalized()
+        dirs = [d0, (LYING_C - K1).normalized(), Vector((0, 0.05, -1)).normalized(), down, down]
+        sv = hermite(f, S_KEYS)
+        p = catmull_path([p0, K1, K2, K3, K4], sv)
+        q = frame_quat(catmull_path(dirs, sv))
+        target = LYING_C if sv < 1.5 else (SPREAD if sv < 2.4 else Q)
+        fstop = hermite(f, [(END0, 2.4, 0), (152, 7.0, 0), (TOP, 6.0, 0), (READ, 11.0, 0), (DIVE, 6.0, 0)])
+        return p, q, fstop, max(0.08, (target - p).length)
     if f <= ALIGN:
         t = smooth(f / ALIGN)
         # 앞쪽은 빠르게 물러나고 끝에서 천천히 맞춰진다. 곡선은 C0에서 뒤로 빠지며 살짝 떠오른다.
@@ -322,7 +530,7 @@ def cam_at(f):
     return p, q, fstop, (BOOK_C - p).length
 
 prev = None
-for f in range(0, LAST + 1):
+for f in range(0, LAST + TAIL + 1):
     p, q, fstop, focus = cam_at(f)
     if prev is not None and prev.dot(q) < 0: q = -q
     prev = q
@@ -331,17 +539,35 @@ for f in range(0, LAST + 1):
     cd.dof.aperture_fstop = fstop; cd.dof.focus_distance = focus
     cd.dof.keyframe_insert("aperture_fstop", frame=f); cd.dof.keyframe_insert("focus_distance", frame=f)
 
-# 14번에서 어둠으로 넘어와 밝아진다.
-S.view_settings.exposure = -8; S.view_settings.keyframe_insert("exposure", frame=0)
-S.view_settings.exposure = 0; S.view_settings.keyframe_insert("exposure", frame=12)
+# 14번에서 어둠으로 넘어와 밝아진다. 1단계 끝에서는 종이가 하얗게 차고, 그 흰빛이 문의 빛으로 가라앉는다.
+for f, e in ((0, -8), (12, 0), (DIVE - 8, 0), (DIVE, 1.6), (DIVE + 1, 1.6), (DIVE + 16, 0)):
+    S.view_settings.exposure = e; S.view_settings.keyframe_insert("exposure", frame=f)
+
+# 흰 막: 카메라 바로 앞의 빛 판. 종이 속으로 빨려 들어가며 하얗게 차고, 복도에서 걷힌다(장면이 바뀌는 순간을 가린다).
+def build_veil():
+    bpy.ops.mesh.primitive_plane_add(size=1.0); ob = bpy.context.object; ob.name = "Veil"
+    m, nt, out = (lambda m: (m, *nodes_of(m)))(bpy.data.materials.new("Veil"))
+    m.cycles.emission_sampling = "NONE"
+    em = nt.nodes.new("ShaderNodeEmission"); em.inputs["Color"].default_value = (1.0, 0.98, 0.95, 1); em.inputs["Strength"].default_value = 1.0
+    tr = nt.nodes.new("ShaderNodeBsdfTransparent"); mix = nt.nodes.new("ShaderNodeMixShader")
+    nt.links.new(tr.outputs[0], mix.inputs[1]); nt.links.new(em.outputs[0], mix.inputs[2]); nt.links.new(mix.outputs[0], out.inputs[0])
+    key_input(mix.inputs[0], [(0, 0.0), (DIVE - 6, 0.0), (DIVE, 1.0), (DIVE + 2, 1.0), (DIVE + 15, 0.0)])
+    ob.data.materials.append(m)
+    ob.parent = cam; ob.location = (0, 0, -0.06); ob.scale = (0.2, 0.2, 1)
+    ob.visible_shadow = False
+    return ob
+
+build_veil()
 
 # ── 렌더 ─────────────────────────────────────────────────────────────
 OUT = WORK / ("stills" if A.mode == "still" else "frames")
 OUT.mkdir(parents=True, exist_ok=True)
 if A.save: bpy.ops.wm.save_as_mainfile(filepath=str(WORK / "book.blend"))
-frames = [int(x) for x in A.frames.split(",") if x] or list(range(0, LAST + 1))
+frames = [f for x in A.frames.split(",") if x for f in (range(int(x.split("-")[0]), int(x.split("-")[1]) + 1) if "-" in x else [int(x)])] or list(range(0, LAST + 1))
+S.render.motion_blur_shutter = 0.5
 for f in frames:
     t0 = time.time(); S.frame_set(f)
+    S.render.use_motion_blur = OPEN[0] <= f <= TOP + 4 or READ + 3 <= f <= DIVE   # 낱장이 넘어갈 때와 빨려 들어갈 때만(문장을 읽는 동안은 또렷하게)
     S.render.filepath = str(OUT / f"f{f:04d}.png")
     bpy.ops.render.render(write_still=True)
     print(f"frame {f} {time.time() - t0:.1f}s", flush=True)

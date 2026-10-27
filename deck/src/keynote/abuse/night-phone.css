@@ -75,7 +75,7 @@
 .ph-live { position: absolute; left: 26px; right: 26px; top: 306px; padding: 18px 20px 20px; border-radius: 22px; background: #ffffff0d; border: 1px solid #ffffff12; }
 .ph-live__label { display: block; font-size: 14px; color: #8e96a3; margin-bottom: 10px; letter-spacing: .02em; }
 .ph-live p { font-size: 23px; line-height: 1.42; margin: 0 0 8px; color: #eef0f3; font-weight: 520; }
-.np[data-motion] .ph-live p { animation: ph-line .5s ease both; animation-delay: calc(1.2s + var(--i) * 1.7s); }
+.np[data-motion] .ph-live p { animation: ph-line .5s ease both; animation-delay: var(--at, calc(1.2s + var(--i) * 1.7s)); }
 @keyframes ph-line { from { opacity: 0; transform: translateY(8px); filter: blur(4px); } to { opacity: 1; transform: none; filter: none; } }
 .ph-controls { position: absolute; left: 44px; right: 44px; bottom: 70px; display: grid; grid-template-columns: repeat(3, 1fr); row-gap: 30px; justify-items: center; }
 .ph-controls > span:not(.ph-btn) { width: 66px; height: 66px; border-radius: 50%; background: #ffffff1a; }

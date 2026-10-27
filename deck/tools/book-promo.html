@@ -1,0 +1,296 @@
+<!doctype html>
+<!--
+  15번 책 장면의 책 소개판(tools/build-book-promo.mjs가 글꼴·영상·정지 화면을 이 파일 안에 넣어 한 파일로 만든다).
+  덱의 머리말·번호·앞 장과 이어지는 말 없이 혼자 선다. 책을 받는 분이 열어 보는 화면이라 덱처럼 키로 넘기되,
+  처음 여는 사람도 알 수 있게 아래에 넘기는 방법을 둔다. ?record는 빌드 스크립트가 글만 투명하게 찍어 영상에 얹을 때 쓴다.
+  BGM을 넣어 빌드하면 브라우저가 소리 나는 자동 재생을 막으므로 "재생" 단추로 시작하고, 음악은 영상 1의 흐름과 상관없이 한 번 흐른다.
+-->
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>몫: 인간의 자리</title>
+<meta name="description" content="백승헌 지음 『몫: 인간의 자리 — 행동하는 AI시대』 (파지트, 2026. 11. 1)">
+<style>
+@font-face { font-family: "Pretendard Variable"; src: url(__FONT__) format("woff2"); font-weight: 100 900; font-style: normal; font-display: block; }
+:root { --bg: #08080e; --ink: #f3ede4; --gold: #ffcf86; --amber: #e8b27a; --muted: #9aa3b5; --ask: #b9c0cc; }
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; background: #000; overflow: hidden; }
+body { font-family: "Pretendard Variable", -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif; color: var(--ink); letter-spacing: -.035em; -webkit-font-smoothing: antialiased; -webkit-tap-highlight-color: transparent; user-select: none; word-break: keep-all; }
+body[data-idle] { cursor: none; }
+
+/* 1920×1080 무대를 창에 맞춰 줄이거나 키운다. 남는 자리는 검게 둔다. */
+.stage { position: absolute; left: 50%; top: 50%; width: 1920px; height: 1080px; transform: translate(-50%, -50%) scale(var(--s, .5)); background: var(--bg); overflow: hidden; }
+.film, .film img, .film video { position: absolute; inset: 0; width: 100%; height: 100%; display: block; object-fit: cover; }
+.film video { opacity: 0; }
+.film video[data-on] { opacity: 1; }
+/* 오른쪽 글 뒤만 조금 누른다. 책과 문이 선 왼쪽은 건드리지 않는다. */
+.shade { position: absolute; inset: 0; background: linear-gradient(270deg, #06060bb3 0%, #06060b66 34%, #06060b00 56%); opacity: 0; }
+
+.copy { position: absolute; left: 1020px; width: 740px; visibility: hidden; }
+.eyebrow { display: flex; align-items: center; gap: 16px; margin: 0 0 24px; font-size: 23px; font-weight: 520; letter-spacing: .005em; color: var(--amber); }
+.eyebrow::before { content: ""; width: 34px; height: 1px; background: var(--amber); opacity: .8; }
+.copy h1 { margin: 0; font-size: 76px; line-height: 1.2; font-weight: 650; letter-spacing: -.045em; color: var(--ink); text-shadow: 0 2px 30px #05080d; }
+.copy h1 em { font-style: normal; color: var(--gold); text-shadow: 0 0 40px #ffb45e40; }
+.source { margin: 34px 0 0; font-size: 21px; color: var(--muted); letter-spacing: -.01em; }
+
+/* 1 · 책 소개 첫머리의 질문 넷. 앞의 셋을 작게 쌓고, 마지막 질문을 크게 세운다. */
+#a { top: 282px; }
+.asks { list-style: none; margin: 0 0 30px; padding: 0; }
+.asks li { font-size: 31px; line-height: 1.6; font-weight: 460; letter-spacing: -.03em; color: var(--ask); text-shadow: 0 2px 20px #05080d; }
+
+/* 2 · 에필로그 241쪽 */
+#b { top: 282px; }
+#b h1 { font-size: 52px; line-height: 1.42; font-weight: 580; letter-spacing: -.04em; }
+
+/* 3 · 끝 화면 */
+#c { top: 330px; }
+#c h1 { font-size: 92px; line-height: 1.12; font-weight: 700; letter-spacing: -.05em; }
+.sub { margin: 20px 0 0; font-size: 36px; font-weight: 560; letter-spacing: -.035em; color: #dfe5ee; text-shadow: 0 2px 20px #05080d; }
+.meta { margin: 40px 0 0; font-size: 25px; color: #c7cdd8; letter-spacing: -.015em; }
+.acts { display: flex; gap: 14px; margin-top: 54px; }
+.acts a, .acts button { font: inherit; font-size: 21px; font-weight: 560; letter-spacing: -.02em; padding: 15px 26px; border-radius: 999px; cursor: pointer; text-decoration: none; transition: background .2s, border-color .2s, color .2s; }
+.acts a { color: #17120a; background: var(--gold); border: 1px solid var(--gold); }
+.acts a:hover { background: #ffe0ad; }
+.acts button { color: #e6eaf0; background: #ffffff0d; border: 1px solid #ffffff38; }
+.acts button:hover { background: #ffffff1f; border-color: #ffffff66; }
+
+/* 넘기는 방법: 글 기둥 아래의 점 셋과 한 줄 안내(왼쪽의 책과 문은 비워 둔다). 처음 넘기면 안내는 사라지고 점만 남는다. */
+.nav { position: absolute; left: 1020px; bottom: 58px; display: flex; align-items: center; gap: 22px; opacity: 0; transition: opacity .6s; }
+.nav[data-on] { opacity: 1; }
+.dots { display: flex; gap: 12px; }
+.dots i { width: 9px; height: 9px; border-radius: 50%; background: #ffffff40; transition: background .3s, transform .3s; }
+.dots i[data-on] { background: var(--gold); transform: scale(1.25); }
+.hint { margin: 0; font-size: 19px; color: #aab3c2; letter-spacing: -.01em; transition: opacity .5s; }
+.hint kbd { font: inherit; display: inline-block; min-width: 30px; padding: 1px 8px; margin: 0 2px; border: 1px solid #ffffff40; border-radius: 6px; color: #dfe4ec; text-align: center; }
+.hint[hidden] { display: block; opacity: 0; }
+.full, .sound { position: absolute; right: 34px; top: 30px; width: 46px; height: 46px; border: 0; border-radius: 10px; background: transparent; color: #c9d0db; opacity: .35; cursor: pointer; transition: opacity .2s, background .2s; }
+.sound { right: 88px; }
+.full:hover, .sound:hover { opacity: 1; background: #ffffff14; }
+.full svg, .sound svg { width: 24px; height: 24px; }
+.sound .off, .sound[aria-pressed="true"] .on { display: none; }
+.sound[aria-pressed="true"] .off { display: inline; }
+.full[hidden], .sound[hidden] { display: none; }
+.play { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center; gap: 18px; padding: 0; border: 0; background: none; color: var(--ink); font: inherit; cursor: pointer; }
+.play span { padding: 22px 46px; border-radius: 999px; border: 1px solid #ffffff55; background: #ffffff12; font-size: 26px; font-weight: 560; letter-spacing: -.02em; transition: background .2s, border-color .2s; }
+.play:hover span { background: #ffffff22; border-color: #ffffff88; }
+.play small { display: none; font-size: 19px; color: #98a2b3; letter-spacing: -.01em; }
+.stage[data-bgm] .play small { display: block; }
+.play[hidden] { display: none; }
+
+/* 글만 찍는 모드: 영상·바탕·조작 단추를 빼고 투명하게 둔다. */
+html[data-record], html[data-record] body, html[data-record] .stage { background: transparent; }
+html[data-record] .film, html[data-record] .nav, html[data-record] .full, html[data-record] .sound, html[data-record] .acts, html[data-record] .play { display: none; }
+
+@media (prefers-reduced-motion: reduce) { .nav, .hint { transition: none; } }
+</style>
+</head>
+<body>
+<div class="stage" aria-label="『몫: 인간의 자리』 책 소개">
+  <div class="film" aria-hidden="true"><img alt=""><video muted playsinline preload="auto"></video></div>
+  <div class="shade" aria-hidden="true"></div>
+
+  <section class="copy" id="a">
+    <p class="eyebrow" data-rise="150">백승헌 지음 · 파지트 · 2026. 11. 1</p>
+    <ul class="asks">
+      <li data-rise="500">이걸 어디까지 맡겨도 됩니까?</li>
+      <li data-rise="1000">예외가 생기면 누가 판단합니까?</li>
+      <li data-rise="1500">문제가 생기면 누가 설명합니까?</li>
+    </ul>
+    <h1 data-rise="2300">그럼, 누가<br><em>멈출 수</em> 있습니까?</h1>
+    <p class="source" data-rise="2700">『몫: 인간의 자리』 책 소개</p>
+  </section>
+
+  <section class="copy" id="b" data-rise="150">
+    <p class="eyebrow">에필로그 「결국, 우리의 몫」</p>
+    <h1>몫은 기술이 우리에게<br>남겨주는 것이 아니라,<br>우리가 <em>무엇을 맡기고<br>무엇을 책임질지</em><br>정하면서 만들어지는 것이다.</h1>
+    <p class="source">『몫: 인간의 자리』 241쪽</p>
+  </section>
+
+  <section class="copy" id="c">
+    <p class="eyebrow" data-rise="100">2026년 11월 1일 출간</p>
+    <h1 data-rise="350">몫: <em>인간의 자리</em></h1>
+    <p class="sub" data-rise="650">행동하는 AI시대</p>
+    <p class="meta" data-rise="950">백승헌 지음 · 파지트</p>
+    <nav class="acts" data-rise="1500"><a href="https://www.yes24.com/product/goods/199251414" target="_blank" rel="noopener">YES24에서 보기 ↗</a><button type="button" data-act="replay">처음부터 다시 보기</button></nav>
+  </section>
+
+  <div class="nav">
+    <div class="dots" aria-hidden="true"><i></i><i></i><i></i></div>
+    <p class="hint">화면을 누르거나 <kbd>→</kbd> 키로 넘겨 보세요</p>
+  </div>
+  <button class="sound" type="button" aria-label="소리 끄기" aria-pressed="false" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path class="on" d="M15.5 9a4.5 4.5 0 0 1 0 6M18 6.5a8 8 0 0 1 0 11"/><path class="off" d="M16 9.5l5 5M21 9.5l-5 5"/></svg></button>
+  <button class="full" type="button" aria-label="전체 화면"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
+  <button class="play" type="button" hidden><span>▶ 재생</span><small>소리가 함께 나옵니다</small></button>
+</div>
+
+<script type="application/octet-stream" id="m-a0" data-type="image/jpeg">__A0__</script>
+<script type="application/octet-stream" id="m-a1" data-type="image/jpeg">__A1__</script>
+<script type="application/octet-stream" id="m-a2" data-type="image/jpeg">__A2__</script>
+<script type="application/octet-stream" id="m-seg0" data-type="video/mp4">__SEG0__</script>
+<script type="application/octet-stream" id="m-seg1" data-type="video/mp4">__SEG1__</script>
+<script type="application/octet-stream" id="m-bgm" data-type="audio/mp4">__BGM__</script>
+<script>
+(() => {
+  // 영상 1은 덱의 1단계(책이 눕고 펼쳐져 문 앞의 사람으로 나온다, 140프레임) 뒤에 문 쪽으로 천천히 다가가는 꼬리가 붙어 있다.
+  // 글은 꼬리가 시작될 때 뜬다.
+  const COPY_AT = 140 / 30;
+  const RISE = [{ opacity: 0, transform: "translateY(22px)", filter: "blur(8px)" }, { opacity: 1, transform: "none", filter: "none" }];
+  const EASE = "cubic-bezier(.16,1,.3,1)";
+  const record = new URLSearchParams(location.search).has("record");
+  const $ = (s) => document.querySelector(s);
+  const stage = $(".stage"), img = $(".film img"), video = $(".film video"), shade = $(".shade");
+  const blocks = [$("#a"), $("#b"), $("#c")];
+  const nav = $(".nav"), hint = $(".hint"), dots = [...document.querySelectorAll(".dots i")], playBtn = $(".play");
+
+  const fit = () => stage.style.setProperty("--s", record ? 1 : Math.min(innerWidth / 1920, innerHeight / 1080));
+  addEventListener("resize", fit); fit();
+
+  // ── 글: 덱과 같은 떠오름(아래에서 22px, 흐림 8px, 1.1초) ───────────────────────────
+  function enter(el) {
+    el.getAnimations({ subtree: true }).forEach((a) => a.cancel());
+    el.style.visibility = "visible";
+    el._leave = null;
+    el._rise = [el, ...el.querySelectorAll("[data-rise]")].filter((n) => n.dataset.rise !== undefined)
+      .map((n) => n.animate(RISE, { duration: 1100, delay: +n.dataset.rise, easing: EASE, fill: "both" }));
+  }
+  function leave(el) {
+    if (el.style.visibility !== "visible" || el._leave) return;
+    const a = el._leave = el.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 400, easing: "ease-in", fill: "forwards" });
+    a.finished.then(() => { if (el._leave === a) el.style.visibility = "hidden"; }).catch(() => {});
+  }
+  const shadeTo = (on) => shade.animate([{ opacity: getComputedStyle(shade).opacity }, { opacity: on ? 1 : 0 }], { duration: on ? 800 : 400, easing: "ease", fill: "forwards" });
+
+  if (record) {
+    document.documentElement.dataset.record = "";
+    // 빌드 스크립트가 프레임마다 부른다. st.a·b·c는 [나온 뒤 ms, 사라지기 시작한 뒤 ms|null] 또는 null, st.shade도 같은 꼴.
+    window.__seek = async (st) => {
+      blocks.forEach((el, i) => {
+        const t = st["abc"[i]];
+        if (!t) { el.getAnimations({ subtree: true }).forEach((a) => a.cancel()); el.style.visibility = "hidden"; el._on = false; return; }
+        if (!el._on) { enter(el); el._on = true; }
+        el._rise.forEach((a) => { a.pause(); a.currentTime = t[0]; });
+        if (t[1] == null) { el._leave?.cancel(); el._leave = null; }
+        else { if (!el._leave) el._leave = el.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 400, easing: "ease-in", fill: "forwards" }); el._leave.pause(); el._leave.currentTime = t[1]; }
+      });
+      shade.getAnimations().forEach((a) => a.cancel());
+      if (st.shade) {
+        const [tin, tout] = st.shade;
+        const a = tout == null ? shade.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 800, easing: "ease", fill: "forwards" })
+                               : shade.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 400, easing: "ease", fill: "forwards" });
+        a.pause(); a.currentTime = tout == null ? tin : tout;
+      }
+      await document.fonts.ready;
+      await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+    };
+    window.__ready = document.fonts.load('650 76px "Pretendard Variable"').then(() => document.fonts.ready);
+    return;
+  }
+
+  // ── 영상과 정지 화면 ───────────────────────────────────────────────────────────
+  const media = {};
+  const bgm = $("#m-bgm").textContent.trim() ? new Audio() : null;   // 빌드에서 BGM을 넣었을 때만
+  const load = Promise.all(["a0", "a1", "a2", "seg0", "seg1", ...(bgm ? ["bgm"] : [])].map(async (k) => {
+    const s = $(`#m-${k}`);
+    media[k] = URL.createObjectURL(await (await fetch(`data:${s.dataset.type};base64,${s.textContent.trim()}`)).blob());
+    s.remove();
+  }));
+
+  let step = -1;          // 0 책이 선 화면, 1 241쪽의 문장, 2 끝 화면
+  let busy = null;        // 지금 도는 조각: "seg0" | "seg1" | null
+  let watch = 0;
+
+  function play(seg, poster) {
+    cancelAnimationFrame(watch);
+    busy = seg;
+    video.poster = poster; video.src = media[seg];
+    video.dataset.on = "";
+    return video.play().catch((e) => { if (e.name !== "AbortError") throw e; });
+  }
+  function stopVideo(still) {
+    cancelAnimationFrame(watch); busy = null;
+    video.pause(); delete video.dataset.on; video.removeAttribute("src"); video.load();
+    img.src = still;
+  }
+  function settle0() { busy = null; img.src = media.a1; enter(blocks[0]); shadeTo(true); }
+  function settle1() { busy = null; enter(blocks[1]); shadeTo(true); }
+  video.addEventListener("ended", () => { if (busy === "seg0") settle0(); });
+
+  function go(next) {
+    if (next < 0 || next > 2) return;
+    // 조각이 도는 중에 넘기면 먼저 그 조각의 끝(글이 뜬 화면)으로 간다.
+    if (busy === "seg0") { video.pause(); video.currentTime = video.duration; settle0(); return; }
+    if (busy === "seg1" && next >= step) { video.currentTime = Math.max(video.currentTime, COPY_AT); return; }
+    if (next === step) return;
+    const from = step; step = next;
+    dots.forEach((d, i) => d.toggleAttribute("data-on", i === step));
+    if (from >= 0 && next > from) hint.hidden = true;
+    if (next === 0) {
+      blocks.slice(1).forEach(leave);
+      if (from < 0) {
+        img.src = media.a0; shade.getAnimations().forEach((a) => a.cancel());
+        blocks.forEach((el) => { el.getAnimations({ subtree: true }).forEach((a) => a.cancel()); el.style.visibility = "hidden"; });
+        play("seg0", media.a0).catch(() => { playBtn.hidden = false; });
+      } else { stopVideo(media.a1); enter(blocks[0]); shadeTo(true); }
+    } else if (next === 1) {
+      blocks.forEach((el, i) => i !== 1 && leave(el));
+      if (from === 0) {
+        shadeTo(false);
+        play("seg1", media.a1);
+        const tick = () => { if (video.currentTime >= COPY_AT) { busy = null; settle1(); } else watch = requestAnimationFrame(tick); };
+        watch = requestAnimationFrame(tick);
+      } else enter(blocks[1]);
+    } else {
+      leave(blocks[1]);
+      setTimeout(() => step === 2 && enter(blocks[2]), 350);
+    }
+  }
+  // 처음 시작: BGM이 있으면 "재생"을 눌러야(브라우저가 소리 나는 자동 재생을 막는다) 음악과 함께 시작한다.
+  let started = false;
+  function start() {
+    if (started) return;
+    started = true; playBtn.hidden = true;
+    if (bgm) { bgm.currentTime = 0; bgm.play().catch(() => {}); sound.hidden = false; }
+    go(0);
+    setTimeout(() => { nav.dataset.on = ""; }, 4200);
+  }
+  const restart = () => { if (bgm) { bgm.currentTime = 0; bgm.play().catch(() => {}); } step = -1; go(0); };
+
+  // ── 조작 ───────────────────────────────────────────────────────────────────
+  addEventListener("keydown", (e) => {
+    if (e.metaKey || e.ctrlKey || e.altKey) return;
+    if (!started) { if (!playBtn.hidden && [" ", "Enter", "ArrowRight"].includes(e.key)) { e.preventDefault(); start(); } return; }
+    if (["ArrowRight", "PageDown", " ", "Enter"].includes(e.key)) { e.preventDefault(); go(step + 1); }
+    else if (["ArrowLeft", "PageUp", "Backspace"].includes(e.key)) { e.preventDefault(); go(step - 1); }
+    else if (e.key === "Home") restart();
+    else if (e.key === "f" || e.key === "F") toggleFull();
+    else if ((e.key === "m" || e.key === "M") && bgm) toggleSound();
+  });
+  stage.addEventListener("click", (e) => { if (!e.target.closest("a, button")) started ? go(step + 1) : !playBtn.hidden && start(); });
+  $("[data-act=replay]").addEventListener("click", restart);
+  playBtn.addEventListener("click", () => { if (!started) return start(); playBtn.hidden = true; video.play(); });
+  const sound = $(".sound");
+  function toggleSound() {
+    bgm.muted = !bgm.muted;
+    sound.setAttribute("aria-pressed", String(bgm.muted)); sound.setAttribute("aria-label", bgm.muted ? "소리 켜기" : "소리 끄기");
+  }
+  sound.addEventListener("click", toggleSound);
+  const full = $(".full");
+  function toggleFull() { if (document.fullscreenElement) document.exitFullscreen(); else document.documentElement.requestFullscreen?.().catch(() => {}); }
+  if (!document.documentElement.requestFullscreen) full.hidden = true;
+  full.addEventListener("click", toggleFull);
+  // 가만히 두면 마우스 커서를 숨긴다(누군가에게 보여 줄 때).
+  let idle = 0;
+  const wake = () => { delete document.body.dataset.idle; clearTimeout(idle); idle = setTimeout(() => { document.body.dataset.idle = ""; }, 2500); };
+  addEventListener("mousemove", wake); wake();
+
+  load.then(() => {
+    img.src = media.a0;
+    if (!bgm) return start();
+    bgm.src = media.bgm; bgm.preload = "auto";
+    stage.dataset.bgm = ""; playBtn.hidden = false;
+  });
+})();
+</script>
+</body>
+</html>

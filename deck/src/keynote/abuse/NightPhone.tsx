@@ -3,6 +3,7 @@ import plate from "../../../public/abuse/night-phone.json";
 import { quadMatrix3d } from "./homography";
 import { usePerformanceMotion } from "../usePerformanceMotion";
 import { shortcutKey } from "../../components/keys";
+import { localNote } from "./localAudio";
 
 /*
  * 36·37·39번의 무대. Blender로 렌더한 한밤중 협탁(public/abuse/night-phone.jpg) 위에서
@@ -15,6 +16,8 @@ const MATRIX = quadMatrix3d(UI_W, UI_H, plate.screen.corners);
 const [cx, cy] = plate.screen.corners.reduce(([x, y], [a, b]) => [x + a / 4, y + b / 4], [0, 0]);
 
 const FAKE_LINES = ["엄마… 나야.", "나 사고 났어.", "폰이 깨져서 친구 폰으로 전화했어.", "지금 좀 급해. 엄마, 나 좀 도와줘.", "아빠한테는 말하지 마."];
+// 발표자 컴퓨터의 통화 음성(local-only/phone-call.json)이 정한 줄마다의 시각(초). 없으면 CSS의 기본 간격으로 뜬다.
+const CAPTION_AT = localNote<{ captionTimes?: number[] }>("phone-call")?.captionTimes;
 
 function StatusBar({ time = "2:47" }: { time?: string }) {
   return <div className="ph-status"><b>{time}</b><span className="ph-status__icons"><i className="ph-signal"/><i className="ph-wifi"/><i className="ph-battery"/></span></div>;
@@ -36,7 +39,7 @@ export function PhoneScreen({ mode, onAnswer }: { mode: PhoneMode; onAnswer?: ()
     <div className="ph-caller ph-caller--small"><strong>알 수 없는 번호</strong><span className="ph-timer">통화 중</span></div>
     <FakeWave/>
     <div className="ph-live"><span className="ph-live__label">실시간 자막</span>
-      {FAKE_LINES.map((line, i) => <p key={i} style={{ "--i": i } as CSSProperties}>{line}</p>)}
+      {FAKE_LINES.map((line, i) => <p key={i} style={{ "--i": i, ...(CAPTION_AT ? { "--at": `${CAPTION_AT[i]}s` } : {}) } as CSSProperties}>{line}</p>)}
     </div>
     {mode === "reveal" && <div className="ph-stamp"><b>합성된 목소리</b><span>통화 녹음으로 흉내 낸 음성 · 가상 상황</span></div>}
     <div className="ph-controls"><span/><span/><span/><span className="ph-btn ph-btn--decline ph-btn--end"><i/></span></div>

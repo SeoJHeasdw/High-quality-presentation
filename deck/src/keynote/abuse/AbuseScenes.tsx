@@ -4,6 +4,7 @@ import { MediaInspection } from "../AbuseInteractive";
 import { usePerformanceMotion } from "../usePerformanceMotion";
 import "./abuse-v2.css";
 import { shortcutKey } from "../../components/keys";
+import { audioSrc } from "./localAudio";
 
 /* 35·38번의 캔버스 장면. 점과 사진 칸은 도식이며 사람 수·공유 수 같은 데이터가 아니다. */
 const rand = (seed: number) => { let s = seed >>> 0; return () => { s = (s * 1664525 + 1013904223) >>> 0; return s / 4294967296; }; };
@@ -119,7 +120,7 @@ function ThresholdAudio({ active }: { active: boolean }) {
     return () => window.removeEventListener("keydown", onKey);
   }, [active]);
   return <div className="th-sound" data-active={active || undefined}>
-    <audio ref={audio} src="/abuse/audio/threshold-scene.m4a?v=scene-37-2" preload="auto" muted={muted}
+    <audio ref={audio} src={audioSrc("threshold-scene", "/abuse/audio/threshold-scene.m4a?v=scene-37-2")} preload="auto" muted={muted}
       onPlay={() => { setPlaying(true); setBlocked(false); }} onPause={() => setPlaying(false)} onEnded={() => setPlaying(false)}/>
     {active && <><span>가상 음성 연출</span><button type="button" onClick={toggle}>{blocked ? "소리 재생하기" : playing ? "일시정지" : "다시 듣기"} <kbd>P</kbd></button>
       <button type="button" onClick={toggleSound}>{muted ? "소리 켜기" : "소리 끄기"} <kbd>A</kbd></button></>}

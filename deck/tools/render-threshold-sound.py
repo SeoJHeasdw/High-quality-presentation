@@ -13,7 +13,9 @@
   python3 deck/tools/render-threshold-sound.py --level soft    # 덜 무섭게(soft·mid·strong)
   python3 deck/tools/render-threshold-sound.py --final-pitch -4 --final-tempo .8   # 마지막 말을 더 낮고 느리게
   python3 deck/tools/render-threshold-sound.py --final yuna    # 마지막 말을 예전 합성 여성 목소리로
-결과: public/abuse/audio/threshold-scene.m4a (numpy와 ffmpeg만 쓴다)
+  python3 deck/tools/render-threshold-sound.py --final whisper # 발표자 컴퓨터에만 있는 속삭임(local-only/threshold-final-whisper.m4a)으로
+  python3 deck/tools/render-threshold-sound.py --final whisper --layers local  # 겹치는 목소리도 local-only/threshold-layer-1~3.m4a로
+결과: public/abuse/audio/threshold-scene.m4a, local-only 음성을 쓰면 local-only/threshold-scene.m4a (numpy와 ffmpeg만 쓴다)
 """
 import argparse, json, subprocess
 from pathlib import Path
@@ -21,14 +23,19 @@ import numpy as np
 
 ROOT = Path(__file__).resolve().parents[1]
 AUDIO = ROOT / 'public/abuse/audio'
+LOCAL = ROOT / 'local-only'  # 깃에 올리지 않는 발표자 전용 음성(src/keynote/abuse/localAudio.ts)
 SR = 48000
 p = argparse.ArgumentParser()
 p.add_argument('--level', choices=['soft', 'mid', 'strong'], default='strong')
-p.add_argument('--final', choices=['jaeho', 'yuna'], default='jaeho')
-p.add_argument('--final-pitch', type=float, default=-3, help='마지막 말의 음높이(반음). 재생 속도를 낮춰 목소리 울림도 함께 내린다(그만큼 느려진다)')
-p.add_argument('--final-tempo', type=float, default=.85, help='그 위에 음높이는 두고 바꾸는 속도(1보다 작으면 느리게)')
-p.add_argument('--out', default=str(AUDIO / 'threshold-scene.m4a'))
+p.add_argument('--final', choices=['jaeho', 'yuna', 'whisper'], default='jaeho')
+p.add_argument('--final-pitch', type=float, help='마지막 말의 음높이(반음, 기본 whisper 0 · jaeho -3). 재생 속도를 낮춰 목소리 울림도 함께 내린다(그만큼 느려진다)')
+p.add_argument('--final-tempo', type=float, help='그 위에 음높이는 두고 바꾸는 속도(1보다 작으면 느리게, 기본 whisper 1 · jaeho .85)')
+p.add_argument('--layers', choices=['qwen', 'local'], default='qwen', help='겹치는 목소리: threshold-voices.m4a 그대로, 또는 local-only의 세 개')
+p.add_argument('--out', help='기본: public/abuse/audio/threshold-scene.m4a, local-only 음성을 쓰면 local-only/threshold-scene.m4a')
 a = p.parse_args()
+if a.final_pitch is None: a.final_pitch = 0 if a.final == 'whisper' else -3
+if a.final_tempo is None: a.final_tempo = 1 if a.final == 'whisper' else .85
+if a.out is None: a.out = str((LOCAL if a.final == 'whisper' or a.layers == 'local' else AUDIO) / 'threshold-scene.m4a')
 BED = {'soft': .6, 'mid': 1.0, 'strong': 1.45}[a.level]
 rng = np.random.default_rng(3709)
 
@@ -80,17 +87,35 @@ def dark_line(x):
     for at, extra in FINAL_PAUSES:
         i = int(at * SR); seg = x[last:i].copy(); seg[-k:] *= fade(k, 'out'); parts += [seg, np.zeros(int(extra * SR))]
         last = i; x[last:last + k] = x[last:last + k] * fade(k)
-    x = np.concatenate(parts + [x[last:]])
-    rate = 2 ** (a.final_pitch / 12)
-    x = np.frombuffer(subprocess.run(
-        ['ffmpeg', '-v', 'error', '-f', 'f32le', '-ar', str(SR), '-ac', '1', '-i', '-',
-         '-af', f'asetrate={SR * rate:.0f},aresample={SR},atempo={a.final_tempo}', '-f', 'f32le', '-'],
-        input=x.astype(np.float32).tobytes(), capture_output=True, check=True).stdout, dtype=np.float32).astype(np.float64)
+    x = shift(np.concatenate(parts + [x[last:]]))
     X = np.fft.rfft(x); f = np.fft.rfftfreq(len(x), 1 / SR)
     tilt = 1 / np.sqrt(1 + (f / 3200) ** 2) * .55 + .45 * 1 / (1 + (f / 9000) ** 4)   # 3.2kHz 위를 약 -7dB
     body = 1 + .4 * np.exp(-((np.log2(np.maximum(f, 1) / 190)) ** 2) / .5)             # 190Hz 주변 +3dB
     rumble = 1 / (1 + (65 / np.maximum(f, 1e-3)) ** 4)
-    x = np.fft.irfft(X * tilt * body * rumble, len(x))
+    return trimmed(np.fft.irfft(X * tilt * body * rumble, len(x)))
+
+
+def whisper_line(x):
+    """속삭임: 말소리가 숨의 고역에 있으니 깎지 않는다. 귓가의 마이크처럼 저중역만 조금 올리고 맨 위 쉬익 소리를 누른다."""
+    x = shift(x.mean(1))
+    X = np.fft.rfft(x); f = np.fft.rfftfreq(len(x), 1 / SR)
+    near = 1 + .35 * np.exp(-((np.log2(np.maximum(f, 1) / 220)) ** 2) / .6)            # 220Hz 주변 +2.6dB
+    hiss = .55 + .45 / (1 + (f / 9500) ** 4)                                            # 9.5kHz 위를 약 -5dB
+    rumble = 1 / (1 + (90 / np.maximum(f, 1e-3)) ** 4)
+    return trimmed(np.fft.irfft(X * near * hiss * rumble, len(x)))
+
+
+def shift(x):
+    """--final-pitch·--final-tempo를 적용한다(둘 다 그대로면 손대지 않는다)."""
+    if a.final_pitch == 0 and a.final_tempo == 1: return x
+    rate = 2 ** (a.final_pitch / 12)
+    return np.frombuffer(subprocess.run(
+        ['ffmpeg', '-v', 'error', '-f', 'f32le', '-ar', str(SR), '-ac', '1', '-i', '-',
+         '-af', f'asetrate={SR * rate:.0f},aresample={SR},atempo={a.final_tempo}', '-f', 'f32le', '-'],
+        input=x.astype(np.float32).tobytes(), capture_output=True, check=True).stdout, dtype=np.float32).astype(np.float64)
+
+
+def trimmed(x):
     on = np.nonzero(np.abs(x) > db(-45))[0]
     x = x[max(0, on[0] - int(.012 * SR)):on[-1] + int(.05 * SR)]
     x[:int(.012 * SR)] *= fade(int(.012 * SR)); x[-int(.05 * SR):] *= fade(int(.05 * SR), 'out')
@@ -141,12 +166,31 @@ mono = np.abs(voice).max(1)
 search = int(4.5 * SR)
 onset = search + int(np.argmax(mono[search:] > db(-40)))      # 마지막 말의 첫 소리
 end = onset + int(np.nonzero(mono[onset:] > db(-50))[0][-1])  # 마지막 말의 끝
-layers = voice[:int(LAYERS_END * SR)].copy(); layers[-int(.04 * SR):] *= fade(int(.04 * SR), 'out')[:, None]
+layers = voice[:int(LAYERS_END * SR)].copy()
+
+
+def local_layers():
+    """local-only의 세 목소리를 예전 겹침처럼 놓는다: 0.9초 간격(셋째가 LAYERS_END 안에 끝나게), 왼쪽·가운데·오른쪽,
+    반대편에 짧은 메아리, 뒤로 갈수록 조금 크게."""
+    out = np.zeros((int(LAYERS_END * SR), 2))
+    for i, (side, gain) in enumerate(zip((-.5, 0, .5), (-4, -1.5, 0))):
+        x = trimmed(load(LOCAL / f'threshold-layer-{i + 1}.m4a').mean(1))[:, 0]
+        x = x / np.sqrt((x[np.abs(x) > db(-40)] ** 2).mean()) * db(gain)
+        place(out, x, i * .9, 1.0, side)
+        place(out, x, i * .9 + .14, db(-14), -side if side else .35)
+    return out
+
+
+if a.layers == 'local':  # 예전 겹침과 같은 크기(RMS)로 맞춘다
+    rms = lambda y: np.sqrt((y[np.abs(y).max(1) > db(-40)] ** 2).mean())
+    built = local_layers(); layers = built * rms(layers) / rms(built)
+layers[-int(.04 * SR):] *= fade(int(.04 * SR), 'out')[:, None]
 pre = int(.012 * SR)
 final = voice[onset - pre:end + int(.05 * SR)].copy(); final[:pre] *= fade(pre)[:, None]; final[-int(.05 * SR):] *= fade(int(.05 * SR), 'out')[:, None]
-if a.final == 'jaeho':  # 예전 마지막 말과 같은 크기(RMS)로 맞춘다
+if a.final != 'yuna':  # 예전 마지막 말과 같은 크기(RMS)로 맞춘다
     loud = lambda y: np.sqrt((y[np.abs(y).max(1) > db(-40)] ** 2).mean())
-    final = (lambda y: y * loud(final) / loud(y))(dark_line(load(AUDIO / 'threshold-final-line.m4a')))
+    line = whisper_line(load(LOCAL / 'threshold-final-whisper.m4a')) if a.final == 'whisper' else dark_line(load(AUDIO / 'threshold-final-line.m4a'))
+    final = line * loud(final) / loud(line)
 
 CUT = V + LAYERS_END
 F_AT = CUT + HUSH
@@ -222,7 +266,7 @@ place(mix, layers, V)
 final_l = np.zeros((len(final) + int(TAIL * SR), 2)); final_l[:len(final)] = final
 wet = np.stack([conv(final_l[:, c], dark_ir(2.4, 1.9, 1400)[:, c])[:len(final_l)] for c in range(2)], 1)
 lastword = np.interp(np.arange(len(final_l)) / SR, [0, len(final) / SR * .6, len(final) / SR], [0, .25, 1])  # 마지막 말에만 잔향
-place(mix, final_l + wet * db(-14) * lastword[:, None], F_AT)
+place(mix, final_l + wet * db(-20 if a.final == 'whisper' else -14) * lastword[:, None], F_AT)  # 속삭임은 가까이 들리게 잔향을 덜
 
 peak = np.abs(mix).max()
 if peak > db(-1): mix *= db(-1) / peak
@@ -231,6 +275,6 @@ mix[-int(.3 * SR):] *= fade(int(.3 * SR), 'out')[:, None]
 out = Path(a.out)
 subprocess.run(['ffmpeg', '-v', 'error', '-y', '-f', 'f32le', '-ar', str(SR), '-ac', '2', '-i', '-', '-c:a', 'aac', '-b:a', '192k', '-movflags', '+faststart', str(out)],
                input=mix.astype(np.float32).tobytes(), check=True)
-info = {'level': a.level, 'final': a.final, 'durationSeconds': round(TOTAL, 2), 'layersAt': V, 'cutAt': round(CUT, 2), 'finalLineAt': round(F_AT, 2),
+info = {'level': a.level, 'final': a.final, 'layers': a.layers, 'durationSeconds': round(TOTAL, 2), 'layersAt': V, 'cutAt': round(CUT, 2), 'finalLineAt': round(F_AT, 2),
         'finalLineEnds': round(F_END, 2), 'sourceFinalOnset': round(onset / SR, 3), 'peakDb': round(20 * np.log10(np.abs(mix).max()), 1)}
 print(json.dumps(info, ensure_ascii=False))
