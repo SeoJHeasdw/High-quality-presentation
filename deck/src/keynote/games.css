@@ -1,0 +1,22 @@
+/* 32 · 실물 4 / 게임. 29~31번(demo-slide)과 같은 틀에 카드 세 장. 카드는 0.9초 안에 차례로 서고, 칩은 2.4초 안에 켜진다. */
+.games-slide .brief-content { top: 205px; }
+.gm-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 30px; }
+.gm-card { opacity: 0; animation: gm-rise .8s cubic-bezier(.16,1,.3,1) both; animation-delay: calc(.25s + var(--i) * .2s); }
+@keyframes gm-rise { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
+.gm-card figure { position: relative; margin: 0; aspect-ratio: 16 / 10; overflow: hidden; border: 1px solid #2b3b4a; background: #050a0e; }
+.gm-card img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.gm-card figcaption { position: absolute; left: 0; bottom: 0; padding: 6px 12px; font-size: 15px; color: #c4d2dc; background: #0a121ccc; }
+.gm-card h2 { margin-top: 20px; font-size: 34px; font-weight: 640; letter-spacing: -.03em; color: #f2efe8; }
+.gm-card p { margin-top: 6px; font-size: 19px; color: #92a4b2; }
+.gm-card ul { display: flex; gap: 10px; margin: 16px 0 0; padding: 0; list-style: none; }
+.gm-card li { padding: 7px 14px; border-radius: 999px; font-size: 18px; letter-spacing: -.01em; opacity: 0; animation: gm-chip .5s ease both; animation-delay: calc(1.2s + var(--i) * .2s); }
+@keyframes gm-chip { to { opacity: 1; } }
+.gm-card li[data-use="on"] { color: #1a1206; background: #ffd899; font-weight: 600; }
+.gm-card li[data-use="next"] { color: #93a8b8; border: 1px dashed #5d7385; }
+.gm-card li small { margin-left: 6px; font-size: 14px; color: #6f8392; }
+.gm-legend { position: absolute; left: 0; bottom: 0; display: flex; align-items: center; gap: 10px; font-size: 18px; color: #7f93a3; }
+.gm-legend i { width: 26px; height: 12px; border-radius: 6px; margin-left: 14px; }
+.gm-legend i:first-child { margin-left: 0; }
+.gm-legend i[data-use="on"] { background: #ffd899; }
+.gm-legend i[data-use="next"] { border: 1px dashed #5d7385; }
+.deck-keynote[data-motion="off"] .gm-card, .deck-keynote[data-motion="off"] .gm-card li { animation: none; opacity: 1; }

@@ -14,7 +14,7 @@
 제 엔진으로 실제로 만든, 회사 인증용 IBM Bob 데모 영상입니다. 대본을 제 목소리로 읽고, 자막과 장표를 붙였습니다. 그때는 사진 한 장에 단어 하나였다면, 지금은 영상 한 편이 나옵니다.
 
 근거: IBM Bob Demo Builder 영상(local-tts-engine, 2026-10-15 제작, 5분 37초)의 첫 17초입니다. 목소리는 Qwen3-TTS 1.7B + 제 목소리 어댑터 0.60이고, 화면의 3D 제목 장면도 같은 영상의 것입니다. 원본과 발췌 위치는 public/demos/provenance.json에 있습니다.
-확인 필요: 이 영상이 실제로 인증에 제출됐다면 "회사 인증용" 대신 "인증에 낸"으로 말해도 됩니다. 합성 목소리를 제출물에 써도 되는지 물으면 바로 답할 수 있게 해 둡니다(33~40번이 목소리 오용을 다룹니다).
+확인 필요: 이 영상이 실제로 인증에 제출됐다면 "회사 인증용" 대신 "인증에 낸"으로 말해도 됩니다. 합성 목소리를 제출물에 써도 되는지 물으면 바로 답할 수 있게 해 둡니다(34~41번이 목소리 오용을 다룹니다).
 
 ## story-brood
 ### 0
@@ -211,3 +211,12 @@ BofA Global Research, Fortune 2025-06-26 https://fortune.com/2025/06/26/agentic-
 이번에는 Music Engine으로 만든 감성 힙합입니다. 노래만 들려드리기 아쉬워서, 뮤비까지 만들어 봤습니다.
 
 발표 조작: 장표 진입 후 1초 뒤 음악이 자동 재생됩니다. '뮤직비디오'를 누르면 새 탭에서 뮤비가 소리와 함께 재생되고 이 장의 음원은 멈춥니다. 전체화면이 풀리니 돌아와서 F를 누릅니다. P는 재생·일시정지, A는 소리 켜기·끄기. 출력 후보의 최종 음악성이나 발음 품질을 자동 검사 통과만으로 승인하지 않습니다. 원본 파일은 수정하지 않았습니다.
+
+## games
+### 0
+그리고 이 엔진들을 다 이으면, 결국 게임이 만들어지더라고요. 게임에 에셋 넣고, BGM 넣고, 나중엔 NPC 나레이션도 제 목소리 엔진으로 넣을 수 있겠죠. 지금 세 개를 동시에 만들고 있습니다.
+
+근거: 달빛 야시장(~/Desktop/moonlight, Unity 6, 10/29 친구 테스트판 r2) — 3D 소품 32개 키트 · 타이틀 배경 · UI 아트는 local-assets-engine, 음악 moonlit_market_loop.wav는 ACE-Step 1.5로 2026-10-22 생성(AudioProduction/moonlit-market/README.md). 화면은 Docs/Images/08-district.png.
+근거: maxmax(가칭, ~/Desktop/maxmax, Unity 6, 친구 4명 테스트 준비) — 크리처 · 나무 · 상자는 local-assets-engine(provenance/assets.jsonl, IslandSceneBuilder.cs · TreeFactory.cs), 낮 · 밤 · 마지막 밤 BGM은 local-music-engine(FeelMusic.cs). 화면은 게임 화면이 아니라 maxmax에 넣은 크리처 라인업(Assets Engine creature-kit, 2026-10-22 job 20261022-181442-d356)이라 카드에 '게임에 넣은 크리처'로 적었습니다.
+근거: RECLAIM WORKS(~/Desktop/1st-game, Unreal 5.8, 0.4.1) — 작업장 음악은 local-music-engine(Content/SourceAudio/WorkshopMusic.source.json). README에 "외부 3D 에셋 도구 연결은 아직 구현하지 않았습니다"라 에셋은 '다음'. 화면은 회색 상자 단계의 현장(Saved/CameraReview04/09-third-person-depot.png).
+연출: NPC 목소리는 세 게임 모두 아직이라 점선('다음')입니다. 카드는 0.9초 안에, 칩은 2.4초 안에 켜집니다.
