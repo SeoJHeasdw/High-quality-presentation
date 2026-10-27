@@ -214,6 +214,19 @@
 .ou-brief h2 em { color: #ffd899; }
 .ou-brief p { margin-top: 26px; font-size: 26px; color: #9fb0bd; }
 
+/* 19-1 · REA 카드: 20-0의 카드 자리에 들어선다 */
+.ou-rea { position: absolute; right: 0; top: 210px; width: 820px; z-index: 3; padding: 30px 30px 26px; box-sizing: border-box; border-radius: 22px;
+  background: linear-gradient(180deg, #0f1a26ee, #0a121cf0); border: 1px solid #a8cbe530; box-shadow: 0 40px 100px #000b, inset 0 1px 0 #ffffff10;
+  opacity: 0; transform: translateX(30px); pointer-events: none; transition: opacity .3s, transform .3s; }
+.ou-rea[data-on] { opacity: 1; transform: none; transition: opacity .7s ease .25s, transform .9s cubic-bezier(.16,1,.3,1) .25s; }
+.ou-rea > span { display: inline-block; font-size: 19px; letter-spacing: .02em; color: #9fd6ff; padding: 6px 12px; border-radius: 8px; background: #8fd0ff14; border: 1px solid #8fd0ff33; }
+.ou-rea img { display: block; width: 100%; margin-top: 20px; border-radius: 12px; box-shadow: 0 0 0 1px #ffffff1a; }
+.ou-rea__stat { display: flex; align-items: center; gap: 22px; margin-top: 22px; }
+.ou-rea__stat b { font-size: 64px; font-weight: 650; color: #ffd899; letter-spacing: -.04em; font-variant-numeric: tabular-nums; }
+.ou-rea__stat small { font-size: 21px; line-height: 1.45; color: #b9c5cf; }
+.ou-rea p { margin-top: 14px; font-size: 15px; color: #6f8392; }
+.ou-rea[data-on] .ou-rea__stat { animation: pv-rise .9s cubic-bezier(.16,1,.3,1) 1.1s both; }
+
 /* 17-1 · 조건이 느슨해진다 */
 .ou-spec { position: absolute; right: 0; top: 196px; width: 900px; z-index: 3; padding: 26px 34px 20px; box-sizing: border-box; border-radius: 22px;
   background: linear-gradient(180deg, #0f1a26ea, #0a121cee); border: 1px solid #a8cbe530; box-shadow: 0 40px 100px #000b, inset 0 1px 0 #ffffff10;

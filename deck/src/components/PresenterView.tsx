@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useDeckNav, fmtTime, type DeckModule } from "./deck-kit";
-import { getScript } from "../script";
+import { getScript, splitScript } from "../script";
 import "./presenter.css";
 
 function jumpWindow(total: number, current: number): Array<number | string> {
@@ -59,11 +59,9 @@ export default function PresenterView({
   const elapsed = (now - t0) / 1000;
   const jumpItems = jumpWindow(total, index);
 
+  // 읽을 말만 가운데에 두고, 근거 · 연출 · 발표 조작 같은 노트는 오른쪽에 둔다. 다음 장의 대본은 보여 주지 않는다(읽다가 헷갈린다).
   const current = getScript(slide.scriptKey, step);
-  const hasNextStep = step < maxStep;
-  const next = hasNextStep
-    ? getScript(slide.scriptKey, step + 1)
-    : getScript(mod.slides[index + 1]?.scriptKey, 0);
+  const { say, notes } = current ? splitScript(current) : { say: "", notes: "" };
 
   return (
     <div className="pv">
@@ -119,11 +117,15 @@ export default function PresenterView({
             )}
           </div>
 
-          {current ? (
+          {say ? (
             <div className="pv__text" key={`${index}-${step}`}>
-              {current.split("\n\n").map((p, i) => (
+              {say.split("\n\n").map((p, i) => (
                 <p key={i}>{p}</p>
               ))}
+            </div>
+          ) : current ? (
+            <div className="pv__empty">
+              <p>이 스텝은 말할 대본 없이 넘깁니다. 오른쪽 노트를 보세요.</p>
             </div>
           ) : (
             <div className="pv__empty">
@@ -137,12 +139,21 @@ export default function PresenterView({
 
         <aside className="pv__side">
           <div className="pv__panel pv__panel--grow">
-            <div className="pv__label">
-              다음 {hasNextStep ? "스텝" : "슬라이드"}
-            </div>
-            <p className="pv__next">
-              {next ?? (index + 1 >= total ? "— 마지막 슬라이드 —" : "—")}
-            </p>
+            <div className="pv__label">근거 · 연출</div>
+            {notes ? (
+              <div className="pv__notes" key={`${index}-${step}`}>
+                {notes.split("\n").filter((line) => line.trim()).map((line, i) => {
+                  const head = line.match(/^([^:：]{1,70})[:：]\s*/);
+                  return head && !/^https?$/.test(head[1]) ? (
+                    <p key={i}><b>{head[1]}</b>{line.slice(head[0].length)}</p>
+                  ) : (
+                    <p key={i}>{line}</p>
+                  );
+                })}
+              </div>
+            ) : (
+              <p className="pv__notes pv__notes--none">이 스텝의 노트는 없습니다.</p>
+            )}
           </div>
         </aside>
       </main>

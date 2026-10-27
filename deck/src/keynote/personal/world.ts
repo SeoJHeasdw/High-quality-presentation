@@ -15,11 +15,13 @@ import { FONT, GLSL_SAFE, PhaseClock, canvasTexture, clamp01, createStage, easeI
  *   8  (22) 공간 전체가 어두워지고 청중의 질문이 뜬다(DOM).
  *   9  (22) 기업이었다면: 다시 공장 안(21-0과 같은 구도). 스테이션의 핵이 올라가 사라지고 다른 핵이 내려온다(데이터 조회 · 문서 검색).
  *          받아쓰기 스테이션은 그대로 회의 정리가 되고, 목소리 자리는 비어 "다음 업무"가 된다. 기업용 엔진은 발표자의 가정이다.
- *  10  (22) 저는 개인이라: 핵이 제 것으로 돌아온다(21-2와 같은 구도). 다음 장부터 그 결과물을 본다.
- * Agent OS, 전체 연결, RICE가 엔진에 일을 나누고 프론티어가 지켜보는 흐름은 구상이다. 스테이션(엔진)들은 따로 개발 중이다(대본·화면에 표시).
+ *  10  (22) 통제된 문(구상): 문(임원) 바깥에 금색 틀이 서고 창살이 내려온다. 아래에서 오르는 데이터는 창살 앞에서 멈추고,
+ *          위의 판단(흰 빛)은 그대로 내려온다. 직원은 Claude · GPT를 쓰고 데이터는 밖으로 나가지 않는다.
+ *  11  (22) 저는 개인이라: 핵이 제 것으로 돌아온다(21-2와 같은 구도). 다음 장부터 그 결과물을 본다.
+ * Agent OS, 전체 연결, RICE가 엔진에 일을 나누고 프론티어가 지켜보는 흐름은 구상이다. 스테이션(엔진)들은 따로 가동 중이다(대본·화면에 표시).
  */
 
-export const PHASES = 11;
+export const PHASES = 12;
 const ICE = new THREE.Color("#8fd0ff");
 const GOLD = new THREE.Color("#ffd49a");
 const WHITE = new THREE.Color("#eef5ff");
@@ -56,6 +58,8 @@ const DOOR = FACTORY.clone().addScaledVector(IN_F, 2.3).setY(6.3);
 const DOOR_W = 1.7, DOOR_H = 2.8;
 const RICE_POS = FACTORY.clone().addScaledVector(IN_F, 1.2).setY(3.85);
 const ST_TOP = 1.85;
+/** 22-2 · 회사 정책을 거는 문: 프론티어 문을 둘러싸는 금색 틀 */
+const POLICY_W = DOOR_W + 0.7, POLICY_H = DOOR_H + 0.7;
 const CODEX_W = 3.5, CODEX_H = CODEX_W * 150 / 1565, CLAUDE_W = 3.5, CLAUDE_H = CLAUDE_W * 550 / 1990;
 // 문 앞 아래쪽에 두 장이 걸린다. 금액 라벨은 각 영수증 아래에 선다.
 const CODEX_AT = DOOR.clone().addScaledVector(IN_R, -2.15).add(new THREE.Vector3(0, -2.35, 0)).addScaledVector(IN_F, -1.3);
@@ -78,16 +82,17 @@ const SHOTS: Shot[] = [
   { az: IN_AZ, el: 13, rect: [520, 230, 1800, 930], points: () => [...stations(), ...riceBox(), ...doorCorners()] },
   { az: IN_AZ + 2, el: 5, rect: [760, 250, 1830, 760], points: () => [...doorCorners(), ...quadCorners(CODEX_AT, CODEX_W, CODEX_H), ...quadCorners(CLAUDE_AT, CLAUDE_W, CLAUDE_H)] },
   { az: IN_AZ - 6, el: 21, rect: [420, 250, 1820, 940], points: () => [...stations(), ...riceBox(), ...doorCorners()] },
-  // 22 · 질문(넓게) → 기업이었다면(21-0의 구도) → 저는 개인이라(21-2의 구도)
+  // 22 · 질문(넓게) → 기업이었다면(21-0의 구도) → 통제된 문(문 가까이) → 저는 개인이라(21-2의 구도)
   { az: 0, el: 34, rect: [560, 380, 1840, 880], points: wide },
   { az: IN_AZ, el: 13, rect: [520, 230, 1800, 930], points: () => [...stations(), ...riceBox(), ...doorCorners()] },
+  { az: IN_AZ + 3, el: 12, rect: [840, 130, 1800, 990], points: () => [...quadCorners(DOOR, POLICY_W, POLICY_H), DOOR.clone().setY(DOOR.y + POLICY_H / 2 + 1.1), ...riceBox(), ...stations()] },
   { az: IN_AZ - 6, el: 21, rect: [420, 250, 1820, 940], points: () => [...stations(), ...riceBox(), ...doorCorners()] },
 ];
 
 export const ANCHORS = {
   me: new THREE.Vector3(), os: new THREE.Vector3(), factory: new THREE.Vector3(), tts: new THREE.Vector3(), out: new THREE.Vector3(), redo: new THREE.Vector3(), crowd: new THREE.Vector3(),
   stVoice: new THREE.Vector3(), stStt: new THREE.Vector3(), stAssets: new THREE.Vector3(), stMusic: new THREE.Vector3(), rice: new THREE.Vector3(),
-  frontier: new THREE.Vector3(), takeover: new THREE.Vector3(), rentCodex: new THREE.Vector3(), rentClaude: new THREE.Vector3(),
+  frontier: new THREE.Vector3(), takeover: new THREE.Vector3(), rentCodex: new THREE.Vector3(), rentClaude: new THREE.Vector3(), policy: new THREE.Vector3(),
 };
 export type AnchorId = keyof typeof ANCHORS;
 
@@ -139,6 +144,9 @@ const TAKE_AT = FAIL_AT + 1.0, TAKE_RUN = 0.9;
 const REQ_CYCLE = TAKE_AT + TAKE_RUN + 3.0;
 /** 22-1 · 스테이션마다(왼쪽부터) 핵이 바뀌기 시작하는 때와 걸리는 시간. 3초 안에 끝난다. 22-2에서는 BACK_AT부터 거의 한꺼번에 돌아온다. */
 const SWAP_AT = [0.8, 1.2, 1.6, 2.0], SWAP_DUR = 0.8, BACK_AT = 0.3, BACK_DUR = 0.7;
+/** 22-2 · 틀이 서고(0.3초~) 창살이 내려온 뒤(0.6~1.5초) 데이터가 오르기 시작한다. 데이터는 데이터 조회 · 문서 검색 스테이션에서 번갈아
+ *  RICE로(POL_UP초), 다시 문으로(POL_RISE초) 올라 창살 앞에서 멈춘다. 흰 빛(판단)은 POL_DOWN_AT초에 문에서 RICE로 내려온다. */
+const POL_START = 1.4, POL_UP = 0.7, POL_RISE = 0.6, POL_DOWN_AT = 1.8, POL_DOWN = 0.8, POL_CYCLE = 2.9;
 
 export function createOneUserWorld(canvas: HTMLCanvasElement, images: OneUserImages, initialPhase: number, initialMotion: boolean): OneUserWorld {
   const { result } = images;
@@ -300,6 +308,26 @@ export function createOneUserWorld(canvas: HTMLCanvasElement, images: OneUserIma
   }
   const doorGlow = glowSprite(WHITE.clone().multiplyScalar(0.6), 1); doorGlow.scale.set(5.2, 6.2, 1); doorGlow.position.z = -0.4; door.add(doorGlow);
 
+  /* 22-2 · 회사 정책을 거는 문(구상): 문 바깥의 금색 틀과, 위에서 내려오는 세로 창살 */
+  const policy = new THREE.Group(); policy.position.z = 0.12; policy.visible = false; door.add(policy);
+  const policyFrameMat = new THREE.MeshBasicMaterial({ color: GOLD.clone().multiplyScalar(1.7), transparent: true, opacity: 0, depthWrite: false, toneMapped: false });
+  for (const [w, h, x, y] of [[POLICY_W + 0.1, 0.08, 0, POLICY_H / 2], [POLICY_W + 0.1, 0.08, 0, -POLICY_H / 2], [0.08, POLICY_H, -POLICY_W / 2, 0], [0.08, POLICY_H, POLICY_W / 2, 0]]) {
+    const bar = new THREE.Mesh(new THREE.BoxGeometry(w, h, 0.08), policyFrameMat); bar.position.set(x, y, 0); policy.add(bar);
+  }
+  const gateMat = new THREE.ShaderMaterial({
+    uniforms: { uLit: { value: 0 }, uDraw: { value: 0 }, uHit: { value: 0 } },
+    vertexShader: `varying vec2 vUv; void main(){ vUv=uv; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.); }`,
+    fragmentShader: `${GLSL_SAFE}varying vec2 vUv; uniform float uLit,uDraw,uHit;
+      void main(){ float edge=1.-uDraw; float drawn=sstep(edge-.04,edge,vUv.y);
+        float bars=pw(.5+.5*cos(vUv.x*6.2832*7.),40.);
+        float rail=pw(.5+.5*cos(vUv.y*6.2832*3.),60.)*.6;
+        float head=exp(-abs(vUv.y-edge)*40.)*step(.001,edge)*.8;
+        float hit=exp(-vUv.y*7.)*uHit;
+        gl_FragColor=vec4(vec3(1.,.82,.55)*((bars*.55+rail*.35+.03)*drawn*uLit+head*uLit+hit*1.2),1.); }`,
+    transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide,
+  });
+  policy.add(new THREE.Mesh(new THREE.PlaneGeometry(POLICY_W, POLICY_H), gateMat));
+
   /* 현장 관리자 RICE: 문(임원)과 스테이션(현장) 사이. 위에서 일을 받아 엔진에 나눠 준다(관리자 역할은 구상). */
   const rice = new THREE.Group(); rice.position.copy(RICE_POS); scene.add(rice);
   const riceRingMat = additive(TEAL.clone().multiplyScalar(1.7));
@@ -319,6 +347,11 @@ export function createOneUserWorld(canvas: HTMLCanvasElement, images: OneUserIma
   const DOOR_FOOT = DOOR.clone().setY(DOOR.y - DOOR_H / 2 - 0.05);
   const orderLine = line([DOOR_FOOT, DOOR_FOOT.clone().lerp(RICE_POS, 0.5), RICE_POS.clone().setY(RICE_POS.y + 0.1)], WHITE, 0.024);
   const orderCurve = orderLine.curve;
+  // 22-2 · 위로 오르는 데이터가 멈추는 곳: 문 → RICE 선이 금색 틀의 아랫변 높이를 지나는 자리
+  let STOP_S = 0; for (let i = 0; i <= 100; i++) if (orderCurve.getPoint(i / 100).y >= DOOR.y - POLICY_H / 2 - 0.05) STOP_S = i / 100;
+  const stopGlow = glowSprite(AMBER.clone().multiplyScalar(1.6), 1); stopGlow.position.copy(orderCurve.getPoint(STOP_S)); scene.add(stopGlow);
+  // 막힌 순간 그 자리에서 퍼지는 고리
+  const blockMat = additive(AMBER.clone().multiplyScalar(2.2)); const block = new THREE.Mesh(new THREE.RingGeometry(0.22, 0.27, 64), blockMat); block.visible = false; scene.add(block);
   const dispatch = ST_POS.map((p) => line([RICE_POS.clone().setY(RICE_POS.y - 0.1), RICE_POS.clone().lerp(p, 0.55).setY((RICE_POS.y + ST_TOP) / 2 + 0.3), p.clone().setY(ST_TOP)], TEAL, 0.02));
   const TAKE_FROM = DOOR.clone().addScaledVector(IN_R, -DOOR_W / 2 - 0.05).setY(DOOR.y - 0.7);
   const takeLine = line([TAKE_FROM, TAKE_FROM.clone().lerp(ST_POS[TAKE_ST], 0.45).addScaledVector(IN_R, -0.9).setY(3.9), ST_POS[TAKE_ST].clone().setY(ST_TOP + 0.05)], WHITE, 0.03);
@@ -479,18 +512,20 @@ export function createOneUserWorld(canvas: HTMLCanvasElement, images: OneUserIma
     const spread = p === 5 ? easeInOut(ev(0.5, 2.3)) : p > 5 ? 1 : 0;
     const req = p === 5 ? requests(pc.motion ? (t < 999 ? t - REQ_START : time) : null) : null;
     if (!req) packets.forEach((pk) => { pk.material.opacity = 0; });
-    // 22-1에서 핵이 바뀌고(0 → 1), 22-2에서 제 것으로 돌아온다(1 → 0). 받아쓰기 스테이션은 바뀌지 않는다.
-    const swapOf = (st: number) => (st === STT_ST ? 0 : p === 9 ? easeInOut(ev(SWAP_AT[st], SWAP_DUR)) : p === 10 ? 1 - easeInOut(ev(BACK_AT + st * 0.12, BACK_DUR)) : 0);
-    const corp = follow("corp", p === 9 ? 1 : 0, dt, 3);
+    // 22-1에서 핵이 바뀌고(0 → 1), 22-2에서는 바뀐 채로 있다가, 22-3에서 제 것으로 돌아온다(1 → 0). 받아쓰기 스테이션은 바뀌지 않는다.
+    const swapOf = (st: number) => (st === STT_ST ? 0 : p === 9 ? easeInOut(ev(SWAP_AT[st], SWAP_DUR)) : p === 10 ? 1 : p === 11 ? 1 - easeInOut(ev(BACK_AT + st * 0.12, BACK_DUR)) : 0);
+    const corp = follow("corp", p === 9 || p === 10 ? 1 : 0, dt, 3);
     const tintC = new THREE.Color();
     const tint = (st: number) => tintC.copy(ICE).lerp(AMBER, follow(`fail${st}`, req?.fail[st] ?? 0, dt, 12)).lerp(WHITE, follow(`taken${st}`, req?.taken[st] ?? 0, dt, 6) * 0.8).lerp(WHITE, corp * 0.45);
     const stationLevel = (st: number, i: number) => {
       if (p < 5) return -1; // 18번까지의 엔진 규칙을 쓴다
       if (p === 5) return 0.05 + 0.95 * (req?.act[st] ?? 0);
       if (p === 6) return 0.06;
-      if (p === 7 || p === 10) return 0.62 + 0.38 * (pc.motion ? 0.5 + 0.5 * Math.sin(time * 1.5 + i * 1.3) : 1);
+      if (p === 7 || p === 11) return 0.62 + 0.38 * (pc.motion ? 0.5 + 0.5 * Math.sin(time * 1.5 + i * 1.3) : 1);
       // 기업이었다면: 새 핵이 든 스테이션과 회의 정리가 켜지고, 비워 둔 목소리 자리는 꺼진다
       if (p === 9) return st === VOICE_ST ? 0.5 - 0.44 * swapOf(st) : 0.5 + 0.42 * (st === STT_ST ? ev(SWAP_AT[st], SWAP_DUR) : swapOf(st));
+      // 통제된 문: 스테이션은 기업의 것 그대로, 문이 앞서도록 조금 낮춘다
+      if (p === 10) return st === VOICE_ST ? 0.06 : 0.55;
       return 0.45;
     };
     engines.forEach((e, i) => {
@@ -573,10 +608,35 @@ export function createOneUserWorld(canvas: HTMLCanvasElement, images: OneUserIma
     // 프론티어 문
     const doorIn = p === 5 ? easeOut(ev(1.3, 1.8)) : p > 5 ? 1 : 0;
     door.position.copy(DOOR).setY(DOOR.y + (1 - doorIn) * 1.6 + (pc.motion ? Math.sin(time * 0.6) * 0.05 : 0)); door.visible = doorIn > 0.001;
-    const doorLit = follow("door", p === 5 ? 0.7 : p === 6 ? 1 : p === 7 ? 0.6 : 0.8, dt, 3) * doorIn;
+    const doorLit = follow("door", p === 5 ? 0.7 : p === 6 || p === 10 ? 1 : p === 7 ? 0.6 : 0.8, dt, 3) * doorIn;
     doorFillMat.uniforms.uLit.value = doorLit; doorFillMat.uniforms.uFlare.value = req?.flare ?? 0; doorFillMat.uniforms.uTime.value = time;
     doorFrameMat.opacity = Math.min(1, doorIn * (0.45 + 0.35 * doorLit + (req?.flare ?? 0)));
     (doorGlow.material as THREE.SpriteMaterial).opacity = doorIn * (0.1 + 0.18 * doorLit + 0.55 * (req?.flare ?? 0));
+
+    // 22-2 · 통제된 문: 틀이 서고 창살이 내려온다. 아래(RICE)에서 오르는 금색 데이터는 틀 아랫변에서 멈추고, 문의 흰 빛(판단)은 그대로 내려온다.
+    // 모션을 끄면 창살이 다 내려오고 데이터 하나가 멈춘 자리에 선 장면이다.
+    const polA = follow("policy", p === 10 ? 1 : 0, dt, 4), polDraw = p === 10 ? easeOut(ev(0.3, 0.8)) : 1;
+    policy.visible = polA > 0.001; policy.scale.setScalar(1 + 0.18 * (1 - polDraw));
+    policyFrameMat.opacity = polA * polDraw;
+    gateMat.uniforms.uLit.value = polA; gateMat.uniforms.uDraw.value = p === 10 ? easeOut(ev(0.6, 0.9)) : 1;
+    let polHit = 0, blockT = -1;
+    if (p === 10) {
+      const lt = pc.motion ? (t < 999 ? t - POL_START : time) : null;
+      const put = (i: number, pos: THREE.Vector3, color: THREE.Color) => { const pk = packets[i]; pk.position.copy(pos); pk.material.opacity = 1; pk.material.color.copy(color).multiplyScalar(2.6); };
+      if (lt === null) { put(0, orderCurve.getPoint(STOP_S), AMBER); polHit = 0.6; blockT = 0.35; }
+      else if (lt >= 0) {
+        const c = lt % POL_CYCLE, from = Math.floor(lt / POL_CYCLE) % 2;
+        if (c < POL_UP) put(0, dispatch[from].curve.getPoint(1 - easeInOut(c / POL_UP)), AMBER);
+        else if (c < POL_UP + POL_RISE) put(0, orderCurve.getPoint(1 - (1 - STOP_S) * easeOut((c - POL_UP) / POL_RISE)), AMBER);
+        polHit = hit(c - POL_UP - POL_RISE); blockT = c - POL_UP - POL_RISE;
+        const w = c - POL_DOWN_AT;
+        if (w >= 0 && w < POL_DOWN) put(1, orderCurve.getPoint(easeInOut(w / POL_DOWN)), WHITE);
+      }
+    }
+    gateMat.uniforms.uHit.value = polHit * polA;
+    stopGlow.material.opacity = polHit * polA * 0.9; stopGlow.scale.setScalar(0.7 + polHit * 0.9); stopGlow.visible = polHit * polA > 0.001;
+    block.visible = blockT >= 0 && blockT < 0.9;
+    if (block.visible) { block.position.copy(stopGlow.position); block.quaternion.copy(camera.quaternion); block.scale.setScalar(1 + blockT * 3.2); blockMat.opacity = (1 - blockT / 0.9) * 0.85 * polA; }
 
     // 영수증: 문 양옆으로 내려와 걸린다
     [codexR, claudeR].forEach((r, i) => {
@@ -611,7 +671,8 @@ export function createOneUserWorld(canvas: HTMLCanvasElement, images: OneUserIma
     // 이웃한 라벨이 겹치지 않도록 높이를 엇갈린다
     // 스테이션 라벨은 상자 바로 위 한 줄에 둔다(위의 RICE와 겹치지 않게)
     ST_IDS.forEach((id, st) => ANCHORS[id].copy(ST_POS[st]).setY(2.0));
-    ANCHORS.frontier.copy(DOOR).setY(door.position.y + DOOR_H / 2 + 0.3);
+    ANCHORS.frontier.copy(DOOR).setY(door.position.y + DOOR_H / 2 + 0.3 + 0.35 * polA);
+    ANCHORS.policy.copy(door.position).addScaledVector(IN_R, POLICY_W / 2 + 0.05).setY(door.position.y - 0.5);
     ANCHORS.rice.copy(rice.position).addScaledVector(tmp.set(1, 0, 0).applyQuaternion(camera.quaternion), 0.75);
     ANCHORS.takeover.copy(say.position);
     ANCHORS.rentCodex.copy(codexR.g.position).add(tmp.set(0, -CODEX_H / 2 - 0.08, 0));
@@ -628,7 +689,7 @@ export function createOneUserWorld(canvas: HTMLCanvasElement, images: OneUserIma
       const forward = pc.go(next);
       cam.from.copy(camera.position); cam.fromLook.copy(lookNow);
       cam.eye.set(...POSES[next].eye); cam.look.set(...POSES[next].look); cam.t0 = pc.clock;
-      cam.dur = forward ? (next === 2 ? 2.8 : next === 5 ? 3.0 : next === 8 ? 2.6 : next === 9 ? 1.8 : next === 10 ? 1.6 : 2.0) : 1.4;
+      cam.dur = forward ? (next === 2 ? 2.8 : next === 5 ? 3.0 : next === 8 ? 2.6 : next === 9 || next === 10 ? 1.8 : next === 11 ? 1.6 : 2.0) : 1.4;
       stage.kick();
     },
     setMotion(on) { pc.setMotion(on); if (!on) { cam.t0 = -1e6; cam.from.copy(cam.eye); cam.fromLook.copy(cam.look); } stage.kick(); },

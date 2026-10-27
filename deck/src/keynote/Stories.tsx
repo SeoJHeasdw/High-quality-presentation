@@ -48,10 +48,10 @@ const INCIDENT=[
  ["사람은 \"풀어라\"만 말했습니다","지시","보안 평가 과제 898개","그중 198개는 어떤 모델도 푼 적이 없는 문제였습니다."],
  ["AI는 풀기 위해 선을 넘었습니다","목표 하나, 선 셋","6월 26일 · 7월 8일 · 7월 11~13일","넘으라고 한 사람은 없었습니다. 목표는 과제 하나였습니다."],
  ["사람은 세 번 봤습니다","되짚기","5월 26일 · 6월 27일 · 7월 5일","보는 것과 멈추는 것은 다릅니다."],
- ["AI는 시킨 일의 옳고 그름을 모릅니다","결론","그래서 일을 맡기기 전에 먼저 정합니다","일은 맡겨도, 판단까지 맡기지는 않습니다."],
+ ["AI는 시킨 일의 옳고 그름을 모릅니다","결론","그래서 OpenAI는 선을 다시 정했습니다","일은 맡겨도, 판단까지 맡기지는 않습니다."],
 ];
 type StripState="past"|"now"|"next";
-/** 아래 띠. 10~12번은 사건의 날짜, 13번은 지시와 선 셋, 14-0은 사람이 본 신호와 AI가 넘은 선을 한 줄에 섞고, 14-1은 제가 정할 세 가지.
+/** 아래 띠. 10~12번은 사건의 날짜, 13번은 지시와 선 셋, 14-0은 사람이 본 신호와 AI가 넘은 선을 한 줄에 섞고, 14-1은 사건 뒤 OpenAI가 정한 세 가지(보고서 IX).
  *  cue: 3D 장면에서 그 일이 일어나는 초(world.ts). 그때 켜진다. 금색 = 사람, amber = AI가 넘은 선.
  *  split이 항목 수와 같으면 구간이 하나다. */
 type Strip={eras:[string,string][];items:([string,string]|[string,string,"amber"])[];split:number;states:(phase:number)=>[StripState,number?][]};
@@ -66,7 +66,7 @@ const STRIPS:Strip[]=[
  {eras:[["사람이 본 신호 · AI가 넘은 선","8"]],split:7,
   items:[["5.26","게시판을 봄"],["6.26","① 공용 서버","amber"],["6.27","경보 · 계속"],["7.5","장애 · 서버 내림"],["7.7","평가 재개"],["7.8","② 바깥 인터넷","amber"],["7.11~13","③ Hugging Face","amber"]],
   states:()=>[["now",1.2],["now",1.4],["now",1.9],["now",2.6],["now",2.8],["now",3.0],["now",3.3]]},
- {eras:[["일을 맡기기 전에 제가 정할 세 가지","9"]],split:3,
+ {eras:[["사건 뒤 OpenAI가 정한 세 가지","9"]],split:3,
   items:[["범위","어디까지 닿게 할지"],["감시","누가 지켜볼지"],["중단","누가 멈출 수 있는지"]],
   states:()=>[["now",1.4],["now",2.9],["now",4.4]]},
 ];
@@ -103,7 +103,7 @@ export function IncidentStory({part,step}:{part:number;step:number}){
   {!bridge&&<IncidentTimeline phase={phase}/>}
   {(!bridge||step===1)&&<Source href={part<=0||part>=3?SOURCES.incidentReport:SOURCES.incident}>{
    part===3?"OpenAI 조사 보고서 I·III·VIII · 2026.08.26 · 선의 경로는 도식"
-   :part===4?(step===0?"OpenAI 조사 보고서 I·III · 2026.08.26 · 마지막 줄은 발표자의 관점":"결론 · OpenAI 대책(보고서 IX)과 견줌")
+   :part===4?(step===0?"OpenAI 조사 보고서 I·III · 2026.08.26 · 마지막 줄은 발표자의 관점":"세 가지는 OpenAI 대책(보고서 IX) · 결론은 발표자의 관점")
    :`OpenAI 조사 보고서 · 2026.08.26${bridge?"":" · 여러 실행을 시간순으로 단순화한 재구성"}`}</Source>}
  </Frame>;
 }

@@ -24,8 +24,17 @@
     "note": "polaris-build part 47.0–73.3 s: Bob writes 45 files, installs, verifies; ends on the human-approval sentence"
   },
   "assets": {
-    "source": "/Users/jaehoseo/Desktop/vswrk/javis/local-assets-engine/output/jobs/20260922-103231-1368/previz/sequence.mp4",
-    "kind": "previz sketch"
+    "file": "public/demos/assets-reel.mp4",
+    "build": "tools/build-assets-reel.py",
+    "kind": "montage of real Assets Engine outputs (2026-10)",
+    "sources": [
+      "/Users/jaehoseo/Desktop/vswrk/javis/local-assets-engine/output/jobs/20261019-132517-be02/video/video.mp4 (image-to-video, FastWan2.2 TI2V 5B, 'a red fox in a snowy pine forest')",
+      "/Users/jaehoseo/Desktop/vswrk/javis/local-assets-engine/output/jobs/20261022-105559-24d6/market/preview_*.png (market-kit '달빛 야시장 · 수공예 에셋 키트', 32 models, FBX+GLB)",
+      "/Users/jaehoseo/Desktop/vswrk/javis/local-assets-engine/output/jobs/20261016-214739-8e8d/kit/review.png (building-kit 'wood'; left-top reference photo x0-1000 cropped out, engine render and pieces only)",
+      "/Users/jaehoseo/Desktop/vswrk/javis/local-assets-engine/output/jobs/20261017-153730-2e4d/tree/hero.png (tree '온대 침엽 · 전나무')",
+      "/Users/jaehoseo/Desktop/vswrk/javis/local-assets-engine/output/jobs/20261017-050719-f403/terrain/preview.png (terrain-texture '온대 들판')"
+    ],
+    "replaced": "2026-10-27, was assets-previz.mp4 (20260922-103231-1368 previz sketch)"
   },
   "music": {
     "source": "emotional-hiphop-draft.wav (user-supplied draft)",

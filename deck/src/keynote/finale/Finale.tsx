@@ -38,11 +38,12 @@ function Strata() {
       <div className="fs-model-track">{MODELS.map((m, i) => <span key={m} className="fs-model" style={{ "--i": i } as CSSProperties}><b>{m}</b><small>{i === 0 ? "지금 쓰는 모델" : "가정"}</small></span>)}</div>
     </div>
     <div className="fs-axis" aria-hidden="true"><span>2026 · 지금</span><i/><span>2056</span></div>
-    <div className="fs-layers" aria-label="남는 것: 작업 방식, 판단의 기록, 결과물">
-      <div className="fs-layer" style={{ "--i": 0 } as CSSProperties}><span className="fs-lane-label">남는 것 <b>작업 방식</b></span>
-        <div className="fs-items">{WAYS.map((w) => <span key={w} className="fs-chip">{w}</span>)}</div></div>
-      <div className="fs-layer" style={{ "--i": 1 } as CSSProperties}><span className="fs-lane-label"><b>판단의 기록</b></span>
+    {/* 쌓는 것은 '저'에 가까운 것부터: 취향과 판단 → 작업 방식 → 결과물 */}
+    <div className="fs-layers" aria-label="쌓는 것: 취향과 판단, 작업 방식, 결과물">
+      <div className="fs-layer" style={{ "--i": 0 } as CSSProperties}><span className="fs-lane-label">쌓는 것 <b>취향과 판단</b></span>
         <div className="fs-items">{DECISIONS.map(([d, t]) => <span key={d} className="fs-chip fs-chip--log"><time>{d}</time>{t}</span>)}</div></div>
+      <div className="fs-layer" style={{ "--i": 1 } as CSSProperties}><span className="fs-lane-label"><b>작업 방식</b></span>
+        <div className="fs-items">{WAYS.map((w) => <span key={w} className="fs-chip">{w}</span>)}</div></div>
       <div className="fs-layer" style={{ "--i": 2 } as CSSProperties}><span className="fs-lane-label"><b>결과물</b></span>
         <div className="fs-items">{RESULTS.map(([src, t]) => <figure key={t} className="fs-thumb"><img src={src} alt=""/><figcaption>{t === "이 발표" ? `이 발표 · ${total}장` : t}</figcaption></figure>)}</div></div>
       <span className="fs-future">앞으로 30년 동안 쌓을 자리</span>
@@ -85,7 +86,8 @@ const UNFINISHED: { kicker: string; title: ReactNode; lead: string; notes?: [str
   { kicker: "방 하나를 더 지을 때마다", title: <><em>다 할 수 있다</em>는 말은<br/>여기까지 넓어집니다</>, lead: "방이 하나 늘 때마다, 이을 수 있는 조합은 두 배 넘게 늘어납니다." },
 ];
 const HEAD: { name: string; kicker: string; title: ReactNode; lead: string }[] = [
-  { name: "30년 동안 쌓을 것", kicker: "30년 동안 쌓을 것", title: <>모델이 바뀌어도<br/>제 작업은 남기고 싶습니다</>, lead: "더 좋은 AI가 나오면, 이미 만든 기반 위에서 받아들일 수 있도록 합니다." },
+  // 55-1 · 남기는 것은 작업이 아니라 '저'다(2026-10-27). 점심 추천은 답이 아니라 질문으로 둔다.
+  { name: "30년 동안 쌓을 것", kicker: "30년 동안 쌓을 것", title: <>모델은 바뀌어도<br/><em>저라는 사람</em>을 쌓아 두려고 합니다</>, lead: "언젠가 더 똑똑한 AI에 붙이면, 점심 추천도 사람보다 저한테 더 잘 맞지 않을까요?" },
   { name: "아직 남아 있는 문제", kicker: "아직 남아 있는 문제", title: <>만들 수 있다는 것과<br/>매일 쓸 만하다는 것은<br/>다릅니다</>, lead: "" },
   // 44 · 에세이의 끝. 16번의 질문("앞으로 30년, 저는 뭘 하며 살까요?")을 다시 띄우고 답한다. 표지의 "나는 자비스를 만들고 있다"로 돌아온다.
   //      그 아래에는 처음의 두 마음(희열 · 두려움)이 같은 크기로 선다.

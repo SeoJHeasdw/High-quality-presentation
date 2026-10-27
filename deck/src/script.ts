@@ -60,6 +60,17 @@ export const SCRIPT: ScriptMap = (() => {
   return out;
 })();
 
+/** 노트 머리말(근거 · 연출 · 발표 조작 …) 뒤에 쌍점이 오는 줄, 또는 주소만 있는 줄. "참고로 …" 같은 말은 노트가 아니다. */
+const NOTE_HEAD = /^(근거|연출|발표 조작|질문이 나오면|출처|확인 필요|개발 상태|원본|화면 원본|확인한 로컬 자료)[^:：\n]{0,60}[:：]|^https?:\/\//;
+
+/** 한 스텝의 대본을 읽을 말과 노트로 나눈다. 노트 머리말이 처음 나온 줄부터 끝까지가 노트다. */
+export function splitScript(text: string): { say: string; notes: string } {
+  const lines = text.split("\n");
+  const at = lines.findIndex((line) => NOTE_HEAD.test(line.trim()));
+  if (at < 0) return { say: text.trim(), notes: "" };
+  return { say: lines.slice(0, at).join("\n").trim(), notes: lines.slice(at).join("\n").trim() };
+}
+
 export function getScript(
   key: string | undefined,
   step: number,

@@ -7,7 +7,7 @@ import { shortcutKey } from "../components/keys";
 const MV="/__javis/mv/hiphop-mv-tel.mp4";
 const DEMOS={
  tts:{title:"회사 일로 만든 영상, 제 목소리로 들어보면",name:"실물 1 / TTS Engine",lead:"IBM Bob 데모 영상에서 Bob이 직접 일하는 26초입니다.",src:"/demos/bob-work.mp4",poster:"/demos/bob-work.jpg",caption:"실제 만든 IBM Bob 데모 영상 · 원본 2:49–3:15",description:"대본과 작업 화면을 받아 음성·자막·영상으로 만든 결과",audio:false},
- assets:{title:"장면을 만들고, 카메라를 움직여봅니다",name:"실물 2 / Assets Engine",lead:"로컬 엔진이 만든 15초 프리비즈입니다. 구도와 움직임을 먼저 확인하는 스케치입니다.",src:"/demos/assets-previz.mp4",poster:"/demos/assets-previz.jpg",caption:"실제 프리비즈 출력 · 2026.09.22 · 15초",description:"장면 배치와 카메라 움직임이 영상으로 이어진 결과",audio:false},
+ assets:{title:"영상도, 3D 에셋도 뽑아냅니다",name:"실물 2 / Assets Engine",lead:"10월에 Assets Engine으로 만든 것들을 15초로 이어 붙였습니다.",src:"/demos/assets-reel.mp4",poster:"/demos/assets-reel.jpg",caption:"실제 출력 · 2026.10.16–10.22 · 15초로 편집",description:"여우 영상 · 달빛 야시장 3D 소품 32개 · 건축 키트 · 나무 · 지형 질감",audio:false},
  music:{title:"이번에는, 설명 대신 잠깐 들어보겠습니다",name:"실물 3 / Music Engine",lead:"제가 만든 감성 힙합 초안을 들어보겠습니다.",src:"/demos/emotional-hiphop-draft.wav",poster:"",caption:"감성 힙합 초안 · 3분",description:"가사와 음악 지시로 만든 곡",audio:true},
 };
 export default function DemoPlayer({kind}:{kind:keyof typeof DEMOS}){

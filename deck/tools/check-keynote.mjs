@@ -101,7 +101,9 @@ report.leashTo41=await page.evaluate(n=>document.querySelector('.kn-slide').data
 const leashOk=report.leash.map(b=>b.step).join(',')==='0,1,2'&&report.leash[1].same&&report.leash[0].title.includes('말이었습니다')&&report.leashTo41&&mindOk;
 // 7~8, 19~22 · 묶인 3D 공간: 장이 바뀌어도 같은 캔버스가 이어지고, 모든 단계가 그려지며, 뒤로 가면 처음 단계로 돌아온다.
 report.groups={};
-for(const [name,first,beats] of [['agentWeb','story-web-door',5],['oneUser','manifesto-requirements',11]]){
+// 20-1(REA)은 3D를 그대로 두고 오른쪽 카드만 바꾼다: oneUser는 phase 0이 두 번 나오고, 23번의 통제된 문까지 열세 단계다.
+const GROUP_PHASES={agentWeb:'0,1,2,3,4',oneUser:'0,0,1,2,3,4,5,6,7,8,9,10,11'};
+for(const [name,first,beats] of [['agentWeb','story-web-door',5],['oneUser','manifesto-requirements',13]]){
  await go(slideNumber(first));await page.waitForSelector('.iw-canvas[data-ready]',{timeout:10000});await page.waitForTimeout(400);
  await page.evaluate(()=>{window.__groupCanvas=document.querySelector('.iw-canvas')});
  const phases=[];for(let i=0;i<beats;i++){if(i){await page.keyboard.press('ArrowRight');await page.waitForTimeout(1800)}phases.push(await page.evaluate(()=>Number(document.querySelector('.iw').dataset.phase)))}
@@ -109,7 +111,7 @@ for(const [name,first,beats] of [['agentWeb','story-web-door',5],['oneUser','man
  for(let i=1;i<beats;i++)await page.keyboard.press('ArrowLeft');await page.waitForTimeout(900);
  report.groups[name]={phases:phases.join(','),same,reverse:await page.evaluate(()=>Number(document.querySelector('.iw').dataset.phase))===0,fallback:await page.locator('.iw[data-fallback]').count()===0};
 }
-const groupsOk=Object.values(report.groups).every(g=>g.phases===Array.from({length:g.phases.split(',').length},(_,i)=>i).join(',')&&g.same&&g.reverse&&g.fallback)&&report.groups.oneUser.phases.split(',').length===11;
+const groupsOk=Object.entries(report.groups).every(([k,g])=>g.phases===GROUP_PHASES[k]&&g.same&&g.reverse&&g.fallback);
 // 16·17 · 같은 집과 30년 눈금: 17번 세 단계 동안 배경과 눈금을 다시 그리지 않고, 뒤로 가면 16번 글이 돌아온다.
 await go(slideNumber('manifesto-person'));await page.waitForTimeout(500);
 await page.evaluate(()=>{window.__ruler=document.querySelector('.p13-years')});

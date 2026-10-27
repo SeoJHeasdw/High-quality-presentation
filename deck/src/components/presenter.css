@@ -106,7 +106,7 @@
 .pv__main {
   flex: 1;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 360px;
+  grid-template-columns: minmax(0, 1fr) 400px;
   min-height: 0;
 }
 
@@ -224,14 +224,32 @@
   min-height: 0;
 }
 
-.pv__next {
-  font-size: 16px;
+/* 근거 · 연출 · 발표 조작. 읽는 글이 아니라 곁눈으로 보는 노트라 작고 흐리게, 길면 이 칸 안에서 내린다. */
+.pv__notes {
+  flex: 1;
+  overflow-y: auto;
+  font-size: 14.5px;
   line-height: 1.62;
-  color: #97a1b8;
-  display: -webkit-box;
-  -webkit-line-clamp: 5;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
+  color: #8f99b0;
+  overflow-wrap: anywhere;
+}
+
+.pv__notes p + p {
+  margin-top: 0.75em;
+}
+
+.pv__notes b {
+  display: block;
+  margin-bottom: 2px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: #b3bdff;
+}
+
+.pv__notes--none {
+  flex: none;
+  color: #5d677d;
 }
 
 .pv__keys kbd {

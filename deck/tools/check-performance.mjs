@@ -62,25 +62,7 @@ try {
   await page.keyboard.press('m');
   report.ripple = 'scaled pointer, click, keyboard pulse, idle RAF stops, M fallback';
 
-  await go('factory-repositories');
-  const preview = page.locator('.rb-tilted-card').nth(1);
-  const tiltPoint = await point(preview, .85, .2);
-  await page.mouse.move(tiltPoint.x, tiltPoint.y); await page.waitForTimeout(500);
-  assert.match(await preview.locator('.rb-tilted-card__inner').evaluate(el => getComputedStyle(el).transform), /matrix3d/);
-  await shot('20-hover'); await preview.click();
-  await page.waitForSelector('dialog[open]'); await shot('20-enlarged');
-  await page.keyboard.type('5'); await page.keyboard.press('Escape');
-  assert.equal(await page.locator('dialog[open]').count(), 0);
-  assert.equal(await page.locator('.goto').count(), 0);
-  assert(await preview.evaluate(el => el === document.activeElement));
-  await page.keyboard.press('Enter'); await page.waitForSelector('dialog[open]');
-  await page.keyboard.press('ArrowRight'); await page.waitForSelector(`.kn-slide[data-slide="${slideNumber('factory-enter')}"]`);
-  assert.equal(await page.locator('dialog[open]').count(), 0);
-  assert.equal(await page.locator('.performance-click-spark').count(), 0);
-  await go('factory-repositories'); await page.keyboard.press('m');
-  assert.equal(await page.locator('.rb-tilted-card__inner').first().evaluate(el => getComputedStyle(el).transform), 'none');
-  await page.keyboard.press('m');
-  report.preview = 'hover tilt, click/Enter enlarge, Escape restores focus, arrow continues, M resets';
+  // 옛 24번(세 결과물 갤러리, 기울어지는 카드)은 2026-10-27에 덱에서 뺐다.
 
   await go('abuse-turn');
   const face = page.locator('.abuse-face-control');

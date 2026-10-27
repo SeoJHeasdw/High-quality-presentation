@@ -73,20 +73,19 @@ const ordered = [
  {id:"manifesto-transition",scriptKey:"manifesto-transition",steps:2,group:"person-ruler",render:({step})=><PersonalIntro part={1} step={step}/>},
  byId("manifesto-compute"),
  // 20~23 · 한 사람을 둘러싼 흐름에서 Factory 안으로 들어가, "기업이었다면"의 스테이션과 제 스테이션까지 한 공간이다(묶음 one-user).
- {id:"manifesto-requirements",scriptKey:"manifesto-requirements",steps:1,group:"one-user",render:({step})=><OneUserStory part={0} step={step}/>},
+ {id:"manifesto-requirements",scriptKey:"manifesto-requirements",steps:2,group:"one-user",render:({step})=><OneUserStory part={0} step={step}/>},
  {id:"manifesto-system",scriptKey:"manifesto-system",steps:2,group:"one-user",render:({step})=><OneUserStory part={1} step={step}/>},
  {id:"manifesto-factory",scriptKey:"manifesto-factory",steps:2,group:"one-user",render:({step})=><OneUserStory part={2} step={step}/>},
- {id:"manifesto-company",scriptKey:"manifesto-company",steps:2,group:"one-user",render:({step})=><OneUserStory part={3} step={step}/>},
- byId("factory-repositories"),
+ {id:"manifesto-company",scriptKey:"manifesto-company",steps:3,group:"one-user",render:({step})=><OneUserStory part={3} step={step}/>},
  ...OriginalDeck.slides.filter(slide=>slide.group==="factory-flight"),
  ...(["tts","assets","music"] as const).map(kind=>({id:`demo-${kind}`,scriptKey:`demo-${kind}`,render:()=> <DemoPlayer kind={kind}/>})),
  {id:"manifesto-worst-model",scriptKey:"manifesto-worst-model",steps:2,render:({step})=><WorstModelStory step={step}/>},
  ...ABUSE_SLIDES,
- // 42 · 가짜였던 말이 낱말이 되어 몸을 이루고, 실리콘밸리의 목줄 문장이 선다.
+ // 41 · 가짜였던 말이 낱말이 되어 몸을 이루고, 실리콘밸리의 목줄 문장이 선다.
  {id:"abuse-leash",scriptKey:"abuse-leash",steps:1,render:({step})=><FinaleStory part={-1} step={step}/>},
- // 43~53 · 그 안에 누가 있을까: AI는 선 안에 있나, 밖에 있나. 43~45·50~53은 3D 방, 46~49는 Blender 전시관 영상이고 열한 장이 한 묶음(mind)이다.
+ // 42~52 · 그 안에 누가 있을까: AI는 선 안에 있나, 밖에 있나. 42~44·49~52는 3D 방, 45~48은 Blender 전시관 영상이고 열한 장이 한 묶음(mind)이다.
  ...["mind-meeting","mind-dinner","mind-answers","mind-ladder","mind-line","mind-ai","mind-edge","mind-memory","mind-body","mind-shift","mind-erase"].map((id,part)=>({id,scriptKey:id,group:"mind",steps:PART_STEPS[part],render:({step}:{step:number})=><MindStory part={part} step={step}/>})),
- // 54~57 · 목줄에서 새벽으로. 54번은 42번의 목줄 장면을 이어 그리고(신에게 목줄이 걸릴까), 그 캔버스가 55번 첫 단계까지 이어진다(묶음 finale).
+ // 53~56 · 목줄에서 새벽으로. 53번은 41번의 목줄 장면을 이어 그리고(신에게 목줄이 걸릴까), 그 캔버스가 54번 첫 단계까지 이어진다(묶음 finale).
  {id:"abuse-leash-return",scriptKey:"abuse-leash-return",group:"finale",render:({step})=><FinaleStory part={-1} step={step} leashFrom={2}/>},
  ...(["manifesto-remains","tel-unfinished","tel-invitation"] as const).map((id,part)=>({id,scriptKey:id,group:"finale",steps:id==="tel-unfinished"?3:id==="manifesto-remains"?1:undefined,render:({step}:{step:number})=><FinaleStory part={part as 0|1|2} step={step}/>})),
 ];
