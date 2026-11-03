@@ -101,9 +101,9 @@ report.leashTo41=await page.evaluate(n=>document.querySelector('.kn-slide').data
 const leashOk=report.leash.map(b=>b.step).join(',')==='0,1,2'&&report.leash[1].same&&report.leash[0].title.includes('말이었습니다')&&report.leashTo41&&mindOk;
 // 7~8, 19~22 · 묶인 3D 공간: 장이 바뀌어도 같은 캔버스가 이어지고, 모든 단계가 그려지며, 뒤로 가면 처음 단계로 돌아온다.
 report.groups={};
-// 20-1(REA)은 3D를 그대로 두고 오른쪽 카드만 바꾼다: oneUser는 phase 0이 두 번 나오고, 23번의 통제된 문까지 열세 단계다.
-const GROUP_PHASES={agentWeb:'0,1,2,3,4',oneUser:'0,0,1,2,3,4,5,6,7,8,9,10,11'};
-for(const [name,first,beats] of [['agentWeb','story-web-door',5],['oneUser','manifesto-requirements',13]]){
+// 7-1(Walmart 통로)과 23-3(이미 쓰는 곳)은 3D 단계가 따로 있다. oneUser는 20-1(REA)만 3D를 유지하므로 phase 0을 두 번 지난다.
+const GROUP_PHASES={agentWeb:'0,1,2,3,4,5',oneUser:'0,0,1,2,3,4,5,6,7,8,9,10,11,12'};
+for(const [name,first,beats] of [['agentWeb','story-web-door',6],['oneUser','manifesto-requirements',14]]){
  await go(slideNumber(first));await page.waitForSelector('.iw-canvas[data-ready]',{timeout:10000});await page.waitForTimeout(400);
  await page.evaluate(()=>{window.__groupCanvas=document.querySelector('.iw-canvas')});
  const phases=[];for(let i=0;i<beats;i++){if(i){await page.keyboard.press('ArrowRight');await page.waitForTimeout(1800)}phases.push(await page.evaluate(()=>Number(document.querySelector('.iw').dataset.phase)))}

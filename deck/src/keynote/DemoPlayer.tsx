@@ -3,8 +3,11 @@ import { Briefing } from "./KeynoteFrame";
 import musicWave from "./data/music-waveform-hiphop.json";
 import { shortcutKey } from "../components/keys";
 
-/** 31번 · 뮤직비디오(../mv/render/hiphop-mv-tel.mp4). 로컬 발표 서버가 내보내며, 파일이 없으면 링크를 띄우지 않는다. */
-const MV="/__javis/mv/hiphop-mv-tel.mp4";
+/** 31번 · 로컬 발표 서버의 뮤직비디오. 파일이 있는 링크만 띄운다. */
+const MVS=[
+ {label:"뮤비_opus",src:"/__javis/mv/hiphop-mv-tel.mp4"},
+ {label:"뮤비_local",src:"/__javis/mv/slow-reply.mp4"},
+] as const;
 const DEMOS={
  tts:{title:"회사 일로 만든 영상, 제 목소리로 들어보면",name:"실물 1 / TTS Engine",lead:"IBM Bob 데모 영상에서 Bob이 직접 일하는 26초입니다.",src:"/demos/bob-work.mp4",poster:"/demos/bob-work.jpg",caption:"실제 만든 IBM Bob 데모 영상 · 원본 2:49–3:15",description:"대본과 작업 화면을 받아 음성·자막·영상으로 만든 결과",audio:false},
  assets:{title:"영상도, 3D 에셋도 뽑아냅니다",name:"실물 2 / Assets Engine",lead:"10월에 Assets Engine으로 만든 것들을 15초로 이어 붙였습니다.",src:"/demos/assets-reel.mp4",poster:"/demos/assets-reel.jpg",caption:"실제 출력 · 2026.10.16–10.22 · 15초로 편집",description:"여우 영상 · 달빛 야시장 3D 소품 32개 · 건축 키트 · 나무 · 지형 질감",audio:false},
@@ -16,11 +19,11 @@ export default function DemoPlayer({kind}:{kind:keyof typeof DEMOS}){
  const [playing,setPlaying]=useState(false),[muted,setMuted]=useState(kind==='assets'),[time,setTime]=useState(0),[error,setError]=useState("");
  const launchPending=useRef(false);
  const [launching,setLaunching]=useState(false),[launchMessage,setLaunchMessage]=useState("");
- const [hasMv,setHasMv]=useState(false);
+ const [availableMvs,setAvailableMvs]=useState<string[]>([]);
  useEffect(()=>{
   if(kind!=='music')return;
   let cancelled=false;
-  fetch(MV,{method:'HEAD'}).then(r=>{if(!cancelled)setHasMv(r.ok&&(r.headers.get('content-type')??'').startsWith('video/'))}).catch(()=>{});
+  Promise.all(MVS.map(async mv=>{try{const r=await fetch(mv.src,{method:'HEAD'});return r.ok&&(r.headers.get('content-type')??'').startsWith('video/')?mv.src:null}catch{return null}})).then(results=>{if(!cancelled)setAvailableMvs(results.filter(src=>src!==null))});
   return()=>{cancelled=true};
  },[kind]);
  // 새 탭에서 뮤직비디오가 소리와 함께 재생되므로, 이 장의 음원은 멈춘다.
@@ -55,6 +58,6 @@ export default function DemoPlayer({kind}:{kind:keyof typeof DEMOS}){
    {demo.audio?<><audio ref={ref as React.RefObject<HTMLAudioElement>} src={demo.src} preload="auto" muted={muted} {...events}/><div className="music-wave" aria-label="실제 음원의 파형">{musicWave.peaks.map((height,i)=><i key={i} data-played={time/duration>=i/musicWave.peaks.length||undefined} style={{height:`${Math.max(5,height*220)}px`}}/>)}</div><span className="music-time">{time.toFixed(1)}<small> / {duration.toFixed(1)} s</small></span></>:<video ref={ref as React.RefObject<HTMLVideoElement>} src={demo.src} poster={demo.poster} preload="auto" playsInline muted={muted} {...events}/>}
    <span className="demo-caption">{demo.caption}</span>
   </div>
-  <div className="demo-controls" onKeyDown={e=>{if(e.key===' ')e.stopPropagation()}}><button type="button" onClick={toggle}>{playing?"일시정지":"재생"} <kbd>P</kbd></button>{kind!=='assets'&&<button type="button" onClick={sound}>{muted?"소리 켜기":"소리 끄기"} <kbd>A</kbd></button>}<span role="status">{launchMessage||error||demo.description}</span>{hasMv&&<a className="demo-launch demo-mv" href={MV} target="_blank" rel="noreferrer" onClick={openMv}>뮤직비디오 <b aria-hidden="true">↗</b></a>}<button type="button" className="demo-launch" onClick={()=>void launchEngine()} disabled={launching} aria-busy={launching}>{launching?"앱 여는 중…":`${engineName} 엔진 실행`} <b aria-hidden="true">↗</b></button></div>
+  <div className="demo-controls" onKeyDown={e=>{if(e.key===' ')e.stopPropagation()}}><button type="button" onClick={toggle}>{playing?"일시정지":"재생"} <kbd>P</kbd></button>{kind!=='assets'&&<button type="button" onClick={sound}>{muted?"소리 켜기":"소리 끄기"} <kbd>A</kbd></button>}<span role="status">{launchMessage||error||demo.description}</span>{MVS.filter(mv=>availableMvs.includes(mv.src)).map(mv=><a key={mv.src} className="demo-launch demo-mv" href={mv.src} target="_blank" rel="noreferrer" onClick={openMv}>{mv.label} <b aria-hidden="true">↗</b></a>)}<button type="button" className="demo-launch" onClick={()=>void launchEngine()} disabled={launching} aria-busy={launching}>{launching?"앱 여는 중…":`${engineName} 엔진 실행`} <b aria-hidden="true">↗</b></button></div>
  </Briefing>;
 }

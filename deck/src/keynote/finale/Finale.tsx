@@ -72,15 +72,11 @@ function Blueprint() {
 }
 
 /** 43번은 단계마다 제목이 바뀐다(0 지금, 1 조합, 2 사무직이었다면, 3 계속 늘어나는 방, 4 방 하나에서 뻗는 사례). */
-/** 43-0 · 남아 있는 문제 셋. 이 장에서 가장 중요한 말이라 제목과 함께 화면에 둔다. */
-const PROBLEMS: [string, string][] = [
-  ["01 연결", "RICE가 방들을 제 맥락으로 잇는 길은 아직 점선입니다."],
-  ["02 품질", "만드는 만큼, 고르고 고치는 데에도 제 시간이 듭니다."],
-  ["03 쓸모", "만드는 일에 빠지지 않고, 쓸모가 있는지 계속 확인합니다."],
-];
-const UNFINISHED: { kicker: string; title: ReactNode; lead: string; notes?: [string, string][] }[] = [
-  { kicker: "아직 남아 있는 문제", title: <>만들 수 있다는 것과<br/>매일 쓸 만하다는 것은<br/>다릅니다</>, lead: "", notes: PROBLEMS },
-  { kicker: "방과 방을 이으면", title: <>조합하면<br/>할 수 있는 일이 늘어납니다</>, lead: "같은 설계가 목소리, 업무, 주식 판단에 들어가 있습니다. 조합은 아직 가능성입니다." },
+/** 56-0 · 완성된 자비스가 아니라, 방을 지을 때마다 하는 싸움. 57번의 "아직도 모르지만 고른 세 가지"로 이어진다(2026-11-03). */
+const FIGHT: [string, string] = ["“이거 진짜 쓸모 있을까? 굳이?”", "방을 하나 지을 때마다 저랑 싸웁니다."];
+const UNFINISHED: { kicker: string; title: ReactNode; lead: string; ask?: [string, string] }[] = [
+  { kicker: "아직 남아 있는 문제", title: <>만들 수 있다는 것과<br/>매일 쓸 만하다는 것은<br/>다릅니다</>, lead: "", ask: FIGHT },
+  { kicker: "그래도, 방과 방을 이으면", title: <>조합하면<br/>할 수 있는 일이 늘어납니다</>, lead: "같은 설계가 목소리, 업무, 주식 판단에 들어가 있습니다. 조합은 아직 가능성입니다." },
   { kicker: "제가 사무직이었다면", title: <>이 방들부터<br/>지었을 겁니다</>, lead: "엑셀, 브라우저, PDF와 PPT, 문서 방향. 전부 제 가정입니다." },
   // 마지막 단계: 17번의 "다 할 수 있다"(과도기의 희열)를 회수한다. 파는 이야기로 읽히지 않게 사례는 두지 않는다.
   { kicker: "방 하나를 더 지을 때마다", title: <><em>다 할 수 있다</em>는 말은<br/>여기까지 넓어집니다</>, lead: "방이 하나 늘 때마다, 이을 수 있는 조합은 두 배 넘게 늘어납니다." },
@@ -102,7 +98,7 @@ export default function FinaleStory({ part, step = 0, leashFrom = 0 }: { part: -
   // 목줄 장면은 둘로 나뉜다: 41번(낱말 → 몸, 목줄의 문장)과, 42~52번(그 안에 누가 있을까)을 지나 돌아오는 53번(신에게 목줄이 걸릴까).
   // 53번은 41번의 셋째 단계부터 이어 그린다(leashFrom = 2).
   const leash = part === -1, bridge = part === 0 && step === 0, ls = step + leashFrom;
-  const head: { name: string; kicker: string; title: ReactNode; lead: string; notes?: [string, string][] } | null =
+  const head: { name: string; kicker: string; title: ReactNode; lead: string; ask?: [string, string] } | null =
     leash ? null : bridge ? BRIDGE : part === 1 ? { ...HEAD[1], ...UNFINISHED[Math.min(3, step)] } : HEAD[part];
   // 41·42번의 3D 단계: 41번 -1~1, 42번 2~3
   const phase = leash ? ls - 1 : 2 + step;
@@ -119,7 +115,7 @@ export default function FinaleStory({ part, step = 0, leashFrom = 0 }: { part: -
       <p className="fn-kicker">{head.kicker}</p>
       <h1>{head.title}</h1>
       {head.lead && <p className="fn-lead">{head.lead}</p>}
-      {head.notes && <ul className="fn-notes">{head.notes.map(([name, text], i) => <li key={name} style={{ "--i": i } as CSSProperties}><b>{name}</b>{text}</li>)}</ul>}
+      {head.ask && <p className="fn-fight"><q>{head.ask[0]}</q><span>{head.ask[1]}</span></p>}
     </div> : <LeashCopy step={ls}/>}
     {part === 0 && step === 1 && <Strata/>}
     {part === 1 && <><Blueprint3D step={step} fallback={<Blueprint/>}/><p className="fn-legend"><span><i/>실선 · 만든 방</span><span><i data-dash/>점선 · 구상·가정</span></p></>}

@@ -6,6 +6,7 @@ import IncidentWorld from "./incident/IncidentWorld";
 
 export const SOURCES={
  cloudflare:"https://blog.cloudflare.com/radar-2025-year-in-review/",
+ botsNow:"https://seomator.com/blog/crawl-to-refer-ratio-ai-crawlers-llm-bots",
  brood:"https://bw.swerdlow.dev/report",
  incident:"https://openai.com/index/hugging-face-incident-and-the-road-ahead/",
  incidentReport:"https://cdn.openai.com/pdf/67869394-cb91-4c12-888c-5cbd85c7814c/OpenAI-Hugging-Face%20Incident-Technical-Report.pdf",

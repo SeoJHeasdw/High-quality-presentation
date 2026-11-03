@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import Stage from "./components/Stage";
 import AnnotationLayer from "./components/AnnotationLayer";
+import LaserPointer from "./components/LaserPointer";
 import PresenterView from "./components/PresenterView";
 import {
   useDeckNav,
@@ -51,6 +52,7 @@ function readHash(): Route {
 
 function DeckView({ id }: { id: DeckKey }) {
   const [fullscreenHint, setFullscreenHint] = useState("");
+  const [laserOn, setLaserOn] = useState(false);
   const mod = MODULES[id];
   const {
     index,
@@ -66,6 +68,21 @@ function DeckView({ id }: { id: DeckKey }) {
     jump,
   } = useDeckNav(mod.slides, id);
   const slide = mod.slides[index];
+
+  useEffect(() => {
+    if (annotationMode) setLaserOn(false);
+  }, [annotationMode]);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const editable = (e.target as Element | null)?.closest?.("input, textarea, select, [contenteditable]:not([contenteditable='false'])");
+      if (e.defaultPrevented || e.repeat || e.ctrlKey || e.metaKey || e.altKey || editable || annotationMode || shortcutKey(e) !== "q") return;
+      e.preventDefault();
+      setLaserOn((on) => !on);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [annotationMode]);
 
   useEffect(() => {
     let timeout: number | undefined;
@@ -84,7 +101,7 @@ function DeckView({ id }: { id: DeckKey }) {
 
   return (
     <>
-      <Stage>
+      <Stage laserOn={laserOn}>
         <div
           className={mod.className}
           data-motion={motion ? "on" : "off"}
@@ -115,6 +132,7 @@ function DeckView({ id }: { id: DeckKey }) {
           </div>
         )}
         <AnnotationLayer active={annotationMode} slideIndex={index} />
+        <LaserPointer active={laserOn} />
       </Stage>
 
       <Hud
@@ -128,6 +146,7 @@ function DeckView({ id }: { id: DeckKey }) {
         hidden={hudHidden}
         captionGuide={captionGuide}
         annotationMode={annotationMode}
+        laserOn={laserOn}
         jump={jump}
       />
 
@@ -162,6 +181,7 @@ function Hud({
   hidden,
   captionGuide,
   annotationMode,
+  laserOn,
   jump,
 }: {
   deckId: DeckKey;
@@ -174,6 +194,7 @@ function Hud({
   hidden: boolean;
   captionGuide: boolean;
   annotationMode: boolean;
+  laserOn: boolean;
   jump: string;
 }) {
   const [now, setNow] = useState(Date.now());
@@ -214,6 +235,7 @@ function Hud({
       <span className="hud__pill">{fmtTime((now - t0) / 1000)}</span>
       {!motion && <span className="hud__pill">모션 OFF</span>}
       {annotationMode && <span className="hud__pill">드로잉 중</span>}
+      {laserOn && <span className="hud__pill">레이저 ON</span>}
       {deckId === "course" && (
         <span className="hud__pill">자막 가이드 {captionGuide ? "ON" : "OFF"}</span>
       )}
@@ -233,7 +255,7 @@ function Hud({
       <span className="hud__sep" />
       <span style={{ opacity: 0.6 }}>
         <kbd>숫자</kbd>+<kbd>Enter</kbd> 이동 <kbd>H</kbd> 조작 바{" "}
-        <kbd>F</kbd> 전체화면 <kbd>W</kbd> 드로잉 켜기 <kbd>Esc</kbd> 닫기
+        <kbd>F</kbd> 전체화면 <kbd>Q</kbd> 레이저 <kbd>W</kbd> 드로잉 켜기 <kbd>Esc</kbd> 닫기
         {deckId === "course" && (
           <>
             {" "}<kbd>S</kbd> 자막영역

@@ -95,10 +95,11 @@ class WordBrain {
     geo.setAttribute("aSeed", new THREE.BufferAttribute(aSeed, 1));
     geo.setAttribute("aGroup", new THREE.BufferAttribute(aGroup, 1));
     this.mat = new THREE.ShaderMaterial({
-      uniforms: { uForm: { value: 1 }, uA: { value: 0 }, uTime: { value: 0 }, uD: { value: camD }, uC: { value: ICE.clone() }, uS: { value: size } },
+      uniforms: { uForm: { value: 1 }, uA: { value: 0 }, uTime: { value: 0 }, uD: { value: camD }, uC: { value: ICE.clone() }, uS: { value: size },
+        uWarm: { value: 0 }, uWarmFrom: { value: new THREE.Vector3() }, uWarmR: { value: h * 1.3 }, uWarmC: { value: GOLD.clone() } },
       vertexShader: `${GLSL_SAFE}
         attribute vec3 aWord; attribute vec3 aBrain; attribute float aSeed; attribute float aGroup;
-        uniform float uForm, uA, uTime, uD, uS; varying float vA;
+        uniform float uForm, uA, uTime, uD, uS, uWarm, uWarmR; uniform vec3 uWarmFrom; varying float vA; varying float vWarm;
         void main(){
           float k = clamp(uForm * 1.6 - aGroup * .45 - aSeed * .15, 0., 1.); k = k * k * (3. - 2. * k);
           vec3 w = aWord + vec3(sin(uTime * .21 + aGroup * 17.) * 18., cos(uTime * .17 + aGroup * 11.) * 12., 0.) * (1. - k);
@@ -107,22 +108,27 @@ class WordBrain {
           p += vec3(sin(uTime * 1.3 + aSeed * 50.), cos(uTime * 1.1 + aSeed * 40.), sin(uTime * .9 + aSeed * 30.)) * (1. + 1.4 * k) * uS;
           vec4 mv = modelViewMatrix * vec4(p, 1.); float z = -mv.z;
           vA = uA * (.5 + .5 * k) * exp(-pw(.00036 * max(z - 1900., 0.), 2.)) * sstep(120., 760., z);
-          gl_PointSize = (1.9 + aSeed * 1.3) * (.55 + .45 * uS) * (uD / z);
+          // 들어온 기록이 닿은 쪽(uWarmFrom)부터 점의 열에 넷이 금빛으로 물든다. 나머지는 파랑 그대로라 둘이 섞여 떼어낼 수 없다.
+          float own = step(fract(aSeed * 7.31), .4);
+          vWarm = own * sstep(0., .22, uWarm * 1.45 - length(aBrain - uWarmFrom) / uWarmR - aSeed * .3);
+          gl_PointSize = (1.9 + aSeed * 1.3) * (.55 + .45 * uS) * (1. + .15 * vWarm) * (uD / z);
           gl_Position = projectionMatrix * mv;
         }`,
-      fragmentShader: `${GLSL_SAFE}uniform vec3 uC; varying float vA;
-        void main(){ float d = length(gl_PointCoord - .5); gl_FragColor = vec4(uC * 1.15 * sstep(.5, .05, d) * vA, 1.); }`,
+      fragmentShader: `${GLSL_SAFE}uniform vec3 uC, uWarmC; varying float vA; varying float vWarm;
+        void main(){ float d = length(gl_PointCoord - .5); gl_FragColor = vec4(mix(uC * 1.15, uWarmC * 1.1, vWarm) * sstep(.5, .05, d) * vA, 1.); }`,
       transparent: true, depthWrite: false, depthTest: false, blending: THREE.AdditiveBlending,
     });
     this.points = new THREE.Points(geo, this.mat); this.points.frustumCulled = false; this.points.position.copy(at);
   }
   set(a: number, form: number, time: number) { this.mat.uniforms.uA.value = a; this.mat.uniforms.uForm.value = form; this.mat.uniforms.uTime.value = time; this.points.visible = a > 0.002; }
+  /** k(0→1)만큼 from(뇌 기준 좌표) 쪽부터 금빛으로 물든다 */
+  warm(k: number, from?: THREE.Vector3) { this.mat.uniforms.uWarm.value = k; if (from) this.mat.uniforms.uWarmFrom.value.copy(from); }
 }
 
 /** 출발점들에서 뇌 안으로 흘러드는 빛. loop면 읽고 사라지기를 되풀이하고, 아니면 들어가 남는다. */
 class Flow {
   points: THREE.Points; mat: THREE.ShaderMaterial;
-  constructor(sources: THREE.Vector3[], targets: THREE.Vector3[], count: number, seed: number, camD: number, color: THREE.Color) {
+  constructor(sources: THREE.Vector3[], targets: THREE.Vector3[], count: number, seed: number, camD: number, color: THREE.Color, size = 1) {
     const r = rand(seed), src = new Float32Array(count * 3), dst = new Float32Array(count * 3), sd = new Float32Array(count);
     for (let i = 0; i < count; i++) {
       const a = sources[Math.floor(r() * sources.length)], b = targets[Math.floor(r() * targets.length)];
@@ -134,10 +140,10 @@ class Flow {
     geo.setAttribute("aDst", new THREE.BufferAttribute(dst, 3));
     geo.setAttribute("aSeed", new THREE.BufferAttribute(sd, 1));
     this.mat = new THREE.ShaderMaterial({
-      uniforms: { uT: { value: 0 }, uSpan: { value: 2.4 }, uLoop: { value: 0 }, uA: { value: 0 }, uTime: { value: 0 }, uD: { value: camD }, uC: { value: color.clone() } },
+      uniforms: { uT: { value: 0 }, uSpan: { value: 2.4 }, uLoop: { value: 0 }, uA: { value: 0 }, uTime: { value: 0 }, uD: { value: camD }, uC: { value: color.clone() }, uPS: { value: size } },
       vertexShader: `${GLSL_SAFE}
         attribute vec3 aSrc; attribute vec3 aDst; attribute float aSeed;
-        uniform float uT, uSpan, uLoop, uA, uTime, uD; varying float vA;
+        uniform float uT, uSpan, uLoop, uA, uTime, uD, uPS; varying float vA;
         void main(){
           float lt = uLoop > .5 ? mod(uT - aSeed * 2.4, 2.4) : uT - aSeed * uSpan;
           float k = clamp(lt / 1.15, 0., 1.); k = k * k * (3. - 2. * k);
@@ -147,7 +153,7 @@ class Flow {
           float a = sstep(0., .12, lt) * (uLoop > .5 ? 1. - sstep(1.1, 1.7, lt) : .55 + .45 * sin(uTime * 2. + aSeed * 30.) * k);
           vA = lt < 0. ? 0. : uA * a;
           vec4 mv = modelViewMatrix * vec4(p, 1.); float z = -mv.z;
-          gl_PointSize = (2.2 + aSeed * 1.6) * (uD / z);
+          gl_PointSize = (2.2 + aSeed * 1.6) * uPS * (uD / z);
           gl_Position = projectionMatrix * mv;
         }`,
       fragmentShader: `${GLSL_SAFE}uniform vec3 uC; varying float vA;
@@ -438,14 +444,20 @@ export function createMindWorld(canvas: HTMLCanvasElement, initialPhase: number,
   const fRing = new THREE.Mesh(new THREE.TorusGeometry(1, 0.0042, 8, 320), fRingMat); fRing.rotation.x = -Math.PI / 2; fRing.position.copy(FR); scene.add(fRing);
   const fWash = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), softGlow(GOLD.clone().multiplyScalar(0.6), 0)); fWash.rotation.x = -Math.PI / 2; fWash.position.copy(FR).setY(-537); scene.add(fWash);
   let fRingA = 0; track(35, 37, (a) => { fRingA = a; }, { delay: 0.2 });
+  // 51-3 · 선은 그대로 두고, AI의 발밑에 원의 금빛이 옅게 번진다(단정하지 않되 무시하지 않는다). 원 끝을 살짝 덮는 크기다.
+  const feetGlow = new THREE.Mesh(new THREE.PlaneGeometry(2600, 2200), softGlow(GOLD.clone().multiplyScalar(0.8), 0));
+  feetGlow.rotation.x = -Math.PI / 2; feetGlow.position.copy(FEET).setY(-535); feetGlow.visible = false; scene.add(feetGlow);
+  let feetA = 0; track(37, 37, (a) => { feetA = a; }, { delay: 0.5, dur: 2.4 });
   // 52-0 · 30년 눈금. 52-1 · 눈금에서 기록(금빛)이 올라와 뇌 바깥에 모인다. 52-2 · 그 기록이 뇌 안으로 들어가 남는다.
   const R = LAYOUT.ruler, ticks: [number, number][][] = [[[R.x0, R.y], [R.x1, R.y]]];
   for (let i = 0; i <= 30; i++) { const x = R.x0 + (R.x1 - R.x0) * i / 30, big = i % 10 === 0; ticks.push([[x, R.y], [x, R.y - (big ? 26 : 11)]]); }
   inkOn(screenInk(ticks, 5, CHALK, { width: 1.1, sketch: 0, seed: 101 }), 38, 40, { dur: 1.0 });
   const tickSrc = Array.from({ length: 31 }, (_, i) => at(R.x0 + (R.x1 - R.x0) * i / 30, R.y - 14, 5));
-  const cloud = (() => { const r = rand(103), c = at(LAYOUT.records.x, LAYOUT.records.y, 5); return Array.from({ length: 400 }, () => { const a = r() * Math.PI * 2, d = Math.sqrt(r()) * 78; return c.clone().add(new THREE.Vector3(Math.cos(a) * d, Math.sin(a) * d * 0.7, (r() - .5) * 60)); }); })();
-  const flowRec = add(new Flow(tickSrc, cloud, 1100, 104, camD, GOLD));
-  const flowInto = add(new Flow(cloud, brainF.interior, 1100, 105, camD, GOLD));
+  const cloud = (() => { const r = rand(103), c = at(LAYOUT.records.x, LAYOUT.records.y, 5); return Array.from({ length: 400 }, () => { const a = r() * Math.PI * 2, d = Math.sqrt(r()) * 104; return c.clone().add(new THREE.Vector3(Math.cos(a) * d, Math.sin(a) * d * 0.7, (r() - .5) * 60)); }); })();
+  const flowRec = add(new Flow(tickSrc, cloud, 1100, 104, camD, GOLD, 1.5));
+  const flowInto = add(new Flow(cloud, brainF.interior, 1100, 105, camD, GOLD, 1.7));
+  // 52-2 · 기록이 들어오는 쪽(뇌의 왼쪽 아래, 기록 덩어리를 향한 쪽)부터 뇌 자신이 금빛으로 물든다
+  const warmFrom = at(LAYOUT.records.x, LAYOUT.records.y, 5).sub(brainF.points.position).multiplyScalar(0.55);
   let recA = 0, intoA = 0; track(39, 39, (a) => { recA = a; }, { delay: 0.4 }); track(40, 42, (a) => { intoA = a; }, { delay: 0 });
 
   function update(dt: number) {
@@ -501,15 +513,17 @@ export function createMindWorld(canvas: HTMLCanvasElement, initialPhase: number,
     brainE.set(brainEA, 1, time);
     if (p === 32 || p === 33) column.forEach((lamp, row) => { lamp.mat.uniforms.uFill.value = (p === 33 ? 0.55 : 0.3) + 0.2 * Math.sin(time * 2.2 + row * 1.7) * (p === 32 ? smooth(1.4, 2.2, t) : 1); });
 
-    // 51 · 낱말이 다시 뇌가 되고, 바닥의 원이 그 발밑 쪽으로 넓어지다 멈춘다(51-3에서는 가장자리가 숨 쉬듯 밝아졌다 흐려진다)
+    // 51 · 낱말이 다시 뇌가 되고, 바닥의 원이 그 발밑 쪽으로 넓어지다 멈춘다. 51-3에서 원은 그대로이고 발밑 쪽 빈틈만 밝아진다.
     const rr = p === 35 ? 700 + (F_R - 700) * easeInOut(pc.ev(0.3, 2.4)) : p > 35 ? F_R : 700;
     fRing.scale.setScalar(rr); fWash.scale.set(rr, rr, 1);
-    fRingMat.opacity = fRingA * (p === 37 ? 0.7 + 0.3 * Math.sin(time * 2.6) : 1); fRing.visible = fRingA > 0.002;
+    fRingMat.opacity = fRingA; fRing.visible = fRingA > 0.002;
+    glowA(feetGlow.material as THREE.Material, 0.42 * feetA); feetGlow.visible = feetA > 0.002;
     glowA(fWash.material as THREE.Material, 0.22 * fRingA); fWash.visible = fRing.visible;
     // 52 · 기록은 뇌 밖에 모였다가(52-1) 안으로 들어가 남는다(52-2~). 52-4에서는 모두 조금 흐려진다.
     brainF.set(brainFA * (p === 42 ? 1 - 0.35 * smooth(0.3, 2.0, t) : 1), p === 34 ? brainFF : 1, time);
     flowRec.set(recA, p === 39 ? t - 0.5 : 99, time, false, 1.8);
     flowInto.set(intoA * (p === 42 ? 1 - 0.35 * smooth(0.3, 2.0, t) : 1), p === 40 ? t - 0.1 : 99, time, false, 2.2);
+    brainF.warm(p === 40 ? easeInOut(pc.ev(1.2, 2.5)) : p > 40 ? 1 : 0, warmFrom);
   }
   stage.start(update, () => pc.motion);
 

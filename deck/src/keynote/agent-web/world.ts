@@ -4,14 +4,15 @@ import { FONT, GLSL_SAFE, PhaseClock, canvasTexture, clamp01, createStage, easeI
 /*
  * 7~8번 · 에이전트가 쓰는 웹. 한 공간을 두 장 동안 유지하고, 발표자가 누를 때마다 카메라와 상태만 옮긴다.
  *   0  (7) 웹사이트 앞의 "나는 로봇이 아닙니다". 사람은 확인을 받고 들어가고, 에이전트는 그 앞에서 기다린다.
- *   1  (7) 사이트가 겹을 연다. 화면 뒤에 사이트가 알려주는 기능(WebMCP)이 있고, 에이전트가 그 기능을 부른다.
- *   2  (8) 같은 키보드를 파는 두 판매처. A 위에는 광고판이 켜져 있다.
- *   3  (8) 에이전트는 화면 대신 조건을 읽는다. 같은 조건, 다른 가격. B를 고른다.
- *   4  (8) A의 광고판이 가격표로 흘러내린다. 판매자의 선택에 대한 발표자의 가설.
- * 판매처·가격·도구 이름은 모두 설명용 예시다(FACT-CHECK.md).
+ *   1  (7) 사람 확인 옆 바닥에서 에이전트 전용 통로가 솟는다. 에이전트는 그 문을 지나 구매 버튼 앞의 고객 승인에서 멈춘다.
+ *   2  (7) 사이트가 겹을 연다. 화면 뒤에 사이트가 알려주는 기능(WebMCP)이 있고, 에이전트가 그 기능을 부른다.
+ *   3  (8) 같은 키보드를 파는 두 판매처. A 위에는 광고판이 켜져 있다.
+ *   4  (8) 에이전트는 화면 대신 조건을 읽는다. 같은 조건, 다른 가격. B를 고른다.
+ *   5  (8) A의 광고판이 가격표로 흘러내린다. 판매자의 선택에 대한 발표자의 가설.
+ * 판매처·가격·도구 이름과 통로·승인 장면은 모두 설명용 예시다(FACT-CHECK.md).
  */
 
-export const PHASES = 5;
+export const PHASES = 6;
 
 const ICE = new THREE.Color("#8fd0ff");
 const GOLD = new THREE.Color("#ffd49a");
@@ -27,14 +28,22 @@ const AGENT_WAIT = new THREE.Vector3(-6.0, 1.45, 4.3);
 const AGENT_SHOP = new THREE.Vector3(4.2, 2.05, 3.6);
 const BILL = new THREE.Vector3(0, 5.15, 0);
 const BILL_W = 5.2, BILL_H = BILL_W * 360 / 1400;
-/** 7-1에서 겹이 벌어지는 곳(판매처 A 기준). 화면은 앞·왼쪽으로, 기능은 뒤·오른쪽으로. */
+/** WebMCP 스텝에서 겹이 벌어지는 곳(판매처 A 기준). 화면은 앞·왼쪽으로, 기능은 뒤·오른쪽으로. */
 const UI_OPEN = new THREE.Vector3(-1.7, 0.1, 1.3), UI_OPEN_RY = 0.34;
 const TOOLS_OPEN = new THREE.Vector3(2.5, 0.05, -1.1), TOOLS_OPEN_RY = 0.42;
 const AGENT_TOOLS = new THREE.Vector3(6.7, 2.35, 2.5);
+/** 7-1 · 기다리던 에이전트 왼쪽에 솟는 에이전트 전용 통로(바닥 가운데 기준)와, 에이전트가 멈추는 구매 버튼(판매처 A 텍스처의 963, 692px) 앞.
+ *  에이전트는 사람 확인을 두고 왼쪽 문으로 들어가, 사람 확인 뒤쪽을 지나 구매 버튼 앞에 선다. */
+const DOOR = new THREE.Vector3(-8.8, 0, 3.0), DOOR_W = 1.5, DOOR_H = 2.5, DOOR_RY = 0.25;
+const DOOR_MID = DOOR.clone().setY(1.3);
+const BUY = new THREE.Vector3(A.x + SW * (963 / 1280 - 0.5), A.y + SH * (0.5 - 692 / 800), 0.12);
+const AGENT_ENTER = new THREE.Vector3(-0.95, 1.1, 1.0);
+const LANE = [AGENT_WAIT, new THREE.Vector3(-7.6, 1.35, 5.2), new THREE.Vector3(-8.7, 1.3, 4.2), DOOR_MID, new THREE.Vector3(-8.3, 1.2, 1.7), new THREE.Vector3(-5.4, 1.0, 0.9), new THREE.Vector3(-2.3, 1.05, 1.2), AGENT_ENTER];
 
 /** 단계별 샷: 보여야 할 것과 그것이 들어갈 화면 영역. 제목(왼쪽 위)과 설명(왼쪽 아래)을 피한다. */
 const SHOTS: Shot[] = [
   { az: -8, el: 10, rect: [240, 390, 1780, 850], points: () => [...quad(A, SW + 0.2, SH + 0.2), A.clone().setY(0), ...quad(GATE, 2.9, 0.8, 0.32), GATE.clone().setY(0), AGENT_WAIT.clone()] },
+  { az: -14, el: 10, rect: [240, 400, 1780, 820], points: () => [...quad(A, SW + 0.2, SH + 0.2), A.clone().setY(0), ...quad(GATE, 2.9, 0.8, 0.32), DOOR.clone(), DOOR.clone().setY(DOOR_H + 0.6), ...LANE.map((v) => v.clone())] },
   { az: 30, el: 12, rect: [260, 370, 1790, 850], points: () => [...quad(A.clone().add(UI_OPEN), SW, SH, UI_OPEN_RY), ...quad(A.clone().add(TOOLS_OPEN), SW, SH, TOOLS_OPEN_RY), AGENT_TOOLS.clone()] },
   { az: 0, el: 8, rect: [230, 430, 1790, 870], points: () => [...quad(A, SW, SH), ...quad(B, SW, SH), ...quad(BILL, BILL_W, BILL_H), A.clone().setY(0.3), B.clone().setY(0.3)] },
   { az: 0, el: 12, rect: [230, 440, 1790, 880], points: () => [...quad(A, SW, SH), ...quad(B, SW, SH), A.clone().setY(0.3), B.clone().setY(0.3), BILL.clone().setY(4.6)] },
@@ -44,6 +53,7 @@ const SHOTS: Shot[] = [
 export const ANCHORS = {
   gate: new THREE.Vector3(), site: new THREE.Vector3(), agent: new THREE.Vector3(), human: new THREE.Vector3(), tools: new THREE.Vector3(),
   storeA: new THREE.Vector3(), storeB: new THREE.Vector3(), bill: new THREE.Vector3(), pick: new THREE.Vector3(), priceA: new THREE.Vector3(),
+  door: DOOR.clone().setY(DOOR_H + 0.3), approve: BUY.clone().add(new THREE.Vector3(1.35, 0, 0.1)),
 };
 export type AnchorId = keyof typeof ANCHORS;
 
@@ -292,6 +302,33 @@ export function createAgentWebWorld(canvas: HTMLCanvasElement, initialPhase: num
   const veil = new THREE.Mesh(new THREE.PlaneGeometry(3.4, 3.0), veilMat); veil.position.set(0, 0.25, 0.55); gate.add(veil);
   const gatePool = pool(GATE, 4, AMBER);
 
+  /* 에이전트 전용 통로 (1) ------------------------------------------------------ */
+  // 바닥에서 솟는 문. 바닥이 깊이를 쓰므로 바닥 아래에 있는 동안은 보이지 않는다.
+  const door = new THREE.Group(); door.position.copy(DOOR); door.rotation.y = DOOR_RY; scene.add(door);
+  const doorFrame = frameEdges(DOOR_W, DOOR_H, ICE.clone().multiplyScalar(1.7), 0.05); doorFrame.group.position.y = DOOR_H / 2; door.add(doorFrame.group);
+  const doorMat = new THREE.ShaderMaterial({
+    uniforms: { uAlpha: { value: 0 }, uTime: { value: 0 }, uPass: { value: 0 } },
+    vertexShader: `varying vec2 vUv; void main(){ vUv=uv; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.); }`,
+    fragmentShader: `${GLSL_SAFE}varying vec2 vUv; uniform float uAlpha,uTime,uPass;
+      void main(){ vec2 p=vUv; float side=sstep(0.,.12,p.x)*sstep(1.,.88,p.x);
+        // 가장자리에서 안쪽으로 번지는 빛과, 아래에서 위로 천천히 오르는 옅은 띠 하나
+        float rim=pw(1.-min(min(p.x,1.-p.x)*2.,1.),4.)*.2;
+        float band=exp(-pw(abs(p.y-fract(uTime*.18))*7.,2.))*.08*side;
+        float fill=.012+.035*sstep(1.,0.,p.y);
+        vec3 c=vec3(.56,.82,1.)*(fill*side+rim+band) + vec3(.8,.93,1.)*uPass*(.4+side*.6);
+        gl_FragColor=vec4(c*uAlpha,1.); }`,
+    transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide,
+  });
+  const doorPlane = new THREE.Mesh(new THREE.PlaneGeometry(DOOR_W, DOOR_H), doorMat); doorPlane.position.y = DOOR_H / 2; door.add(doorPlane);
+  const doorPool = pool(DOOR, 4.2, ICE);
+  // 구매 버튼을 두르는 고객 승인: 에이전트가 닿으면 금색으로 켜진다.
+  const approveMat = additive(GOLD.clone().multiplyScalar(2.2));
+  const approveRing = new THREE.Mesh(new THREE.RingGeometry(1, 1.06, 96), approveMat); approveRing.scale.set(1.4, 0.4, 1); approveRing.position.copy(BUY); scene.add(approveRing);
+  // 판매처 화면보다 늦게 그린다. 왼쪽에서 볼 때 투명 물체의 거리 순서가 바뀌어 화면이 고리를 덮지 않게 한다.
+  approveRing.renderOrder = 3;
+  const approveGlowMat = new THREE.MeshBasicMaterial({ map: glow, color: GOLD.clone(), transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending });
+  const approveGlow = new THREE.Mesh(new THREE.PlaneGeometry(3.6, 1.4), approveGlowMat); approveGlow.position.copy(BUY).setZ(BUY.z - 0.02); approveGlow.renderOrder = 2; scene.add(approveGlow);
+
   /* 사람의 커서 ---------------------------------------------------------------- */
   const cursorShape = new THREE.Shape(); cursorShape.moveTo(0, 0); cursorShape.lineTo(0, -0.62); cursorShape.lineTo(0.16, -0.47); cursorShape.lineTo(0.27, -0.72); cursorShape.lineTo(0.37, -0.67); cursorShape.lineTo(0.26, -0.43); cursorShape.lineTo(0.46, -0.43); cursorShape.closePath();
   const cursorMat = new THREE.MeshBasicMaterial({ color: WHITE.clone().multiplyScalar(1.6), transparent: true, opacity: 0, side: THREE.DoubleSide, depthWrite: false });
@@ -372,7 +409,9 @@ export function createAgentWebWorld(canvas: HTMLCanvasElement, initialPhase: num
     const mat = cableMat(color, len); const mesh = new THREE.Mesh(new THREE.TubeGeometry(curve, 80, radius, 8, false), mat); scene.add(mesh);
     return { mesh, mat, curve };
   };
-  // 7-1: 에이전트 → 도구 세 줄 (도구 겹이 펼쳐진 뒤의 위치 기준)
+  // 7-1: 기다리던 자리 → 통로 → 구매 버튼 앞. 에이전트는 이 선을 따라 움직인다.
+  const lane = beam(LANE.map((v) => v.clone()), ICE, 0.022);
+  // 7-2: 에이전트 → 도구 세 줄 (도구 겹이 펼쳐진 뒤의 위치 기준)
   const toolWorld = (i: number) => A.clone().add(TOOLS_OPEN).add(new THREE.Vector3(SW * 0.47, 0.42 - i * 0.84, 0.05).applyAxisAngle(new THREE.Vector3(0, 1, 0), TOOLS_OPEN_RY));
   const toolBeams = [0, 1, 2].map((i) => { const to = toolWorld(i); const mid = AGENT_TOOLS.clone().lerp(to, 0.5).add(new THREE.Vector3(0, 0.35, 0.6)); return beam([AGENT_TOOLS.clone(), mid, to], ICE); });
   // 8-1: 에이전트 → 두 판매처의 조건
@@ -421,8 +460,8 @@ export function createAgentWebWorld(canvas: HTMLCanvasElement, initialPhase: num
     camera.position.copy(eyeNow); camera.lookAt(lookNow);
     floorU.uLit.value = follow("floor", 1, dt, 1.2);
 
-    /* 사람 확인 (0) */
-    const gateOn = p <= 1 ? 1 : 0;
+    /* 사람 확인 (0~2) */
+    const gateOn = p <= 2 ? 1 : 0;
     const clicked = p === 0 ? t > 1.75 : true;
     capMat.map = clicked ? capOn : capOff;
     capMat.opacity = follow("cap", gateOn, dt); gateStandMat.opacity = capMat.opacity;
@@ -448,66 +487,84 @@ export function createAgentWebWorld(canvas: HTMLCanvasElement, initialPhase: num
       const start = AGENT_WAIT.clone().add(new THREE.Vector3(-5.5, 0.8, 3));
       ap = bezier(start, start.clone().lerp(AGENT_WAIT, 0.5).add(new THREE.Vector3(0, 0.9, 0)), AGENT_WAIT, easeOut(ev(1.6, 1.6)));
     } else if (p === 1) {
+      ap = lane.curve.getPoint(easeInOut(ev(0.9, 2.0)));
+    } else if (p === 2) {
       const e = easeInOut(ev(0.9, 1.6));
-      ap = bezier(AGENT_WAIT, new THREE.Vector3(1.5, 0.9, 6.2), AGENT_TOOLS, e);
+      ap = bezier(AGENT_ENTER, new THREE.Vector3(5.2, 2.6, 3.4), AGENT_TOOLS, e);
     } else {
-      ap = p === 2 ? lerpV(AGENT_TOOLS, AGENT_SHOP, easeInOut(ev(0.2, 1.6))) : AGENT_SHOP.clone();
+      ap = p === 3 ? lerpV(AGENT_TOOLS, AGENT_SHOP, easeInOut(ev(0.2, 1.6))) : AGENT_SHOP.clone();
     }
     ap.y += Math.sin(time * 1.4) * 0.06;
-    agent.scale.setScalar(follow("agentScale", p === 4 ? 0.55 : 1, dt, 3));
+    agent.scale.setScalar(follow("agentScale", p === 5 ? 0.55 : 1, dt, 3));
     agent.position.copy(ap); ANCHORS.agent.copy(ap).add(new THREE.Vector3(0, 0.75, 0));
     core.rotation.y = time * 0.8; shell.rotation.y = -time * 0.3; orbit.rotation.z = time * 0.9;
     // 사람 확인 앞에서 멈춰 섰을 때의 빛의 막
     const wait = p === 0 ? smooth(2.9, 3.3, t) : 0;
-    veilMat.uniforms.uAlpha.value = follow("veil", p === 0 ? 0.25 + wait * 0.35 : 0, dt, 4);
+    veilMat.uniforms.uAlpha.value = follow("veil", p === 0 ? 0.25 + wait * 0.35 : p === 1 ? 0.18 : 0, dt, 4);
     veilMat.uniforms.uHit.value = p === 0 ? ev(3.0, 1.2) : 1;
     veilMat.uniforms.uTime.value = time;
-    gatePool.opacity = follow("gatePool", p === 0 ? 0.25 + wait * 0.35 : 0, dt);
-    coreMat.emissive.copy(ICE).lerp(AMBER, p === 0 ? wait * 0.55 : 0);
+    gatePool.opacity = follow("gatePool", p === 0 ? 0.25 + wait * 0.35 : p === 1 ? 0.15 : 0, dt);
+    coreMat.emissive.copy(ICE).lerp(AMBER, follow("agentAmber", p === 0 ? wait * 0.55 : 0, dt, 3));
 
-    /* A: 겹이 열린다 (1), 다시 닫힌다 (2~) */
-    const open = p === 1 ? easeInOut(ev(0.2, 1.4)) : 0;
-    const openS = follow("open", open, dt, p === 1 ? 20 : 3);
+    /* 에이전트 전용 통로 (1): 문이 솟고, 길이 그려지고, 에이전트가 문을 지나 고객 승인 앞에서 멈춘다. */
+    const rise = p === 1 ? easeOut(ev(0.15, 1.1)) : 1;
+    door.position.y = -DOOR_H * 1.05 * (1 - rise);
+    const doorA = follow("door", p === 1 ? 1 : 0, dt, p === 1 ? 20 : 3);
+    doorMat.uniforms.uAlpha.value = doorA; doorMat.uniforms.uTime.value = time;
+    // 에이전트가 문을 지나는 순간 문이 밝아진다.
+    doorMat.uniforms.uPass.value = p === 1 ? Math.exp(-ap.distanceToSquared(DOOR_MID) * 2.5) : 0;
+    doorFrame.mat.opacity = doorA; doorPool.opacity = doorA * 0.3;
+    door.visible = doorA > 0.01;
+    lane.mat.uniforms.uDraw.value = p === 1 ? easeOut(ev(0.7, 1.0)) : 1;
+    lane.mat.uniforms.uLit.value = follow("lane", p === 1 ? 0.75 : 0, dt, p === 1 ? 20 : 4);
+    lane.mat.uniforms.uTime.value = time; lane.mesh.visible = lane.mat.uniforms.uLit.value > 0.01;
+    const approve = follow("approve", p === 1 ? smooth(2.6, 3.2, t) : 0, dt, p === 1 ? 20 : 4);
+    approveMat.opacity = approve * (0.75 + 0.25 * Math.sin(time * 3.2)); approveGlowMat.opacity = approve * 0.32;
+    approveRing.visible = approveGlow.visible = approve > 0.01;
+
+    /* A: 겹이 열린다 (2), 다시 닫힌다 (3~) */
+    const open = p === 2 ? easeInOut(ev(0.2, 1.4)) : 0;
+    const openS = follow("open", open, dt, p === 2 ? 20 : 3);
     storeA.ui.position.copy(UI_OPEN).multiplyScalar(openS);
     storeA.ui.rotation.y = UI_OPEN_RY * openS;
     storeA.tools.position.copy(TOOLS_OPEN).multiplyScalar(openS);
     storeA.tools.rotation.y = TOOLS_OPEN_RY * openS;
-    const toolsA = p === 1 ? smooth(0.5, 1.4, t) : 0;
-    const toolsV = follow("tools", toolsA, dt, p === 1 ? 20 : 4);
+    const toolsA = p === 2 ? smooth(0.5, 1.4, t) : 0;
+    const toolsV = follow("tools", toolsA, dt, p === 2 ? 20 : 4);
     toolPanelMat.uniforms.uAlpha.value = toolsV; toolPanelMat.uniforms.uTime.value = time;
     toolHeaderMat.opacity = toolsV;
     toolRows.forEach((r, i) => {
       r.mat.opacity = toolsV;
-      const call = p === 1 ? ev(2.6 + i * 0.55, 0.55) : 0;
-      r.flash.opacity = call > 0 && call < 1 ? Math.sin(call * Math.PI) * 0.7 : (p === 1 && t > 2.6 + i * 0.55 ? 0.18 : 0);
+      const call = p === 2 ? ev(2.6 + i * 0.55, 0.55) : 0;
+      r.flash.opacity = call > 0 && call < 1 ? Math.sin(call * Math.PI) * 0.7 : (p === 2 && t > 2.6 + i * 0.55 ? 0.18 : 0);
       const b = toolBeams[i];
-      b.mat.uniforms.uDraw.value = p === 1 ? easeOut(ev(2.3 + i * 0.55, 0.6)) : 0;
-      b.mat.uniforms.uLit.value = follow(`tb${i}`, p === 1 ? 1 : 0, dt, 5);
+      b.mat.uniforms.uDraw.value = p === 2 ? easeOut(ev(2.3 + i * 0.55, 0.6)) : 0;
+      b.mat.uniforms.uLit.value = follow(`tb${i}`, p === 2 ? 1 : 0, dt, 5);
       b.mat.uniforms.uTime.value = time; b.mesh.visible = b.mat.uniforms.uLit.value > 0.01;
     });
     ANCHORS.tools.copy(A).add(TOOLS_OPEN).add(new THREE.Vector3(0.9, SH / 2 + 0.3, 0).applyAxisAngle(new THREE.Vector3(0, 1, 0), TOOLS_OPEN_RY));
     ANCHORS.gate.copy(GATE).add(new THREE.Vector3(0.9, 0.55, 0));
     ANCHORS.site.copy(A).add(new THREE.Vector3(SW * 0.3, SH / 2 + 0.25, 0));
 
-    /* B와 광고판 (2~) */
-    const shop = p >= 2 ? 1 : 0;
+    /* B와 광고판 (3~) */
+    const shop = p >= 3 ? 1 : 0;
     const bIn = follow("bIn", shop, dt, 2.2);
-    const bDim = follow("bDim", p === 4 ? 0.3 : 1, dt, 3);
+    const bDim = follow("bDim", p === 5 ? 0.3 : 1, dt, 3);
     storeB.uiMat.opacity = bIn * bDim; storeB.uiFrame.opacity = bIn * bDim; storeB.stand.opacity = bIn; storeB.root.visible = bIn > 0.01;
     storeB.root.position.y = B.y - (1 - bIn) * 0.4;
-    const billOn = p === 2 ? smooth(0.6, 1.4, t) : p >= 3 ? 1 : 0;
-    // 4: 광고판은 빛을 가격표에 넘겨주고 희미한 윤곽만 남긴다.
-    const billFade = p === 4 ? 1 - 0.78 * smooth(0.2, 2.6, t) : 1;
-    const billDim = p === 3 ? 0.12 : 1;
+    const billOn = p === 3 ? smooth(0.6, 1.4, t) : p >= 4 ? 1 : 0;
+    // 5: 광고판은 빛을 가격표에 넘겨주고 희미한 윤곽만 남긴다.
+    const billFade = p === 5 ? 1 - 0.78 * smooth(0.2, 2.6, t) : 1;
+    const billDim = p === 4 ? 0.12 : 1;
     const billA = follow("bill", billOn * billFade * billDim, dt, 3);
     billMat.opacity = billA; billGlowMat.opacity = billA * 0.4 * (0.85 + 0.15 * Math.sin(time * 5.3));
     cones.forEach((m) => { m.uniforms.uAlpha.value = billA; });
     bill.visible = billA > 0.01;
 
-    /* 에이전트가 읽는 조건 (3) */
-    const readA = follow("read", p === 3 ? 1 : 0, dt, 3.5);
+    /* 에이전트가 읽는 조건 (4) */
+    const readA = follow("read", p === 4 ? 1 : 0, dt, 3.5);
     [storeA, storeB].forEach((s, i) => {
-      if (p === 3) s.dataMat.opacity = S[`data${i}`] = smooth(0.6 + i * 0.25, 1.3 + i * 0.25, t);
+      if (p === 4) s.dataMat.opacity = S[`data${i}`] = smooth(0.6 + i * 0.25, 1.3 + i * 0.25, t);
       else s.dataMat.opacity = follow(`data${i}`, 0, dt, 5);
       s.data.visible = s.dataMat.opacity > 0.01;
     });
@@ -515,18 +572,18 @@ export function createAgentWebWorld(canvas: HTMLCanvasElement, initialPhase: num
     const uiDim = 1 - 0.72 * readA;
     storeA.uiMat.opacity = uiDim; storeA.uiMat.color.setScalar(0.92 * (0.4 + 0.6 * uiDim));
     storeB.uiMat.color.setScalar(0.92 * (0.4 + 0.6 * (1 - 0.72 * readA)));
-    if (p === 3) storeB.uiMat.opacity = Math.min(storeB.uiMat.opacity, 1 - 0.72 * readA);
+    if (p === 4) storeB.uiMat.opacity = Math.min(storeB.uiMat.opacity, 1 - 0.72 * readA);
     readBeams.forEach((b, i) => {
-      b.mat.uniforms.uDraw.value = p === 3 ? easeOut(ev(0.3 + i * 0.25, 0.8)) : 0;
-      b.mat.uniforms.uLit.value = follow(`rb${i}`, p === 3 ? 0.9 : 0, dt, 5) * (p === 3 ? 1 - smooth(2.4, 3.0, t) * 0.6 : 1);
+      b.mat.uniforms.uDraw.value = p === 4 ? easeOut(ev(0.3 + i * 0.25, 0.8)) : 0;
+      b.mat.uniforms.uLit.value = follow(`rb${i}`, p === 4 ? 0.9 : 0, dt, 5) * (p === 4 ? 1 - smooth(2.4, 3.0, t) * 0.6 : 1);
       b.mat.uniforms.uTime.value = time; b.mesh.visible = b.mat.uniforms.uLit.value > 0.01;
     });
-    const pick = p === 3 ? smooth(2.3, 2.9, t) : 0;
-    pickBeam.mat.uniforms.uDraw.value = p === 3 ? easeOut(ev(2.3, 0.7)) : 0;
+    const pick = p === 4 ? smooth(2.3, 2.9, t) : 0;
+    pickBeam.mat.uniforms.uDraw.value = p === 4 ? easeOut(ev(2.3, 0.7)) : 0;
     pickBeam.mat.uniforms.uLit.value = follow("pb", pick, dt, 5); pickBeam.mat.uniforms.uTime.value = time; pickBeam.mesh.visible = pickBeam.mat.uniforms.uLit.value > 0.01;
-    const pickV = follow("pick", p === 3 ? pick : 0, dt, 4);
+    const pickV = follow("pick", p === 4 ? pick : 0, dt, 4);
     pickRingMat.opacity = pickV * 0.9; pickRing.scale.setScalar(1 + (1 - pickV) * 0.15); pickPool.opacity = pickV * 0.45;
-    storeB.pool.opacity = follow("poolB", p >= 2 ? 0.18 : 0, dt);
+    storeB.pool.opacity = follow("poolB", p >= 3 ? 0.18 : 0, dt);
     storeA.pool.opacity = follow("poolA", 0.22, dt);
     ANCHORS.storeA.copy(A).add(new THREE.Vector3(-SW / 2 + 0.3, -SH / 2 - 0.35, 0.3));
     ANCHORS.storeB.copy(B).add(new THREE.Vector3(-SW / 2 + 0.3, -SH / 2 - 0.35, 0.3));
@@ -534,12 +591,12 @@ export function createAgentWebWorld(canvas: HTMLCanvasElement, initialPhase: num
     ANCHORS.pick.copy(B).add(new THREE.Vector3(0, SH / 2 + 0.3, 0.9));
     ANCHORS.priceA.copy(PRICE_A).add(new THREE.Vector3(1.7, 0.2, 0));
 
-    /* 광고비 → 가격 (4) */
-    dropMat.uniforms.uT.value = p === 4 ? ev(0.3, 2.6) : 0;
-    dropMat.uniforms.uLoop.value = p === 4 ? smooth(2.6, 3.6, t) : 0;
-    dropMat.uniforms.uAlpha.value = p === 4 ? 1 : 0;
-    dropMat.uniforms.uTime.value = time; drops.visible = p === 4;
-    priceRingMat.opacity = follow("priceRing", p === 4 ? 0.55 * smooth(1.6, 2.6, t) : 0, dt) * (0.8 + 0.2 * Math.sin(time * 3));
+    /* 광고비 → 가격 (5) */
+    dropMat.uniforms.uT.value = p === 5 ? ev(0.3, 2.6) : 0;
+    dropMat.uniforms.uLoop.value = p === 5 ? smooth(2.6, 3.6, t) : 0;
+    dropMat.uniforms.uAlpha.value = p === 5 ? 1 : 0;
+    dropMat.uniforms.uTime.value = time; drops.visible = p === 5;
+    priceRingMat.opacity = follow("priceRing", p === 5 ? 0.55 * smooth(1.6, 2.6, t) : 0, dt) * (0.8 + 0.2 * Math.sin(time * 3));
 
     dust.rotation.y = time * 0.006;
   }

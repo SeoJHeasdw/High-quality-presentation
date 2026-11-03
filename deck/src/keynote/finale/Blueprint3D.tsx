@@ -26,7 +26,8 @@ const BUILT: Label[] = [
 ];
 const ME: Label = { id: "door", name: "나", tone: "gold", dir: "left" };
 function labelsFor(phase: number): Label[] {
-  if (phase === 0) return [...BUILT, { id: "os", name: "연결", sub: "방들을 잇는 길", tag: "구상", tone: "ice" }, ME];
+  // 56-0 · 지은 방들만 이름을 단다. 방을 잇는 점선판은 그대로 두되 '연결' 라벨은 달지 않는다(완성을 앞둔 시스템처럼 읽히지 않게).
+  if (phase === 0) return [...BUILT, ME];
   // 조합 단계: 빛이 나가는 방(TTS·ASSETS·Personal CIO)만 흐린 이름을 남긴다. RICE 이름은 조합 라벨과 같은 자리에 겹친다.
   if (phase === 1) return [
     ...BUILT.filter((l) => l.id === "tts" || l.id === "assets" || l.id === "cio").map((l) => ({ ...l, sub: undefined, tag: undefined, lift: undefined, tone: "mute" as Tone })),
@@ -43,7 +44,7 @@ function labelsFor(phase: number): Label[] {
     { id: "doc", name: "문서 가로 ↔ 세로", tag: "가정", tone: "ice" },
   ];
 }
-const IDS: LabelId[] = ["tts", "assets", "music", "rice", "cio", "os", "door", "comboStock", "comboLecture", "excel", "browser", "pdf", "doc"];
+const IDS: LabelId[] = ["tts", "assets", "music", "rice", "cio", "door", "comboStock", "comboLecture", "excel", "browser", "pdf", "doc"];
 
 /** 단계가 끝났을 때 선 방의 수(처음 그릴 때와 모션을 끈 화면의 숫자) */
 const FINAL_N = [5, 5, 9, 40];

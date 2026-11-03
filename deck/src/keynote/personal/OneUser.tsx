@@ -2,17 +2,20 @@ import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 
 import { Frame } from "../KeynoteFrame";
 import { usePerformanceMotion } from "../usePerformanceMotion";
 import type { AnchorId, OneUserWorld } from "./world";
+import { ORGS_NOW, ORGS_THEN, ORG_NOW_AT, ORG_NOW_DUR } from "./orgs";
 import "../incident/incident.css";
 import "./personal.css";
 
 /*
- * 19~22번은 하나의 공간이다(묶음 one-user).
- *   19번 세 단계 → phase 0 · 0 · 1(가운데 REA 단계는 3D를 그대로 두고 오른쪽 카드만 바꾼다), 20번 세 단계 → 2~4, 21번 세 단계 → 5~7, 22번 네 단계 → 8~11.
+ * 20~23번은 하나의 공간이다(묶음 one-user).
+ *   20번 세 단계 → phase 0 · 0 · 1(REA 단계는 3D를 유지), 21번 세 단계 → 2~4, 22번 세 단계 → 5~7.
+ *   23번 다섯 단계 → 8~12.
  * 3D는 personal/world.ts, 요구사항 표·설명·라벨은 여기의 DOM이 맡는다.
  * 19번(공장 안)의 모델 이름은 각 엔진 README의 제작 모델이다(FACT-CHECK 18행). 스테이션(엔진)은 따로 가동 중이고 노래·목소리·영상·에셋을 낸다(2026-10).
  * 위계(프론티어 모델 = 임원 → RICE = 현장 관리자 → 스테이션)에서 RICE가 일을 나누고 프론티어가 지켜보다 직접 내려오는 흐름은 구상이다.
- * 22번은 "결국 영상 만드는 거 아닌가요?"에 답한다: 기업이었다면 같은 공장에 다른 스테이션이 선다(22-1, 발표자의 가정)
- *   → 문(임원)에 회사 정책을 걸면 직원은 Claude · GPT를 쓰고 데이터는 나가지 않는다(22-2, 구상) → 저는 개인이라 제 것을 넣었다(22-3).
+ * 23번은 "결국 영상 만드는 거 아닌가요?"에 답한다: 기업이었다면 같은 공장에 다른 스테이션이 선다(23-1, 발표자의 가정)
+ *   → 문(임원)에 회사 정책을 걸면 직원은 Claude · GPT를 쓰고 데이터는 나가지 않는다(23-2, 구상)
+ *   → 그런 문 너머를 이미 쓰는 곳: Claude에 1년 10만 달러 넘게 쓰는 곳이 950곳에서 11,900곳으로(23-3, Anthropic S-1/A) → 저는 개인이라 제 것을 넣었다(23-4).
  */
 type Tone = "ice" | "amber" | "gold" | "mute" | "white" | "teal";
 /** at: 단계가 시작되고 몇 초 뒤에 나타나는지. 3D 장면에서 그 일이 일어나는 때에 맞춘다(world.ts). */
@@ -37,7 +40,7 @@ function labelsFor(p: number): Label[] {
   if (p === 6) return [{ ...frontier, sub: "구독과 추가 사용량 · 월 20만원 이상" }, { id: "rentCodex", name: <>₩159,000<small>/월</small></>, sub: "Codex · Pro 플랜", tone: "white", dir: "down", size: "lg" }, { id: "rentClaude", name: <>US$72.77</>, sub: "Claude · 이번 달 추가 사용량 · 한도 US$76", tone: "white", dir: "down", size: "lg" }];
   if (p === 7) return [...stations("ice", false), { ...frontier, sub: "판단하고 지켜봅니다" }, { ...rice, name: "RICE", sub: "일을 나눕니다", tag: "현장 관리자" }];
   if (p === 8) return [];
-  // 22-1 · 기업이었다면(가정). 쉬운 이름을 위에, 기술 이름을 아래에 둔다. at은 핵이 내려앉는 때(world.ts SWAP_AT + SWAP_DUR)다.
+  // 23-1 · 기업이었다면(가정). 쉬운 이름을 위에, 기술 이름을 아래에 둔다. at은 핵이 내려앉는 때(world.ts SWAP_AT + SWAP_DUR)다.
   if (p === 9) return [
     { id: "stMusic", name: "데이터 조회", sub: "Text-to-SQL", tone: "white", dir: "left", at: 1.5 },
     { id: "stAssets", name: "문서 검색", sub: "RAG", tone: "white", dir: "up", at: 1.9 },
@@ -46,12 +49,14 @@ function labelsFor(p: number): Label[] {
     { ...frontier, sub: "판단하고 지켜봅니다" },
     { ...rice, name: "관리자 Agent", sub: "엔진에 일을 나눕니다", tag: "현장 관리자" },
   ];
-  // 22-2 · 통제된 문(구상). 정책 라벨은 창살이 다 내려온 뒤(world.ts, 1.5초)에 선다.
+  // 23-2 · 통제된 문(구상). 정책 라벨은 창살이 다 내려온 뒤(world.ts, 1.5초)에 선다.
   if (p === 10) return [
     { ...frontier, name: "Claude · GPT", sub: "직원이 쓰던 그대로" },
     { id: "policy", name: "회사 정책을 거는 문", sub: "데이터는 밖으로 나가지 않습니다", tone: "gold", tag: "구상", dir: "right", at: 1.3 },
   ];
-  // 22-3 · 저는 개인이라: 제 스테이션으로 돌아온다
+  // 23-3 · 이미 쓰는 곳. 문 라벨에 클라우드 경유를 붙이고, 숫자는 왼쪽 DOM이 맡는다.
+  if (p === 11) return [{ ...frontier, name: "Claude Code · Codex", sub: "AWS 같은 회사 클라우드로도 씁니다" }];
+  // 23-4 · 저는 개인이라: 제 스테이션으로 돌아온다
   return [...stations("gold", false), { ...frontier, sub: "판단하고 지켜봅니다" }, { ...rice, name: "RICE", sub: "일을 나눕니다", tag: "현장 관리자" }];
 }
 const ALL_IDS: AnchorId[] = ["me", "crowd", "os", "factory", "out", "redo", "stVoice", "stStt", "stAssets", "stMusic", "rice", "frontier", "rentCodex", "rentClaude", "policy"];
@@ -73,12 +78,31 @@ const FACTORY_HEAD: { kicker: string; title: ReactNode; lead: ReactNode }[] = [
   { kicker: "디지털 월세", title: <>비싼 지능은<br/>판단에만 빌려 씁니다</>, lead: <>만드는 데만 이만큼 나갑니다.<br/>모든 일을 임원에게 시키면 토큰이 남아나지 않습니다.</> },
   { kicker: "그래서 공장입니다", title: <>각자<br/>자기 일만 합니다</>, lead: <>임원은 판단하고, 관리자는 나누고, 스테이션은 만듭니다.<br/>새 일이 생기면 스테이션을 하나 더 들이면 됩니다.</> },
 ];
-/** 22번의 답 세 단계: 기업이었다면(phase 9) → 통제된 문(phase 10) → 저는 개인이라(phase 11) */
-const ANSWER_HEAD: { kicker: string; title: ReactNode; lead: ReactNode }[] = [
-  { kicker: "맞습니다. 저 한 명에게 맞췄습니다", title: <>기업이었다면<br/>스테이션이 달랐을 겁니다</>, lead: <>쓰는 사람이 바뀌면 들어가는 엔진이 바뀝니다.<br/>임원 · 관리자 · 스테이션의 구조는 그대로입니다.</> },
-  { kicker: "내부 에이전트는 안 씁니다", title: <>데이터가 빠져나가지 않는<br/>통제된 문</>, lead: <>직원은 Claude · GPT를 쓰던 그대로 쓰고,<br/>회사는 토큰까지 아낍니다.</> },
-  { kicker: "저는 개인이라", title: <>제가 쓸 것을<br/>넣었습니다</>, lead: <>스테이션은 갈아 끼우면 됩니다.<br/>남는 것은 공장입니다.</> },
-];
+/** 23번의 답: 기업이었다면(phase 9) → 통제된 문(phase 10) → 이미 쓰는 곳(phase 11, 숫자는 OrgCount) → 저는 개인이라(phase 12) */
+const ANSWER_HEAD: Record<number, { kicker: string; title: ReactNode; lead: ReactNode }> = {
+  9: { kicker: "맞습니다. 저 한 명에게 맞췄습니다", title: <>기업이었다면<br/>스테이션이 달랐을 겁니다</>, lead: <>쓰는 사람이 바뀌면 들어가는 엔진이 바뀝니다.<br/>임원 · 관리자 · 스테이션의 구조는 그대로입니다.</> },
+  10: { kicker: "내부 에이전트는 안 씁니다", title: <>데이터가 빠져나가지 않는<br/>통제된 문</>, lead: <>직원은 Claude · GPT를 쓰던 그대로 쓰고,<br/>회사는 토큰까지 아낍니다.</> },
+  11: { kicker: "하지만 · Anthropic 상장 공시", title: <>Claude에 1년 동안<br/>10만 달러 넘게 쓰는 곳</>, lead: <>점 하나가 한 곳입니다.</> },
+  12: { kicker: "저는 개인이라", title: <>제가 쓸 것을<br/>넣었습니다</>, lead: <>스테이션은 갈아 끼우면 됩니다.<br/>남는 것은 공장입니다.</> },
+};
+const SEC_S1 = "https://www.sec.gov/Archives/edgar/data/2130357/000162828026068676/anthropicpbc-sx1ax1.htm";
+const ease = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
+
+/** 23-3의 숫자. 앞 단계에서 넘어오면 3D 점과 같은 시간표(orgs.ts)로 950에서 11,900까지 오른다. 뒤로 오거나 모션을 끄면 바로 11,900이다. */
+function useOrgCount(phase: number, motion: boolean) {
+  const [n, setN] = useState(ORGS_NOW);
+  const prev = useRef(phase);
+  useEffect(() => {
+    const forward = prev.current === phase - 1; prev.current = phase;
+    if (phase !== 11 || !motion || !forward) { setN(ORGS_NOW); return; }
+    let raf = 0;
+    const t0 = performance.now();
+    const tick = (now: number) => { const t = Math.min(1, Math.max(0, ((now - t0) / 1000 - ORG_NOW_AT) / ORG_NOW_DUR)); setN(Math.round(ORGS_THEN + (ORGS_NOW - ORGS_THEN) * ease(t))); if (t < 1) raf = requestAnimationFrame(tick); };
+    setN(ORGS_THEN); raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [phase, motion]);
+  return n;
+}
 
 export default function OneUserStory({ part, step }: { part: 0 | 1 | 2 | 3; step: number }) {
   const phase = part === 0 ? [0, 0, 1][step] : [0, 2, 5, 8][part] + step;
@@ -90,6 +114,7 @@ export default function OneUserStory({ part, step }: { part: 0 | 1 | 2 | 3; step
   const motion = usePerformanceMotion();
   const motionRef = useRef(motion); motionRef.current = motion;
   const phaseRef = useRef(phase); phaseRef.current = phase;
+  const orgCount = useOrgCount(phase, motion);
 
   useEffect(() => {
     const canvas = canvasRef.current!;
@@ -189,17 +214,22 @@ export default function OneUserStory({ part, step }: { part: 0 | 1 | 2 | 3; step
     </>}
     {part === 3 && <>
       <blockquote className="ob-question" data-on={phase === 8 || undefined} data-small={phase >= 9 || undefined}>“결국 영상 만드는 거 아닌가요?”</blockquote>
-      {phase >= 9 && <div className="ou-heading of-heading ob-heading" data-on key={`h${phase}`}>
-        <p className="pv-eyebrow">{ANSWER_HEAD[phase - 9].kicker}</p>
-        <h1>{ANSWER_HEAD[phase - 9].title}</h1>
-        <p className="of-lead">{ANSWER_HEAD[phase - 9].lead}</p>
+      {phase >= 9 && <div className={`ou-heading of-heading ob-heading${phase === 11 ? " ob-orgs" : ""}`} data-on key={`h${phase}`}>
+        <p className="pv-eyebrow">{ANSWER_HEAD[phase].kicker}</p>
+        <h1>{ANSWER_HEAD[phase].title}</h1>
+        {phase === 11 && <div className="ob-orgs__count" aria-label="2025년 9월 950곳 이상, 2026년 9월 11,900곳 이상">
+          <div className="is-then"><span>2025.09</span><b>{ORGS_THEN.toLocaleString("en-US")}<small>곳+</small></b></div>
+          <div className="is-now"><span>2026.09</span><b>{orgCount.toLocaleString("en-US")}<small>곳+</small></b></div>
+        </div>}
+        <p className="of-lead">{ANSWER_HEAD[phase].lead}</p>
       </div>}
+      {phase === 11 && <a className="ob-orgs__source" href={SEC_S1} target="_blank" rel="noreferrer">Anthropic S-1/A · SEC · 2026.11.02 · 각 시점 직전 12개월 기준 ↗</a>}
       <p className="of-note ob-note" data-on={phase === 9 || undefined}>스테이션만 다른 <b>Compound AI System</b>입니다<span>모델 하나가 아니라, 일마다 맞춘 엔진이 나눠 맡습니다</span></p>
-      <p className="ob-next" data-on={phase === 11 || undefined}>그래서 먼저 만든 스테이션들의 결과물입니다 <b aria-hidden="true">→</b></p>
+      <p className="ob-next" data-on={phase === 12 || undefined}>그래서 먼저 만든 스테이션들의 결과물입니다 <b aria-hidden="true">→</b></p>
     </>}
     {failed && part < 2 && <div className="ou-fallback">{part === 0 ? <b>1명</b> : <b>Agent OS → Factory → 저</b>}</div>}
     {failed && part === 2 && phase !== 6 && <ul className="ob-fallback">{STATIONS.map((st) => <li key={st.id}>{st.name}<span>{st.model}</span></li>)}</ul>}
     {failed && part === 2 && phase === 6 && <ul className="ob-fallback"><li>₩159,000/월<span>Codex · Pro 플랜</span></li><li>US$72.77<span>Claude · 이번 달 추가 사용량 · 한도 US$76</span></li></ul>}
-    {failed && phase >= 9 && <ul className="ob-fallback ob-fallback--answer">{labelsFor(phase).filter((l) => l.id !== "frontier").map((l) => <li key={l.id}>{l.name}<span>{l.sub}</span></li>)}</ul>}
+    {failed && phase >= 9 && phase !== 11 && <ul className="ob-fallback ob-fallback--answer">{labelsFor(phase).filter((l) => l.id !== "frontier").map((l) => <li key={l.id}>{l.name}<span>{l.sub}</span></li>)}</ul>}
   </Frame>;
 }

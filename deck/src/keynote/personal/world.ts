@@ -1,5 +1,6 @@
 import * as THREE from "three";
 import { FONT, GLSL_SAFE, PhaseClock, canvasTexture, clamp01, createStage, easeInOut, easeOut, fitShot, rand, roundRect, smooth, type Pose, type Shot } from "../stage3d/runtime";
+import { ORGS_NOW, ORGS_THEN, ORG_NOW_AT, ORG_NOW_DUR, ORG_THEN_AT, ORG_THEN_DUR } from "./orgs";
 
 /*
  * 17~20번 · 사용자는 저 한 명, 그 한 사람을 둘러싼 흐름, 그리고 Factory 안.
@@ -17,11 +18,13 @@ import { FONT, GLSL_SAFE, PhaseClock, canvasTexture, clamp01, createStage, easeI
  *          받아쓰기 스테이션은 그대로 회의 정리가 되고, 목소리 자리는 비어 "다음 업무"가 된다. 기업용 엔진은 발표자의 가정이다.
  *  10  (22) 통제된 문(구상): 문(임원) 바깥에 금색 틀이 서고 창살이 내려온다. 아래에서 오르는 데이터는 창살 앞에서 멈추고,
  *          위의 판단(흰 빛)은 그대로 내려온다. 직원은 Claude · GPT를 쓰고 데이터는 밖으로 나가지 않는다.
- *  11  (22) 저는 개인이라: 핵이 제 것으로 돌아온다(21-2와 같은 구도). 다음 장부터 그 결과물을 본다.
+ *  11  (22) 이미 쓰는 곳: 통제된 문에서 조금 물러나면 문 뒤의 어둠에 점이 켜진다. 점 하나가 Claude에 1년 10만 달러 넘게 쓰는 한 곳이다.
+ *          2025.09의 950곳(금색)이 먼저 켜지고 2026.09의 11,900곳까지 채워진다(Anthropic S-1/A, 점의 개수는 공시의 하한과 같다).
+ *  12  (22) 저는 개인이라: 핵이 제 것으로 돌아온다(21-2와 같은 구도). 다음 장부터 그 결과물을 본다.
  * Agent OS, 전체 연결, RICE가 엔진에 일을 나누고 프론티어가 지켜보는 흐름은 구상이다. 스테이션(엔진)들은 따로 가동 중이다(대본·화면에 표시).
  */
 
-export const PHASES = 12;
+export const PHASES = 13;
 const ICE = new THREE.Color("#8fd0ff");
 const GOLD = new THREE.Color("#ffd49a");
 const WHITE = new THREE.Color("#eef5ff");
@@ -86,6 +89,8 @@ const SHOTS: Shot[] = [
   { az: 0, el: 34, rect: [560, 380, 1840, 880], points: wide },
   { az: IN_AZ, el: 13, rect: [520, 230, 1800, 930], points: () => [...stations(), ...riceBox(), ...doorCorners()] },
   { az: IN_AZ + 3, el: 12, rect: [840, 130, 1800, 990], points: () => [...quadCorners(DOOR, POLICY_W, POLICY_H), DOOR.clone().setY(DOOR.y + POLICY_H / 2 + 1.1), ...riceBox(), ...stations()] },
+  // 23-3 · 문에서 조금 물러나 낮게 본다. 문 뒤의 어둠(점이 켜질 곳)이 넓게 보인다.
+  { az: IN_AZ + 3, el: 6, rect: [980, 250, 1720, 960], points: () => [...quadCorners(DOOR, POLICY_W, POLICY_H), DOOR.clone().setY(DOOR.y + POLICY_H / 2 + 1.1), ...riceBox(), ...stations()] },
   { az: IN_AZ - 6, el: 21, rect: [420, 250, 1820, 940], points: () => [...stations(), ...riceBox(), ...doorCorners()] },
 ];
 
@@ -373,6 +378,36 @@ export function createOneUserWorld(canvas: HTMLCanvasElement, images: OneUserIma
   const claudeR = receipt(images.claude, CLAUDE_W, CLAUDE_H, CLAUDE_AT, -0.1);
 
   /* 요청의 빛 */
+  /* 23-3 · 이미 쓰는 곳: 문 뒤의 어둠에 흩어진 점. 앞의 950개(금색)가 2025.09, 전체 11,900개가 2026.09다. */
+  const orgGeo = new THREE.BufferGeometry();
+  {
+    const r = rand(77), pos = new Float32Array(ORGS_NOW * 3), seed = new Float32Array(ORGS_NOW), rank = new Float32Array(ORGS_NOW), v = new THREE.Vector3();
+    for (let i = 0; i < ORGS_NOW; i++) {
+      // 문 뒤에 모이고 가장자리로 갈수록 옅어진다(세 난수의 합). 왼쪽의 글자 뒤는 비워 둔다.
+      const f = 5 + r() * 14, g = () => (r() + r() + r() - 1.5) / 1.5;
+      v.copy(DOOR).addScaledVector(IN_F, f).addScaledVector(IN_R, g() * (6 + f * 0.75)).setY(DOOR.y + 0.8 + g() * (4 + f * 0.3));
+      pos.set([v.x, v.y, v.z], i * 3); seed[i] = r(); rank[i] = i;
+    }
+    orgGeo.setAttribute("position", new THREE.BufferAttribute(pos, 3)); orgGeo.setAttribute("aSeed", new THREE.BufferAttribute(seed, 1)); orgGeo.setAttribute("aRank", new THREE.BufferAttribute(rank, 1));
+  }
+  const orgMat = new THREE.ShaderMaterial({
+    uniforms: { uCount: { value: 0 }, uAlpha: { value: 0 }, uTime: { value: 0 } },
+    vertexShader: `attribute float aSeed; attribute float aRank; uniform float uCount,uTime; varying float vA; varying float vThen;
+      void main(){ float then=step(aRank,${ORGS_THEN - 0.5}); vThen=then;
+        // 켜질 차례가 된 점만 보인다. 950곳은 하나하나, 나머지는 물결처럼 켜진다.
+        float on=clamp((uCount-aRank)/mix(320.,24.,then),0.,1.);
+        vA=on*(.72+.28*sin(uTime*1.2+aSeed*40.));
+        vec4 mv=modelViewMatrix*vec4(position,1.);
+        gl_PointSize=(1.3+aSeed*1.1+then*1.2)*(30./-mv.z)*(.5+.5*on);
+        gl_Position=projectionMatrix*mv; }`,
+    fragmentShader: `${GLSL_SAFE}uniform float uAlpha; varying float vA; varying float vThen;
+      void main(){ float d=length(gl_PointCoord-.5); float a=sstep(.5,.0,d);
+        vec3 c=mix(vec3(.6,.82,1.),vec3(1.,.83,.55)*1.3,vThen);
+        gl_FragColor=vec4(c*a*vA*uAlpha,1.); }`,
+    transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
+  });
+  const orgs = new THREE.Points(orgGeo, orgMat); orgs.frustumCulled = false; orgs.visible = false; scene.add(orgs);
+
   const packets = Array.from({ length: 4 }, () => { const s = glowSprite(ICE.clone().multiplyScalar(2.4), 0.8); scene.add(s); return s; });
 
   /* 결과: 실제 IBM Bob 데모 영상 화면 */
@@ -513,19 +548,19 @@ export function createOneUserWorld(canvas: HTMLCanvasElement, images: OneUserIma
     const req = p === 5 ? requests(pc.motion ? (t < 999 ? t - REQ_START : time) : null) : null;
     if (!req) packets.forEach((pk) => { pk.material.opacity = 0; });
     // 22-1에서 핵이 바뀌고(0 → 1), 22-2에서는 바뀐 채로 있다가, 22-3에서 제 것으로 돌아온다(1 → 0). 받아쓰기 스테이션은 바뀌지 않는다.
-    const swapOf = (st: number) => (st === STT_ST ? 0 : p === 9 ? easeInOut(ev(SWAP_AT[st], SWAP_DUR)) : p === 10 ? 1 : p === 11 ? 1 - easeInOut(ev(BACK_AT + st * 0.12, BACK_DUR)) : 0);
-    const corp = follow("corp", p === 9 || p === 10 ? 1 : 0, dt, 3);
+    const swapOf = (st: number) => (st === STT_ST ? 0 : p === 9 ? easeInOut(ev(SWAP_AT[st], SWAP_DUR)) : p === 10 || p === 11 ? 1 : p === 12 ? 1 - easeInOut(ev(BACK_AT + st * 0.12, BACK_DUR)) : 0);
+    const corp = follow("corp", p >= 9 && p <= 11 ? 1 : 0, dt, 3);
     const tintC = new THREE.Color();
     const tint = (st: number) => tintC.copy(ICE).lerp(AMBER, follow(`fail${st}`, req?.fail[st] ?? 0, dt, 12)).lerp(WHITE, follow(`taken${st}`, req?.taken[st] ?? 0, dt, 6) * 0.8).lerp(WHITE, corp * 0.45);
     const stationLevel = (st: number, i: number) => {
       if (p < 5) return -1; // 18번까지의 엔진 규칙을 쓴다
       if (p === 5) return 0.05 + 0.95 * (req?.act[st] ?? 0);
       if (p === 6) return 0.06;
-      if (p === 7 || p === 11) return 0.62 + 0.38 * (pc.motion ? 0.5 + 0.5 * Math.sin(time * 1.5 + i * 1.3) : 1);
+      if (p === 7 || p === 12) return 0.62 + 0.38 * (pc.motion ? 0.5 + 0.5 * Math.sin(time * 1.5 + i * 1.3) : 1);
       // 기업이었다면: 새 핵이 든 스테이션과 회의 정리가 켜지고, 비워 둔 목소리 자리는 꺼진다
       if (p === 9) return st === VOICE_ST ? 0.5 - 0.44 * swapOf(st) : 0.5 + 0.42 * (st === STT_ST ? ev(SWAP_AT[st], SWAP_DUR) : swapOf(st));
       // 통제된 문: 스테이션은 기업의 것 그대로, 문이 앞서도록 조금 낮춘다
-      if (p === 10) return st === VOICE_ST ? 0.06 : 0.55;
+      if (p === 10 || p === 11) return st === VOICE_ST ? 0.06 : 0.55;
       return 0.45;
     };
     engines.forEach((e, i) => {
@@ -608,14 +643,14 @@ export function createOneUserWorld(canvas: HTMLCanvasElement, images: OneUserIma
     // 프론티어 문
     const doorIn = p === 5 ? easeOut(ev(1.3, 1.8)) : p > 5 ? 1 : 0;
     door.position.copy(DOOR).setY(DOOR.y + (1 - doorIn) * 1.6 + (pc.motion ? Math.sin(time * 0.6) * 0.05 : 0)); door.visible = doorIn > 0.001;
-    const doorLit = follow("door", p === 5 ? 0.7 : p === 6 || p === 10 ? 1 : p === 7 ? 0.6 : 0.8, dt, 3) * doorIn;
+    const doorLit = follow("door", p === 5 ? 0.7 : p === 6 || p === 10 || p === 11 ? 1 : p === 7 ? 0.6 : 0.8, dt, 3) * doorIn;
     doorFillMat.uniforms.uLit.value = doorLit; doorFillMat.uniforms.uFlare.value = req?.flare ?? 0; doorFillMat.uniforms.uTime.value = time;
     doorFrameMat.opacity = Math.min(1, doorIn * (0.45 + 0.35 * doorLit + (req?.flare ?? 0)));
     (doorGlow.material as THREE.SpriteMaterial).opacity = doorIn * (0.1 + 0.18 * doorLit + 0.55 * (req?.flare ?? 0));
 
     // 22-2 · 통제된 문: 틀이 서고 창살이 내려온다. 아래(RICE)에서 오르는 금색 데이터는 틀 아랫변에서 멈추고, 문의 흰 빛(판단)은 그대로 내려온다.
     // 모션을 끄면 창살이 다 내려오고 데이터 하나가 멈춘 자리에 선 장면이다.
-    const polA = follow("policy", p === 10 ? 1 : 0, dt, 4), polDraw = p === 10 ? easeOut(ev(0.3, 0.8)) : 1;
+    const polA = follow("policy", p === 10 || p === 11 ? 1 : 0, dt, 4), polDraw = p === 10 ? easeOut(ev(0.3, 0.8)) : 1;
     policy.visible = polA > 0.001; policy.scale.setScalar(1 + 0.18 * (1 - polDraw));
     policyFrameMat.opacity = polA * polDraw;
     gateMat.uniforms.uLit.value = polA; gateMat.uniforms.uDraw.value = p === 10 ? easeOut(ev(0.6, 0.9)) : 1;
@@ -634,6 +669,12 @@ export function createOneUserWorld(canvas: HTMLCanvasElement, images: OneUserIma
       }
     }
     gateMat.uniforms.uHit.value = polHit * polA;
+
+    // 23-3 · 이미 쓰는 곳: 950곳이 먼저, 이어서 11,900곳까지. 뒤로 오거나 모션을 끄면 다 켜진 채다.
+    const orgA = follow("orgs", p === 11 ? 1 : 0, dt, p === 11 ? 20 : 3);
+    orgMat.uniforms.uAlpha.value = orgA; orgMat.uniforms.uTime.value = time;
+    orgMat.uniforms.uCount.value = p === 11 ? ORGS_THEN * easeOut(ev(ORG_THEN_AT, ORG_THEN_DUR)) + (ORGS_NOW - ORGS_THEN) * easeInOut(ev(ORG_NOW_AT, ORG_NOW_DUR)) + 0.5 : ORGS_NOW;
+    orgs.visible = orgA > 0.001;
     stopGlow.material.opacity = polHit * polA * 0.9; stopGlow.scale.setScalar(0.7 + polHit * 0.9); stopGlow.visible = polHit * polA > 0.001;
     block.visible = blockT >= 0 && blockT < 0.9;
     if (block.visible) { block.position.copy(stopGlow.position); block.quaternion.copy(camera.quaternion); block.scale.setScalar(1 + blockT * 3.2); blockMat.opacity = (1 - blockT / 0.9) * 0.85 * polA; }
@@ -689,7 +730,7 @@ export function createOneUserWorld(canvas: HTMLCanvasElement, images: OneUserIma
       const forward = pc.go(next);
       cam.from.copy(camera.position); cam.fromLook.copy(lookNow);
       cam.eye.set(...POSES[next].eye); cam.look.set(...POSES[next].look); cam.t0 = pc.clock;
-      cam.dur = forward ? (next === 2 ? 2.8 : next === 5 ? 3.0 : next === 8 ? 2.6 : next === 9 || next === 10 ? 1.8 : next === 11 ? 1.6 : 2.0) : 1.4;
+      cam.dur = forward ? (next === 2 ? 2.8 : next === 5 ? 3.0 : next === 8 ? 2.6 : next === 9 || next === 10 ? 1.8 : next === 11 ? 2.2 : next === 12 ? 1.6 : 2.0) : 1.4;
       stage.kick();
     },
     setMotion(on) { pc.setMotion(on); if (!on) { cam.t0 = -1e6; cam.from.copy(cam.eye); cam.fromLook.copy(cam.look); } stage.kick(); },

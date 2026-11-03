@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import { AUTO, LAYOUT, SHARES } from "./layout";
+import { AUTO, LAYOUT, SHARES, SHARES_NOW } from "./layout";
 import { FONT, GLSL_SAFE, PhaseClock, canvasTexture, createStage, easeInOut, easeOut, pixelCamera, rand, roundRect, smooth, toWorld } from "../stage3d/runtime";
 
 /*
@@ -8,11 +8,13 @@ import { FONT, GLSL_SAFE, PhaseClock, canvasTexture, createStage, easeInOut, eas
  *      흐름이 멈추면 점들이 떠올라 숫자 53%와 47%, 그 아래 비율 막대가 된다.
  *   1  숫자가 풀려 막대로 내려앉고, 막대가 두꺼워지며 봇 53이 그 밖의 봇 49 · AI 봇 등 4로 나뉜다.
  *      AI 봇 등만 밝게 남는다. 제목과 설명은 DOM이 맡는다.
+ *   2  가정 시나리오. 같은 막대의 칸 경계가 55 · 10 · 35로 옮겨 간다. 사람 칸 왼쪽 끝의 점들이 봇 색으로 바뀌어
+ *      그 밖의 봇과 AI 칸에 붙고, AI 칸은 넓어지며 가정이라 조금 흐릿하게 일렁인다.
  * 카메라는 z=0 평면의 1단위가 화면 1px이 되도록 고정한다(2~3번과 같다). DOM과 3D가 같은 좌표를 쓴다.
- * 점의 개수는 비중과 정확히 같다(Cloudflare 2025.12.02 HTML 요청, FACT-CHECK.md).
+ * 점의 개수는 비중과 정확히 같다(0·1 Cloudflare 2025.12.02 HTML 요청, 2 가정 시나리오, FACT-CHECK.md).
  */
 
-export const PHASES = 2;
+export const PHASES = 3;
 const N = 16000;
 
 const ICE = new THREE.Color("#8fd0ff");
@@ -119,12 +121,12 @@ export function createBotsWorld(canvas: HTMLCanvasElement, glyphs: { auto: [numb
   /* 요청 ------------------------------------------------------------------- */
   // 길은 두 토막이다. 출발점 → 관측 지점(진행도 KG) → 페이지. 관측 지점을 지나면 봇은 위로, 사람은 아래로 갈라진다.
   const KG = 0.5, TAILS = 3;
-  const base = { from: new Float32Array(N * 3), ca: new Float32Array(N * 3), gate: new Float32Array(N * 3), cb: new Float32Array(N * 3), end: new Float32Array(N * 3), num: new Float32Array(N * 3), slab: new Float32Array(N * 3), meta: new Float32Array(N * 4) };
+  const base = { from: new Float32Array(N * 3), ca: new Float32Array(N * 3), gate: new Float32Array(N * 3), cb: new Float32Array(N * 3), end: new Float32Array(N * 3), num: new Float32Array(N * 3), slab: new Float32Array(N * 3), slab2: new Float32Array(N * 3), cls2: new Float32Array(N), meta: new Float32Array(N * 4) };
   {
     const r = rand(61), v = new THREE.Vector3(), n = new THREE.Vector3(0, 0, 1).applyQuaternion(gateGroup.quaternion);
     const bounds = [SHARES[0], AUTO].map((s) => Math.round(N * s / 100));
     let ia = 0, ih = 0;
-    const barFrac = 0.22;
+    const barFrac = 0.22, slabX = new Float32Array(N);
     for (let i = 0; i < N; i++) {
       const cls = i < bounds[0] ? 0 : i < bounds[1] ? 1 : 2, human = cls === 2, sd = r();
       // 출발: 화면 왼쪽 바깥, 넓게
@@ -150,7 +152,28 @@ export function createBotsWorld(canvas: HTMLCanvasElement, glyphs: { auto: [numb
       const tw = toWorld(tx, ty); base.num.set([tw.x, tw.y, (r() - .5) * 14], i * 3);
       // 1단계: 두꺼운 막대의 제 칸
       const S = LAYOUT.slab.segments[cls];
-      const sw = toWorld(S.x0 + r() * (S.x1 - S.x0), LAYOUT.slab.y + r() * LAYOUT.slab.h); base.slab.set([sw.x, sw.y, (r() - .5) * 90], i * 3);
+      slabX[i] = S.x0 + r() * (S.x1 - S.x0);
+      const sw = toWorld(slabX[i], LAYOUT.slab.y + r() * LAYOUT.slab.h); base.slab.set([sw.x, sw.y, (r() - .5) * 90], i * 3);
+    }
+    // 2단계: 칸 경계만 옮긴다. 사람 칸 왼쪽 끝의 점부터 차례로 그 밖의 봇 · AI 칸으로 넘어가고, 나머지는 제 칸 안에서 늘어나거나 그대로 있다.
+    // 넘어가는 개수는 비중의 차이와 같아서 2단계의 점 개수도 55 · 10 · 35와 정확히 같다.
+    const [S0, S1, S2] = LAYOUT.slab.segments, [T0, T1, T2] = LAYOUT.slab.now;
+    const remap = (x: number, a0: number, a1: number, b0: number, b1: number) => b0 + (x - a0) / Math.max(1e-6, a1 - a0) * (b1 - b0);
+    const humans = Array.from({ length: N - bounds[1] }, (_, k) => bounds[1] + k).sort((a, b) => slabX[a] - slabX[b]);
+    const toBot = Math.round(N * (SHARES_NOW[0] - SHARES[0]) / 100), toAgent = Math.round(N * (SHARES_NOW[1] - SHARES[1]) / 100);
+    const span = (from: number, to: number) => [slabX[humans[from]], slabX[humans[to - 1]]] as const;
+    const [b0, b1] = span(0, toBot), [g0, g1] = span(toBot, toBot + toAgent), [h0] = span(toBot + toAgent, humans.length);
+    const rank = new Int32Array(N).fill(-1); humans.forEach((i, k) => { rank[i] = k; });
+    for (let i = 0; i < N; i++) {
+      const x = slabX[i], k = rank[i];
+      let cls2: number, x2: number;
+      if (i < bounds[0]) { cls2 = 0; x2 = x; }
+      else if (i < bounds[1]) { cls2 = 1; x2 = remap(x, S1.x0, S1.x1, T1.x0, T1.x1); }
+      else if (k < toBot) { cls2 = 0; x2 = remap(x, b0, b1, S0.x1, T0.x1); }
+      else if (k < toBot + toAgent) { cls2 = 1; x2 = remap(x, g0, g1, T1.x0, T1.x1); }
+      else { cls2 = 2; x2 = remap(x, h0, S2.x1, T2.x0, T2.x1); }
+      base.cls2[i] = cls2;
+      base.slab2.set([base.slab[i * 3] + x2 - x, base.slab[i * 3 + 1], base.slab[i * 3 + 2]], i * 3);
     }
   }
   // 움직임이 보이도록 흐르는 동안만 점 뒤에 꼬리 두 개를 붙인다. 숫자가 되면 꼬리는 머리 안으로 사라진다.
@@ -160,23 +183,25 @@ export function createBotsWorld(canvas: HTMLCanvasElement, glyphs: { auto: [numb
     geo.setAttribute("position", rep(base.num, 3));
     geo.setAttribute("aFrom", rep(base.from, 3)); geo.setAttribute("aCa", rep(base.ca, 3)); geo.setAttribute("aGateP", rep(base.gate, 3));
     geo.setAttribute("aCb", rep(base.cb, 3)); geo.setAttribute("aEnd", rep(base.end, 3)); geo.setAttribute("aNum", rep(base.num, 3)); geo.setAttribute("aSlab", rep(base.slab, 3));
+    geo.setAttribute("aSlab2", rep(base.slab2, 3)); geo.setAttribute("aCls2", rep(base.cls2, 1));
     geo.setAttribute("aMeta", rep(base.meta, 4));
     const tail = new Float32Array(N * TAILS); for (let j = 0; j < TAILS; j++) tail.fill(j, j * N, (j + 1) * N);
     geo.setAttribute("aTail", new THREE.BufferAttribute(tail, 1));
   }
   const mat = new THREE.ShaderMaterial({
     uniforms: {
-      uFlow: { value: 0 }, uReveal: { value: 0 }, uGate: { value: 0 }, uGather: { value: 0 }, uSlab: { value: 0 }, uFocus: { value: 0 }, uTime: { value: 0 }, uD: { value: camD },
+      uFlow: { value: 0 }, uReveal: { value: 0 }, uGate: { value: 0 }, uGather: { value: 0 }, uSlab: { value: 0 }, uFocus: { value: 0 }, uShift: { value: 0 }, uTime: { value: 0 }, uD: { value: camD },
       uNeutral: { value: NEUTRAL.clone() }, uIce: { value: ICE.clone() }, uGold: { value: GOLD.clone() },
       uSteel: { value: new THREE.Color("#5e86a6") }, uAgent: { value: new THREE.Color("#e6f6ff") },
     },
     vertexShader: `${GLSL_SAFE}
-      attribute vec3 aFrom; attribute vec3 aCa; attribute vec3 aGateP; attribute vec3 aCb; attribute vec3 aEnd; attribute vec3 aNum; attribute vec3 aSlab;
-      attribute vec4 aMeta; attribute float aTail;
-      uniform float uFlow,uReveal,uGate,uGather,uSlab,uFocus,uTime,uD;
+      attribute vec3 aFrom; attribute vec3 aCa; attribute vec3 aGateP; attribute vec3 aCb; attribute vec3 aEnd; attribute vec3 aNum; attribute vec3 aSlab; attribute vec3 aSlab2;
+      attribute vec4 aMeta; attribute float aTail; attribute float aCls2;
+      uniform float uFlow,uReveal,uGate,uGather,uSlab,uFocus,uShift,uTime,uD;
       uniform vec3 uNeutral,uIce,uGold,uSteel,uAgent;
       varying vec3 vC; varying float vA;
       vec3 bz(vec3 a,vec3 b,vec3 c,float t){ return mix(mix(a,b,t),mix(b,c,t),t); }
+      vec3 segCol(float c){ return c<.5?uSteel:c<1.5?uAgent:uGold; }
       void main(){
         float cls=aMeta.x, seed=aMeta.y, dur=aMeta.z;
         float human=step(1.5,cls), agent=step(.5,cls)*(1.-human);
@@ -199,18 +224,28 @@ export function createBotsWorld(canvas: HTMLCanvasElement, glyphs: { auto: [numb
         float s=clamp(uSlab*1.5-r2*.5,0.,1.); s=s*s*(3.-2.*s);
         vec3 mid2=mix(aNum,aSlab,.5)+vec3(0.,0.,160.+r2*200.);
         p=mix(mix(p,mid2,s),mix(mid2,aSlab,s),s);
-        float live=g*(1.-s)+s*(1.+agent*uFocus*2.);
+        // 2단계: 칸 경계가 옮겨 간다. 멀리 가는 점일수록 앞으로 조금 떠올랐다 내려앉고, 가는 길 중간에 새 칸의 색이 된다.
+        float r3=fract(seed*3.71);
+        float sh=clamp(uShift*1.4-r3*.4,0.,1.); sh=sh*sh*(3.-2.*sh);
+        vec3 mid3=mix(aSlab,aSlab2,.5)+vec3(0.,0.,min(260.,length(aSlab2.xy-aSlab.xy)*1.4));
+        p+=mix(mix(aSlab,mid3,sh),mix(mid3,aSlab2,sh),sh)-aSlab;
+        float turn=sstep(.3,.7,sh);
+        float agent2=step(.5,aCls2)*(1.-step(1.5,aCls2));
+        float agentF=mix(agent,agent2,turn), guess=agent2*turn;
+        float live=g*(1.-s)+s*(1.+agentF*uFocus*2.+guess*1.6);
         p+=vec3(sin(uTime*1.1+seed*37.),cos(uTime*.9+seed*23.),sin(uTime*.7+seed*11.)*4.)*1.3*live;
-        vec3 seg=cls<.5?uSteel:cls<1.5?uAgent:uGold;
+        vec3 seg=mix(segCol(cls),segCol(aCls2),turn);
         float tw=.8+.3*sin(uTime*3.1+seed*60.);
-        seg*=mix(1.,mix(.42,.95*tw,agent),uFocus);
+        seg*=mix(1.,mix(.42,.95*tw,agentF),uFocus);
+        // 가정인 AI 칸은 조금 더 깜빡인다.
+        seg*=1.-guess*.32*(.5+.5*sin(uTime*1.7+seed*91.));
         vec3 c=mix(cFlow,col*1.15,g);
         c=mix(c,seg,s);
         vC=c;
         // 꼬리는 숫자가 되면서 사라진다
         vA=mix(aFlow,aTail<.5?1.:0.,g);
         vec4 mv=modelViewMatrix*vec4(p,1.);
-        gl_PointSize=(1.7+seed*1.2+g*.8+agent*uFocus*.5)*(uD/-mv.z);
+        gl_PointSize=(1.7+seed*1.2+g*.8+agentF*uFocus*.5)*(uD/-mv.z);
         gl_Position=projectionMatrix*mv;
       }`,
     fragmentShader: `${GLSL_SAFE}varying vec3 vC; varying float vA;
@@ -222,11 +257,13 @@ export function createBotsWorld(canvas: HTMLCanvasElement, glyphs: { auto: [numb
   // 숫자 아래의 빛 웅덩이, AI 봇 칸 뒤의 빛
   const pool = (color: string, w: number, h: number, x: number, y: number) => {
     const m = new THREE.MeshBasicMaterial({ map: glow, color: new THREE.Color(color), transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending });
-    const mesh = new THREE.Mesh(new THREE.PlaneGeometry(w, h), m); mesh.position.copy(toWorld(x, y)).setZ(-140); scene.add(mesh); return m;
+    const mesh = new THREE.Mesh(new THREE.PlaneGeometry(w, h), m); mesh.position.copy(toWorld(x, y)).setZ(-140); scene.add(mesh); return mesh;
   };
   const autoPool = pool("#3f7fb0", 1100, 560, 330, 560), humanPool = pool("#a8854e", 1000, 560, LAYOUT.num.human.x + 230, 560);
-  const agentSeg = LAYOUT.slab.segments[1];
+  const agentSeg = LAYOUT.slab.segments[1], agentNow = LAYOUT.slab.now[1];
   const agentPool = pool("#9fd6ff", 300, 380, (agentSeg.x0 + agentSeg.x1) / 2, LAYOUT.slab.y + LAYOUT.slab.h / 2);
+  const agentX = [agentPool.position.x, agentPool.position.x + (agentNow.x0 + agentNow.x1 - agentSeg.x0 - agentSeg.x1) / 2];
+  const agentW = (agentNow.x1 - agentNow.x0) / (agentSeg.x1 - agentSeg.x0);
 
   /* 떠다니는 먼지 */
   const dustGeo = new THREE.BufferGeometry();
@@ -243,7 +280,7 @@ export function createBotsWorld(canvas: HTMLCanvasElement, glyphs: { auto: [numb
     const p = pc.phase, t = pc.t, time = pc.clock;
     const u = (s: number, d: number) => pc.ev(s, d);
 
-    let siteA = 0, reveal = 1, gateOn = 0, flash = 0, gather = 1, slab = 0, focus = 0;
+    let siteA = 0, reveal = 1, gateOn = 0, flash = 0, gather = 1, slab = 0, focus = 0, shift = 0;
     if (p === 0) {
       siteA = easeOut(u(0, 0.9)) * (1 - easeInOut(u(T.gather, 1.0)));
       reveal = u(T.reveal, T.revealDur) * 1.08;
@@ -253,10 +290,11 @@ export function createBotsWorld(canvas: HTMLCanvasElement, glyphs: { auto: [numb
       // 흐름은 앞으로 넘겨 들어왔을 때만 흐르고, 숫자가 되기 직전에 멈춘다.
       flow += dt * (1 - smooth(T.slow, T.gather + 0.2, t));
     }
-    if (p >= 1) {
+    if (p === 1) {
       slab = easeInOut(u(0.1, 1.9));
       focus = smooth(1.7, 2.7, t);
     }
+    if (p === 2) { slab = 1; focus = 1; shift = easeInOut(u(0.1, 1.9)); }
 
     pageMat.opacity = siteA * 0.92;
     siteGlowMat.opacity = siteA * 0.22;
@@ -270,11 +308,13 @@ export function createBotsWorld(canvas: HTMLCanvasElement, glyphs: { auto: [numb
 
     const U = mat.uniforms;
     U.uFlow.value = flow; U.uReveal.value = reveal; U.uGate.value = 1; U.uGather.value = gather;
-    U.uSlab.value = slab; U.uFocus.value = focus; U.uTime.value = time;
+    U.uSlab.value = slab; U.uFocus.value = focus; U.uShift.value = shift; U.uTime.value = time;
 
-    autoPool.opacity = 0.22 * smooth(0.55, 1, gather) * (1 - slab);
-    humanPool.opacity = 0.2 * smooth(0.55, 1, gather) * (1 - slab);
-    agentPool.opacity = 0.2 * focus;
+    autoPool.material.opacity = 0.22 * smooth(0.55, 1, gather) * (1 - slab);
+    humanPool.material.opacity = 0.2 * smooth(0.55, 1, gather) * (1 - slab);
+    agentPool.material.opacity = (0.2 + 0.06 * shift) * focus;
+    agentPool.position.x = agentX[0] + (agentX[1] - agentX[0]) * shift;
+    agentPool.scale.x = 1 + (agentW * 0.7 - 1) * shift;
 
     dust.rotation.y = time * 0.004; dust.position.y = Math.sin(time * 0.1) * 12;
   }

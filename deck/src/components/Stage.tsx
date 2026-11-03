@@ -4,7 +4,7 @@ import { useEffect, useRef, type ReactNode } from "react";
  * 1920×1080 고정 캔버스. 뷰포트에 맞춰 통째로 스케일한다.
  * → 어떤 모니터에서 녹화해도 타이포 크기 비율이 동일하게 유지된다.
  */
-export default function Stage({ children }: { children: ReactNode }) {
+export default function Stage({ children, laserOn = false }: { children: ReactNode; laserOn?: boolean }) {
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -21,7 +21,7 @@ export default function Stage({ children }: { children: ReactNode }) {
 
   return (
     <div className="stage-wrap">
-      <div className="stage" ref={ref}>
+      <div className="stage" data-laser={laserOn} ref={ref}>
         {children}
       </div>
     </div>

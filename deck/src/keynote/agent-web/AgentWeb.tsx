@@ -6,13 +6,14 @@ import "../incident/incident.css";
 import "./agent-web.css";
 
 /*
- * 7~8번은 하나의 공간이다(묶음 agent-web). 7번 두 단계, 8번 세 단계가 순서대로 phase 0~4가 된다.
+ * 7~8번은 하나의 공간이다(묶음 agent-web). 7번 세 단계, 8번 세 단계가 순서대로 phase 0~5가 된다.
  * 3D 공간은 agent-web/world.ts, 제목·설명·출처와 라벨은 여기의 DOM이 맡는다.
  */
 export const AGENT_WEB_SOURCES = {
   webmcp: "https://developer.chrome.com/blog/webmcp-epp",
   aside: "https://aside.com/",
   muse: "https://www.geekwire.com/2026/amazon-blocks-metas-muse-ai-assistant-in-new-standoff-over-agentic-shopping/",
+  walmart: "https://corporate.walmart.com/news/2026/10/Making-It-Possible-for-Agents-to-Shop-on-Behalf-of-Customers",
 };
 
 type Tone = "ice" | "amber" | "gold" | "mute";
@@ -23,28 +24,34 @@ function labelsFor(p: number): Label[] {
     { id: "site", name: "웹사이트", sub: "사람이 보는 화면", tone: "mute", dir: "up" },
   ];
   if (p === 1) return [
+    { id: "door", name: "에이전트 전용 통로", tone: "ice", tag: "계획", dir: "up" },
+    { id: "approve", name: "고객 승인", sub: "구매 전 확인 · 사용 한도", tone: "gold", dir: "right" },
+  ];
+  if (p === 2) return [
     { id: "tools", name: "사이트가 알려주는 기능", sub: "에이전트가 호출한다", tone: "ice", tag: "WEBMCP", dir: "up" },
     { id: "gate", name: "사람인지 확인", tone: "mute", dir: "right" },
   ];
-  if (p === 2) return [
+  if (p === 3) return [
     { id: "bill", name: "광고", sub: "사람의 눈에 띄려는 비용", tone: "amber", dir: "right" },
   ];
-  if (p === 3) return [
+  if (p === 4) return [
     { id: "pick", name: "B 선택", sub: "20,000원 절약", tone: "gold", dir: "up" },
     { id: "agent", name: "화면 대신 조건을 읽는다", tone: "ice", dir: "up" },
   ];
   return [{ id: "priceA", name: "광고비 → 가격?", sub: "판매자의 새 선택지", tone: "amber", tag: "발표자의 가설", dir: "right" }];
 }
-const ALL_IDS: AnchorId[] = ["gate", "site", "tools", "agent", "bill", "pick", "priceA"];
+const ALL_IDS: AnchorId[] = ["gate", "site", "door", "approve", "tools", "agent", "bill", "pick", "priceA"];
 
-// 7번은 단계마다 제목이 바뀐다: 막는 곳(7-0) → 여는 곳(7-1). 8번은 세 단계가 한 제목이다.
-const COPY = [
-  { kicker: "웹사이트와 에이전트", title: "에이전트를 막는 곳이 있습니다" },
+// 7번은 단계마다 제목이 바뀐다: 막는 곳(7-0) → 받아들이는 곳(7-1) → 여는 기능(7-2). 8번은 세 단계가 한 제목이다.
+const COPY: { kicker: string; title: React.ReactNode }[] = [
+  { kicker: "웹사이트와 에이전트", title: <>에이전트를 <em className="aw-heading__block">막는 곳</em>이 있습니다</> },
+  { kicker: "웹사이트와 에이전트", title: <>에이전트를 <em className="aw-heading__open">받아들이는 곳</em>도 있습니다</> },
   { kicker: "웹사이트와 에이전트", title: "에이전트용 웹 기능이 생기고 있습니다" },
   { kicker: "가상 구매 사례", title: "같은 키보드, 어디서 살까요?" },
 ];
 const NARRATION = [
   "웹사이트는 먼저 사람인지 확인합니다.",
+  "무조건 여는 게 아니라, 누가 어떤 조건으로 들어올지 정합니다.",
   "WebMCP · 사이트가 제공하는 기능을 에이전트가 호출합니다.",
   "같은 무선 키보드 · 내일 도착 · 14일 이내 반품",
   "같은 조건이라면, 에이전트는 가격을 봅니다.",
@@ -52,7 +59,7 @@ const NARRATION = [
 ];
 
 export default function AgentWebStory({ part, step }: { part: 0 | 1; step: number }) {
-  const phase = part === 0 ? step : 2 + step;
+  const phase = part === 0 ? step : 3 + step;
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const labelsRef = useRef<HTMLDivElement>(null);
   const labelRefs = useRef<Partial<Record<AnchorId, HTMLDivElement | null>>>({});
@@ -91,7 +98,7 @@ export default function AgentWebStory({ part, step }: { part: 0 | 1; step: numbe
   useEffect(() => { world.current?.setMotion(motion); }, [motion]);
 
   const active = new Map(labelsFor(phase).map((l) => [l.id, l]));
-  const scene = Math.min(phase, 2), copy = COPY[scene];
+  const scene = Math.min(phase, 3), copy = COPY[scene];
   return <Frame n={7 + part} name={part === 0 ? "에이전트가 쓰는 웹" : "에이전트가 고르는 판매처"} step={step} className="story-edit story-agent-web">
     <div className="iw aw" data-fallback={failed || undefined} data-phase={phase} aria-hidden="true">
       <canvas ref={canvasRef} className="iw-canvas" width={1920} height={1080}/>
@@ -117,16 +124,19 @@ export default function AgentWebStory({ part, step }: { part: 0 | 1; step: numbe
     </div>
     {part === 1 && <div className="aw-request" key="request"><i/>“내일까지 받으면 돼. 싼 곳으로 골라줘.”</div>}
     <p className="aw-narrative" key={`n${phase}`} data-phase={phase}>
-      {phase === 4 && <span className="aw-tag">발표자의 가설</span>}
+      {phase === 5 && <span className="aw-tag">발표자의 가설</span>}
       {NARRATION[phase]}
     </p>
     {phase === 0 && <p className="aw-aside is-block" key="muse"><b>2026.09.20</b>Amazon은 Meta의 에이전트 Muse가 대신 구매하는 것을 막았습니다</p>}
-    {phase === 1 && <p className="aw-aside" key="aside"><b>Aside</b>사람과 에이전트가 함께 쓰는 브라우저도 나왔습니다</p>}
+    {phase === 1 && <p className="aw-aside is-open" key="walmart"><b>2026.10.21</b>Walmart는 에이전트 전용 통로를 열 계획이라고 발표했습니다</p>}
+    {phase === 2 && <p className="aw-aside" key="aside"><b>Aside</b>사람과 에이전트가 함께 쓰는 브라우저도 나왔습니다</p>}
     {failed && <AgentWebFallback phase={phase}/>}
 
     {part === 0
       ? <aside className="story-source aw-source">{phase === 0
         ? <><a href={AGENT_WEB_SOURCES.muse} target="_blank" rel="noreferrer">GeekWire · Amazon의 Muse 차단 · 2026.09.20 ↗</a><span>판매처 화면은 설명용 예시</span></>
+        : phase === 1
+        ? <><a href={AGENT_WEB_SOURCES.walmart} target="_blank" rel="noreferrer">Walmart · 에이전트 쇼핑 발표 · 2026.10.21 ↗</a><span>통로와 승인 장면은 설명용</span></>
         : <><a href={AGENT_WEB_SOURCES.webmcp} target="_blank" rel="noreferrer">Chrome · WebMCP early preview · 2026.02.10 ↗</a><a href={AGENT_WEB_SOURCES.aside} target="_blank" rel="noreferrer">Aside 공식 소개 ↗</a><span>도구 이름은 설명용 예시</span></>}</aside>
       : <aside className="story-source aw-source"><span>가상 금액과 조건 · 판매자 신뢰와 나머지 조건은 같다고 가정 · 가격 전략은 발표자의 가설</span></aside>}
   </Frame>;
@@ -134,12 +144,13 @@ export default function AgentWebStory({ part, step }: { part: 0 | 1; step: numbe
 
 /** WebGL을 쓸 수 없을 때: 같은 내용을 평면으로 보여준다. */
 function AgentWebFallback({ phase }: { phase: number }) {
-  if (phase <= 1) return <div className="aw-fallback">
+  if (phase <= 2) return <div className="aw-fallback">
     <div className="aw-fb-card"><span>사람인지 확인</span><b>☑ 나는 로봇이 아닙니다</b></div>
-    {phase === 1 && <div className="aw-fb-card is-ice"><span>WebMCP · 사이트가 알려주는 기능 (예시)</span><b>상품 검색 · 옵션 선택 · 주문하기</b></div>}
+    {phase === 1 && <div className="aw-fb-card is-ice"><span>에이전트 전용 통로 (계획)</span><b>고객 승인 · 사용 한도</b></div>}
+    {phase === 2 && <div className="aw-fb-card is-ice"><span>WebMCP · 사이트가 알려주는 기능 (예시)</span><b>상품 검색 · 옵션 선택 · 주문하기</b></div>}
   </div>;
   return <div className="aw-fallback">
     <div className="aw-fb-card"><span>판매처 A</span><b>129,000원</b></div>
-    <div className="aw-fb-card" data-pick={phase >= 3 || undefined}><span>판매처 B</span><b>109,000원</b>{phase >= 3 && <em>B 선택 · 20,000원 절약</em>}</div>
+    <div className="aw-fb-card" data-pick={phase >= 4 || undefined}><span>판매처 B</span><b>109,000원</b>{phase >= 4 && <em>B 선택 · 20,000원 절약</em>}</div>
   </div>;
 }

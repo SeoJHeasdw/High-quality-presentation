@@ -1,0 +1,21 @@
+.laser-pointer {
+  position: absolute;
+  z-index: 100;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(circle, #fff 0 12%, #ff4c4c 30%, #e50000 58%, #ff171700 75%);
+  box-shadow: 0 0 12px 4px #ff1a1ab3, 0 0 32px 10px #ff16164d;
+  pointer-events: none;
+}
+
+.laser-pointer[hidden] {
+  display: none;
+}
+
+/* 레이저가 켜져 있을 때 장표 안에서는 기본 커서를 감춘다. */
+.stage[data-laser="true"],
+.stage[data-laser="true"] * {
+  cursor: none !important;
+}

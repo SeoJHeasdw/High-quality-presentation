@@ -6,13 +6,17 @@
 /** Cloudflare 2025.12.02 HTML 요청(%): 그 밖의 봇(AI가 아닌 봇 44 + Googlebot 5) · AI 봇 등(나머지) · 사람. 합이 100이다. */
 export const SHARES = [49, 4, 47] as const;
 export const AUTO = SHARES[0] + SHARES[1];
+/** 2단계 가정 시나리오(%): 2026년 10월 집계의 봇 65 · 사람 35에, AI 관련 봇 10을 가정했다(FACT-CHECK.md). 합이 100이다. */
+export const SHARES_NOW = [55, 10, 35] as const;
+export const AUTO_NOW = SHARES_NOW[0] + SHARES_NOW[1];
 
 const SLAB = { x0: 100, x1: 1820, y: 462, h: 150, gap: 8 };
-const segments = (() => {
-  const usable = SLAB.x1 - SLAB.x0 - SLAB.gap * (SHARES.length - 1);
+const split = (shares: readonly number[]) => {
+  const usable = SLAB.x1 - SLAB.x0 - SLAB.gap * (shares.length - 1);
   let x = SLAB.x0;
-  return SHARES.map((s) => { const x0 = x, x1 = x + usable * s / 100; x = x1 + SLAB.gap; return { x0, x1 }; });
-})();
+  return shares.map((s) => { const x0 = x, x1 = x + usable * s / 100; x = x1 + SLAB.gap; return { x0, x1 }; });
+};
+const segments = split(SHARES);
 
 export const LAYOUT = {
   page: { x: 1490, y: 612, w: 700, h: 438, rotY: -0.62 },
@@ -22,6 +26,6 @@ export const LAYOUT = {
   num: { auto: { x: 100, base: 668 }, human: { x: segments[2].x0, base: 668 } },
   /** 0단계 막대: 봇 한 칸과 사람 한 칸. 1단계 두꺼운 막대의 칸 경계와 맞춘다. */
   bar: { y: 720, h: 28, auto: { x0: segments[0].x0, x1: segments[1].x1 }, human: segments[2] },
-  /** 1단계 두꺼운 막대 */
-  slab: { ...SLAB, segments },
+  /** 1단계 두꺼운 막대. 2단계는 같은 막대의 칸 경계만 SHARES_NOW로 옮긴다. */
+  slab: { ...SLAB, segments, now: split(SHARES_NOW) },
 };

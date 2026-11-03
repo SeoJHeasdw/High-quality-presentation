@@ -61,8 +61,8 @@ const ordered = [
  {id:"story-now",scriptKey:"story-now",group:"cat-opening",steps:1,render:({step})=> <CatStory now step={step}/>},
  byId("manifesto-unknown"),
  {id:"story-brood",scriptKey:"story-brood",steps:1,render:({step})=><BroodStory step={step}/>},
- {id:"story-bots",scriptKey:"story-bots",steps:1,render:({step})=><BotStory step={step}/>},
- {id:"story-web-door",scriptKey:"story-web-door",steps:1,group:"agent-web",render:({step})=><AgentWebStory part={0} step={step}/>},
+ {id:"story-bots",scriptKey:"story-bots",steps:2,render:({step})=><BotStory step={step}/>},
+ {id:"story-web-door",scriptKey:"story-web-door",steps:2,group:"agent-web",render:({step})=><AgentWebStory part={0} step={step}/>},
  {id:"story-price",scriptKey:"story-price",steps:2,group:"agent-web",render:({step})=><AgentWebStory part={1} step={step}/>},
  // 9~14 · 열어준 문에서 닫아둔 문으로 넘어와, 같은 공간에서 사건을 재구성하고(10~12) 지시·선 셋·신호·결론까지 본다(13·14, 묶음 incident-rooms).
  ...["story-closed-door","story-rooms","story-board","story-boundary","story-lines","story-signals"].map((id,i)=>({id,scriptKey:id,steps:1,group:"incident-rooms",render:({step})=><IncidentStory part={i-1} step={step}/>})),
@@ -77,7 +77,7 @@ const ordered = [
  {id:"manifesto-requirements",scriptKey:"manifesto-requirements",steps:2,group:"one-user",render:({step})=><OneUserStory part={0} step={step}/>},
  {id:"manifesto-system",scriptKey:"manifesto-system",steps:2,group:"one-user",render:({step})=><OneUserStory part={1} step={step}/>},
  {id:"manifesto-factory",scriptKey:"manifesto-factory",steps:2,group:"one-user",render:({step})=><OneUserStory part={2} step={step}/>},
- {id:"manifesto-company",scriptKey:"manifesto-company",steps:3,group:"one-user",render:({step})=><OneUserStory part={3} step={step}/>},
+ {id:"manifesto-company",scriptKey:"manifesto-company",steps:4,group:"one-user",render:({step})=><OneUserStory part={3} step={step}/>},
  ...OriginalDeck.slides.filter(slide=>slide.group==="factory-flight"),
  ...(["tts","assets","music"] as const).map(kind=>({id:`demo-${kind}`,scriptKey:`demo-${kind}`,render:()=> <DemoPlayer kind={kind}/>})),
  // 32 · 실물 4 / 게임: 엔진의 에셋과 BGM이 들어간 게임 세 개.
