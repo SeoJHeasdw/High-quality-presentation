@@ -10,15 +10,16 @@ import * as S from "./drawings";
  *   45~48은 Blender 전시관 영상이다(tools/render-mind-hall.py, Mind.tsx의 HallLayer). 그동안 이 캔버스는 쉰다.
  *   방 D(49) 기록을 다시 읽는 AI → 클라이브 웨어링의 일기 → 판단의 기록을 다시 읽는 자비스 → 쓰면서 배우는 연구
  *   방 E(50) 몸이 생긴 로봇 → 흉내 낸 아픔(로봇 환자의 얼굴) → 두 빈칸(몸 · 기억)이 채워지는 중 → 기술적 장벽이 없어 보인다
- *   방 F(51~52) 낱말이 뇌가 되고, 바닥의 빛 원이 그 발밑 쪽으로 다가와 멈춘다 → 30년 눈금의 기록이 뇌 밖에 모였다가 안으로 들어간다 → 카메라가 뇌로 다가간다
+ *   방 F(51~52) 낱말이 뇌가 되고, 바닥의 빛 원이 그 발밑 쪽으로 다가와 멈춘다 → 30년 눈금의 기록이 뇌 밖에 모였다가 안으로 들어간다 → 카메라가 뇌로 다가간다 →
+ *        뇌가 오리 로봇이 되었다가(52-4) 다시 뇌로 돌아온다(52-5)
  * 따뜻한 색(분필 금빛)은 사람과 동물, 파랑은 AI다. 빨강은 쓰지 않는다(이 덱에서 사실이 아님을 뜻하는 색).
- * 카메라는 방마다 z=방 평면의 1단위가 화면 1px이 되도록 선다(DOM 라벨과 같은 좌표). 43번에서는 탁자 쪽으로, 52-3~4에서는 뇌 쪽으로 다가간다.
+ * 카메라는 방마다 z=방 평면의 1단위가 화면 1px이 되도록 선다(DOM 라벨과 같은 좌표). 43번에서는 탁자 쪽으로, 52-3~5에서는 뇌 쪽으로 다가간다.
  */
 
-export const PHASES = 43;
+export const PHASES = 44;
 /** 장마다 시작 단계(42~52번)와 단계 수 - 1 */
 export const PART_BASE = [0, 3, 6, 10, 16, 20, 23, 26, 30, 34, 38];
-export const PART_STEPS = [2, 2, 3, 5, 3, 2, 2, 3, 3, 3, 4];
+export const PART_STEPS = [2, 2, 3, 5, 3, 2, 2, 3, 3, 3, 5];
 /** 45~48번(단계 10~25)은 전시관 영상이다. 그 단계의 방은 -1이고 캔버스는 쉰다. */
 export const HALL = { from: 10, to: 25 };
 export const ROOM = (p: number) => (p < 10 ? 0 : p <= HALL.to ? -1 : p < 30 ? 3 : p < 34 ? 4 : 5);
@@ -46,22 +47,48 @@ export const DIARY = { first: 1.5, gap: 0.36, rule0: 360, gap_y: 52, x0: 1111 };
 export type MindWorld = { setPhase: (p: number) => void; setMotion: (on: boolean) => void; onFrame: (cb: () => void) => void; dispose: () => void };
 
 /* 낱말 → 뇌 입자 ------------------------------------------------------------------------- */
-function sampleBrain(count: number, h: number, seed: number) {
+/** 300×240 캔버스에 흰색으로 그린 모양을 입자로 샘플링한다. 뇌와 오리 로봇이 같은 틀을 써서 크기가 맞는다. */
+function sampleMask(draw: (g: CanvasRenderingContext2D) => void, count: number, h: number, seed: number, edgeShare = 0.3, depthK = 0.3) {
   const W = 300, H = 240, c = document.createElement("canvas"); c.width = W; c.height = H;
   const g = c.getContext("2d", { willReadFrequently: true })!;
-  g.fillStyle = "#fff"; g.fill(new Path2D(S.BRAIN_OUTLINE)); g.fill(new Path2D("M200 176 Q230 205 255 190 Q262 175 255 160 Z"));
+  g.fillStyle = "#fff"; g.strokeStyle = "#fff"; draw(g);
   const d = g.getImageData(0, 0, W, H).data, inside = (x: number, y: number) => x >= 0 && y >= 0 && x < W && y < H && d[(y * W + x) * 4 + 3] > 128;
   const fill: number[] = [], edge: number[] = [];
   for (let y = 0; y < H; y += 2) for (let x = 0; x < W; x += 2) if (inside(x, y)) (inside(x - 5, y) && inside(x + 5, y) && inside(x, y - 5) && inside(x, y + 5) ? fill : edge).push(x, y);
   const r = rand(seed), s = h / H, out: THREE.Vector3[] = [];
   for (let i = 0; i < count; i++) {
-    const src = r() < 0.3 ? edge : fill, k = Math.floor(r() * (src.length / 2)) * 2, x = src[k], y = src[k + 1];
+    const src = r() < edgeShare ? edge : fill, k = Math.floor(r() * (src.length / 2)) * 2, x = src[k], y = src[k + 1];
     // 가운데는 두껍고 가장자리는 얇은 덩어리
     const cx = (x - W / 2) / (W / 2), cy = (y - H / 2) / (H / 2), depth = Math.sqrt(Math.max(0, 1 - cx * cx * 0.8 - cy * cy * 0.8));
-    out.push(new THREE.Vector3((x - W / 2 + (r() - .5) * 2) * s, (H / 2 - y + (r() - .5) * 2) * s, (r() - .5) * 2 * depth * h * 0.3));
+    out.push(new THREE.Vector3((x - W / 2 + (r() - .5) * 2) * s, (H / 2 - y + (r() - .5) * 2) * s, (r() - .5) * 2 * depth * h * depthK));
   }
   return out;
 }
+const sampleBrain = (count: number, h: number, seed: number) => sampleMask((g) => { g.fill(new Path2D(S.BRAIN_OUTLINE)); g.fill(new Path2D("M200 176 Q230 205 255 190 Q262 175 255 160 Z")); }, count, h, seed);
+/** 53-4 · 16-7에서 본 오리 로봇. 왼쪽(글 쪽)을 보고 선다. 큰 네모 머리와 납작한 부리, 카메라 눈, 무릎이 뒤로 꺾인 두 다리.
+ *  눈 · 부리 이음매 · 몸통 이음매는 빈 선으로 남겨 입자로도 읽히게 한다. 실루엣이 읽히도록 가장자리 점을 뇌보다 많이 쓰고,
+ *  두께는 뇌의 1/3이다(카메라가 비스듬히 다가가 있어, 두꺼우면 시차로 빈 선이 메워진다). */
+const sampleDuck = (count: number, h: number, seed: number) => sampleMask((g) => {
+  const blob = (f: () => void) => { g.beginPath(); f(); g.fill(); };
+  const line = (w: number, pts: [number, number][]) => { g.lineWidth = w; g.beginPath(); pts.forEach(([x, y], i) => (i ? g.lineTo(x, y) : g.moveTo(x, y))); g.stroke(); };
+  g.lineCap = "round"; g.lineJoin = "round";
+  blob(() => g.roundRect(128, 88, 124, 74, 34)); // 몸통
+  blob(() => { g.moveTo(240, 98); g.quadraticCurveTo(266, 80, 272, 86); g.quadraticCurveTo(268, 110, 248, 126); }); // 꼬리
+  line(26, [[150, 104], [118, 76]]); // 목
+  blob(() => g.roundRect(50, 16, 98, 76, 30)); // 머리
+  blob(() => g.roundRect(10, 52, 60, 28, 13)); // 부리
+  for (const hx of [160, 204]) {
+    line(13, [[hx, 156], [hx + 20, 192], [hx - 2, 222]]);
+    blob(() => g.arc(hx + 20, 192, 11, 0, Math.PI * 2)); // 무릎 관절
+    blob(() => g.roundRect(hx - 30, 218, 46, 12, 6)); // 발
+  }
+  g.globalCompositeOperation = "destination-out";
+  blob(() => g.arc(92, 46, 13, 0, Math.PI * 2)); // 눈
+  line(6, [[58, 50], [58, 82]]); // 부리 이음매
+  line(6, [[146, 126], [236, 126]]); // 몸통 이음매
+  g.globalCompositeOperation = "source-over";
+  g.beginPath(); g.arc(92, 46, 5, 0, Math.PI * 2); g.fill(); // 눈동자(렌즈)
+}, count, h, seed, 0.42, 0.1);
 function sampleWords(perWord: number, seed: number) {
   const out: { word: number; x: number; y: number }[] = [], c = document.createElement("canvas"); c.width = 520; c.height = 160;
   const g = c.getContext("2d", { willReadFrequently: true })!, r = rand(seed);
@@ -76,15 +103,17 @@ function sampleWords(perWord: number, seed: number) {
 
 class WordBrain {
   points: THREE.Points; mat: THREE.ShaderMaterial; interior: THREE.Vector3[];
-  constructor(at: THREE.Vector3, h: number, perWord: number, seed: number, camD: number, size = 1) {
-    const words = sampleWords(perWord, seed), m = words.length, brain = sampleBrain(m, h, seed + 1), r = rand(seed + 2);
-    const aWord = new Float32Array(m * 3), aBrain = new Float32Array(m * 3), aSeed = new Float32Array(m), aGroup = new Float32Array(m);
+  /** alt: 뇌 대신 바뀌어 갈 두 번째 모양(53-4의 오리 로봇). 없으면 뇌 그대로다. */
+  constructor(at: THREE.Vector3, h: number, perWord: number, seed: number, camD: number, size = 1, alt?: typeof sampleBrain) {
+    const words = sampleWords(perWord, seed), m = words.length, brain = sampleBrain(m, h, seed + 1), other = alt?.(m, h, seed + 3) ?? brain, r = rand(seed + 2);
+    const aWord = new Float32Array(m * 3), aBrain = new Float32Array(m * 3), aAlt = new Float32Array(m * 3), aSeed = new Float32Array(m), aGroup = new Float32Array(m);
     const spots = WORDS.map((_, i) => { const a = (i / WORDS.length) * Math.PI * 2 + r() * 0.3, rad = h * (0.95 + r() * 0.55); return new THREE.Vector3(Math.cos(a) * rad * 1.15, Math.sin(a) * rad * 0.62, -h * 0.9 + r() * h * 1.4); });
     const sc = WORDS.map(() => (0.2 + r() * 0.18) * h / 300);
     for (let i = 0; i < m; i++) {
       const w = words[i], s = spots[w.word];
       aWord.set([s.x + w.x * sc[w.word], s.y + w.y * sc[w.word], s.z], i * 3);
       aBrain.set([brain[i].x, brain[i].y, brain[i].z], i * 3);
+      aAlt.set([other[i].x, other[i].y, other[i].z], i * 3);
       aSeed[i] = r(); aGroup[i] = w.word / WORDS.length;
     }
     this.interior = brain.filter((_, i) => i % 3 === 0).map((v) => v.clone().multiplyScalar(0.86).add(at));
@@ -92,19 +121,24 @@ class WordBrain {
     geo.setAttribute("position", new THREE.BufferAttribute(aBrain.slice(), 3));
     geo.setAttribute("aWord", new THREE.BufferAttribute(aWord, 3));
     geo.setAttribute("aBrain", new THREE.BufferAttribute(aBrain, 3));
+    geo.setAttribute("aAlt", new THREE.BufferAttribute(aAlt, 3));
     geo.setAttribute("aSeed", new THREE.BufferAttribute(aSeed, 1));
     geo.setAttribute("aGroup", new THREE.BufferAttribute(aGroup, 1));
     this.mat = new THREE.ShaderMaterial({
-      uniforms: { uForm: { value: 1 }, uA: { value: 0 }, uTime: { value: 0 }, uD: { value: camD }, uC: { value: ICE.clone() }, uS: { value: size },
+      uniforms: { uForm: { value: 1 }, uAlt: { value: 0 }, uA: { value: 0 }, uTime: { value: 0 }, uD: { value: camD }, uC: { value: ICE.clone() }, uS: { value: size },
         uWarm: { value: 0 }, uWarmFrom: { value: new THREE.Vector3() }, uWarmR: { value: h * 1.3 }, uWarmC: { value: GOLD.clone() } },
       vertexShader: `${GLSL_SAFE}
-        attribute vec3 aWord; attribute vec3 aBrain; attribute float aSeed; attribute float aGroup;
-        uniform float uForm, uA, uTime, uD, uS, uWarm, uWarmR; uniform vec3 uWarmFrom; varying float vA; varying float vWarm;
+        attribute vec3 aWord; attribute vec3 aBrain; attribute vec3 aAlt; attribute float aSeed; attribute float aGroup;
+        uniform float uForm, uAlt, uA, uTime, uD, uS, uWarm, uWarmR; uniform vec3 uWarmFrom; varying float vA; varying float vWarm;
         void main(){
           float k = clamp(uForm * 1.6 - aGroup * .45 - aSeed * .15, 0., 1.); k = k * k * (3. - 2. * k);
           vec3 w = aWord + vec3(sin(uTime * .21 + aGroup * 17.) * 18., cos(uTime * .17 + aGroup * 11.) * 12., 0.) * (1. - k);
-          vec3 mid = mix(w, aBrain, .5) + vec3(-80. + aGroup * 160., 60. * sin(aGroup * 20.), 180.) * uS;
-          vec3 p = mix(mix(w, mid, k), mix(mid, aBrain, k), k);
+          // 뇌 → 두 번째 모양: 점마다 조금씩 늦게 출발해 한 번 흩어졌다가 모인다. 다 모이면 살짝 숨 쉬듯 오르내린다.
+          float ak = clamp(uAlt * 1.5 - aSeed * .5, 0., 1.); ak = ak * ak * (3. - 2. * ak);
+          vec3 b = mix(aBrain, aAlt, ak) + vec3(sin(aSeed * 91.), cos(aSeed * 53.), sin(aSeed * 27.)) * 70. * uS * sin(ak * 3.14159);
+          b.y += sin(uTime * 2.4) * 5. * ak;
+          vec3 mid = mix(w, b, .5) + vec3(-80. + aGroup * 160., 60. * sin(aGroup * 20.), 180.) * uS;
+          vec3 p = mix(mix(w, mid, k), mix(mid, b, k), k);
           p += vec3(sin(uTime * 1.3 + aSeed * 50.), cos(uTime * 1.1 + aSeed * 40.), sin(uTime * .9 + aSeed * 30.)) * (1. + 1.4 * k) * uS;
           vec4 mv = modelViewMatrix * vec4(p, 1.); float z = -mv.z;
           vA = uA * (.5 + .5 * k) * exp(-pw(.00036 * max(z - 1900., 0.), 2.)) * sstep(120., 760., z);
@@ -121,6 +155,8 @@ class WordBrain {
     this.points = new THREE.Points(geo, this.mat); this.points.frustumCulled = false; this.points.position.copy(at);
   }
   set(a: number, form: number, time: number) { this.mat.uniforms.uA.value = a; this.mat.uniforms.uForm.value = form; this.mat.uniforms.uTime.value = time; this.points.visible = a > 0.002; }
+  /** k(0→1)만큼 두 번째 모양이 된다. 물든 점은 그대로 따라간다. */
+  alt(k: number) { this.mat.uniforms.uAlt.value = k; }
   /** k(0→1)만큼 from(뇌 기준 좌표) 쪽부터 금빛으로 물든다 */
   warm(k: number, from?: THREE.Vector3) { this.mat.uniforms.uWarm.value = k; if (from) this.mat.uniforms.uWarmFrom.value.copy(from); }
 }
@@ -433,8 +469,8 @@ export function createMindWorld(canvas: HTMLCanvasElement, initialPhase: number,
   });
 
   /* 방 F(51~52) · 선이 움직인다면 · 30년을 함께 겪은 AI ---------------------------------------- */
-  const brainF = add(new WordBrain(at(1390, 470, 5), 440, 220, 100, camD, 1.3));
-  let brainFA = 0, brainFF = 0; track(34, 42, (a, d) => { brainFA = a; brainFF = d; }, { delay: 1.0, dur: 2.2 });
+  const brainF = add(new WordBrain(at(1390, 470, 5), 440, 220, 100, camD, 1.3, sampleDuck));
+  let brainFA = 0, brainFF = 0; track(34, 43, (a, d) => { brainFA = a; brainFF = d; }, { delay: 1.0, dur: 2.2 });
   // 51-1 · 바닥의 빛 원(45~46번의 선)이 AI의 발밑 쪽으로 넓어지다 바로 앞에서 멈춘다
   // 바닥은 방 평면보다 먼 곳이라야 화면에 보인다. FEET는 화면에서 뇌 바로 아래(1390, 760)에 보이는 바닥의 점이다.
   const FEET_D = 2015 * 540 / 220, FEET = new THREE.Vector3(430 * FEET_D / camD, -536, Z(5) + camD - FEET_D);
@@ -458,7 +494,7 @@ export function createMindWorld(canvas: HTMLCanvasElement, initialPhase: number,
   const flowInto = add(new Flow(cloud, brainF.interior, 1100, 105, camD, GOLD, 1.7));
   // 52-2 · 기록이 들어오는 쪽(뇌의 왼쪽 아래, 기록 덩어리를 향한 쪽)부터 뇌 자신이 금빛으로 물든다
   const warmFrom = at(LAYOUT.records.x, LAYOUT.records.y, 5).sub(brainF.points.position).multiplyScalar(0.55);
-  let recA = 0, intoA = 0; track(39, 39, (a) => { recA = a; }, { delay: 0.4 }); track(40, 42, (a) => { intoA = a; }, { delay: 0 });
+  let recA = 0, intoA = 0; track(39, 39, (a) => { recA = a; }, { delay: 0.4 }); track(40, 43, (a) => { intoA = a; }, { delay: 0 });
 
   function update(dt: number) {
     pc.tick(dt);
@@ -467,8 +503,8 @@ export function createMindWorld(canvas: HTMLCanvasElement, initialPhase: number,
     const room = ROOM(p), prev = p > 0 ? ROOM(p - 1) : room, here = room < 0 ? 0 : room;
     const k = room !== prev && room >= 0 && prev >= 0 ? prev + (room - prev) * easeInOut(pc.ev(0, 1.8)) : here;
     const dolly = p === 3 ? easeInOut(pc.ev(0.1, 1.9)) : p === 4 || p === 5 ? 1 : p === 6 ? 1 - easeInOut(pc.ev(0, 1.3)) : 0;
-    // 52-3 · 카메라가 뇌로 천천히 다가가고 52-4에서 그대로 머문다
-    const push = p === 41 ? easeInOut(pc.ev(0.2, 3.2)) : p === 42 ? 1 : 0;
+    // 52-3 · 카메라가 뇌로 천천히 다가가고 52-4~5에서 그대로 머문다
+    const push = p === 41 ? easeInOut(pc.ev(0.2, 3.2)) : p > 41 ? 1 : 0;
     camera.position.set(DOLLY.x * dolly + 250 * push, DOLLY.y * dolly + 40 * push, camD - k * STRIDE - DOLLY.z * dolly - 560 * push);
     // 고리가 화면 오른쪽(글 단 밖)에 오도록 고리보다 조금 왼쪽을 본다
     ahead.copy(camera.position).add(new THREE.Vector3(0, 0, -1000));
@@ -519,10 +555,13 @@ export function createMindWorld(canvas: HTMLCanvasElement, initialPhase: number,
     fRingMat.opacity = fRingA; fRing.visible = fRingA > 0.002;
     glowA(feetGlow.material as THREE.Material, 0.42 * feetA); feetGlow.visible = feetA > 0.002;
     glowA(fWash.material as THREE.Material, 0.22 * fRingA); fWash.visible = fRing.visible;
-    // 52 · 기록은 뇌 밖에 모였다가(52-1) 안으로 들어가 남는다(52-2~). 52-4에서는 모두 조금 흐려진다.
-    brainF.set(brainFA * (p === 42 ? 1 - 0.35 * smooth(0.3, 2.0, t) : 1), p === 34 ? brainFF : 1, time);
+    // 52 · 기록은 뇌 밖에 모였다가(52-1) 안으로 들어가 남는다(52-2~). 52-4에서 뇌가 오리 로봇이 되고, 52-5에서 다시 뇌로 돌아온 뒤 모두 조금 흐려진다.
+    // 뇌 안에 들어가 남은 기록(flowInto)은 뇌 모양 그대로라, 오리 로봇인 동안은 걷어 둔다. 금빛으로 물든 뇌 자신의 점은 오리 로봇을 따라간다.
+    const dim = p === 43 ? 1 - 0.35 * smooth(1.8, 3.4, t) : 1;
+    brainF.alt(p === 42 ? easeInOut(pc.ev(0.4, 2.6)) : p === 43 ? 1 - easeInOut(pc.ev(0.2, 2.2)) : 0);
+    brainF.set(brainFA * dim, p === 34 ? brainFF : 1, time);
     flowRec.set(recA, p === 39 ? t - 0.5 : 99, time, false, 1.8);
-    flowInto.set(intoA * (p === 42 ? 1 - 0.35 * smooth(0.3, 2.0, t) : 1), p === 40 ? t - 0.1 : 99, time, false, 2.2);
+    flowInto.set(intoA * dim * (p === 42 ? 1 - smooth(0.3, 1.2, t) : p === 43 ? smooth(1.4, 2.4, t) : 1), p === 40 ? t - 0.1 : 99, time, false, 2.2);
     brainF.warm(p === 40 ? easeInOut(pc.ev(1.2, 2.5)) : p > 40 ? 1 : 0, warmFrom);
   }
   stage.start(update, () => pc.motion);
