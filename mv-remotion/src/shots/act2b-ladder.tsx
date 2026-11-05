@@ -25,8 +25,8 @@ export const AMBER = "#e07a2a";
 export const RUNG = .15, HALF = .2;
 
 export type V2 = { x: number; y: number };
-/** 발판 틀: 가운데(x, y), 사다리 위쪽 단위 벡터(ux, uy), 먼 난간 쪽 반폭 벡터(sx, sy), k = 그 자리의 아이 크기(px) */
-export type RF = { x: number; y: number; ux: number; uy: number; sx: number; sy: number; k: number };
+/** 발판 틀: 가운데(x, y), 사다리 위쪽 단위 벡터(ux, uy), 먼 난간 쪽 반폭 벡터(sx, sy), k = 그 자리의 아이 크기(px), ul = 화면에서 한 칸의 길이(원근으로 줄어든 값, 없으면 RUNG·k) */
+export type RF = { x: number; y: number; ux: number; uy: number; sx: number; sy: number; k: number; ul?: number };
 
 const len = (x: number, y: number) => Math.hypot(x, y) || 1;
 
@@ -56,7 +56,7 @@ export function framesFrom(pts: RF[], i0: number) {
     if (u >= n - 1) { const a = pts[n - 1], d = u - (n - 1); return { ...a, x: a.x + a.ux * RUNG * a.k * d, y: a.y + a.uy * RUNG * a.k * d }; }
     const j = Math.floor(u), w = u - j, a = pts[j], b = pts[j + 1];
     const ux = mix(a.ux, b.ux, w), uy = mix(a.uy, b.uy, w), l = len(ux, uy);
-    return { x: mix(a.x, b.x, w), y: mix(a.y, b.y, w), ux: ux / l, uy: uy / l, sx: mix(a.sx, b.sx, w), sy: mix(a.sy, b.sy, w), k: mix(a.k, b.k, w) };
+    return { x: mix(a.x, b.x, w), y: mix(a.y, b.y, w), ux: ux / l, uy: uy / l, sx: mix(a.sx, b.sx, w), sy: mix(a.sy, b.sy, w), k: mix(a.k, b.k, w), ul: a.ul !== undefined && b.ul !== undefined ? mix(a.ul, b.ul, w) : undefined };
   };
 }
 
@@ -77,7 +77,7 @@ type Ids = { wing: string; glow: string; hot: string };
 /** 나방 하나를 틀 f에 그린다. spread 0 = 날갯짓하며 날아오는 중, 1 = 날개를 난간까지 펴고 멈춤(발판). flash = 막 붙은 반짝임 */
 function mothGlyph(key: string | number, f: RF, ids: Ids, o: { spread: number; t: number; seed: number; b: number; flash?: number; lod?: boolean; glow?: number }) {
   const sl = len(f.sx, f.sy);
-  const body = RUNG * f.k * .42; // 몸 길이 단위(px)
+  const body = (f.ul ?? RUNG * f.k) * .42; // 몸 길이 단위(px): 사다리 방향으로 원근이 줄인 길이
   const sp = clamp(o.spread);
   // 날 때: 날개가 접혔다 펴졌다(크게). 붙은 뒤: 숨 쉬듯 조금
   const fast = .22 + .78 * Math.abs(Math.sin(o.t * 17 + o.seed * 3.1));
@@ -429,7 +429,7 @@ export function pDir(c: Cam3, dx: number, dy: number, dz: number) {
 }
 
 /** 세계(미터): 땅 y=0. 아이의 건물은 원점, 지붕 높이 ROOF. 아이 크기 S_M(미터) */
-export const ROOF = 24, S_M = 1.45;
+export const ROOF = 17, S_M = 1.45;
 /** 3D 사다리: 지붕 앞쪽에서 +z(달 쪽)로 기울며 오른다 */
 export const LAD3 = { x: 0, y: ROOF + .25, z: 3, lean: .2, curve: .0006, yaw: .1 };
 export function rung3(i: number) {
@@ -453,10 +453,11 @@ export function ladder3(c: Cam3, sideSign = 1) {
   return (i: number): RF => {
     const r = rung3(i);
     const a = p3(c, r.x, r.y, r.z);
-    const b = p3(c, r.x + r.ux * .1, r.y + r.uy * .1, r.z + r.uz * .1);
+    const st = RUNG * S_M;
+    const b = p3(c, r.x + r.ux * st, r.y + r.uy * st, r.z + r.uz * st);
     const sd = p3(c, r.x + r.hx * sideSign, r.y, r.z + r.hz * sideSign);
     const ux = b.x - a.x, uy = b.y - a.y, l = len(ux, uy);
-    return { x: a.x, y: a.y, ux: ux / l, uy: uy / l, sx: sd.x - a.x, sy: sd.y - a.y, k: a.s * S_M };
+    return { x: a.x, y: a.y, ux: ux / l, uy: uy / l, sx: sd.x - a.x, sy: sd.y - a.y, k: a.s * S_M, ul: l };
   };
 }
 /** 달의 방향(+z 앞, 위) */
@@ -473,7 +474,7 @@ export const CITY: Bld3[] = (() => {
     const cx = gx * CELL, cz = gz * CELL, half = (CELL - STREET) / 2;
     if (gx === 0 && gz === 0) { out.push({ x0: -10, x1: 10, z0: -9, z1: 9, h: ROOF, seed: 1 }); continue; }
     const r = rnd(77, id);
-    const H = () => 9 + Math.pow(rnd(78, id + out.length), 1.7) * 42;
+    const H = () => 6 + Math.pow(rnd(78, id + out.length), 1.8) * 30;
     if (r < .4) out.push({ x0: cx - half, x1: cx + half, z0: cz - half, z1: cz + half, h: H(), seed: id });
     else if (r < .75) {
       const m = mix(-half * .4, half * .4, rnd(79, id));
@@ -491,7 +492,7 @@ export const CITY: Bld3[] = (() => {
 type CityK = { sil: string; silFar: string; fog: string; win: string; cold: string; glow: string; sky: string[] };
 
 /** 아이 방 창: 아이 건물의 +z 벽, 지붕에서 두 층 아래 */
-export const MY_WIN = { x: -3.2, y: ROOF - 6.6, z: 9.02, w: 2.2, h: 1.7 };
+export const MY_WIN = { x: -4, y: 11.22, z: 9.03, w: 2, h: 1.53 };
 
 
 /** 3D 도시를 그린다. myWin: 아이 방 창의 차가운 빛(0..1). lights: 가로등·차 불빛 */
@@ -582,12 +583,13 @@ export const City3D: React.FC<{ c: Cam3; k: CityK; t: number; fogD?: number; myW
     const N = 7;
     for (let a = -N; a <= N; a++) for (let j = -N * 3; j <= N * 3; j++) {
       for (const dir of [0, 1]) {
+        if ((j + a + dir) % 2) continue;
         const s0 = (a + .5) * CELL, s1 = j * CELL / 3 + (dir ? 4 : 0);
         const X = dir ? s1 : s0, Z = dir ? s0 : s1;
         if (Math.hypot(X - c.x, Z - c.z) > radius) continue;
         const p = p3(c, X, .3, Z);
         if (p.z < 1 || p.x < -20 || p.x > 1940 || p.y < -20 || p.y > 1100) continue;
-        const r = Math.max(.9, .9 * p.s);
+        const r = Math.max(.7, .32 * p.s);
         const fw = 1 - Math.exp(-p.z / fogD);
         lamp.push(<circle key={`l${a}_${j}_${dir}`} cx={p.x} cy={p.y} r={r * 3} fill={`url(#${id}lg)`} opacity={(1 - fw * .6) * lights} />);
       }
@@ -665,3 +667,25 @@ export const Ground3D: React.FC<{ c: Cam3; k: CityK }> = ({ c, k }) => {
     </g>
   );
 };
+
+/** 사다리 위 높이 L(골반)의 3D 기준: 발판 자리, 위쪽 u, 아이 쪽 n(사다리 면에 수직, -z·위), 옆 h(+x) */
+export function kidFrame3(L: number) {
+  const r = rung3(L);
+  const ul = Math.hypot(r.ux, r.uy, r.uz);
+  const u = { x: r.ux / ul, y: r.uy / ul, z: r.uz / ul };
+  // n = u × h 방향을 아이 쪽(-z)으로
+  const h = { x: Math.cos(LAD3.yaw), y: 0, z: -Math.sin(LAD3.yaw) };
+  let n = { x: u.y * h.z - u.z * h.y, y: u.z * h.x - u.x * h.z, z: u.x * h.y - u.y * h.x };
+  if (n.z > 0) n = { x: -n.x, y: -n.y, z: -n.z };
+  return { p: { x: r.x, y: r.y, z: r.z }, u, n, h };
+}
+export const add3 = (a: { x: number; y: number; z: number }, ...bs: [{ x: number; y: number; z: number }, number][]) => {
+  let x = a.x, y = a.y, z = a.z;
+  for (const [b, k] of bs) { x += b.x * k; y += b.y * k; z += b.z * k; }
+  return { x, y, z };
+};
+/** 3D 카메라가 점 p에서 점 q를 바라보는 yaw·pitch */
+export function lookAt(p: { x: number; y: number; z: number }, q: { x: number; y: number; z: number }) {
+  const dx = q.x - p.x, dy = q.y - p.y, dz = q.z - p.z;
+  return { yaw: Math.atan2(dx, dz), pitch: Math.atan2(dy, Math.hypot(dx, dz)) };
+}

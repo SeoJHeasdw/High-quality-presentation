@@ -83,7 +83,7 @@ const BloomThread: React.FC<{ th: (typeof BLOOM.threads)[number]; t: number; col
   const x = (t - th.t0) / th.D;
   if (x <= 0) return null;
   const p = x >= 1 ? 1 : x < .3 ? .42 * ease("quadOut", x / .3) : .42 + .58 * Math.pow((x - .3) / .7, 2);
-  const head = getPointAtLength(th.d, th.len * p);
+  const head = getPointAtLength(th.d, th.len * p) ?? th.L;
   const land = t - th.t0 - th.D;
   return (
     <g>
@@ -114,12 +114,14 @@ const IGN = (() => {
     { row: 3, bi: near(3, 380), t: beat(244.5) }, { row: 1, bi: near(1, 300), t: beat(244.5) },
     { row: 4, bi: near(4, 1600), t: beat(245) }, { row: 2, bi: near(2, 150), t: beat(245) }, { row: 0, bi: near(0, 1650), t: beat(245) },
     { row: 3, bi: near(3, 1750), t: beat(245.5) }, { row: 1, bi: near(1, 900), t: beat(245.5) },
+    // 8분음표마다 더 작은 실들(박 사이를 잇는 잔비)
+    ...[4, 2, 1, 3, 0, 2, 4, 1, 3, 2, 0, 1].map((row, j) => ({ row, bi: near(row, -100 + rnd(652, j) * 2100), t: beat(243.25 + j * .25) })),
   ];
   return { tb, kWin, lands, target: tw.at(kWin) };
 })();
 
 /** 67: 골목(한 점 원근). 단위는 세계 좌표, 카메라는 -Z에서 +Z를 본다 */
-const AL = { F: 1000, A: 300, G: 950, TOP: -1050, ZF: 5600, ZK: 640, floors: [-800, -400, 0, 400, 800], bays: Array.from({ length: 13 }, (_, b) => 40 + b * 430) };
+const AL = { F: 1000, A: 260, G: 950, TOP: -1050, ZF: 5600, ZK: 640, floors: [-800, -400, 0, 400, 800], bays: Array.from({ length: 13 }, (_, b) => 40 + b * 430) };
 
 export const act5: Shot[] = [
   {
@@ -148,7 +150,7 @@ export const act5: Shot[] = [
             <Cloud seed={585} x={1700} y={80} w={1100} h={380} dark={cl.dark} lit={cl.lit} t={t} drift={-12} />
           </Layer>
           <Layer d={2.6} blend="screen">
-            <Moths t={t} at={(tt) => streams(77, tt, { cx: 960, cy: 530, R0: 820, R1: 70, sy: .62, K: 12, per: 11, spin: -1.1, size: 3.2, wob: 40 })} color={kR.accent} trail={3} trailDt={.04} wings={false} />
+            <Moths t={t} at={(tt) => streams(77, tt, { cx: 960, cy: 530, R0: 820, R1: 70, sy: .62, K: 12, per: 11, spin: -1.1, size: 4.6, wob: 40 })} color={kR.accent} trail={3} trailDt={.04} wings={false} glow={1.3} />
           </Layer>
           <Layer d={1}>
             <Rain t={t} count={90} angle={.18} color="#8a9aa6" opacity={.22} speed={1900} len={50} width={1.1} />
@@ -159,7 +161,7 @@ export const act5: Shot[] = [
             <PhoneLight x={pr.skb.haF.x} y={pr.skb.haF.y} s={48} color={kR.cold} on={1} glow={2.2} />
           </Layer>
           <Layer d={1} blend="screen">
-            <Moths t={t} at={(tt) => streams(91, tt, { cx: 960, cy: 530, R0: 1000, R1: 80, sy: .6, K: 12, per: 12, spin: 1.2, size: 4.6, wob: 50 })} color={kR.accent} trail={4} trailDt={.04} />
+            <Moths t={t} at={(tt) => streams(91, tt, { cx: 960, cy: 530, R0: 1000, R1: 80, sy: .6, K: 12, per: 12, spin: 1.2, size: 6.2, wob: 50 })} color={kR.accent} trail={4} trailDt={.04} glow={1.2} />
             <Glow x={960} y={530} r={700} color={kR.glow} opacity={turn * .08} />
           </Layer>
           <Layer d={.5}>
@@ -233,11 +235,11 @@ export const act5: Shot[] = [
       const sag = caught ? Math.sin(Math.min(1, a * 4) * Math.PI) * 0 + (1 - springStep(a, 11, .3)) * 46 : 0;
       void dip;
       const cy = 690 + sag - lift * 160;
-      const rx = 470, ry = 210;
+      const rx = 540, ry = 235;
       const seatY = cy + ry * .5;
       // 두 아이: 떨어지다(가속) 박에 앉는다
       const fallW = ease("in", lin(0, lc, lt));
-      const s = 330;
+      const s = 390;
       const sitW = caught ? ease("back", clamp(a / .3)) : 0;
       const sq = caught ? (1 - springStep(a, 15, .35)) * .22 : -.04;
       const warm = smooth(lc - .5, lc + .25, lt);
@@ -321,23 +323,24 @@ export const act5: Shot[] = [
       const tg = cradlePts(5, cx, cy, rx, ry, 140, 4);
       const tg2 = cradlePts(6, cx, cy + 8, rx * 1.12, ry * 1.15, 110, 3);
       const sit = (seed: number, list: typeof tg, size: number) => (tt: number): M[] => list.map((p, i) => ({ x: p.x + n2(seed + i, tt * 1.5) * 6, y: p.y + n2(seed + i, tt * 1.5, 4) * 6, a: p.a, s: size * (.6 + rnd(seed, i) * .8), f: tt * 10 + i, b: .7 + .3 * rnd(seed, i + 9) }));
-      const cl = { dark: mixhex(kR.cloud, "#000000", .25), lit: mixhex(mixhex(kR.cloud, kR.cloudLit, .5), "#fff4dc", light * .7) };
+      const cl = { dark: mixhex(kR.sky[0], kR.cloud, .5), lit: mixhex(mixhex(kR.cloud, kR.cloudLit, .3), "#ffe2a8", light * .3) };
       const tail = (tt: number) => stream(613, 70, tt, (u) => ({ x: cx + Math.sin(u * 5 + tt * 3) * 50 * u - u * 120, y: cy + ry * .9 + u * 1100 }), { speed: 1.4, spread: 50 + 0, size: 8 });
       return (
         <Scene cam={cam}>
           <SkyLayer k={kR} horizon={1300} glowOpacity={.2}>
             <Glow x={960} y={-120} r={mix(500, 1500, light)} color={K.clear.moon} opacity={.25 + light * .6} />
           </SkyLayer>
-          <Layer d={3.2}>
-            <RushClouds seed={611} t={t} n={7} speed={900} x0={-900} x1={2800} y0={-1400} span={2900} size={1100} dark={cl.dark} lit={cl.lit} />
+          <Layer d={3.2} blur={5}>
+            <RushClouds seed={611} t={t} n={12} speed={950} x0={-900} x1={2800} y0={-1400} span={2900} size={720} dark={cl.dark} lit={cl.lit} />
             <Glow x={260} y={300} r={700} color="#cfe8ff" opacity={bolt * .5} />
             <Lightning seed={611} x0={140} y0={-300} x1={620} y1={980} flash={bolt} width={4} branches={5} />
           </Layer>
           <Layer d={3.2} blend="screen">
-            <GodRays x={960} y={-200} t={t} count={16} len={1700} color={K.clear.moon} opacity={light * .5} spin={.01} />
+            <GodRays x={960} y={-200} t={t} count={16} len={1700} color={K.clear.moon} opacity={light * .6} spin={.01} />
+            <Glow x={960} y={-60} r={mix(200, 900, light)} color="#fff3d0" opacity={light * .8} />
           </Layer>
-          <Layer d={1.7}>
-            <RushClouds seed={612} t={t} n={4} speed={2100} x0={-500} x1={2400} y0={-1300} span={2700} size={850} dark={cl.dark} lit={cl.lit} dx={-200} />
+          <Layer d={1.7} blur={2.5}>
+            <RushClouds seed={612} t={t} n={6} speed={2100} x0={-500} x1={2400} y0={-1300} span={2700} size={600} dark={cl.dark} lit={cl.lit} dx={-200} />
           </Layer>
           <Layer d={1} blend="screen">
             <Rain t={t} count={120} angle={.06} color="#c9d6e0" opacity={.3 * (1 - light * .6)} speed={5200} len={240} width={1.6} />
@@ -353,10 +356,10 @@ export const act5: Shot[] = [
             <Moths t={t} at={sit(62, tg, 9)} color={kR.accent} />
           </Layer>
           <Layer d={.55}>
-            <RushClouds seed={614} t={t} n={2} speed={4200} x0={-600} x1={2600} y0={-1600} span={3600} size={1500} dark={mixhex(cl.dark, "#000000", .3)} lit={cl.dark} />
+            {[[-260, .1], [2150, .62], [-120, 1.3]].map(([x, o], i) => <Cloud key={i} seed={614 + i} x={x} y={-1500 + ((lt + o) * 4300) % 4600} w={1300} h={520} dark={mixhex(cl.dark, "#000000", .3)} lit={cl.dark} />)}
           </Layer>
           <Layer d={Infinity} blur={0} blend="screen">
-            <rect x={-200} y={-200} width={2400} height={1500} fill="#fff8ec" opacity={white * .85} />
+            <Glow x={960} y={-150} r={mix(300, 2600, ease("in", white))} color="#fff8ec" core={.4} opacity={white} />
           </Layer>
         </Scene>
       );
@@ -389,7 +392,7 @@ export const act5: Shot[] = [
       const splash = (i: number) => {
         const a = -Math.PI / 2 + (rnd(62, i) - .5) * 2.6, v = 300 + rnd(63, i) * 600;
         const e = ease("expoOut", lin(0, 1.6, lt));
-        return { x: 880 + Math.cos(a) * v * e, y: 1060 + Math.sin(a) * v * e * .7 + lt * lt * 40, r: (60 + rnd(64, i) * 90) * (1 - lin(0, 2.2, lt) * .6), o: 1 - smooth(.6, 2.2, lt) };
+        return { x: 880 + Math.cos(a) * v * e, y: 1060 + Math.sin(a) * v * e * .7 + lt * lt * 40, r: (50 + rnd(64, i) * 80) * (1 + lin(0, 2.2, lt) * .5), o: 1 - smooth(.3, 1.8, lt) };
       };
       return (
         <Scene cam={cam}>
@@ -409,7 +412,7 @@ export const act5: Shot[] = [
             <CloudBank seed={623} y={1230} x0={-900} x1={2900} size={900} count={8} dark={mixhex(k.cloud, k.sil, .35)} lit={mixhex(k.cloudLit, k.cloud, .2)} t={t} drift={-10} />
           </Layer>
           <Layer d={1}>
-            {Array.from({ length: 12 }, (_, i) => { const q = splash(i); return <circle key={i} cx={q.x} cy={q.y} r={q.r} fill={mixhex(k.cloud, k.cloudLit, .55)} opacity={q.o * .9} />; })}
+            {Array.from({ length: 16 }, (_, i) => { const q = splash(i); return <Glow key={i} x={q.x} y={q.y} r={q.r * 1.1} color={k.cloudLit} opacity={q.o * .7} />; })}
           </Layer>
           <Layer d={1} blend="screen">
             <Glow x={cx} y={cy + ry * .5} rx={rx * 1.6} ry={ry * 2} r={rx} color={k.accent} opacity={.5} />
@@ -431,54 +434,58 @@ export const act5: Shot[] = [
     },
   },
   {
-    // 63. 클로즈업: 맞잡은 두 손이 달 표면으로 다가간다. 멈칫(예비동작) 했다가 박 236에 손끝이 닿는다 → 빛 터짐 + 표면에 번지는 빛 고리(박마다 하나 더)
+    // 63. 클로즈업: 화면을 거의 채운 달 표면. 아래 양 귀퉁이에서 두 팔이 V자로 모여 맞잡은 손(깍지)이 된다(원근: 다가갈수록 작아진다).
+    //     천천히 다가와 멈칫(예비동작) 했다가 박 236에 손끝이 닿는다 → 빛 터짐 + 표면에 번지는 빛 고리(박마다 하나 더)
     id: "a5-touch", start: T63, key: "clear", enter: { type: "cut" },
     render: (c) => {
       const lt = c.lt, t = c.t;
       const k = K.clear;
       const tTouch = beat(236), lT = tTouch - T63, a = t - tTouch;
       const touched = a >= 0;
-      const g = touched ? -7 * Math.exp(-a * 3) : kf(lt, [[0, 340], [lT - .42, 80, "expoOut"], [lT - .16, 112, "out"], [lT, 0, "in"]]);
+      const g = touched ? -6 * Math.exp(-a * 3) : kf(lt, [[0, 300], [lT - .42, 70, "expoOut"], [lT - .16, 100, "out"], [lT, 0, "in"]]);
       const kick = touched ? Math.exp(-a * 5) : 0;
       const hh = handheld(t, 63, 4);
-      const P0 = { x: 1010, y: 520 };
-      const cam: Cam = { x: mix(960, P0.x, .35) + hh.x + Math.sin(a * 60) * kick * 6, y: mix(540, P0.y, .35) + hh.y, zoom: kf(lt, [[0, 1.0], [lT, 1.06, "io"], [c.dur, 1.16, "out"]]) + kick * .03, rot: hh.r, focus: 1, dof: 7 };
-      const moon = { x: 1400, y: 470, r: 780 };
+      const P0 = { x: 960, y: 455 };
+      const cam: Cam = { x: 960 + hh.x + Math.sin(a * 60) * kick * 6, y: 520 + hh.y, zoom: kf(lt, [[0, 1.0], [lT, 1.05, "io"], [c.dur, 1.14, "out"]]) + kick * .03, rot: hh.r, focus: 1, dof: 7 };
+      const moon = { x: 960, y: 170, r: 930 };
       const glowR = touched ? mix(80, 1900, ease("expoOut", a / 1.8)) : 0;
       const bright = touched ? smooth(0, 1.3, a) : 0;
       const white = smooth(c.dur - .55, c.dur, lt);
-      const hands = [
-        { S: { x: -340, y: 1260 }, tip: { x: P0.x - 8, y: P0.y - 22 }, w0: 190 },
-        { S: { x: 330, y: 1460 }, tip: { x: P0.x + 16, y: P0.y + 20 }, w0: 175 },
+      // 깍지 낀 손(매듭): 다가갈수록 위로, 작게
+      const sc = 1 + g / 520;
+      const Kn = { x: P0.x, y: P0.y + 64 * sc + g * .55 };
+      const arms = [
+        { S: { x: 250, y: 1330 }, side: -1, w0: 250 },
+        { S: { x: 1670, y: 1330 }, side: 1, w0: 250 },
       ].map((h) => {
-        const dx = h.tip.x - h.S.x, dy = h.tip.y - h.S.y, L = Math.hypot(dx, dy);
+        const W = { x: Kn.x + h.side * 62 * sc, y: Kn.y + 58 * sc };
+        const dx = W.x - h.S.x, dy = W.y - h.S.y, L = Math.hypot(dx, dy);
         const u = { x: dx / L, y: dy / L }, n = { x: -u.y, y: u.x };
-        const tip = { x: h.tip.x - u.x * g, y: h.tip.y - u.y * g };
-        const W = { x: tip.x - u.x * 128, y: tip.y - u.y * 128 };
-        return { ...h, u, n, tip, W };
+        return { ...h, W, u, n };
       });
       const shape = (fill: string) => (
         <g fill={fill} stroke={fill} strokeLinecap="round">
-          {hands.map((h, i) => {
-            const { S, W, u, n, w0, tip } = h;
-            const w1 = 40;
-            const m = { x: mix(S.x, W.x, .55), y: mix(S.y, W.y, .55) };
+          {arms.map((h, i) => {
+            const { S, W, u, n, w0, side } = h;
+            const w1 = 50 * sc;
+            const bow = side * 34;
+            const m = { x: mix(S.x, W.x, .5) + n.x * bow, y: mix(S.y, W.y, .5) + n.y * bow };
             const wm = (w0 + w1) * .55;
-            const cuff = { x: W.x - u.x * 70, y: W.y - u.y * 70 };
-            const palm = { x: W.x + u.x * 34, y: W.y + u.y * 34 };
+            const cuff = { x: W.x - u.x * 70 * sc, y: W.y - u.y * 70 * sc };
             const ang = (Math.atan2(u.y, u.x) * 180) / Math.PI;
-            const side = i === 0 ? -1 : 1;
             return (
               <g key={i}>
                 <path strokeWidth={0} d={`M${S.x + n.x * w0},${S.y + n.y * w0}Q${m.x + n.x * wm},${m.y + n.y * wm} ${W.x + n.x * w1},${W.y + n.y * w1}L${W.x - n.x * w1},${W.y - n.y * w1}Q${m.x - n.x * wm},${m.y - n.y * wm} ${S.x - n.x * w0},${S.y - n.y * w0}Z`} />
-                <ellipse strokeWidth={0} cx={cuff.x} cy={cuff.y} rx={22} ry={62} transform={`rotate(${ang} ${cuff.x} ${cuff.y})`} />
-                <ellipse strokeWidth={0} cx={palm.x} cy={palm.y} rx={50} ry={36} transform={`rotate(${ang} ${palm.x} ${palm.y})`} />
-                <line x1={palm.x + u.x * 20} y1={palm.y + u.y * 20} x2={tip.x} y2={tip.y} strokeWidth={19} />
-                {[0, 1, 2].map((f) => {
-                  const b = { x: palm.x + u.x * (30 - f * 9) + n.x * side * (22 + f * 13), y: palm.y + u.y * (30 - f * 9) + n.y * side * (22 + f * 13) };
-                  return <line key={f} x1={b.x} y1={b.y} x2={b.x + u.x * 24 - n.x * side * 16} y2={b.y + u.y * 24 - n.y * side * 16} strokeWidth={17} />;
+                <ellipse strokeWidth={0} cx={cuff.x} cy={cuff.y} rx={26 * sc} ry={80 * sc} transform={`rotate(${ang} ${cuff.x} ${cuff.y})`} />
+                {/* 손바닥(매듭 쪽으로) */}
+                <ellipse strokeWidth={0} cx={W.x + u.x * 30 * sc} cy={W.y + u.y * 30 * sc} rx={62 * sc} ry={50 * sc} transform={`rotate(${ang} ${W.x + u.x * 30 * sc} ${W.y + u.y * 30 * sc})`} />
+                {/* 깍지: 네 손가락이 매듭 위로 엇갈려 넘어간다 */}
+                {[0, 1, 2, 3].map((f) => {
+                  const bx = Kn.x + side * (26 - f * 4) * sc, by = Kn.y + (-6 + f * 22 - (i ? 11 : 0)) * sc;
+                  return <line key={f} x1={bx} y1={by} x2={bx - side * 64 * sc} y2={by - 20 * sc + f * 4 * sc} strokeWidth={21 * sc} />;
                 })}
-                <line x1={palm.x - n.x * side * 30} y1={palm.y - n.y * side * 30} x2={palm.x + u.x * 34 - n.x * side * 50} y2={palm.y + u.y * 34 - n.y * side * 50} strokeWidth={18} />
+                {/* 엄지: 위로 세워 달에 닿는다 */}
+                <line x1={Kn.x + side * 30 * sc} y1={Kn.y - 6 * sc} x2={P0.x + side * 13 * sc} y2={P0.y + 2 * sc - g * .1} strokeWidth={22 * sc} />
               </g>
             );
           })}
@@ -489,36 +496,31 @@ export const act5: Shot[] = [
         <Scene cam={cam}>
           <SkyLayer k={k} horizon={1300} glowOpacity={.3} stars={.7} t={t} />
           <Layer d={2.4} blend="screen">
-            <Moths t={t} at={(tt) => swarm(631, 40, tt, { cx: 700, cy: 520, rx: 900, ry: 520, speed: .3, size: 4 })} color={k.accent} />
+            <Moths t={t} at={(tt) => swarm(631, 30, tt, { cx: 960, cy: 900, rx: 1100, ry: 300, speed: .3, size: 4 })} color={k.accent} />
           </Layer>
           <Layer d={1.15}>
-            <Glow x={moon.x} y={moon.y} r={moon.r * 1.9} color={k.moon} opacity={.55} />
-            <circle cx={moon.x} cy={moon.y} r={moon.r} fill={mixc(k.moon, "#f0d9a8", .5 - bright * .4)} />
-            <Glow x={moon.x - 140} y={moon.y - 120} r={moon.r * .95} color="#ffffff" opacity={.75} />
-            <g fill={mixc("#c9a868", k.moon, bright * .7)}>
-              {Array.from({ length: 11 }, (_, i) => <Glow key={i} x={moon.x + (rnd(632, i) - .6) * moon.r * 1.3} y={moon.y + (rnd(633, i) - .5) * moon.r * 1.4} r={moon.r * (.08 + rnd(634, i) * .2)} color="#b89660" opacity={.22 * (1 - bright * .7)} />)}
-            </g>
-            <g fill="none" stroke="#b8975e" opacity={.28 * (1 - bright * .8)}>
-              {Array.from({ length: 16 }, (_, i) => <circle key={i} cx={moon.x + (rnd(635, i) - .65) * moon.r * 1.2} cy={moon.y + (rnd(636, i) - .5) * moon.r * 1.4} r={8 + rnd(637, i) * 36} strokeWidth={3} />)}
-            </g>
+            <Glow x={moon.x} y={moon.y} r={moon.r * 1.6} color={k.moon} opacity={.6} />
+            <circle cx={moon.x} cy={moon.y} r={moon.r} fill={mixc(k.moon, "#ecd2a0", .55 - bright * .45)} />
+            <Glow x={moon.x - 160} y={moon.y - 140} r={moon.r * .95} color="#ffffff" opacity={.7} />
+            {Array.from({ length: 13 }, (_, i) => <Glow key={i} x={moon.x + (rnd(632, i) - .5) * moon.r * 1.6} y={moon.y + (rnd(633, i) - .25) * moon.r * 1.2} r={moon.r * (.07 + rnd(634, i) * .17)} color="#b08a52" opacity={.2 * (1 - bright * .75)} />)}
             <Glow x={P0.x} y={P0.y} r={glowR} color="#fffaf0" opacity={touched ? .85 : 0} />
-            <Rings x={P0.x + 8} y={P0.y} t={t} at={ringT} r={1500} sy={.86} color="#e8a845" dur={1.6} width={9} />
+            <Rings x={P0.x} y={P0.y} t={t} at={ringT} r={1500} sy={.86} color="#e09a3a" dur={1.6} width={9} />
           </Layer>
           <Layer d={1.4} blend="screen">
-            <Moths t={t} at={(tt) => swarm(638, 26, tt, { cx: P0.x - 120, cy: P0.y + 40, rx: 300, ry: 200, speed: .5, size: 6 })} color={k.accent} />
+            <Moths t={t} at={(tt) => swarm(638, 22, tt, { cx: P0.x, cy: P0.y + 160, rx: 380, ry: 220, speed: .5, size: 6 })} color={k.accent} />
           </Layer>
-          <Layer d={1} defs={<filter id="a5halo" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation={9} /></filter>}>
-            <g filter="url(#a5halo)" opacity={.95}>{shape(k.rim)}</g>
-            <g transform="translate(5 -4)">{shape(mixc(k.rim, "#ffffff", .4))}</g>
+          <Layer d={1} defs={<filter id="a5halo" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation={14} /></filter>}>
+            <g filter="url(#a5halo)" opacity={.9}>{shape(k.rim)}</g>
+            <g transform="translate(0 -7)">{shape(mixc(k.rim, "#ffffff", .5))}</g>
             {shape(k.sil)}
           </Layer>
           <Layer d={1} blend="screen">
-            <Glow x={P0.x} y={P0.y} r={120} color="#ffffff" opacity={touched ? .9 * Math.exp(-a * 1.2) + .3 : 0} />
-            <Burst x={P0.x} y={P0.y} t={t} t0={tTouch} r={520} n={44} color={k.accent} dur={1.2} />
-            <Burst x={P0.x} y={P0.y} t={t} t0={beat(237)} r={360} n={24} color={k.accent} dur={1} seed={21} />
+            <Glow x={P0.x} y={P0.y} r={130} color="#ffffff" opacity={touched ? .9 * Math.exp(-a * 1.2) + .3 : 0} />
+            <Burst x={P0.x} y={P0.y} t={t} t0={tTouch} r={560} n={44} color={k.accent} dur={1.2} />
+            <Burst x={P0.x} y={P0.y} t={t} t0={beat(237)} r={380} n={24} color={k.accent} dur={1} seed={21} />
           </Layer>
           <Layer d={.45}>
-            <Moths t={t} at={(tt) => swarm(639, 7, tt, { cx: 900, cy: 600, rx: 1100, ry: 600, speed: .18, size: 20 })} color={k.accent} />
+            <Moths t={t} at={(tt) => swarm(639, 7, tt, { cx: 960, cy: 700, rx: 1200, ry: 500, speed: .18, size: 20 })} color={k.accent} />
           </Layer>
           <Layer d={Infinity} blur={0} blend="screen">
             <rect x={-200} y={-200} width={2400} height={1500} fill="#fff6e0" opacity={white * .75} />
@@ -546,7 +548,7 @@ export const act5: Shot[] = [
             <GodRays x={M0.x} y={M0.y} t={t} color={k.moon} opacity={.35 * (1 - lt / c.dur * .5)} len={2400} count={22} spin={.05} />
             <Glow x={M0.x} y={M0.y} r={mix(1500, 700, smooth(0, 1.2, lt))} color={k.glow} opacity={.75} />
             <Glow x={M0.x} y={M0.y} r={260 + pulse * 30} color="#ffffff" opacity={.65 + pulse * .2} />
-            <circle cx={M0.x} cy={M0.y} r={150 * (1 + .3 * ease("expoOut", lt / .6))} fill="#ffffff" opacity={disc} />
+            <Glow x={M0.x} y={M0.y} r={170 * (1 + .6 * ease("expoOut", lt / .6))} color="#ffffff" core={.45} opacity={disc} />
             <Rings x={M0.x} y={M0.y} t={t} at={[T64, T64 + .18, beat(240)]} r={1700} color={k.accent} dur={1.5} width={10} />
             <Burst x={M0.x} y={M0.y} t={t} t0={T64} r={900} n={60} color={k.accent} dur={1.4} />
           </Layer>
@@ -596,60 +598,74 @@ export const act5: Shot[] = [
     },
   },
   {
-    // 66. 새벽 방(dip): 빛 구슬 하나에서 시작해(달 ↔ 구슬 매치컷) 천천히 뒤로 빠지면, 구슬을 꼭 안고 잠든 아이.
-    //     창밖은 복숭앗빛, 비스듬한 햇살 속 먼지, 창턱에 잠든 나방 한 마리. 침대 옆 폰은 꺼져 있다
+    // 66. 새벽 방(dip), 바로 위에서 내려다봄: 빛 구슬 하나에서 시작해(달 ↔ 구슬 매치컷) 천천히 돌며 뒤로 빠지면,
+    //     옆으로 웅크려 구슬을 꼭 안고 잠든 아이. 창 모양 햇살(네 칸)이 이불 위에 비스듬히 눕고, 먼지가 떠다닌다.
+    //     머리맡 바닥의 폰은 꺼진 채 엎어져 있다
     id: "a5-sleep", start: T66, key: "dawn", enter: { type: "dip" },
     render: (c) => {
       const lt = c.lt, t = c.t;
       const k = K.dawn;
       const breath = Math.sin(t * 1.9);
-      const kp = pose({ ...P.sleep, x: 700, y: 700, s: 380, facing: 1, face: .85, faceColor: "#ffd9a0", smile: 1, eyes: 0, swing: -.4, headTilt: .35 + breath * .02, squash: breath * .01, armN: [1.35, 1.55], armF: [1.1, 1.7] });
-      const sk = skeleton(kp);
-      const orb = { x: mix(sk.haN.x, sk.haF.x, .5) + 14, y: mix(sk.haN.y, sk.haF.y, .5) - 4, r: 30 * (1 + .05 * breath) };
-      const pull = ease("expoOut", lin(.1, 2.6, lt));
-      const hh = handheld(t, 66, 3, .3);
-      const cam: Cam = { x: mix(orb.x, 960, pull) + hh.x, y: mix(orb.y, 520, pull) + hh.y, zoom: mix(2.6, 1.04, pull), rot: hh.r, focus: 1, dof: 5 };
-      const win = { x: 1130, y: 140, w: 520, h: 470 };
-      const wall = mixhex(k.sil, k.fog, .3);
-      const shaft = `M${win.x},${win.y}L${win.x},${win.y + win.h}L${win.x - 700},${win.y + win.h + 420}L${win.x - 900},${win.y + 380}Z`;
-      const motes = (tt: number): M[] => Array.from({ length: 30 }, (_, i) => {
-        const u = rnd(661, i), v = rnd(662, i);
-        const x = mix(win.x - 820, win.x - 40, u) + n2(663 + i, tt * .15) * 60, y = mix(win.y + 120, win.y + 700, v) + (u - .5) * 300 + n2(664 + i, tt * .15) * 50;
-        return { x, y, s: 1.6 + rnd(665, i) * 2.4, a: 0, f: 0, b: .35 + .4 * Math.sin(tt * 1.5 + i) ** 2 };
+      // 위에서 본 옆으로 누운 자세: rot +π/2, facing -1 → 머리는 왼쪽(베개), 몸 앞(얼굴·무릎)은 화면 아래
+      const kp = pose({
+        anchor: "center", x: 700, y: 440, s: 640, facing: -1, rot: 1.48 + breath * .006,
+        lean: .32, bend: .22, headTilt: .3, armN: [1.25, 2.05], armF: [1.05, 2.15], legN: [1.35, 1.9], legF: [1.15, 2.05], toe: .2, swing: -.6,
+        face: .9, faceColor: "#ffd9a0", smile: 1, eyes: 0, squash: breath * .012,
       });
+      const sk = skeleton(kp);
+      const orb = { x: mix(sk.haN.x, sk.haF.x, .5), y: mix(sk.haN.y, sk.haF.y, .5) + 18, r: 32 * (1 + .05 * breath) };
+      const pull = ease("expoOut", lin(.12, 2.7, lt));
+      const hh = handheld(t, 66, 2.5, .3);
+      const cam: Cam = { x: mix(orb.x, 960, pull) + hh.x, y: mix(orb.y, 530, pull) + hh.y, zoom: mix(2.7, 1.02, pull), rot: mix(.22, 0, pull) + hh.r, focus: 1, dof: 5 };
+      const floor = mixhex(k.sil, k.fog, .18);
+      const sheet = mixhex(k.fog, k.glow, .18);
+      const blanket = mixhex(k.accent, k.fog, .45);
+      const bed = { x: 250, y: 150, w: 1420, h: 780 };
+      // 창 모양 햇살: 2×2 칸, 오른쪽 위에서 비스듬히
+      const pane = (i: number, j: number) => {
+        const x0 = 1350 + i * 250, y0 = 120 + j * 300, w = 230, h = 280, sh = -.5;
+        return `M${x0 + y0 * sh},${y0}L${x0 + w + y0 * sh},${y0}L${x0 + w + (y0 + h) * sh},${y0 + h}L${x0 + (y0 + h) * sh},${y0 + h}Z`;
+      };
+      const motes = (tt: number): M[] => Array.from({ length: 34 }, (_, i) => {
+        const x = mix(500, 1700, rnd(661, i)) + n2(663 + i, tt * .12) * 70, y = mix(40, 1000, rnd(662, i)) + n2(664 + i, tt * .12) * 60;
+        return { x, y, s: 1.6 + rnd(665, i) * 2.6, a: 0, f: 0, b: .25 + .45 * Math.sin(tt * 1.3 + i) ** 2 };
+      });
+      const hip = sk.pelvis;
+      // 이불은 발치로 걷어차여 뭉쳐 있다(웅크린 실루엣이 밝은 시트 위에서 읽히도록)
+      const bx = bed.x + bed.w;
+      const blanketD = `M${bx - 330},${bed.y + 20}Q${bx - 420},${bed.y + 250} ${bx - 300},${bed.y + 420}Q${bx - 400},${bed.y + 600} ${bx - 260},${bed.y + bed.h - 10}L${bx - 10},${bed.y + bed.h - 10}L${bx - 10},${bed.y + 20}Z`;
       return (
         <Scene cam={cam}>
-          <SkyLayer k={k} horizon={560} glowX={1420} glowOpacity={.9} glowR={700}>
-            <Glow x={1420} y={545} r={150} color="#fff4d8" opacity={.95} />
-          </SkyLayer>
-          <Layer d={7}>
-            <Skyline seed={666} x0={600} x1={2400} base={700} minH={50} maxH={190} minW={40} maxW={110} color={mixhex(k.silFar, k.fog, .5)} t={t} win={{ density: .06, size: .5, warm: k.win, cold: k.cold, coldRatio: 0 }} />
+          <Layer d={1.08}>
+            <rect x={-1500} y={-1200} width={5000} height={3600} fill={floor} />
+            {Array.from({ length: 22 }, (_, i) => <rect key={i} x={-1500} y={-1100 + i * 120} width={5000} height={4} fill={mixhex(floor, k.sil, .45)} />)}
+            {Array.from({ length: 30 }, (_, i) => <rect key={"v" + i} x={-1400 + rnd(667, i) * 4600} y={-1100 + Math.floor(rnd(668, i) * 22) * 120} width={4} height={120} fill={mixhex(floor, k.sil, .45)} />)}
+            <rect x={1700} y={300} width={220} height={220} rx={14} fill={mixhex(floor, k.sil, .55)} />
+            <rect x={1770} y={360} width={70} height={120} rx={10} fill="#0e0918" />
+            <ellipse cx={420} cy={980} rx={58} ry={30} fill={mixhex(floor, k.accent, .25)} />
+            <ellipse cx={520} cy={1000} rx={58} ry={30} fill={mixhex(floor, k.accent, .25)} />
           </Layer>
           <Layer d={1}>
-            <path d={`M-1200,-800H3200V2000H-1200Z M${win.x},${win.y}V${win.y + win.h}H${win.x + win.w}V${win.y}Z`} fill={wall} fillRule="evenodd" />
-            <Glow x={win.x + win.w / 2} y={win.y + win.h / 2} r={900} color={k.accent} opacity={.18} />
-            <WindowFrame x={win.x} y={win.y} w={win.w} h={win.h} frame={mixhex(k.sil, wall, .35)} thick={20} reflect={.08} />
-            <rect x={win.x - 40} y={win.y + win.h + 14} width={win.w + 80} height={18} fill={mixhex(k.sil, wall, .3)} />
-            <Curtain x={win.x - 90} y={win.y - 40} w={70} h={win.h + 120} color={mixhex(k.sil, k.accent, .22)} t={t} wind={.22} side={1} />
-            <Curtain x={win.x + win.w + 90} y={win.y - 40} w={-70} h={win.h + 120} color={mixhex(k.sil, k.accent, .22)} t={t} wind={.18} side={-1} seed={5} />
-            <rect x={1360} y={700} width={150} height={190} rx={8} fill={mixhex(k.sil, wall, .25)} />
-            <rect x={1408} y={688} width={34} height={12} rx={3} fill="#120c1c" />
-            <Bed x={250} y={880} w={1060} color={mixhex(k.sil, wall, .2)} blanket={mixhex(k.sil, k.accent, .2)} />
-            <ellipse cx={sk.head.x - 30} cy={706} rx={120} ry={30} fill={mixhex(k.sil, k.accent, .3)} />
-            <Kid pose={kp} sil={k.sil} rim={{ dx: .9, dy: -.3, color: k.rim, width: .012, glow: .7 }} />
-            <path d={`M${sk.pelvis.x - 10},712Q${sk.pelvis.x + 40},${sk.knN.y - 60} ${mix(sk.knN.x, sk.toeN.x, .5)},${Math.min(sk.knN.y, sk.anN.y) - 40}Q${sk.toeN.x + 120},${sk.anN.y - 20} ${sk.toeN.x + 190},712Z`} fill={mixhex(k.sil, k.accent, .2)} />
+            <rect x={bed.x - 26} y={bed.y - 26} width={bed.w + 52} height={bed.h + 52} rx={46} fill={mixhex(k.sil, floor, .35)} />
+            <rect x={bed.x} y={bed.y} width={bed.w} height={bed.h} rx={34} fill={sheet} />
+            <rect x={bed.x + 40} y={bed.y + 120} width={250} height={430} rx={70} fill={mixhex(sheet, "#ffffff", .12)} />
+            <path d={`M${bed.x + 70},${bed.y + 200}Q${bed.x + 160},${bed.y + 230} ${bed.x + 250},${bed.y + 190}`} stroke={mixhex(sheet, k.sil, .3)} strokeWidth={5} fill="none" />
+            <path d={blanketD} fill={blanket} />
+            <path d={`M${bx - 300},${bed.y + 130}Q${bx - 160},${bed.y + 200} ${bx - 40},${bed.y + 150}M${bx - 320},${bed.y + 420}Q${bx - 180},${bed.y + 380} ${bx - 40},${bed.y + 460}M${bx - 240},${bed.y + 620}Q${bx - 140},${bed.y + 680} ${bx - 40},${bed.y + 640}`} stroke={mixhex(blanket, k.sil, .3)} strokeWidth={8} fill="none" strokeLinecap="round" />
+            <ellipse cx={hip.x - 20} cy={hip.y + 60} rx={300} ry={170} fill={mixhex(sheet, k.sil, .2)} opacity={.35} />
+            <Kid pose={kp} sil={k.sil} rim={{ dx: .5, dy: -.85, color: k.rim, width: .01, glow: .6 }} />
           </Layer>
           <Layer d={1} blend="screen">
-            <path d={shaft} fill={k.accent} opacity={.13} />
-            <Moths t={t} at={motes} color="#fff0d0" wings={false} />
-            <Glow x={orb.x} y={orb.y} r={orb.r * 9 * (1 + c.pulse * .08)} color={K.bloom.accent} opacity={.55} />
-            <Glow x={orb.x} y={orb.y} r={orb.r * 2.2} color="#fff6dc" opacity={.95} />
-            <circle cx={orb.x} cy={orb.y} r={orb.r * .75} fill="#fffdf4" />
-            <Moths t={t} at={(tt) => [{ x: 1395, y: win.y + win.h + 8, s: 11, a: -.15, f: tt * 1.4, b: .9 }]} color={k.accent} />
+            <g fill={k.glow} opacity={.11}>{[0, 1].map((i) => [0, 1].map((j) => <path key={`${i}${j}`} d={pane(i, j)} />))}</g>
+            <Glow x={orb.x} y={orb.y} r={orb.r * 14 * (1 + c.pulse * .06)} color={K.bloom.accent} opacity={.55} />
+            <Glow x={orb.x} y={orb.y} r={orb.r * 2.4} color="#fff6dc" opacity={.95} />
+            <circle cx={orb.x} cy={orb.y} r={orb.r * .78} fill="#fffdf4" />
           </Layer>
-          <Layer d={.55}>
-            <rect x={1580} y={430} width={70} height={900} rx={30} fill={mixhex(k.sil, wall, .1)} />
-            <circle cx={1615} cy={430} r={52} fill={mixhex(k.sil, wall, .1)} />
+          <Layer d={.7} blend="screen">
+            <Moths t={t} at={motes} color="#fff0d0" wings={false} />
+          </Layer>
+          <Layer d={.45}>
+            <Moths t={t} at={(tt) => [{ x: mix(1900, 1300, ease("out", lin(0, c.dur, tt - T66))), y: mix(1050, 820, lin(0, c.dur, tt - T66)) + Math.sin(tt * 3) * 20, s: 30, a: -2.6, f: tt * 9, b: .9 }]} color={k.accent} />
           </Layer>
         </Scene>
       );
@@ -666,12 +682,12 @@ export const act5: Shot[] = [
       const k = K.dawn;
       const hh = handheld(t, 67, 3, .3);
       const back = ease("io", lin(1.4, c.dur - .1, lt));
-      const C3 = { x: hh.x * .5, y: mix(-70, -260, back) + hh.y * .5, z: mix(-110, -1250, back) };
+      const C3 = { x: hh.x * .5, y: mix(-60, -230, back) + hh.y * .5, z: mix(90, -950, back) };
       const pj = (X: number, Y: number, Z: number) => { const s = AL.F / Math.max(15, Z - C3.z); return { x: 960 + (X - C3.x) * s, y: 540 + (Y - C3.y) * s, s }; };
       const quad = (pts: { x: number; y: number }[]) => "M" + pts.map((p) => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join("L") + "Z";
       const zn = C3.z + 25;
       const A = AL.A;
-      const wallC = (side: number, near: boolean) => near ? mixhex(k.sil, k.fog, side < 0 ? .38 : .5) : mixhex(k.fog, k.glow, .35);
+      const wallC = (side: number, near: boolean) => near ? mixhex(k.sil, k.fog, side < 0 ? .16 : .26) : mixhex(k.fog, k.glow, .4);
       // 타이밍
       const tOpen = beat(251) - T67, tLook = beat(252) - T67, tSee = beat(252.5) - T67, tWave = beat(253) - T67;
       const open = ease("expoOut", lin(tOpen, tOpen + .55, lt));
@@ -683,9 +699,9 @@ export const act5: Shot[] = [
       const waveOn = smooth(tWave - .12, tWave + .1, lt);
       const ph = (t - beat(253)) * Math.PI * 2 / .683;
       const ZK = AL.ZK;
-      const kidP = pj(-A + 12, 150, ZK), friP = pj(A - 12, 150, ZK);
+      const kidP = pj(-A + 12, 70, ZK), friP = pj(A - 12, 70, ZK);
       const sKid = 270 * kidP.s;
-      const waveArm = (o: number): [number, number] => [mix(1.3, 2.35, waveOn) + Math.sin(ph + o) * .08 * waveOn, mix(1.4, .55, waveOn) + Math.sin(ph + o) * .5 * waveOn];
+      const waveArm = (o: number): [number, number] => [mix(1.3, 2.62, waveOn) + Math.sin(ph + o) * .1 * waveOn, mix(1.4, .5, waveOn) + Math.sin(ph + o) * .55 * waveOn];
       const faceL = .35 + look * .4;
       const kid = pose({
         x: kidP.x, y: kidP.y, s: sKid, facing: 1, lean: mix(.42, .25, look), bend: .08, headTilt: mix(.45, -.08, look) - hop * .1, squash: -hop * .05,
@@ -694,7 +710,7 @@ export const act5: Shot[] = [
       });
       const friY = mix(380, 0, rise);
       const fri = pose({
-        x: friP.x, y: pj(A - 12, 150 + friY, ZK).y, s: sKid, facing: -1, lean: mix(.1, .3, waveOn), bend: .05, headTilt: mix(-.25, -.05, look) - hop * .1, squash: -hop * .05,
+        x: friP.x, y: pj(A - 12, 70 + friY, ZK).y, s: sKid, facing: -1, lean: mix(.1, .3, waveOn), bend: .05, headTilt: mix(-.25, -.05, look) - hop * .1, squash: -hop * .05,
         armN: stretch > .01 ? [mix(waveArm(1.3)[0], 2.9, stretch), mix(waveArm(1.3)[1], .15, stretch)] : waveArm(1.3), armF: [mix(1.25, 2.7, stretch), mix(1.45, .2, stretch)],
         face: rise * faceL, faceColor: "#ffd2a8", faceDir: .15, eyes: stretch > .5 ? .05 : 1 + see * .25, mouth: stretch * .8 + see * .6, smile: waveOn > .5 ? 1 : 0,
       });
@@ -744,6 +760,12 @@ export const act5: Shot[] = [
         const p = pj(X, Y, Z);
         return { x: p.x, y: p.y, s: 10 * p.s, a: -1.4 + n2(676 + i, tt) * .5, f: tt * 14 + i, b: .9 };
       });
+      // 창턱 아래(방 안)는 보이지 않게: 창턱 높이(Y=0)의 원근선 위쪽만 남긴다
+      const sillClip = (sd: number) => {
+        const L = pj(sd * (A - 12), 0, ZK - 300);
+        const E1 = { x: 960 + (L.x - 960) * 30, y: 540 + (L.y - 540) * 30 }, E2 = { x: 960 - (L.x - 960) * 1.5, y: 540 - (L.y - 540) * 1.5 };
+        return `M${E1.x},${E1.y}L${E2.x},${E2.y}L${E2.x},-9000L${E1.x},-9000Z`;
+      };
       return (
         <Scene cam={{ x: 960, y: 540, zoom: 1 }}>
           <SkyLayer k={k} horizon={560} glowOpacity={.95} glowR={900}>
@@ -794,22 +816,20 @@ export const act5: Shot[] = [
             <Glow x={960} y={560} rx={500} ry={900} r={500} color={k.glow} opacity={.35} />
             <Moths t={t} at={moths} color={K.bloom.accent} trail={2} trailDt={.05} />
           </Layer>
-          <Layer d={1}>
-            <Kid pose={fri} variant="friend" accent={K.chorus.accent} sil={k.sil} rim={{ dx: -1, dy: -.35, color: k.rim, width: .014, glow: .8 }} />
-            <Kid pose={kid} sil={k.sil} rim={{ dx: 1, dy: -.35, color: k.rim, width: .014, glow: .8 }} />
+          <Layer d={1} defs={<><clipPath id="a5sillL"><path d={sillClip(-1)} /></clipPath><clipPath id="a5sillR"><path d={sillClip(1)} /></clipPath></>}>
+            <g clipPath="url(#a5sillR)"><Kid pose={fri} variant="friend" accent={K.chorus.accent} sil={k.sil} rim={{ dx: -1, dy: -.35, color: k.rim, width: .014, glow: .8 }} /></g>
+            <g clipPath="url(#a5sillL)"><Kid pose={kid} sil={k.sil} rim={{ dx: 1, dy: -.35, color: k.rim, width: .014, glow: .8 }} /></g>
             {walls.map((w) => (
               <g key={w.g} fill={`url(#${w.g})`}>
                 <path d={quad([pj(w.X, -2400, zn), pj(w.X, -2400, zk0), pj(w.X, AL.G, zk0), pj(w.X, AL.G, zn)])} />
-                <path d={quad([pj(w.X, 0, zk0), pj(w.X, 0, zk1), pj(w.X, AL.G, zk1), pj(w.X, AL.G, zk0)])} />
                 <path d={quad([pj(w.X, 0, zk0 - 20), pj(w.X, 0, zk1 + 20), pj(w.X - w.sd * 34, 0, zk1 + 20), pj(w.X - w.sd * 34, 0, zk0 - 20)])} fill={mixhex(k.sil, k.fog, .35)} />
                 <path d={quad([pj(w.X - w.sd * 34, 0, zk0 - 20), pj(w.X - w.sd * 34, 0, zk1 + 20), pj(w.X - w.sd * 34, 22, zk1 + 20), pj(w.X - w.sd * 34, 22, zk0 - 20)])} fill={mixhex(k.sil, k.fog, .2)} />
-                {[0, 1].map((i) => { const p = pj(w.X - w.sd * 18, 0, ZK + (i ? 95 : -100) * w.sd * -1); return <g key={i} fill={mixhex(k.sil, k.fog, .15)}><path d={`M${p.x - 22 * p.s},${p.y}L${p.x + 22 * p.s},${p.y}L${p.x + 17 * p.s},${p.y - 38 * p.s}L${p.x - 17 * p.s},${p.y - 38 * p.s}Z`} /><ellipse cx={p.x} cy={p.y - 52 * p.s} rx={30 * p.s} ry={22 * p.s} /></g>; })}
               </g>
             ))}
             {laundry(300, -560, 683, 5)}
           </Layer>
           <Layer d={1} blur={7}>
-            {laundry(-480, -420, 684, 4)}
+            {laundry(-420, -390, 684, 4)}
           </Layer>
         </Scene>
       );

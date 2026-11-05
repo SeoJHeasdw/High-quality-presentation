@@ -86,10 +86,10 @@ export const Lit: React.FC<{ draw: (c: string) => React.ReactNode; fill: string;
 
 type Finger = { bx: number; by: number; a0: number; as: number; len: [number, number, number]; w: number; relax: [number, number, number] };
 const FINGERS: Finger[] = [
-  { bx: .9, by: -.25, a0: -.1, as: -.22, len: [.42, .26, .2], w: .2, relax: [.06, .12, .08] },
-  { bx: .96, by: -.08, a0: -.02, as: -.07, len: [.47, .29, .21], w: .205, relax: [.1, .16, .1] },
-  { bx: .93, by: .09, a0: .06, as: .1, len: [.44, .27, .2], w: .195, relax: [.13, .2, .12] },
-  { bx: .85, by: .23, a0: .14, as: .25, len: [.34, .21, .17], w: .17, relax: [.16, .22, .14] },
+  { bx: .9, by: -.28, a0: -.1, as: -.2, len: [.38, .24, .18], w: .25, relax: [.06, .12, .08] },
+  { bx: .97, by: -.09, a0: -.02, as: -.06, len: [.42, .26, .19], w: .26, relax: [.1, .16, .1] },
+  { bx: .94, by: .1, a0: .06, as: .09, len: [.39, .24, .18], w: .245, relax: [.13, .2, .12] },
+  { bx: .86, by: .27, a0: .14, as: .22, len: [.3, .19, .15], w: .215, relax: [.16, .22, .14] },
 ];
 const CURLK: [number, number, number] = [1.25, 1.55, 1.05];
 
@@ -123,14 +123,14 @@ export function handGeo(h: HandSpec) {
     return { pts, w: F.w * s };
   });
   const tc = h.thumb ?? 0;
-  let ta = .95 - .35 * sp, tx = .2, ty = .18;
+  let ta = .95 - .35 * sp, tx = .22, ty = .22;
   const tpts: V[] = [W(tx, ty)];
-  const TL = [.3, .25, .2], TK = [.45, .6, .5];
+  const TL = [.28, .22, .18], TK = [.45, .6, .5];
   for (let j = 0; j < 3; j++) { ta += -.16 - tc * TK[j]; tx += Math.cos(ta) * TL[j]; ty += Math.sin(ta) * TL[j]; tpts.push(W(tx, ty)); }
-  const sl = h.sleeve ?? 3, sw = h.sleeveW ?? .46;
-  const palm = [W(-.04, -.31), W(.45, -.36), W(.9, -.33), W(1.0, -.1), W(.96, .12), W(.86, .3), W(.45, .36), W(-.04, .31)];
+  const sl = h.sleeve ?? 3, sw = h.sleeveW ?? .5;
+  const palm = [W(-.04, -.3), W(.45, -.4), W(.9, -.38), W(1.0, -.12), W(.97, .14), W(.86, .34), W(.45, .4), W(-.04, .3)];
   const sleeve = [W(-sl, -sw * 1.05), W(-.02, -sw * .9), W(-.02, sw * .9), W(-sl, sw * 1.05)];
-  const cuff = [W(-.2, -sw * 1.02), W(-.02, -sw * .98), W(-.02, sw * .98), W(-.2, sw * 1.02)];
+  const cuff = [W(-.22, -sw * 1.06), W(-.04, -sw * 1.03), W(-.04, sw * 1.03), W(-.22, sw * 1.06)];
   const poly = (pts: V[]) => "M" + pts.map((p) => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join("L") + "Z";
   const chain = (pts: V[], w: number, c: string, key: string) => (
     <g key={key} stroke={c} strokeLinecap="round" fill="none">
@@ -145,7 +145,7 @@ export function handGeo(h: HandSpec) {
           <path d={poly(sleeve)} fill={c} />
           <path d={poly(cuff)} fill={c} />
           <path d={poly(palm)} fill={c} stroke={c} strokeWidth={s * .14} strokeLinejoin="round" />
-          {chain(tpts, s * .23, c, "th")}
+          {chain(tpts, s * .28, c, "th")}
         </>
       ) : null}
       {part !== "base" ? fingers.map((f, i) => chain(f.pts, f.w, c, "f" + i)).reverse() : null}
@@ -203,7 +203,8 @@ export const LadderRails: React.FC<{ L: Ladder; opacity?: number; taper?: number
 // ───────────────────────────── 높은 곳에서 본 도시 ─────────────────────────────
 
 /** 지평선(horizon)으로 모이는 땅의 점 불빛. 대로(avenues)는 소실점으로 모이는 줄, 골목은 가로줄 */
-export const CityCarpet: React.FC<{ k: Key; t: number; horizon: number; vx?: number; n?: number; seed?: number; h0?: number; width?: number; size?: number; opacity?: number; avenues?: number }> = ({ k, t, horizon, vx = 960, n = 520, seed = 11, h0 = 1500, width = 2600, size = 1, opacity = 1, avenues = 9 }) => {
+export const CityCarpet: React.FC<{ k: Key; t: number; horizon: number; vx?: number; n?: number; seed?: number; h0?: number; width?: number; size?: number; opacity?: number; avenues?: number; ground?: boolean }> = ({ k, t, horizon, vx = 960, n = 520, seed = 11, h0 = 1500, width = 2600, size = 1, opacity = 1, avenues = 9, ground = false }) => {
+  const gid = useUid("gr");
   const pts: React.ReactNode[] = [];
   const zMax = 46;
   const P = (X: number, Z: number) => ({ x: vx + (X / Z) * 1.0, y: horizon + h0 / Z });
@@ -241,6 +242,18 @@ export const CityCarpet: React.FC<{ k: Key; t: number; horizon: number; vx?: num
   }
   return (
     <g opacity={opacity}>
+      {ground ? (
+        <>
+          <defs>
+            <linearGradient id={gid} x1="0" y1={horizon} x2="0" y2={horizon + 700} gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stopColor={mixhex(k.fog, k.sky[3], .25)} />
+              <stop offset="12%" stopColor={mixhex(k.silFar, k.fog, .4)} />
+              <stop offset="100%" stopColor={mixhex(k.sil, k.silFar, .4)} />
+            </linearGradient>
+          </defs>
+          <rect x={-3000} y={horizon} width={8000} height={3000} fill={`url(#${gid})`} />
+        </>
+      ) : null}
       <Glow x={vx} y={horizon + 60} r={900} rx={2000} ry={260} color={k.win} opacity={.16} />
       {rows}
       {av}
@@ -342,8 +355,8 @@ export const LonelyWin: React.FC<{
       ) : null}
       {lit ? (
         <>
-          <Glow x={ph.x} y={ph.y} r={h * .9} color={k.cold} opacity={.42 * flick} />
-          <Glow x={ph.x} y={ph.y - h * .2} r={h * .45} color={k.cold} opacity={.25 * flick} />
+          <Glow x={ph.x} y={ph.y} r={h * .9} color={k.cold} opacity={.58 * flick} />
+          <Glow x={ph.x} y={ph.y - h * .2} r={h * .5} color={k.cold} opacity={.38 * flick} />
         </>
       ) : null}
       {who === "tv" ? <rect x={x + w * .55} y={y + h * .45} width={w * .3} height={h * .2} fill={k.cold} opacity={.8 * flick} /> : null}

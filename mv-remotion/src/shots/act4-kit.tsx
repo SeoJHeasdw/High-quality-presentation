@@ -47,14 +47,12 @@ export const CloudMass: React.FC<{
   const end = (x: number, dir: number) => {
     for (let j = 0; j < 6; j++) {
       const v = j / 5;
-      const r = (80 + v * 120 + rnd(seed, 100 + j + (dir > 0 ? 20 : 0)) * 40) * bump;
-      side.push({ x: x + dir * (r * .25 + Math.sin(v * 2.6) * 50 * bump) + (rnd(seed, 140 + j) - .5) * 30, y: y + r * .9 + v * depth * .55, r });
+      const r = (75 + v * 110 + rnd(seed, 100 + j + (dir > 0 ? 20 : 0)) * 40) * bump;
+      // 맨 위 덩이가 가장 튀어나오고 아래로 갈수록 안쪽으로 들어간다(걸터앉은 다리가 허공에 뜬다)
+      side.push({ x: x + dir * (40 * (1 - v) - v * 160 - r * .55) + (rnd(seed, 140 + j) - .5) * 30, y: y + r * .85 + v * depth * .5, r });
     }
   };
-  if (ends.includes("L")) end(x0, -1);
-  if (ends.includes("R")) end(x1, 1);
   const bodyX0 = ends.includes("L") ? x0 : x0 - 600, bodyX1 = ends.includes("R") ? x1 : x1 + 600;
-  const all = [...side, ...top];
   return (
     <g>
       <defs>
@@ -64,10 +62,16 @@ export const CloudMass: React.FC<{
           <stop offset="55%" stopColor={dark} />
           <stop offset="100%" stopColor={dark} stopOpacity={fade ? 0 : 1} />
         </linearGradient>
+        <radialGradient id={id + "c"} cx=".42" cy=".3" r=".75">
+          <stop offset="0%" stopColor={lit} />
+          <stop offset="60%" stopColor={mixc(lit, dark, .22)} />
+          <stop offset="100%" stopColor={mixc(lit, dark, .5)} />
+        </radialGradient>
       </defs>
-      {rim ? top.map((p, i) => <circle key={"r" + i} cx={p.x} cy={p.y - 4} r={p.r + 4} fill={rim} opacity={.6} />) : null}
+      {rim ? top.map((p, i) => <circle key={"r" + i} cx={p.x} cy={p.y - 4} r={p.r + 4} fill={rim} opacity={.45} />) : null}
       <rect x={bodyX0} y={y + 30} width={bodyX1 - bodyX0} height={depth - 30} rx={60} fill={`url(#${id})`} />
-      {all.map((p, i) => <circle key={i} cx={p.x} cy={p.y} r={p.r} fill={`url(#${id})`} />)}
+      {side.map((p, i) => <circle key={"s" + i} cx={p.x} cy={p.y} r={p.r} fill={`url(#${id})`} />)}
+      {top.map((p, i) => <circle key={i} cx={p.x} cy={p.y} r={p.r} fill={`url(#${id}c)`} />)}
       {sheen > 0 ? <Glow x={(x0 + x1) / 2} y={y + 10} r={60} rx={(x1 - x0) * .55} ry={70} color={lit} opacity={sheen} /> : null}
     </g>
   );
@@ -151,6 +155,67 @@ export const StormMass: React.FC<{
     </g>
   );
 };
+
+/**
+ * 뭉게구름 더미. 덩이마다 빛 쪽(왼쪽 위)이 밝고 아래가 어둡다. 위 덩이를 먼저, 아래 덩이를 나중에 그려
+ * 아래 덩이의 밝은 머리가 위 덩이의 그늘을 덮는다(콜리플라워 결).
+ *   shape "mound" 둥근 더미 / "tower" 적란운(넓은 밑동·좁은 몸·퍼지는 모루) / "stone" 납작한 징검돌
+ *   (x, y)는 밑동 가운데. flash 0..1이면 속(fx, fy: 0..1)에서 빛이 번진다
+ */
+export const Heap: React.FC<{
+  seed: number; x: number; y: number; w: number; h: number; lit: string; dark: string; mid?: string;
+  shape?: "mound" | "tower" | "stone"; n?: number; t?: number; churn?: number; light?: number;
+  flash?: number; flashColor?: string; fx?: number; fy?: number; edge?: string; opacity?: number; press?: number; base?: boolean;
+}> = ({ seed, x, y, w, h, lit, dark, mid, shape = "mound", n, t = 0, churn = 1, light = .38, flash = 0, flashColor = "#dff4ff", fx = .5, fy = .45, edge, opacity = 1, press = 0, base = true }) => {
+  const id = useUid("hp");
+  const N = n ?? (shape === "tower" ? 46 : shape === "stone" ? 9 : 22);
+  const prof = (v: number) => shape === "tower" ? .5 + .5 * Math.pow(1 - v, 2) + .6 * Math.pow(clamp((v - .66) / .34), 1.4) : shape === "stone" ? Math.sqrt(clamp(1 - v * v * .6)) : Math.sqrt(clamp(1 - v * v));
+  const sq = 1 - press * .14;
+  const puffs = Array.from({ length: N }, (_, i) => {
+    const v = shape === "stone" ? rnd(seed, i) * .6 : Math.pow(rnd(seed, i), shape === "tower" ? .9 : .75);
+    const half = w * .5 * prof(v);
+    const px = x + (rnd(seed, i + 300) * 2 - 1) * half * .82 + n2(seed + i, t * .15 * churn) * h * .015;
+    const rr = (shape === "tower" ? h * (.1 + rnd(seed, i + 600) * .07) : h * (.28 + rnd(seed, i + 600) * .2)) * (1 - .35 * Math.abs(px - x) / (w * .5 + 1));
+    const py = y - v * h * (shape === "tower" ? .9 : .75) * sq + rr * .5 + n2(seed + i * 3, t * .2 * churn + 5) * rr * .06;
+    return { x: px, y: py, r: rr * (1 + press * .05) };
+  }).sort((a, b) => a.y - a.r - (b.y - b.r));
+  const gx = x + (fx - .5) * w * .7, gy = y - fy * h;
+  return (
+    <g opacity={opacity}>
+      <defs>
+        <radialGradient id={id} cx={light} cy=".28" r=".78">
+          <stop offset="0%" stopColor={lit} />
+          <stop offset="50%" stopColor={mid ?? mixc(lit, dark, .55)} />
+          <stop offset="100%" stopColor={dark} />
+        </radialGradient>
+      </defs>
+      {edge ? puffs.map((p, i) => <circle key={"e" + i} cx={p.x - 3} cy={p.y - 4} r={p.r + 3} fill={edge} opacity={.55} />) : null}
+      {base ? <ellipse cx={x} cy={y - h * .12} rx={w * .46} ry={h * .2} fill={dark} /> : null}
+      {puffs.map((p, i) => <circle key={i} cx={p.x} cy={p.y} r={p.r} fill={`url(#${id})`} />)}
+      {flash > .01 ? (
+        <g style={{ mixBlendMode: "screen" }}>
+          <Glow x={gx} y={gy} r={h * .5} rx={w * .42} ry={h * .48} color={flashColor} opacity={flash * .7} />
+          <Glow x={gx} y={gy} r={h * .16} color="#ffffff" opacity={flash * .5} />
+          {puffs.filter((_, i) => rnd(seed + 3, i) > .5).map((p, i) => {
+            const dd = Math.hypot(p.x - gx, p.y - gy) / (Math.max(w, h) * .55);
+            return <circle key={"f" + i} cx={p.x} cy={p.y - p.r * .2} r={p.r * .8} fill={flashColor} opacity={flash * .3 * clamp(1 - dd)} />;
+          })}
+        </g>
+      ) : null}
+    </g>
+  );
+};
+
+/** 더미 여러 개를 한 줄로(구름 바다). size는 더미 너비, y는 밑동 */
+export const HeapRow: React.FC<{ seed: number; y: number; x0: number; x1: number; size: number; count: number; lit: string; dark: string; mid?: string; t?: number; drift?: number; edge?: string; flash?: number; flashColor?: string; light?: number; hk?: number }> = ({ seed, y, x0, x1, size, count, lit, dark, mid, t = 0, drift = 0, edge, flash = 0, flashColor, light, hk = .5 }) => (
+  <g>
+    {Array.from({ length: count }, (_, i) => {
+      const u = (i + rnd(seed, i) * .7) / count;
+      const w = size * (.7 + rnd(seed, i + 10) * .7);
+      return <Heap key={i} seed={seed * 37 + i} x={mix(x0, x1, u) + drift * t * (.6 + rnd(seed, i + 30))} y={y + (rnd(seed, i + 20) - .5) * size * .15} w={w} h={w * hk * (.75 + rnd(seed, i + 40) * .5)} lit={lit} dark={dark} mid={mid} t={t} edge={edge} flash={flash * rnd(seed, i + 50)} flashColor={flashColor} light={light} />;
+    })}
+  </g>
+);
 
 /** 구름 김: (x, y)에서 t0에 퍼진다(착지·충격) */
 export const Vapor: React.FC<{ x: number; y: number; t: number; t0: number; n?: number; r?: number; color: string; seed?: number; dur?: number; up?: number }> = ({ x, y, t, t0, n = 12, r = 120, color, seed = 3, dur = 1.1, up = .35 }) => {
@@ -285,11 +350,8 @@ export const AlleyView: React.FC<{ cx: number; cy: number; F: number; zs?: numbe
     const bul = .1 + .05 * Math.sin(t * 2.6 + side) * wind + .04 * wind;
     const cur = poly([P(side * .5, .02, zA), P(side * (.5 - bul), .05 + .03 * Math.sin(t * 3 + side), zA + .05), P(side * (.5 - bul * .8), .12, zB - .02), P(side * .5, .12, zB)]);
     const sill = poly([P(side * .5, -.18, zB + .005), P(side * (.5 - .04), -.18, zB + .005), P(side * (.5 - .04), .18, zB + .005), P(side * .5, .18, zB + .005)]);
-    // 창에서 골목으로 쏟아지는 빛(바닥 쪽으로)
-    const spill = poly([P(side * .5, -.16, zA), P(side * .5, .16, zA), P(side * .05, .45, zs), P(side * .05, -.45, zs)]);
     return (
       <g key={side}>
-        <path d={spill} fill={k.win} opacity={.08 * lit} />
         <Glow x={c[0]} y={c[1]} r={F * .16} color={k.win} opacity={.55 * lit} />
         <path d={sill} fill={wallDark} />
         <path d={cur} fill={mixhex(k.win, "#fff2dc", .55)} opacity={.9 * lit} />
@@ -340,6 +402,48 @@ export const AlleyView: React.FC<{ cx: number; cy: number; F: number; zs?: numbe
       {/* 지붕 끝 난간: 달빛이 닿는 얇은 선 */}
       <path d={`M${P(-.5, -YM, 1).join(",")}L${P(-.5, YM, 1).join(",")}`} stroke={mixhex(k.fog, k.moon, .3)} strokeWidth={F * .012} opacity={.6} />
       <path d={`M${P(.5, -YM, 1).join(",")}L${P(.5, YM, 1).join(",")}`} stroke={mixhex(k.fog, k.moon, .5)} strokeWidth={F * .014} opacity={.8} />
+    </g>
+  );
+};
+
+/** 위에서 내려다본 구름 윗면: 가운데가 밝고 가장자리가 어두운 덩이들(빛이 위에서). pts는 덩이 중심·반지름 */
+export const TopPuffs: React.FC<{ pts: { x: number; y: number; r: number }[]; lit: string; dark: string; cx?: number; cy?: number }> = ({ pts, lit, dark, cx = .45, cy = .4 }) => {
+  const id = useUid("tp");
+  return (
+    <g>
+      <defs>
+        <radialGradient id={id} cx={cx} cy={cy} r=".7">
+          <stop offset="0%" stopColor={lit} />
+          <stop offset="65%" stopColor={mixc(lit, dark, .45)} />
+          <stop offset="100%" stopColor={dark} />
+        </radialGradient>
+      </defs>
+      {pts.map((p, i) => <circle key={i} cx={p.x} cy={p.y} r={p.r} fill={`url(#${id})`} />)}
+    </g>
+  );
+};
+
+/** 시점 컷의 다리 한 쌍: 화면 아래 가장자리(bx, by)에서 발끝(fx, fy) 쪽으로 뻗은 두 다리와 신발 */
+export const PovLegs: React.FC<{ bx: number; by: number; fx: number; fy: number; w: number; color: string; rim: string; t: number; ph?: number; spread?: number }> = ({ bx, by, fx, fy, w, color, rim, t, ph = 0, spread = 1 }) => {
+  const leg = (side: number, key: string, col: string, ox = 0, oy = 0) => {
+    const sw = Math.sin(t * 3.2 + ph + (side > 0 ? 2.3 : 0));
+    const x0 = bx + side * w * .75 * spread, y0 = by;
+    const x1 = fx + side * w * .6 * spread + sw * 6, y1 = fy + sw * 34;
+    const a = Math.atan2(y1 - y0, x1 - x0), nx = -Math.sin(a), ny = Math.cos(a);
+    const w0 = w * .62, w1 = w * .4;
+    const d = `M${x0 + nx * w0},${y0 + ny * w0}L${x1 + nx * w1},${y1 + ny * w1}L${x1 - nx * w1},${y1 - ny * w1}L${x0 - nx * w0},${y0 - ny * w0}Z`;
+    const deg = (a * 180) / Math.PI;
+    return (
+      <g key={key} transform={`translate(${ox} ${oy})`}>
+        <path d={d} fill={col} />
+        <ellipse cx={x1 + Math.cos(a) * w * .35} cy={y1 + Math.sin(a) * w * .35} rx={w * .78} ry={w * .55} fill={col} transform={`rotate(${deg} ${x1 + Math.cos(a) * w * .35} ${y1 + Math.sin(a) * w * .35})`} />
+      </g>
+    );
+  };
+  return (
+    <g>
+      {leg(-1, "rl", rim, -5, -4)}{leg(1, "rr", rim, -5, -4)}
+      {leg(-1, "l", color)}{leg(1, "r", color)}
     </g>
   );
 };

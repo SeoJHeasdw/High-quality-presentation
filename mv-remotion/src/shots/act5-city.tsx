@@ -81,7 +81,7 @@ export const FallingThread: React.FC<{ x: number; y: number; t: number; tLand: n
   const d = `M${sx},${sy}C${sx + (rnd(seed, 2) - .5) * sway},${mix(sy, y, .45)} ${x + (rnd(seed, 3) - .5) * sway * .6},${mix(sy, y, .75)} ${x},${y}`;
   const p = clamp(k * k);
   const len = getLength(d);
-  const head = getPointAtLength(d, len * p);
+  const head = getPointAtLength(d, len * p) ?? { x, y };
   const after = Math.max(0, t - tLand);
   return (
     <g>
@@ -107,7 +107,8 @@ export const BookendCity: React.FC<{ t: number; kCold: Key; kWarm: Key; warmth: 
           const bi = Math.round(u * (n - 1));
           const p = W[bi].at(i);
           const tOn = igniteTime(ri, p.x, p.y, i, lands, sweep);
-          return smooth(tOn, tOn + .12, t);
+          // 다 켜지지는 않는다(빽빽한 격자처럼 보이지 않게): 열에 여덟
+          return rnd(row.seed * 3 + bi, i + 7) < .8 ? smooth(tOn, tOn + .12, t) : 0;
         };
         const tgt = target && target.row === ri ? W[target.bi].at(target.k) : null;
         return (

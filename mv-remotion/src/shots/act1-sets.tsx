@@ -105,10 +105,11 @@ export const CityEstablish: React.FC<{
   target?: { on: number; color: string; flicker?: boolean };
   ignite?: (u: number, i: number) => number;
   winDim?: number; moth?: number; stars?: number; sky?: React.ReactNode; kid?: boolean;
-}> = ({ k, t, target = { on: 1, color: k.cold, flicker: true }, ignite, winDim = .35, moth = -1, stars = 1, sky, kid = true }) => {
+}> = ({ k, t, target = { on: 1, color: k.cold, flicker: true }, ignite, winDim = .45, moth = -1, stars = 1, sky, kid = true }) => {
   const T = CITY_T;
   const cid = useUid("tgt");
   const warm = mixhex(k.win, k.fog, winDim);
+  const street = mixhex(k.win, k.fog, .55);
   const f = target.flicker ? phoneFlicker(t) : 1;
   const on = target.on * f;
   const wx = T.x - T.w / 2, wy = T.y - T.h / 2;
@@ -138,10 +139,12 @@ export const CityEstablish: React.FC<{
       <Layer d={9} blur={.5}>
         <Skyline seed={12} base={700} minH={70} maxH={300} minW={60} maxW={150} x0={-2000} x1={3900} color={mixhex(k.silFar, k.fog, .72)} t={t} win={{ density: .12, size: .55, warm, cold: k.cold, coldRatio: 0 }} ignite={ignite} />
         <FogBand y0={600} y1={712} color={mixhex(k.fog, k.sky[3], .25)} opacity={.85} />
+        <Glow x={960} y={690} r={60} rx={3200} ry={46} color={street} opacity={.35} />
       </Layer>
       <Layer d={5} blur={0}>
         <Skyline seed={13} base={880} minH={120} maxH={380} minW={80} maxW={190} x0={-1600} x1={3600} color={mixhex(k.silFar, k.fog, .42)} t={t} win={{ density: .13, size: .75, warm, cold: k.cold, coldRatio: 0 }} ignite={ignite} />
         <FogBand y0={760} y1={890} color={mixhex(k.fog, k.silFar, .3)} opacity={.85} />
+        <Glow x={960} y={868} r={60} rx={3000} ry={60} color={street} opacity={.32} />
       </Layer>
       <Layer d={T.d} blur={0}>
         <Skyline seed={14} base={1220} minH={300} maxH={640} minW={120} maxW={260} x0={-1200} x1={3300} color={mixhex(k.silFar, k.sil, .5)} t={t} win={{ density: .12, size: 1, warm, cold: k.cold, coldRatio: 0 }} ignite={ignite} />
@@ -153,7 +156,7 @@ export const CityEstablish: React.FC<{
           {Array.from({ length: 9 }, (_, r) => Array.from({ length: 4 }, (_, cI) => {
             const x = 1180 + cI * 50, y = 590 + r * 64;
             if (cI === 1 && r === 1) return null;
-            const ig = ignite ? ignite(.55, r * 4 + cI) : rnd(77, r * 4 + cI) < .14 ? 1 : 0;
+            const ig = ignite ? ignite(.55, r * 4 + cI) : r === 6 && cI === 3 ? .55 : 0;
             return (
               <g key={`${r}-${cI}`}>
                 <rect x={x} y={y} width={T.w} height={T.h} fill={mixhex(k.sil, k.silFar, .5)} />
@@ -166,7 +169,7 @@ export const CityEstablish: React.FC<{
           <defs><clipPath id={cid}><rect x={wx} y={wy} width={T.w} height={T.h} /></clipPath></defs>
           <rect x={wx} y={wy} width={T.w} height={T.h} fill={mixhex(k.sil, k.silFar, .5)} />
           <g clipPath={`url(#${cid})`}>
-            <rect x={wx} y={wy} width={T.w} height={T.h} fill={target.color} opacity={on * .55} />
+            <rect x={wx} y={wy} width={T.w} height={T.h} fill={target.color} opacity={on * .7} />
             <Glow x={T.x + 3} y={T.y + 9} r={24} color={target.color} opacity={on} />
             {kid ? <Kid pose={pose({ ...P.sitEdge, ...P.phone, anchor: "seat", x: T.x + 4, y: wy + T.h - 6, s: 30, facing: -1, phone: on, legN: [1.3, 1.4], legF: [1.1, 1.2] })} sil={k.sil} phoneColor={target.color} /> : null}
             <rect x={wx} y={wy} width={7} height={T.h} fill={mixhex(k.sil, k.silFar, .3)} />
@@ -174,10 +177,12 @@ export const CityEstablish: React.FC<{
           <rect x={wx - 3} y={wy + T.h} width={T.w + 6} height={4} fill={mixhex(k.silFar, k.sil, .6)} />
         </g>
         <FogBand y0={1020} y1={1240} color={mixhex(k.fog, k.silFar, .55)} opacity={.75} />
+        <Glow x={900} y={1200} r={60} rx={2600} ry={80} color={street} opacity={.28} />
       </Layer>
       <Layer d={T.d} blend="screen" blur={0}>
-        <Glow x={T.x} y={T.y} r={95} color={target.color} opacity={on * .5} />
-        <Glow x={T.x} y={T.y} r={300} color={target.color} opacity={on * .14} />
+        <Glow x={T.x} y={T.y} r={70} color={target.color} opacity={on * .75} />
+        <Glow x={T.x} y={T.y} r={190} color={target.color} opacity={on * .3} />
+        <Glow x={T.x} y={T.y} r={520} color={target.color} opacity={on * .12} />
         <Glow x={T.x} y={T.y + 34} r={40} rx={46} ry={10} color={target.color} opacity={on * .4} />
         {moth >= 0 ? <Moths t={t} at={mothAt} color="#ffc45a" trail={3} /> : null}
       </Layer>
@@ -377,22 +382,27 @@ export const PhoneScreen: React.FC<{ w: number; h: number; scroll: number; color
 
 /* ───────────────────────── 손끝(9번) ───────────────────────── */
 
-/** 세운 검지(끝이 (x, y)), 말린 손가락·엄지, 소매. fill 하나로 그린다(Rimmed 안에서 쓴다) */
+/**
+ * 세운 검지(끝이 (x, y)), 주먹(말린 세 손가락의 마디가 앞쪽에 둥글게), 엄지 끝, 손목, 소매.
+ * 앞 = +x. fill 하나로 그린다(Rimmed 안에서 쓴다). bend는 손끝이 앞으로 휘는 px
+ */
 export function fingerHand(x: number, y: number, s: number, fill: string, bend = 0) {
-  const fx = x + bend * s * .05;
+  const fx = x + bend;
   return (
     <g fill={fill}>
-      {/* 소매 */}
-      <path d={`M${x - s * 1.1},${y + s * 3.6}C${x - s * .9},${y + s * 2.6} ${x - s * .55},${y + s * 1.85} ${x - s * .42},${y + s * 1.42}L${x + s * .42},${y + s * 1.5}C${x + s * .5},${y + s * 2.1} ${x + s * .6},${y + s * 2.8} ${x + s * .85},${y + s * 3.6}Z`} />
-      <rect x={x - s * .5} y={y + s * 1.3} width={s * .98} height={s * .3} rx={s * .12} transform={`rotate(-6 ${x} ${y + s * 1.45})`} />
-      {/* 손바닥 */}
-      <path d={`M${x - s * .34},${y + s * 1.38}C${x - s * .46},${y + s * 1.0} ${x - s * .36},${y + s * .62} ${x - s * .12},${y + s * .56}L${x + s * .16},${y + s * .56}C${x + s * .4},${y + s * .62} ${x + s * .44},${y + s * 1.05} ${x + s * .34},${y + s * 1.38}Z`} />
-      {/* 세운 검지 */}
-      <path d={`M${x - s * .1},${y + s * .7}L${fx - s * .085},${y + s * .09}A${s * .085},${s * .085} 0 0 1 ${fx + s * .085},${y + s * .09}L${x + s * .1},${y + s * .7}Z`} />
-      {/* 말린 손가락 셋 */}
-      {[0, 1, 2].map((i) => <ellipse key={i} cx={x + s * (.2 + i * .045)} cy={y + s * (.72 + i * .19)} rx={s * .14} ry={s * .1} />)}
-      {/* 엄지 */}
-      <path d={`M${x - s * .3},${y + s * 1.1}C${x - s * .42},${y + s * .9} ${x - s * .32},${y + s * .74} ${x - s * .2},${y + s * .78}C${x - s * .1},${y + s * .84} ${x - s * .12},${y + s * 1.0} ${x - s * .14},${y + s * 1.1}Z`} />
+      {/* 소매와 소맷부리 */}
+      <path d={`M${x - s * 1.05},${y + s * 3.6}C${x - s * .82},${y + s * 2.6} ${x - s * .56},${y + s * 1.85} ${x - s * .42},${y + s * 1.42}L${x + s * .2},${y + s * 1.46}C${x + s * .32},${y + s * 2.05} ${x + s * .52},${y + s * 2.8} ${x + s * .82},${y + s * 3.6}Z`} />
+      <rect x={x - s * .56} y={y + s * 1.38} width={s * .9} height={s * .27} rx={s * .12} transform={`rotate(-7 ${x} ${y + s * 1.5})`} />
+      {/* 손목 */}
+      <rect x={x - s * .42} y={y + s * 1.1} width={s * .48} height={s * .36} />
+      {/* 주먹: 검지는 앞(오른쪽) 가장자리에서 솟는다(가리키는 손 👆의 옆모습) */}
+      <rect x={x - s * .6} y={y + s * .56} width={s * .74} height={s * .66} rx={s * .21} />
+      {[0, 1, 2].map((i) => <ellipse key={i} cx={x + s * .05} cy={y + s * (.76 + i * .15)} rx={s * .1} ry={s * .08} />)}
+      {/* 엄지: 말린 손가락 앞을 가로질러 앞으로 나온다 */}
+      <path d={`M${x - s * .14},${y + s * .84}C${x + s * .02},${y + s * .8} ${x + s * .15},${y + s * .8} ${x + s * .19},${y + s * .86}C${x + s * .22},${y + s * .91} ${x + s * .16},${y + s * .95} ${x + s * .08},${y + s * .95}L${x - s * .14},${y + s * .98}Z`} />
+      {/* 세운 검지: 아래가 조금 굵고 끝이 둥글다 */}
+      <path d={`M${x - s * .1},${y + s * .7}L${fx - s * .08},${y + s * .09}A${s * .08},${s * .08} 0 0 1 ${fx + s * .08},${y + s * .09}L${x + s * .1},${y + s * .7}Z`} />
+      <ellipse cx={x + s * .01} cy={y + s * .42} rx={s * .095} ry={s * .055} />
     </g>
   );
 }

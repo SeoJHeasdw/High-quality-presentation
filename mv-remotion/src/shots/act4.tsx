@@ -195,7 +195,7 @@ export const act4: Shot[] = [
             <Moths t={t} at={guide} color={MOTH} trail={4} trailDt={.05} />
           </Layer>
           <Layer d={1.6} blur={1.2}>
-            <path d={outer + ring(h1.map((p) => ({ x: 960 + (p.x - 960) * 1.04, y: 520 + (p.y - 520) * 1.04 }))) + ring(h2)} fill={mixhex(k.cloud, k.silFar, .45)} fillRule="evenodd" />
+            <path d={ring(h1.map((p) => ({ x: 960 + (p.x - 960) * 1.04, y: 520 + (p.y - 520) * 1.04 }))) + ring(h2)} fill={mixhex(k.cloud, k.silFar, .45)} fillRule="evenodd" />
           </Layer>
           <Layer d={1}>
             <defs>
