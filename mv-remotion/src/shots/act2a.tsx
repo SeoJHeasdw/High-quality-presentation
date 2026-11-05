@@ -171,12 +171,12 @@ export const act2a: Shot[] = [
     render: (c) => {
       const lt = c.lt;
       const take = .16;
-      const up = ease("expoOut", lin(take, c.dur + .2, lt));
+      const up = ease("out", lin(take, c.dur + .35, lt));
       const crouch = 1 - smooth(0, take, lt);
-      const x = mix(560, 1010, up), y = mix(1010, 470, up);
-      const base = lt < take ? lerpPose(P.stand, P.crouch, smooth(0, take * .7, lt)) : lerpPose(P.leap, { ...P.leap, armN: [2.75, 0], armF: [2.5, .1], legN: [1.0, 1.9], legF: [-.45, .6] }, smooth(.5, 1.3, lt));
+      const x = mix(560, 1060, up), y = mix(1010, 400, up);
+      const base = lt < take ? lerpPose(P.stand, P.crouch, smooth(0, take * .7, lt)) : lerpPose(P.leap, { ...P.leap, headTilt: -.7, armN: [2.95, -.05], armF: [2.7, .05], legN: [1.1, 2.0], legF: [-.2, .9] }, smooth(.35, 1.3, lt));
       const p = pose({ ...base, anchor: lt < take ? "feet" : "center", x, y: lt < take ? 1010 : y, s: 520, facing: 1, swing: -1.2 * up + .3, rot: lt < take ? 0 : mix(.45, .2, up) });
-      const cam: Cam = { x: 960, y: mix(600, 520, up), zoom: mix(1, 1.08, up), rot: mix(.02, -.01, up), focus: 1, dof: 3 };
+      const cam: Cam = { x: mix(940, 990, up), y: mix(600, 500, up), zoom: mix(1, 1.12, ease("sineIO", lin(0, c.dur, lt))), rot: mix(.02, -.015, up), focus: 1, dof: 3 };
       const moon = { x: 1000, y: 420, r: 300 };
       return (
         <Scene cam={cam}>
@@ -200,12 +200,13 @@ export const act2a: Shot[] = [
     id: "a2-apex", start: T_APEX, key: "hope", enter: { type: "cut" },
     render: (c) => {
       const lt = c.lt;
-      const hang = .42;
+      const hang = .38;
       const fall = Math.max(0, lt - hang);
-      const x = 820 + lt * 40;
-      const y = 520 - (lt < hang ? Math.sin((lt / hang) * Math.PI / 2) * 14 : 14 - fall * fall * 900);
+      const fu = clamp(fall / (c.dur - hang));
+      const x = 820 + lt * 40 - ease("in", fu) * 220;
+      const y = lt < hang ? 520 - Math.sin((lt / hang) * Math.PI / 2) * 16 : 504 + ease("in", fu) * 380;
       const fl = smooth(hang - .05, hang + .25, lt);
-      const p = pose({ ...lerpPose(P.apex, P.flail, fl), anchor: "center", x, y: Math.min(y + 0, 2000), s: 64, facing: 1, rot: fl * -.4 + Math.sin(lt * 14) * .08 * fl, swing: mix(-.6, 1.4, fl) });
+      const p = pose({ ...lerpPose(P.apex, P.flail, fl), anchor: "center", x, y, s: 92, facing: 1, rot: fl * -.5 + Math.sin(lt * 14) * .1 * fl, swing: mix(-.6, 1.6, fl) });
       const cam: Cam = { x: 960 + lt * 6, y: 540, zoom: 1, focus: 1, dof: .6 };
       // 도약 궤적: 지붕 모서리에서 정점까지 금빛 점
       const trail = Array.from({ length: 14 }, (_, i) => {
@@ -267,7 +268,7 @@ export const act2a: Shot[] = [
       const warm = smooth(tLand, tLand + .25, lt) * (1 - smooth(tOff + .6, tOff + 1.4, lt) * .4);
       const up = smooth(tOff, tOff + .7, lt);
       // 나방 경로: 오른쪽 위에서 내려와 폰에 앉았다가 위로
-      const base = pose({ ...lerpPose(P.sitKnees, P.phone, take), anchor: "feet", x: 860, y: 1110, s: 640, facing: 1, faceDir: .55, bend: .12 + sigh * .14, headTilt: mix(.2 + sigh * .2, .42, take) - up * .95, legN: [1.85, 2.4], legF: [1.7, 2.35] });
+      const base = pose({ ...lerpPose(P.sitKnees, P.phone, take), anchor: "feet", x: 880, y: 1010, s: 880, facing: 1, faceDir: .55, bend: .12 + sigh * .14, headTilt: mix(.2 + sigh * .2, .42, take) - up * .95, legN: [1.85, 2.4], legF: [1.7, 2.35] });
       const sk = skeleton(base);
       const ph = { x: mix(sk.haN.x, sk.haF.x, .35), y: mix(sk.haN.y, sk.haF.y, .35) - 6 };
       const moth = (t: number): M[] => {
@@ -279,7 +280,7 @@ export const act2a: Shot[] = [
         return [{ x, y, s: 13, a, f: l < tLand || l > tOff ? l * 18 : l * 3, b: 1 }];
       };
       const p = pose({ ...base, phone: on, face: on * .95, faceColor: mixc(k.cold, "#ffd27a", warm), eyes: mix(.55, 1.1, warm), smile: warm > .6 && lt < tOff + .3 ? 1 : 0, mouth: up * .5 });
-      const cam: Cam = { x: 980, y: mix(560, 520, up), zoom: kf(lt, [[0, 1.0], [c.dur, 1.14, "lin"]]), focus: 1, dof: 9 };
+      const cam: Cam = { x: 960, y: mix(600, 540, up), zoom: kf(lt, [[0, 1.0], [c.dur, 1.12, "sineIO"]]), focus: 1, dof: 9 };
       return (
         <Scene cam={cam}>
           <RoofSet k={k} t={c.t} moon={{ x: 1560, y: 150, r: 40 }} roofY={940} x0={-1400} x1={3200} props={false} />
