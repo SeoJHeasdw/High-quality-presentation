@@ -2,11 +2,11 @@
  * 4막 전용 재료. 키트(src/lib)에 없는 것만 여기서 만든다.
  *   lerpKey      두 컬러 키 사이 보간(50번: 은빛 → 폭풍)
  *   CloudMass    올라앉을 수 있는 구름 섬(평평하고 울퉁불퉁한 윗면, 둥근 끝, 아래로 녹아드는 몸)
- *   CloudStone   징검다리 구름(작고 둥근 덩이, 밟으면 눌린다)
- *   StormMass    탑처럼 솟은 폭풍 구름. 속에서 번개가 번쩍이면 안쪽이 밝아진다
+ *   Heap         뭉게구름 더미(둥근 더미·적란운 탑·징검돌). 덩이마다 위가 밝고, 속에서 번개가 번쩍일 수 있다. HeapRow는 한 줄
  *   Vapor        착지·충격 때 피어오르는 구름 김
  *   Hand         클로즈업 손(손목·손바닥·손가락 넷·엄지, 소매). 굽힘(curl)으로 갈고리 → 펼침
  *   AlleyView    높은 곳에서 내려다본 좁은 골목. 마주 보는 두 창(48번)
+ *   TopPuffs     위에서 내려다본 구름 윗면 덩이 · PovLegs 시점 컷에서 화면 아래로 늘어진 두 다리
  *   Streaks      한 방향으로 흐르는 줄(빠른 낙하의 비·속도선)
  *   RadialRain   소실점으로 빨려 들어가는 비(위에서 내려다본 낙하, 54번)
  */
@@ -90,85 +90,6 @@ export const CloudMass: React.FC<{
       {side.map((p, i) => <circle key={"s" + i} cx={p.x} cy={p.y} r={p.r} fill={`url(#${id})`} />)}
       {top.map((p, i) => <circle key={i} cx={p.x} cy={p.y} r={p.r} fill={`url(#${id})`} />)}
       {sheen > 0 ? <Glow x={(x0 + x1) / 2} y={y + 10} r={60} rx={(x1 - x0) * .55} ry={70} color={lit} opacity={sheen} /> : null}
-    </g>
-  );
-};
-
-/** 징검다리 구름 하나. 윗면 가운데가 (x, y). press 0..1 밟혀 눌림 */
-export const CloudStone: React.FC<{ seed: number; x: number; y: number; w: number; dark: string; lit: string; rim?: string; press?: number; opacity?: number }> = ({ seed, x, y, w, dark, lit, rim, press = 0, opacity = 1 }) => {
-  const id = useUid("cs");
-  const h = w * .55;
-  const n = 6;
-  const sq = 1 - press * .12;
-  const puffs: Puff[] = Array.from({ length: n }, (_, i) => {
-    const u = i / (n - 1);
-    const bumpv = Math.sin(u * Math.PI);
-    const r = w * (.16 + .14 * bumpv * (.7 + rnd(seed, i) * .5));
-    return { x: x + (u - .5) * w * .82, y: y + r * .85 + press * w * .05, r };
-  });
-  const under: Puff[] = Array.from({ length: 4 }, (_, i) => ({ x: x + (rnd(seed, i + 10) - .5) * w * .5, y: y + h * (.45 + rnd(seed, i + 20) * .35), r: w * (.18 + rnd(seed, i + 30) * .1) }));
-  return (
-    <g opacity={opacity} transform={`translate(${x} ${y}) scale(${1 + press * .06} ${sq}) translate(${-x} ${-y})`}>
-      <defs>
-        <linearGradient id={id} x1="0" y1={y - w * .12} x2="0" y2={y + h} gradientUnits="userSpaceOnUse">
-          <stop offset="0%" stopColor={lit} />
-          <stop offset="40%" stopColor={dark} />
-          <stop offset="100%" stopColor={dark} stopOpacity={.0} />
-        </linearGradient>
-      </defs>
-      {rim ? puffs.map((p, i) => <circle key={"r" + i} cx={p.x} cy={p.y - 3} r={p.r + 3} fill={rim} opacity={.55} />) : null}
-      {under.map((p, i) => <circle key={"u" + i} cx={p.x} cy={p.y} r={p.r} fill={`url(#${id})`} />)}
-      {puffs.map((p, i) => <circle key={i} cx={p.x} cy={p.y} r={p.r} fill={`url(#${id})`} />)}
-    </g>
-  );
-};
-
-/**
- * 폭풍 구름 탑(적란운): 넓은 밑동, 좁아지는 몸, 퍼지는 모루. (x, y)는 밑동 가운데, w 너비, h 높이.
- * flash 0..1이면 속(fx, fy)에서 빛이 번진다. churn은 끓어오름 속도.
- */
-export const StormMass: React.FC<{
-  seed: number; x: number; y: number; w: number; h: number; dark: string; lit: string; t: number;
-  flash?: number; flashColor?: string; fx?: number; fy?: number; churn?: number; rows?: number; edge?: string;
-}> = ({ seed, x, y, w, h, dark, lit, t, flash = 0, flashColor = "#dff4ff", fx = .5, fy = .45, churn = 1, rows = 7, edge }) => {
-  const id = useUid("sm");
-  const prof = (v: number) => .62 + .38 * Math.pow(1 - v, 2) + .55 * Math.pow(clamp((v - .62) / .38), 1.5);
-  const puffs: Puff[] = [];
-  for (let j = 0; j < rows; j++) {
-    const v = j / (rows - 1);
-    const ww = w * prof(v) * .5;
-    const m = 3 + Math.floor(rnd(seed, j) * 3);
-    for (let i = 0; i < m; i++) {
-      const u = m === 1 ? .5 : i / (m - 1);
-      const r = h * (.13 + rnd(seed, j * 10 + i) * .09) * (v > .8 ? .8 : 1);
-      const px = x + (u - .5) * 2 * ww * .78 + n2(seed + j * 7 + i, t * .2 * churn) * r * .12;
-      const py = y - v * h * .86 + (rnd(seed, j * 10 + i + 5) - .5) * r * .4 + n2(seed + j * 5 + i, t * .25 * churn + 3) * r * .1;
-      puffs.push({ x: px, y: py, r });
-    }
-  }
-  const glowX = x + (fx - .5) * w * .6, glowY = y - fy * h;
-  return (
-    <g>
-      <defs>
-        <linearGradient id={id} x1="0" y1={y - h} x2="0" y2={y} gradientUnits="userSpaceOnUse">
-          <stop offset="0%" stopColor={lit} />
-          <stop offset="35%" stopColor={mx(lit, dark, .6)} />
-          <stop offset="100%" stopColor={dark} />
-        </linearGradient>
-      </defs>
-      {edge ? puffs.map((p, i) => <circle key={"e" + i} cx={p.x} cy={p.y - 4} r={p.r + 4} fill={edge} opacity={.5} />) : null}
-      {puffs.map((p, i) => <circle key={i} cx={p.x} cy={p.y} r={p.r} fill={`url(#${id})`} />)}
-      <rect x={x - w * .5} y={y - h * .12} width={w} height={h * .4} rx={h * .12} fill={dark} />
-      {flash > .01 ? (
-        <g style={{ mixBlendMode: "screen" }}>
-          <Glow x={glowX} y={glowY} r={h * .55} rx={w * .45} ry={h * .5} color={flashColor} opacity={flash * .75} />
-          <Glow x={glowX} y={glowY} r={h * .18} color="#ffffff" opacity={flash * .55} />
-          {puffs.filter((_, i) => rnd(seed + 3, i) > .55).map((p, i) => {
-            const dd = Math.hypot(p.x - glowX, p.y - glowY) / (w * .6);
-            return <circle key={"f" + i} cx={p.x} cy={p.y} r={p.r * .9} fill={flashColor} opacity={flash * .22 * clamp(1 - dd)} />;
-          })}
-        </g>
-      ) : null}
     </g>
   );
 };

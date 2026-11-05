@@ -14,7 +14,7 @@ import { Layer, Scene, Screen, project, unproject, type Cam } from "../lib/camer
 import { K, type Key } from "../lib/palette";
 import { B, beat } from "../lib/song";
 import { TAU, clamp, ease, handheld, kf, lin, mix, mixc, mixhex, n2, rnd, smooth, springStep } from "../lib/math";
-import { CloudBank, Glow, GodRays, Lightning, Moon, Rain, SkyFill, Stars, Wisp } from "../lib/sky";
+import { Glow, GodRays, Lightning, Moon, Rain, SkyFill, Stars, Wisp } from "../lib/sky";
 import { Moths, Burst, swarm, type M } from "../lib/moths";
 import { Kid, ikArm, skeleton } from "../kid/rig";
 import { P, lerpPose, pose, type Pose } from "../kid/pose";
@@ -472,10 +472,10 @@ export const act4: Shot[] = [
     id: "a4-strike", start: T52, key: "storm", enter: { type: "cut" },
     render: (c) => {
       const k = ST, lt = c.lt, t = c.t;
-      const bolt = lt < .07 ? 1 : kf(lt, [[.07, 1], [.11, .25], [.15, 1], [.22, .45], [.3, .8], [.62, 0, "out"]]);
+      const bolt = (lt < .07 ? 1 : kf(lt, [[.07, 1], [.11, .25], [.15, 1], [.22, .45], [.3, .8], [.62, 0, "out"]])) + strike(lt - (beat(203) - T52), .35);
       const white = 1 - ease("out", lin(0, .09, lt));
       const shake = Math.exp(-lt * 5.5) * 28;
-      const cam: Cam = { x: 960 + Math.sin(lt * 61) * shake, y: 500 + Math.cos(lt * 53) * shake, zoom: mix(1, 1.07, ease("expoOut", lin(0, .6, lt))), rot: Math.sin(lt * 37) * .012 * Math.exp(-lt * 4), focus: 1, dof: 3 };
+      const hold = ease("io", lin(.42, c.dur, lt));
       const drop = ease("in", lin(.1, .42, lt));
       const flop = ease("back", lin(.14, .4, lt));
       const flinch = ease("expoOut", lin(0, .09, lt));
@@ -485,10 +485,13 @@ export const act4: Shot[] = [
       const lie = pose({ anchor: "center", x: EDGE - .36 * s, y: G - .07 * s, s, facing: 1, rot: Math.PI / 2 + .1, lean: 0, bend: .05, headTilt: .55, legN: [.15, .3], legF: [-.1, .4], armF: [1.6, .8], swing: 2.2 });
       const sway = Math.sin(Math.max(0, lt - .42) * 7) * .28 * smooth(.42, .55, lt);
       const J0 = { x: 945, y: G - .3 * s };
-      const J = { x: mix(J0.x, EDGE + 8, drop), y: mix(J0.y, G + 22, drop) };
-      const kp = ikArm(blendPose(stand, lie, flop), 0, J.x, J.y);
+      const J = { x: mix(J0.x, EDGE + 18, drop), y: mix(J0.y, G + 26, drop) };
+      const kp = ikArm({ ...blendPose(stand, lie, flop), headTilt: mix(.35, .55, flop) + Math.sin(lt * 19) * .04 * hold }, 0, J.x, J.y);
+      // 매달린 뒤: 카메라가 맞잡은 손 쪽으로 밀려 들어간다(다음 컷 손 클로즈업으로)
+      const cam: Cam = { x: 960 + Math.sin(lt * 61) * shake + (J.x - 960) * .4 * hold, y: 500 + Math.cos(lt * 53) * shake + (J.y - 500) * .35 * hold, zoom: mix(1, 1.07, ease("expoOut", lin(0, .6, lt))) + .2 * hold, rot: Math.sin(lt * 37) * .012 * Math.exp(-lt * 4), focus: 1, dof: 3 };
       const fStand = ikArm(pose({ ...lerpPose({ ...P.stand, headTilt: -.2 }, { lean: -.3, headTilt: .3, armF: [2.2, 1.6], squash: .08 }, flinch), anchor: "feet", x: 1015, y: G, s: s * .97, facing: 1, swing: 1.4 }), 0, J.x, J.y);
-      const fHang = hangFrom(J, Math.PI / 2 - .3 + sway, { s: s * .97, armF: [2.4, .6], legN: [.7, 1.0], legF: [-.3, .6], headTilt: -.45, swing: 2, mouth: .8 });
+      const kick = Math.sin(lt * 11);
+      const fHang = hangFrom(J, Math.PI / 2 - .62 + sway, { s: s * .97, armF: [2.4 + .25 * kick, .6], legN: [.7 + .35 * kick, 1.0], legF: [-.3 - .3 * kick, .6 + .3 * kick], headTilt: -.45, swing: 2, mouth: .8 });
       const fpose = blendPose(fStand, fHang, smooth(.1, .45, drop));
       const C = { x: 960, y: 640 };
       const scatter = (tt: number): M[] => {
@@ -589,22 +592,22 @@ export const act4: Shot[] = [
   },
   {
     // 54. 위에서 내려다봄: 구름 끝을 따라 엎드린 아이(후드·꼬리)가 모서리 밖으로 손을 뻗는다. 친구가 검은 구름 바다 속으로 작아지며 떨어진다.
-    //     박(208)에 구름 속 번개가 친구 실루엣을 비추고 구름이 삼킨다. 박(209)부터 아이가 몸을 당겨 웅크린다(다이빙 예비동작)
+    //     박(209)에 구름 속 번개가 친구 실루엣을 비추고 구름이 삼킨다. 그 뒤 아이가 몸을 당겨 웅크리고 카메라가 심연으로 밀려 들어간다(다이빙 예비동작)
     id: "a4-fall", start: T54, key: "storm", enter: { type: "cut" },
     render: (c) => {
       const k = ST, lt = c.lt, t = c.t;
-      const tGone = beat(208) - T54;
+      const tGone = beat(209) - T54;
       const VP = { x: 1060, y: 700 };
-      const z = 1 + .75 * lt + 1.9 * lt * lt;
+      const z = 1 + .55 * lt + .95 * lt * lt;
       const f0 = { x: 610, y: 430 };
       const fx = VP.x + (f0.x - VP.x) / z + n2(541, t) * 20 / z, fy = VP.y + (f0.y - VP.y) / z;
       const fs = 330 / z;
-      const fl = clamp(strike(lt - tGone, 1) + strike(lt - .3, .35) + strike(lt - (beat(209.5) - T54), .45));
+      const fl = clamp(strike(lt - tGone, 1) + strike(lt - .3, .35) + strike(lt - (beat(207) - T54), .45));
       const hh = handheld(t, 54, 6, .55);
-      const cam: Cam = { x: 960 + hh.x, y: 540 + hh.y, zoom: kf(lt, [[0, 1], [c.dur, 1.1, "in"]]), rot: hh.r + .03, focus: 1, dof: 3 };
+      const cam: Cam = { x: 960 + hh.x, y: 540 + hh.y, zoom: kf(lt, [[0, 1], [tGone, 1.06, "io"], [c.dur, 1.28, "in"]]), rot: hh.r + .03, focus: 1, dof: 3 };
       const close = ease("io", lin(tGone - .45, tGone + .25, lt));
       const fp = pose({ ...P.flail, anchor: "center", x: fx, y: fy, s: fs, facing: -1, rot: .35 * Math.sin(lt * 2.2) + lt * .4, armN: [1.9, .3], armF: [2.4, .6], swing: 2.2, legN: [.9 + .3 * Math.sin(lt * 9), .6], legF: [-.3, 1.0 + .3 * Math.sin(lt * 8)], mouth: .8 });
-      const ready = smooth(beat(209) - T54, c.dur, lt);
+      const ready = smooth(tGone + .05, c.dur, lt);
       const KS = 600;
       // 엎드린 아이: 몸은 구름 끝을 따라 눕고(머리 오른쪽), 가까운 팔이 모서리 밖 아래로
       let kp: Partial<Pose> = pose({ anchor: "center", x: 400 - ready * 40, y: 120 - ready * 50, s: KS, facing: 1, rot: Math.PI / 2 + .15 - ready * .15, lean: .05, headTilt: mix(.35, -.1, ready), armF: [1.2, 1.4], legN: [.1, .2], legF: [-.1, .25], swing: 1.0 + n2(542, t * 2) * .3 });

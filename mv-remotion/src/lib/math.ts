@@ -82,6 +82,9 @@ export function springStep(t: number, w = 12, z = .45) {
 
 export type RGB = [number, number, number];
 export function hex(c: string): RGB {
+  // mixc가 돌려준 rgb()/rgba() 문자열도 다시 섞을 수 있게
+  const m = c.match(/rgba?\(\s*([\d.]+)\s*,\s*([\d.]+)\s*,\s*([\d.]+)/);
+  if (m) return [+m[1], +m[2], +m[3]];
   const h = c.replace("#", "");
   return [parseInt(h.slice(0, 2), 16), parseInt(h.slice(2, 4), 16), parseInt(h.slice(4, 6), 16)];
 }

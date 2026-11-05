@@ -36,7 +36,8 @@ function flow(seed: number, n: number, t: number, path: (u: number, t: number) =
     const p = path(u, t), p2 = path(Math.min(1, u + .01), t);
     const nx = -(p2.y - p.y), ny = p2.x - p.x, l = Math.hypot(nx, ny) || 1;
     const off = n2(seed + i, t * .7 + i) * spread * (1 - u * .7);
-    const fade = Math.min(1, u * 10, (1 - u) * 6);
+    // 다시 태어난 직후(u가 0 근처)는 꼬리가 경로 끝과 이어져 화면을 가로지르므로 꺼 둔다
+    const fade = smooth(.1, .2, u) * Math.min(1, (1 - u) * 6);
     return { x: p.x + (nx / l) * off, y: p.y + (ny / l) * off, s: mix(s0, s1, u) * (.7 + rnd(seed, i + 500) * .6), a: Math.atan2(p2.y - p.y, p2.x - p.x), f: t * (o.flap ?? 17) + i, b: alive * fade * (.6 + .4 * rnd(seed, i + 900)) };
   });
 }
@@ -148,7 +149,7 @@ export const act2b: Shot[] = [
       const look = smooth(tUp + .2, D24, lt);
       const kp = pose({
         ...lerpPose({ ...P.sitKnees, headTilt: -.55 }, { ...P.stand, armN: [.25, .5], armF: [-.15, .3], headTilt: mix(-.5, -.95, look), lean: -.06 }, rise),
-        x: 590, y: roofY, s, facing: 1, swing: .2 - rise * .6 + Math.sin(lt * 3) * .1,
+        x: 590, y: roofY, s, facing: 1, swing: mix(.1, -1.1, rise) + Math.sin(lt * 3) * .08,
       });
       const ksk = skeleton(kp);
       // 창 → 사다리 밑동으로 오는 나방 줄기. 출발점은 각 층의 창(시차를 따라 화면 위치를 구해 깊이 1 좌표로)
@@ -193,7 +194,7 @@ export const act2b: Shot[] = [
       };
       return (
         <Scene cam={cam}>
-          <SkyBackdrop k={k} t={t} moon={{ x: 1380, y: 180, r: 46, rays: .7, glow: 1.1, pulse: c.pulse * .3 }} horizon={base + 40} />
+          <SkyBackdrop k={k} t={t} moon={{ x: 1380, y: 180, r: 46, rays: .3, glow: .85, pulse: c.pulse * .2 }} horizon={base + 40} />
           <CityLayers k={k} t={t} base={base} seed={4} />
           {/* 창 플레어: 그 창이 있는 층에 */}
           <Layer d={5}>{wins.filter((w) => w.d === 5).map((w, i) => <Flare key={i} {...w} t={t} t0={w.t0} />)}</Layer>
@@ -202,7 +203,8 @@ export const act2b: Shot[] = [
             <Parapet x0={-700} x1={1060} y={roofY} h={30} color={k.sil} />
             <WaterTank x={150} y={roofY - 30} s={140} color={k.sil} />
             <Antenna x={330} y={roofY - 30} h={260} color={k.sil} t={t} seed={5} light="#ff6a5a" />
-            <Moths t={t} at={mothsB} color={GOLD} trail={5} trailDt={.06} />
+            <Moths t={t} at={mothsB} color={GOLD} trail={5} trailDt={.06} glow={1.5} />
+            <Glow x={lad(0).x} y={roofY - 10} r={60 + 140 * smooth(beat(79) - T24, D24, lt)} color={GOLD} opacity={.55} />
             <Ladder frame={lad} lo={0} hi={40} t={t} land={landGather} src={src} lead={lead} sparks={14} part="back" />
             <Kid pose={kp} sil={k.sil} rim={RIM(.65, -.75, .022)} rim2={{ dx: 1, dy: -.1, color: GOLD, width: .012, glow: .6 }} />
             {/* 아직 손에 든 폰: 작은 차가운 점 */}
@@ -211,7 +213,7 @@ export const act2b: Shot[] = [
             <Ladder frame={lad} lo={0} hi={40} t={t} land={landGather} lead={lead} sparks={14} part="front" />
           </Layer>
           <Layer d={1.15}>
-            <Moths t={t} at={mothsA} color={GOLD} trail={5} trailDt={.06} />
+            <Moths t={t} at={mothsA} color={GOLD} trail={5} trailDt={.06} glow={1.5} />
           </Layer>
           {/* 전경: 카메라 앞을 지나는 큰 나방 보케 */}
           <Layer d={.42} blur={6}>
@@ -310,8 +312,8 @@ export const act2b: Shot[] = [
             })}
           </Layer>
           <Layer d={.62} blur={3}>
-            <path d="M-400,1180L560,1120L620,1400L-400,1400Z" fill={k.sil} />
-            <Antenna x={1980} y={1220} h={780} color={k.sil} t={t} seed={9} />
+            <path d="M-400,905L470,872L540,1300L-400,1300Z" fill={k.sil} />
+            <Antenna x={1830} y={1220} h={780} color={k.sil} t={t} seed={9} />
           </Layer>
           <Layer d={.4} blur={7}>
             <Moths t={t} at={(tt) => flow(460, 4, tt, (u) => ({ x: mix(2300, -400, u), y: mix(900, 200, u) + Math.sin(u * 6) * 60 }), { speed: .3, spread: 80, size: [16, 22] })} color={GOLD} wings={false} />
@@ -338,7 +340,8 @@ export const act2b: Shot[] = [
       const eye = add3(eye0, [fwd, -back]);
       const dF = 1.0;
       const f = 760 * (dF + back) / dF;
-      const cam3: Cam3 = { ...eye, yaw, pitch, roll: .12 + Math.sin(lt * 1.7) * .035 + hh.r * 4, f, cy: 500 };
+      const lurch = lt > beat(91) - T27 ? Math.sin((lt - (beat(91) - T27)) * 9) * Math.exp(-(lt - (beat(91) - T27)) * 3.5) * .07 : 0;
+      const cam3: Cam3 = { ...eye, yaw, pitch: pitch + lurch * .4, roll: .12 + Math.sin(lt * 1.7) * .035 + hh.r * 4 + lurch, f, cy: 500 };
       const lad = ladder3(cam3, 1);
       const land = landFront(Lk + 40, T27 - 9);
       // 발(신발): 발판 Lk-1.2 위. 뒤꿈치는 아이 쪽(n), 발끝은 사다리 너머
@@ -543,7 +546,7 @@ export const act2b: Shot[] = [
       const dW = norm3(win.x - camP0.x, win.y - camP0.y, win.z - camP0.z);
       const camP = add3(camP0, [dW, push * .9]);
       const look = lookAt(camP, win);
-      const f0 = 800, Z = Math.pow(15, push), f = f0 * Z;
+      const f0 = 800, Z = Math.pow(24, push), f = f0 * Z;
       const cx = mix(700, 960, push), cy = mix(790, 560, push);
       const pre: Cam3 = { ...camP, yaw: look.yaw, pitch: look.pitch, roll: 0, f, cx, cy };
       const h0 = p3(pre, ...xyz(head));
@@ -554,21 +557,19 @@ export const act2b: Shot[] = [
       const lad = ladder3(cam3, -1);
       // 아이(2D, 어깨 너머 전경): 화면 오른쪽 위. 밀어 들어가면 창(cx, cy)에서 멀어지며 커지고 화면 밖으로 흘러 나간다
       const zk = Math.pow(Z, .85);
-      const H0 = { x: cx + (1500 - 700) * zk, y: cy + (250 - 790) * zk, z: 1 };
-      const s = 1500 * zk;
+      const H0 = { x: cx + (1530 - 700) * zk, y: cy + (330 - 790) * zk, z: 1 };
+      const s = 1150 * zk;
       const bodyDown = norm2(.22, 1);
       const th = Math.atan2(-bodyDown.x, bodyDown.y);
       const turn = ease("back", lin(.3, 1.6, lt));
       const breath = Math.sin(lt * 1.9) * .025;
       const base = pose({
         ...P.stand, anchor: "center", x: 0, y: 0, s, facing: -1, rot: -th,
-        lean: -.04 + breath, bend: .1 + breath, headTilt: mix(-.3, .62, turn), swing: mix(.7, -.15, turn) + Math.sin(lt * 1.3) * .08,
-        armN: [.2, .7], armF: [.9, .4], legN: [.08, .1], legF: [-.06, .08],
+        lean: -.04 + breath, bend: .1 + breath, headTilt: mix(-.3, .62, turn), swing: mix(.2, -1.05, turn) + Math.sin(lt * 1.3) * .06,
+        armN: [.45, .9], armF: [-.35, .3], legN: [.08, .1], legF: [-.06, .08],
       });
       const sk0 = skeleton(base);
-      let kp: Partial<import("../kid/pose").Pose> = { ...base, x: H0.x - sk0.head.x, y: H0.y - sk0.head.y };
-      const railHold = lad(Lk + .6);
-      kp = ikArm(kp, 1, railHold.x - railHold.sx * .95, railHold.y - railHold.sy * .95);
+      const kp: Partial<import("../kid/pose").Pose> = { ...base, x: H0.x - sk0.head.x, y: H0.y - sk0.head.y };
       const ksk = skeleton(kp);
       const rackKid = mix(0, 10, smooth(1.0, 3.4, lt));
       const rackCity = mix(2.2, 0, smooth(1.0, 3.4, lt));
@@ -621,7 +622,7 @@ export const act2b: Shot[] = [
       const s = 1900;
       const gold = smooth(tPocket - .2, D31, lt);
       const kp0 = pose({
-        ...P.phone, anchor: "center", x: 640, y: 1250, s, facing: 1, phone: 0, faceDir: .38,
+        ...P.phone, anchor: "center", x: 640, y: 1250, s, facing: 1, phone: 0, faceDir: .16,
         headTilt: mix(.32, .2, lower) - gold * .25, bend: .1 - gold * .06, lean: .06,
         armN: [mix(.8, .1, lower), mix(1.45, .55, lower)], armF: [mix(.7, .1, lower), mix(1.55, .3, lower)],
         face: Math.max(onC * .9, gold * .32), faceColor: onC > .02 ? kq.cold : "#ffd890", eyes: lt > tOff && lt < tOff + .12 ? .2 : 1, mouth: 0,
@@ -641,7 +642,8 @@ export const act2b: Shot[] = [
       const phRot = mix(-14, 70, lower);
       const inPocket = tuck > .5;
       const hh = handheld(t, 31, 3, .4);
-      const cam: Cam = { x: 980 + hh.x, y: mix(600, 680, lower) + hh.y, zoom: mix(1, 1.06, ease("sineIO", lt / D31)), rot: -.04 + hh.r, focus: 1, dof: 9 };
+      const settle = ease("expoOut", lin(.15, tScroll + .2, lt));
+      const cam: Cam = { x: mix(hand0.x, 980, settle) + hh.x, y: mix(hand0.y, mix(600, 680, lower), settle) + hh.y, zoom: mix(1.35, 1, settle) * mix(1, 1.06, ease("sineIO", lt / D31)), rot: -.04 + hh.r, focus: 1, dof: 9 };
       const lad = ladder2d({ x: 420, y: 2100, s: 1500, ang: .05, side: { x: .8, y: -.12 }, i0: 0, i1: 20 });
       return (
         <Scene cam={cam}>
@@ -658,7 +660,7 @@ export const act2b: Shot[] = [
           </Layer>
           <Layer d={1}>
             {inPocket ? null : <PhoneCU x={ph.x} y={ph.y} w={s * .062} h={s * .11} rot={phRot} on={onC} scroll={scroll} cold={kq.cold} body={kq.sil} rim={kq.rim} />}
-            <Kid pose={kp} sil={kq.sil} rim={{ dx: -.8, dy: -.4, color: GOLD, width: .006 + gold * .004, glow: .4 + gold * .3 }} rim2={{ dx: .4, dy: -.9, color: kq.rim, width: .004, glow: .3 }} />
+            <Kid pose={kp} sil={kq.sil} rim={{ dx: -.8, dy: -.4, color: GOLD, width: .006 + gold * .004, glow: .4 + gold * .3 }} rim2={{ dx: .4, dy: -.9, color: kq.rim, width: .004, glow: 0 }} />
             {/* 앞주머니 입구: 손이 들어가면 손이 가려진다 */}
             <path d={`M${pocket.x - s * .06},${pocket.y - s * .045}Q${pocket.x + s * .03},${pocket.y - s * .06} ${pocket.x + s * .07},${pocket.y - s * .02}L${pocket.x + s * .06},${pocket.y + s * .07}L${pocket.x - s * .06},${pocket.y + s * .07}Z`} fill={kq.sil} opacity={lower > .6 ? 1 : 0} />
             <path d={`M${pocket.x - s * .06},${pocket.y - s * .045}Q${pocket.x + s * .03},${pocket.y - s * .06} ${pocket.x + s * .07},${pocket.y - s * .02}`} fill="none" stroke={kq.rim} strokeOpacity={.22 * smooth(.3, .7, lower)} strokeWidth={3} />
@@ -670,7 +672,7 @@ export const act2b: Shot[] = [
           </Layer>
           {/* 전경: 흐린 금빛 나방 하나가 천천히 지나간다 */}
           <Layer d={.5}>
-            <Moths t={t} at={(tt) => flow(316, 2, tt, (u) => ({ x: mix(2200, -300, u) * .5 + 700, y: mix(900, 200, u) * .5 + 500 }), { speed: .18, spread: 60, size: [20, 26] })} color={GOLD} wings={false} opacity={.7} />
+            <Moths t={t} at={(tt) => flow(316, 2, tt, (u) => ({ x: mix(2400, 900, u) * .5 + 700, y: mix(1300, 1150, u) * .5 + 600 }), { speed: .18, spread: 40, size: [20, 26] })} color={GOLD} wings={false} opacity={.7} />
           </Layer>
         </Scene>
       );
