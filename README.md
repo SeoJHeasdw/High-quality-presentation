@@ -7,6 +7,9 @@ Technology Expert Lab 발표용 16:9 브라우저 덱.
 
 같은 13번 장표를 벤치마킹한 또 하나의 홈페이지(가상의 건설사 Technology Expert Lab)는 [opus-site/README.md](opus-site/README.md)에 있다. `opus-site`에서 `npm run dev`로 실행하며 포트는 5200이다.
 
+`감성 힙합 초안` 3분 뮤직비디오는 두 가지다. 첫 시안은 브라우저 캔버스 유화([mv/README.md](mv/README.md)),
+그 약점을 고친 두 번째는 Remotion 실루엣 영화([mv-remotion/README.md](mv-remotion/README.md), 67컷 편집표는 [mv-remotion/ART.md](mv-remotion/ART.md))다.
+
 ```bash
 cd deck
 npm install

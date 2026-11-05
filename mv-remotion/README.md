@@ -10,16 +10,23 @@
 | 아이가 배경에 묻힘 | 밝은 하늘 앞 어두운 실루엣 + 테두리 빛 |
 | 종 모양 몸(포즈가 안 읽힘) | 팔·다리·후드 꼬리가 있는 뼈대. 검게 칠해도 동작이 읽힌다 |
 | 같은 와이드로 4컷 | 컷마다 거리·각도가 다르다(어깨 너머·인서트·올려다보기·익스트림 와이드) |
-| 40컷 모두 1·2·3마디, 마디 첫 박 | 67컷, 반 박~2마디. 박 중간에도 자른다. 매치컷·휙 패닝·아이리스 |
+| 40컷 모두 1·2·3마디, 마디 첫 박 | 67컷, 0.7~7초. 박 중간에도 자른다. 매치컷·휙 패닝·아이리스 |
 | 붓질 필터 | 깊이 층(시차·심도)·공기 원근·필름 입자 |
 
 ```bash
 npm install
 npm run studio                       # Remotion Studio (http://localhost:3000)
-node tools/render.mjs                # 전체 1080p → out/mv.mp4 (곡 포함, 4코어에서 약 50분)
+node tools/render.mjs                # 전체 1080p → out/mv.mp4 (곡 포함, 4코어에서 약 48분, CRF 18이라 약 450MB)
 node tools/render.mjs --from 44 --to 55 --scale .5 --out out/part.mp4     # 일부만(초)
 node tools/stills.mjs --entry src/entries/act2a.ts --times 44.3,48.5 --sheet out/a.jpg   # 정지 화면
 npx tsc --noEmit
+```
+
+전달용으로 줄이기(1080p 약 110MB, 720p 약 26MB):
+
+```bash
+ffmpeg -i out/mv.mp4 -c:v libx264 -preset slow -crf 23 -tune grain -c:a aac -b:a 192k -movflags +faststart out/mv-1080p.mp4
+ffmpeg -i out/mv.mp4 -vf scale=1280:720:flags=lanczos -c:v libx264 -preset slow -crf 24 -c:a aac -b:a 160k -movflags +faststart out/mv-720p.mp4
 ```
 
 곡(`../deck/public/demos/emotional-hiphop-draft.wav`)과 박 분석(`../mv/public/hiphop-analysis.json`)은 복사본을 두지 않는다.
