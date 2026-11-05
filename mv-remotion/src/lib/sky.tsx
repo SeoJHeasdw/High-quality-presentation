@@ -63,10 +63,20 @@ export const Moon: React.FC<{ x: number; y: number; r: number; color: string; gl
       <Glow x={x} y={y} r={r * 1.6} color="#ffffff" opacity={.55 * glow} />
       <circle cx={x} cy={y} r={r} fill={`url(#${id}d)`} />
       {texture > 0 ? (
-        <g opacity={.045 * texture} fill="#8a6a4a">
-          {[0, 1, 2, 3, 4, 5, 6].map((i) => (
-            <circle key={i} cx={x + (rnd(17, i) - .5) * r * 1.2} cy={y + (rnd(23, i) - .5) * r * 1.2} r={r * (.08 + rnd(31, i) * .2)} />
-          ))}
+        <g opacity={texture}>
+          <defs>
+            <radialGradient id={id + "m"}>
+              <stop offset="0%" stopColor="#8a7458" stopOpacity={.16} />
+              <stop offset="60%" stopColor="#8a7458" stopOpacity={.08} />
+              <stop offset="100%" stopColor="#8a7458" stopOpacity={0} />
+            </radialGradient>
+            <clipPath id={id + "c"}><circle cx={x} cy={y} r={r} /></clipPath>
+          </defs>
+          <g clipPath={`url(#${id}c)`}>
+            {[[-.28, -.18, .42], [.22, -.3, .3], [.12, .2, .46], [-.3, .32, .26], [.42, .1, .22]].map(([dx, dy, rr], i) => (
+              <ellipse key={i} cx={x + dx * r} cy={y + dy * r} rx={rr * r * 1.15} ry={rr * r * .9} fill={`url(#${id}m)`} />
+            ))}
+          </g>
         </g>
       ) : null}
     </g>
@@ -134,7 +144,7 @@ export const Cloud: React.FC<{ seed: number; x: number; y: number; w: number; h?
           <stop offset="100%" stopColor={dark} />
         </linearGradient>
       </defs>
-      {rim ? puffs.map((p, i) => <circle key={"r" + i} cx={p.px} cy={p.py - 3} r={p.r + 3} fill={rim} opacity={.55} />) : null}
+      {rim ? <g opacity={.55}>{puffs.map((p, i) => <circle key={"r" + i} cx={p.px} cy={p.py - 3} r={p.r + 3} fill={rim} />)}</g> : null}
       {puffs.map((p, i) => <circle key={i} cx={p.px} cy={p.py} r={p.r} fill={`url(#${id})`} />)}
       <rect x={x - w * .47 + drift * t} y={y - h * .25} width={w * .94} height={h * .25} rx={h * .12} fill={dark} />
     </g>
