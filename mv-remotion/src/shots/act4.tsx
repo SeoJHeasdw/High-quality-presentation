@@ -386,7 +386,7 @@ export const act4: Shot[] = [
             <Storm lite masses={seen(cam, 18, bank(502, 850, 760, 3200, 380, 8, { hk: .3, drift: -6, t }))} tone={stormTone(k, .55, .2)} t={t} bolts={bolts} rim={moonRim * .35} rimColor={rimC} />
           </Layer>
           <Layer d={8} blur={0}>
-            <Storm masses={seen(cam, 8, bank(503, 905, -1600, 3500, 480, 12, { hk: .26, drift: -8, t }))} tone={stormTone(k, .5, .3 * (1 - kw))} t={t} bolts={seaBolts} rim={(1 - kw) * .3 + flash * .25} rimColor={rimC} />
+            <Storm lite masses={seen(cam, 8, bank(503, 905, -1600, 3500, 480, 12, { hk: .26, drift: -8, t }))} tone={stormTone(k, .5, .3 * (1 - kw))} t={t} bolts={seaBolts} rim={(1 - kw) * .3 + flash * .25} rimColor={rimC} />
           </Layer>
           <Layer d={4} blur={.6}>
             {[0, 1, 2, 3, 4, 5].map((i) => (
@@ -823,7 +823,7 @@ export const act4: Shot[] = [
             <Lightning seed={555} x0={250} y0={cy8 - 500} x1={420} y1={cy8 + 300} flash={fl} width={3} branches={4} />
           </Layer>
           <Layer d={3} blur={2}>
-            <Storm masses={seen(cam, 3, wall(556, 8, -300, 420, 1040, 1000, .4))} tone={stormTone(k, .4)} t={t * 2} bolts={[{ x: 200, y: cy3 - 100, a: fl * 1.1, r: 1200 }]} rim={fl * .4} rimColor="#e8f8ff" />
+            <Storm lite masses={seen(cam, 3, wall(556, 8, -300, 420, 1040, 1000, .4))} tone={stormTone(k, .4)} t={t * 2} bolts={[{ x: 200, y: cy3 - 100, a: fl * 1.1, r: 1200 }]} rim={fl * .4} rimColor="#e8f8ff" />
           </Layer>
           <Layer d={1}>
             <CloudMass seed={558} x0={-900} x1={930} y={330} depth={500} dark={mixhex(k.cloud, k.sil, .2)} lit={k.cloudLit} rim={mixc(k.cloudLit, "#ffffff", .4)} ends="R" />
