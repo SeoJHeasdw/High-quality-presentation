@@ -10,7 +10,7 @@
  *   54 떨어짐 = B(51) → beat(208.5), 55 다이빙 = beat(208.5) → beat(210) ("beat(210) 직전"), 56은 그대로 beat(210)에 잡는다.
  */
 import React from "react";
-import { Layer, Scene, Screen, unproject, type Cam } from "../lib/camera";
+import { Layer, Scene, Screen, project, unproject, type Cam } from "../lib/camera";
 import { K, type Key } from "../lib/palette";
 import { B, beat } from "../lib/song";
 import { TAU, clamp, ease, handheld, kf, lin, mix, mixc, mixhex, n2, rnd, smooth, springStep } from "../lib/math";
@@ -26,6 +26,7 @@ const PINK = K.chorus.accent;
 const GOLD = "#ffd27a";
 const MOTH = "#ffcf7a";
 
+const TEND = B(54); // 5막 첫 컷(a5-call) 시작
 const T47 = B(44), T48 = beat(182), T49 = B(46), T50 = beat(190), T51 = B(48), T52 = B(50), T53 = beat(203.5), T54 = B(51), T55 = beat(208.5), T56 = beat(210), T57 = B(53);
 
 const RIM = (k: Key, dx: number, dy: number, w = .014, glow = .7, color?: string) => ({ dx, dy, color: color ?? k.rim, width: w, glow });
@@ -66,9 +67,22 @@ function hangFrom(h: { x: number; y: number }, ang: number, extra: Partial<Pose>
 
 /** 두 손이 손가락 갈고리로 맞물리게 손목 자리를 잡는다. 손이 a 방향으로 뻗을 때 갈고리 가운데가 c에 오도록 */
 const hookWrist = (c: { x: number; y: number }, a: number, hs: number, slide = 0) => ({
-  x: c.x - (Math.cos(a) * (.46 + slide) - Math.sin(a) * .11) * hs,
-  y: c.y - (Math.sin(a) * (.46 + slide) + Math.cos(a) * .11) * hs,
+  x: c.x - (Math.cos(a) * (.505 + slide) - Math.sin(a) * .17) * hs,
+  y: c.y - (Math.sin(a) * (.505 + slide) + Math.cos(a) * .17) * hs,
 });
+/** 갈고리 손 한 쌍: 가운데 c, 축 방향 a(첫 손이 뻗는 쪽). d만큼 미끄러져 벌어진다. 두 번째 손목은 첫 손 좌표계 (1.01s + d, .34s) */
+const hookPair = (c: { x: number; y: number }, a: number, hs: number, d = 0) => {
+  const K = hookWrist(c, a, hs, d / 2);
+  const ox = (1.01 + d) * hs, oy = .34 * hs;
+  return { K, F: { x: K.x + Math.cos(a) * ox - Math.sin(a) * oy, y: K.y + Math.sin(a) * ox + Math.cos(a) * oy } };
+};
+/** 두 자세를 골반 기준으로 섞는다(anchor가 달라도 튀지 않게) */
+function blendPose(a: Partial<Pose>, b: Partial<Pose>, w: number): Partial<Pose> {
+  if (w <= 0) return a;
+  if (w >= 1) return b;
+  const pa = skeleton(a).pelvis, pb = skeleton(b).pelvis;
+  return { ...lerpPose(a, b, w), anchor: "center", x: mix(pa.x, pb.x, w), y: mix(pa.y, pb.y, w) };
+}
 
 /** 번개 한 번의 밝기(두 번 깜빡임). x = 번개 친 뒤 지난 초 */
 const strike = (x: number, a = 1) => (x < 0 ? 0 : a * clamp(Math.exp(-x * 9) * .85 + Math.exp(-Math.abs(x - .11) * 40) * .6));
@@ -145,7 +159,7 @@ export const act4: Shot[] = [
             <Wisp x={1500} y={470} w={1600} h={26} color={k.cloudLit} opacity={.2} t={t} drift={-4} />
           </Layer>
           <Layer d={14} blur={0}>
-            <HeapRow seed={471} y={760} x0={-1700} x1={3600} size={330} count={20} hk={.32} {...sea} dark={mixhex(k.cloud, k.fog, .5)} t={t} drift={3} />
+            <HeapRow seed={471} y={760} x0={-1700} x1={3600} size={330} count={20} n={12} hk={.32} {...sea} dark={mixhex(k.cloud, k.fog, .5)} t={t} drift={3} />
           </Layer>
           <Layer d={6} blur={.8}>
             <HeapRow seed={472} y={930} x0={-1700} x1={3700} size={640} count={10} hk={.36} {...sea} t={t} drift={5} />
@@ -264,7 +278,7 @@ export const act4: Shot[] = [
           ? (lt < tU1 ? { armN: [mix(.4, .95, smooth(.05, .3, lt)), .05], armF: [.25, .3] } : lt < tR ? { armN: [.45, .4], armF: [.25, .3] } : lt < tB ? { armN: [mix(.45, 1.6, pt), .06], armF: [.4, .5] } : { armN: [2.45, .3], armF: [2.2, .4] })
           : (lt < tR ? { armN: [.3, .35], armF: [.22, .3] } : lt < tB ? { armN: [mix(.3, 1.2, pt), mix(.35, 2.3, pt)], armF: [mix(.22, 1.05, pt), mix(.3, 2.35, pt)] } : { armN: [1.6, .05], armF: [.6, .6] });
         return {
-          ...P.sitEdge, x: isKid ? 768 : 1152, y: 652 - h * s, s, facing: isKid ? 1 : -1,
+          ...P.sitEdge, x: isKid ? 722 : 1198, y: 652 - h * s, s, facing: isKid ? 1 : -1,
           lean: mix(.18, -.02, up) - (lt > tB ? .1 * smooth(tB, tB + .2, lt) : 0), bend: mix(.2, .02, up), headTilt: mix(.65, -.05, up) - joy * .05, faceDir: .4,
           legN: [1.2 + .15 * sw, 1.15 + .45 * sw], legF: [1.05 - .15 * sw, 1.1 - .4 * sw], ...arms,
           squash: sq(tR) + sq(tB), swing: .3 + h * 6 + n2(isKid ? 491 : 492, t) * .15,
@@ -279,15 +293,15 @@ export const act4: Shot[] = [
             <GodRays x={960} y={-520} t={t} color={k.moon} opacity={.12} len={2400} count={14} />
           </Sky>
           <Layer d={12}>
-            <HeapRow seed={491} y={790} x0={-1400} x1={3400} size={420} count={14} hk={.32} {...sea} t={t} drift={4} />
+            <HeapRow seed={491} y={790} x0={-1400} x1={3400} size={420} count={14} n={12} hk={.32} {...sea} t={t} drift={4} />
           </Layer>
           <Layer d={5}>
-            <HeapRow seed={492} y={1080} x0={-1400} x1={3400} size={760} count={8} hk={.34} {...sea} t={t} drift={6} />
+            <HeapRow seed={492} y={1080} x0={-1400} x1={3400} size={760} count={8} hk={.34} {...sea} lit={mixhex(k.cloudLit, k.cloud, .3)} t={t} drift={6} />
             <Glow x={960} y={1030} r={180} color={k.win} opacity={.35} />
           </Layer>
           <Layer d={1}>
-            <CloudMass seed={493} x0={-700} x1={742} y={654} depth={640} dark={mixhex(k.cloud, k.sil, .4)} lit={k.cloudLit} rim="#ffffff" ends="R" />
-            <CloudMass seed={494} x0={1178} x1={2700} y={654} depth={640} dark={mixhex(k.cloud, k.sil, .4)} lit={k.cloudLit} rim="#ffffff" ends="L" />
+            <CloudMass seed={493} x0={-700} x1={696} y={654} depth={640} dark={mixhex(k.cloud, k.sil, .4)} lit={k.cloudLit} rim="#ffffff" ends="R" />
+            <CloudMass seed={494} x0={1224} x1={2700} y={654} depth={640} dark={mixhex(k.cloud, k.sil, .4)} lit={k.cloudLit} rim="#ffffff" ends="L" />
             <Moths t={t} at={(tt) => {
               const l = tt - T49;
               const rise = ease("expoOut", lin(tR, tR + 1.2, l));
@@ -330,7 +344,7 @@ export const act4: Shot[] = [
         fp = ikArm(fp, 0, mix(fsk.haN.x, hx, hj), mix(fsk.haN.y, hy, hj));
       }
       const sea = { lit: k.cloudLit, dark: mixhex(k.cloud, k.sil, .2), mid: mixhex(k.cloudLit, k.cloud, .5) };
-      const tower = { lit: mixhex(k.cloudLit, k.fog, .2), dark: mixhex(k.cloud, k.sil, .55), mid: mixhex(k.cloud, k.cloudLit, .35) };
+      const tower = { lit: mixhex(ST.cloudLit, k.cloudLit, .45), dark: mixhex(ST.cloud, ST.sil, .3), mid: mixhex(ST.cloud, ST.cloudLit, .35) };
       return (
         <Scene cam={cam}>
           <Sky k={k} t={t} horizon={800} glowX={1300} glowOpacity={.5 + flash * .25} stars={.5 * (1 - kw)} />
@@ -339,12 +353,12 @@ export const act4: Shot[] = [
             <Wisp x={200 + wind * .25} y={230} w={900} h={70} color={mixhex(k.cloud, k.sil, .3)} opacity={kw * .85} />
           </Layer>
           <Layer d={18} blur={0}>
-            <Heap seed={50} shape="tower" x={1500} y={830} w={1250} h={mix(470, 680, kw)} {...tower} t={t * 2} flash={flash} fx={.38 + (lt > tF2 ? .22 : 0)} fy={.5} edge={flash > .05 ? mixc(k.cloudLit, "#ffffff", flash) : undefined} />
+            <Heap seed={50} shape="tower" x={1450} y={840} w={1300} h={mix(500, 700, kw)} n={70} {...tower} t={t * 2} flash={flash} fx={.38 + (lt > tF2 ? .22 : 0)} fy={.5} edge={flash > .05 ? mixc(k.cloudLit, "#ffffff", flash) : undefined} />
             <Lightning seed={501} x0={1430} y0={430} x1={1330} y1={820} flash={strike(lt - tF2)} width={2.2} branches={3} />
-            <HeapRow seed={502} y={835} x0={500} x1={3200} size={380} count={9} hk={.4} {...tower} t={t} drift={-6} />
+            <HeapRow seed={502} y={845} x0={700} x1={3200} size={380} count={9} hk={.4} {...tower} t={t} drift={-6} />
           </Layer>
           <Layer d={8} blur={0}>
-            <HeapRow seed={503} y={900} x0={-1600} x1={3500} size={480} count={12} hk={.38} {...sea} t={t} drift={-8} edge={flash > .05 ? mixc(k.cloudLit, "#ffffff", flash) : undefined} flash={flash * .5} flashColor={k.glow} />
+            <HeapRow seed={503} y={900} x0={-1600} x1={3500} size={480} count={12} n={14} hk={.38} {...sea} t={t} drift={-8} edge={flash > .05 ? mixc(k.cloudLit, "#ffffff", flash) : undefined} flash={flash * .5} flashColor={k.glow} />
           </Layer>
           <Layer d={4} blur={.6}>
             {[0, 1, 2, 3, 4, 5].map((i) => (
@@ -407,23 +421,24 @@ export const act4: Shot[] = [
         <Scene cam={cam}>
           <Sky k={k} t={t} horizon={760} glowX={600} glowOpacity={.35 + flash * .3} />
           <Layer d={60} blur={0}>
-            <Moon x={330} y={170} r={42} color={k.moon} glow={.7 * (1 - c.p * .8)} />
-            <HeapRow seed={510} y={330} x0={-300} x1={2400} size={460} count={7} hk={.35} lit={k.cloud} dark={mixhex(k.cloud, k.sil, .5)} t={t} drift={-25} />
+            <g opacity={1 - smooth(.25, .7, c.p)}><Moon x={330} y={190} r={42} color={k.moon} glow={.7 * (1 - c.p * .8)} /></g>
+            <Wisp x={-200 + lt * 160} y={200} w={700} h={60} color={mixhex(k.cloud, k.sil, .4)} opacity={.9} />
+            <HeapRow seed={510} y={330} x0={-300} x1={2400} size={460} count={7} n={12} hk={.35} lit={k.cloud} dark={mixhex(k.cloud, k.sil, .5)} t={t} drift={-25} />
           </Layer>
           <Layer d={14} blur={0}>
-            <HeapRow seed={513} y={800} x0={-2600} x1={3800} size={420} count={16} hk={.38} lit={mixhex(k.cloudLit, k.cloud, .3)} dark={mixhex(k.cloud, k.sil, .4)} t={t} drift={-6} />
+            <HeapRow seed={513} y={800} x0={-2600} x1={3800} size={480} count={12} n={12} hk={.38} lit={mixhex(k.cloudLit, k.cloud, .3)} dark={mixhex(k.cloud, k.sil, .4)} t={t} drift={-6} />
           </Layer>
-          <Layer d={5}>
-            <Heap seed={514} shape="tower" x={wall.x + 760} y={1150} w={2100} h={1700} {...tower} t={t * 2.5} flash={flash} fx={.25} fy={.55} edge={flash > .05 ? mixc(k.cloudLit, "#ffffff", flash) : undefined} />
+          <Layer d={5} blur={0}>
+            <Heap seed={514} shape="tower" x={wall.x + 760} y={1150} w={2100} h={1700} n={72} puff={.68} {...tower} t={t * 2.5} flash={flash} fx={.25} fy={.55} edge={flash > .05 ? mixc(k.cloudLit, "#ffffff", flash) : undefined} />
             <Lightning seed={515} x0={wall.x + 300} y0={-250} x1={wall.x + 60} y1={760} flash={strike(lt - tL2)} width={4} branches={5} />
             <Lightning seed={516} x0={wall.x + 600} y0={-100} x1={wall.x + 420} y1={600} flash={strike(lt - tL3, .8)} width={3} branches={3} />
           </Layer>
           <Layer d={3.2} blur={1.4}>
-            <HeapRow seed={517} y={1220} x0={-3000} x1={3200} size={720} count={13} hk={.36} {...stone} lit={mixhex(k.cloud, k.cloudLit, .6)} t={t} drift={-12} />
+            <HeapRow seed={517} y={1220} x0={-3000} x1={3200} size={820} count={9} n={14} hk={.36} {...stone} lit={mixhex(k.cloud, k.cloudLit, .6)} t={t} drift={-12} />
           </Layer>
-          <Layer d={1.8} blur={1}>
-            {Array.from({ length: 9 }, (_, i) => (
-              <Heap key={i} seed={5180 + i} shape="stone" x={1900 - i * 540 + rnd(518, i) * 260} y={800 + rnd(519, i) * 130} w={190 + rnd(520, i) * 140} h={100 + rnd(521, i) * 50} lit={mixhex(k.cloudLit, k.cloud, .35)} dark={mixhex(k.cloud, k.sil, .45)} />
+          <Layer d={1.8} blur={0}>
+            {Array.from({ length: 7 }, (_, i) => (
+              <Heap key={i} seed={5180 + i} shape="stone" x={1900 - i * 640 + rnd(518, i) * 260} y={800 + rnd(519, i) * 130} w={190 + rnd(520, i) * 140} h={100 + rnd(521, i) * 50} lit={mixhex(k.cloudLit, k.cloud, .35)} dark={mixhex(k.cloud, k.sil, .45)} />
             ))}
           </Layer>
           <Layer d={Infinity} blur={0}>
@@ -453,35 +468,28 @@ export const act4: Shot[] = [
   },
   {
     // 52. 낙뢰(박 202, 와이드·낮은 각도): 하얀 번쩍임 속 두 실루엣. 오른쪽 구름에 번개가 꽂히고 나방이 사방으로 흩어진다.
-    //     친구 발밑 구름이 터져 떨어지고, 아이가 엎드리며 손을 붙든다
+    //     친구 발밑 구름이 터져 친구가 떨어지고, 아이가 배를 깔고 엎드리며 손을 붙든다(친구는 모서리 밖 허공에 매달림)
     id: "a4-strike", start: T52, key: "storm", enter: { type: "cut" },
     render: (c) => {
       const k = ST, lt = c.lt, t = c.t;
       const bolt = lt < .07 ? 1 : kf(lt, [[.07, 1], [.11, .25], [.15, 1], [.22, .45], [.3, .8], [.62, 0, "out"]]);
-      const white = 1 - ease("out", lin(0, .26, lt));
+      const white = 1 - ease("out", lin(0, .09, lt));
       const shake = Math.exp(-lt * 5.5) * 28;
       const cam: Cam = { x: 960 + Math.sin(lt * 61) * shake, y: 500 + Math.cos(lt * 53) * shake, zoom: mix(1, 1.07, ease("expoOut", lin(0, .6, lt))), rot: Math.sin(lt * 37) * .012 * Math.exp(-lt * 4), focus: 1, dof: 3 };
-      const drop = ease("in", lin(.1, .5, lt));
-      const kneel = ease("back", lin(.16, .42, lt));
+      const drop = ease("in", lin(.1, .42, lt));
+      const flop = ease("back", lin(.14, .4, lt));
       const flinch = ease("expoOut", lin(0, .09, lt));
-      const s = 240, G = 800;
-      let kp: Partial<Pose> = lerpPose(
-        lerpPose({ ...P.stand, headTilt: -.15 }, { lean: -.22, bend: .1, headTilt: .35, squash: .1, armN: [2.3, 1.9], armF: [1.8, 1.4], legN: [.3, .5], legF: [-.2, .4] }, flinch),
-        { lean: 1.05, bend: .3, headTilt: .45, squash: 0, legN: [1.6, 2.6], legF: [1.4, 2.5], armF: [1.0, .9] }, kneel);
-      kp = { ...kp, anchor: "feet", x: mix(880, 860, kneel), y: G, s, facing: 1, swing: 1.3 + flinch * .6 };
-      const J0 = { x: 950, y: G - .3 * s };
-      const sway = Math.sin(Math.max(0, lt - .5) * 7) * .3 * smooth(.5, .62, lt);
-      const J = { x: mix(J0.x, 975, drop), y: mix(J0.y, G + 14, drop) };
-      kp = ikArm(kp, 0, J.x, J.y);
-      const fStand = pose({ ...lerpPose({ ...P.stand, headTilt: -.2 }, { lean: -.3, headTilt: .3, armF: [2.2, 1.6], squash: .08 }, flinch), anchor: "feet", x: 1010, y: G, s: s * .97, facing: 1, swing: 1.4 });
-      const fHang = hangFrom(J, Math.PI / 2 + .35 + sway, { s: s * .97, armF: [2.4, .6], legN: [.7, 1.0], legF: [-.3, .6], headTilt: -.45, swing: 2, mouth: .8 });
-      const w = smooth(.15, .45, drop);
-      const fs = ikArm(fStand, 0, J.x, J.y);
-      const fpose: Partial<Pose> = w <= 0 ? fs : w >= 1 ? fHang : (() => {
-        const L = lerpPose(fs, fHang, w);
-        const a = skeleton(fs).pelvis, b = skeleton(fHang).pelvis;
-        return { ...L, anchor: "center", x: mix(a.x, b.x, w), y: mix(a.y, b.y, w), rot: mix(0, fHang.rot ?? 0, w) };
-      })();
+      const s = 240, G = 800, EDGE = 990;
+      const stand = pose({ ...lerpPose({ ...P.stand, headTilt: -.15 }, { lean: -.22, bend: .1, headTilt: .35, squash: .1, armN: [2.3, 1.9], armF: [1.8, 1.4], legN: [.3, .5], legF: [-.2, .4] }, flinch), anchor: "feet", x: 880, y: G, s, facing: 1, swing: 1.3 + flinch * .6 });
+      // 엎드림: 몸을 수평으로(머리 오른쪽), 다리는 뒤로
+      const lie = pose({ anchor: "center", x: EDGE - .36 * s, y: G - .07 * s, s, facing: 1, rot: Math.PI / 2 + .1, lean: 0, bend: .05, headTilt: .55, legN: [.15, .3], legF: [-.1, .4], armF: [1.6, .8], swing: 2.2 });
+      const sway = Math.sin(Math.max(0, lt - .42) * 7) * .28 * smooth(.42, .55, lt);
+      const J0 = { x: 945, y: G - .3 * s };
+      const J = { x: mix(J0.x, EDGE + 8, drop), y: mix(J0.y, G + 22, drop) };
+      const kp = ikArm(blendPose(stand, lie, flop), 0, J.x, J.y);
+      const fStand = ikArm(pose({ ...lerpPose({ ...P.stand, headTilt: -.2 }, { lean: -.3, headTilt: .3, armF: [2.2, 1.6], squash: .08 }, flinch), anchor: "feet", x: 1015, y: G, s: s * .97, facing: 1, swing: 1.4 }), 0, J.x, J.y);
+      const fHang = hangFrom(J, Math.PI / 2 - .3 + sway, { s: s * .97, armF: [2.4, .6], legN: [.7, 1.0], legF: [-.3, .6], headTilt: -.45, swing: 2, mouth: .8 });
+      const fpose = blendPose(fStand, fHang, smooth(.1, .45, drop));
       const C = { x: 960, y: 640 };
       const scatter = (tt: number): M[] => {
         const l = tt - T52;
@@ -499,7 +507,8 @@ export const act4: Shot[] = [
       return (
         <Scene cam={cam}>
           <Sky k={k} t={t} horizon={880} glowX={bx1} glowOpacity={.3 + bolt * .5}>
-            <Glow x={bx1} y={300} r={1300} color="#eaf8ff" opacity={bolt * .55} />
+            <rect x={-400} y={-400} width={2720} height={1880} fill="#dcefff" opacity={bolt * .75} />
+            <Glow x={bx1} y={300} r={1300} color="#ffffff" opacity={bolt * .7} />
           </Sky>
           <Layer d={10} blur={0}>
             <HeapRow seed={521} y={960} x0={-1400} x1={3400} size={520} count={10} hk={.4} {...stone} t={t} drift={-8} />
@@ -511,10 +520,10 @@ export const act4: Shot[] = [
             <Vapor x={bx1} y={by1 - 20} t={lt} t0={0} r={420} n={14} color={mixc(k.cloudLit, "#ffffff", .5)} dur={1.1} seed={524} />
           </Layer>
           <Layer d={1}>
-            <Heap seed={525} shape="stone" x={780} y={G + 100} w={470} h={170} {...stone} edge={mixc(k.cloudLit, "#ffffff", .3 + bolt * .7)} />
-            <Heap seed={526} shape="stone" x={1120} y={G + 100 + drop * 140} w={300} h={150} {...stone} opacity={1 - smooth(.06, .3, lt)} />
-            <Vapor x={1100} y={G + 10} t={lt} t0={.08} r={260} n={12} color={mixc(k.cloudLit, k.fog, .3)} dur={.9} seed={527} />
+            <Heap seed={526} shape="stone" x={1110} y={G + 100 + drop * 140} w={300} h={150} {...stone} opacity={1 - smooth(.06, .3, lt)} />
             <Kid variant="friend" accent={PINK} pose={pose(fpose)} sil={k.sil} rim={RIM(k, .7, -.7, .022 + bolt * .03, 1, "#ffffff")} />
+            <Heap seed={525} shape="stone" x={790} y={G + 100} w={470} h={170} {...stone} edge={mixc(k.cloudLit, "#ffffff", .3 + bolt * .7)} />
+            <Vapor x={1100} y={G + 10} t={lt} t0={.08} r={260} n={12} color={mixc(k.cloudLit, k.fog, .3)} dur={.9} seed={527} />
             <Kid pose={pose(kp)} sil={k.sil} rim={RIM(k, .7, -.7, .022 + bolt * .03, 1, "#ffffff")} />
           </Layer>
           <Layer d={.85} blur={0}>
@@ -535,42 +544,39 @@ export const act4: Shot[] = [
       const tSep = beat(205) - T53;
       const slip = ease("in", lin(0, tSep, lt));
       const away = ease("in", lin(tSep, c.dur + .15, lt));
-      const fl = strike(lt - tSep + .03, .9) + .35 + .12 * Math.sin(t * 2.3);
+      const fl = clamp(strike(lt - tSep + .03, .8) + .45 + .1 * Math.sin(t * 2.3));
       const hh = handheld(t, 53, 3, .25);
       const cam: Cam = { x: 960 + hh.x, y: 540 + hh.y, zoom: kf(lt, [[0, 1], [c.dur, 1.1, "io"]]), rot: hh.r, focus: 1, dof: 9 };
-      const a = .95, s = 430;
+      const a = 1.0, s = 600;
       const C = { x: 960, y: 520 };
-      const K = hookWrist(C, a, s);
-      const ca = Math.cos(a), sa = Math.sin(a);
-      const d = slip * .17 * s;
-      // 친구 손목: 아이 손 좌표계에서 (.92s + d, .22s) — 두 갈고리가 맞물리는 자리
-      const fx0 = .92 * s + d + away * 900, fy0 = .22 * s;
-      const kidH: HandSpec = { x: K.x, y: K.y, a, s, curl: lt < tSep ? mix(1.25, .95, slip) : mix(.95, 1.45, ease("out", lin(tSep, tSep + .4, lt))), stagger: .1 * slip, spread: .22, thumb: .5, sleeve: 2.4 };
-      const fH: HandSpec = { x: K.x + ca * fx0 - sa * fy0, y: K.y + sa * fx0 + ca * fy0 + away * 260, a: a + Math.PI + away * .5, s: s * (1 - away * .45), curl: lt < tSep ? mix(1.25, .75, slip) : mix(.75, .3, ease("out", lin(tSep, tSep + .5, lt))), stagger: -.16 * slip, spread: .22 + slip * .25, thumb: .4, sleeve: 2.4 };
-      const rim = { dx: .55, dy: -.85, color: "#e8f8ff", w: .02, opacity: clamp(fl) };
-      const drops = Array.from({ length: 14 }, (_, i) => {
+      const { K, F } = hookPair(C, a, s, slip * .2);
+      const fall = { x: Math.cos(a) * away * 900, y: Math.sin(a) * away * 900 + away * 260 };
+      const kidH: HandSpec = { x: K.x, y: K.y, a, s, curl: lt < tSep ? mix(.82, .55, slip) : mix(.55, 1.4, ease("out", lin(tSep, tSep + .45, lt))), stagger: .12 * slip, spread: .28, thumb: .5, sleeve: 1.5 };
+      const fH: HandSpec = { x: F.x + fall.x, y: F.y + fall.y, a: a + Math.PI + away * .5, s: s * (1 - away * .5), curl: lt < tSep ? mix(.82, .45, slip) : mix(.45, .2, ease("out", lin(tSep, tSep + .5, lt))), stagger: -.14 * slip, spread: .28 + slip * .25, thumb: .4, sleeve: 1.5 };
+      const rim = { dx: .5, dy: -.86, color: "#e8f8ff", w: .016, opacity: fl };
+      const drops = Array.from({ length: 16 }, (_, i) => {
         const l = lt - tSep;
         if (l < 0) return null;
-        const ang = -1.4 + rnd(533, i) * 2.8;
-        const v = 120 + rnd(533, i + 9) * 260;
-        const x = C.x + 40 + Math.cos(ang) * v * l, y = C.y + 40 + Math.sin(ang) * v * l + 60 * l * l;
-        return <circle key={i} cx={x} cy={y} r={2 + rnd(533, i + 20) * 4} fill="#eaf8ff" opacity={clamp(1 - l * .8) * .9} />;
+        const ang = -1.6 + rnd(533, i) * 3.2;
+        const v = 140 + rnd(533, i + 9) * 300;
+        const x = C.x + 40 + Math.cos(ang) * v * l, y = C.y + 20 + Math.sin(ang) * v * l + 60 * l * l;
+        return <circle key={i} cx={x} cy={y} r={2.5 + rnd(533, i + 20) * 5} fill="#eaf8ff" opacity={clamp(1 - l * .8) * .9} />;
       });
       return (
         <Scene cam={cam}>
           <Sky k={k} t={t} horizon={1100} glowX={1150} glowR={900} glowOpacity={.4}>
-            <Glow x={1180} y={380} r={950} color={k.glow} opacity={clamp(fl) * .75} />
-            <Glow x={1180} y={380} r={280} color="#ffffff" opacity={clamp(fl - .3) * .6} />
+            <Glow x={1000} y={470} r={1000} color={k.glow} opacity={fl * .8} />
+            <Glow x={1000} y={470} r={380} color="#ffffff" opacity={clamp(fl - .25) * .55} />
           </Sky>
           <Layer d={6} blur={6}>
-            <HeapRow seed={531} y={1150} x0={-1200} x1={3200} size={760} count={7} hk={.4} lit={mixc(k.cloudLit, "#ffffff", clamp(fl) * .4)} dark={mixhex(k.cloud, k.sil, .4)} t={t} drift={-4} />
-            <HeapRow seed={532} y={300} x0={-1200} x1={3200} size={640} count={6} hk={.35} lit={k.cloudLit} dark={mixhex(k.cloud, k.sil, .5)} t={t} drift={3} />
+            <HeapRow seed={531} y={1180} x0={-1200} x1={3200} size={800} count={7} hk={.4} lit={mixc(k.cloudLit, "#ffffff", fl * .4)} dark={mixhex(k.cloud, k.sil, .4)} t={t} drift={-4} />
+            <HeapRow seed={532} y={260} x0={-1200} x1={3200} size={640} count={6} hk={.35} lit={k.cloudLit} dark={mixhex(k.cloud, k.sil, .5)} t={t} drift={3} />
           </Layer>
           <Layer d={2} blur={3}>
             <Rain seed={532} t={t * .12} count={90} angle={.15} color="#d6eef6" opacity={.5} speed={2200} len={22} width={2.2} />
           </Layer>
           <Layer d={1}>
-            <Hand {...fH} color={mixhex(k.sil, k.silFar, .6)} rim={rim} />
+            <Hand {...fH} color={mixhex(k.sil, k.silFar, .7)} rim={rim} />
             <Hand {...kidH} color={k.sil} rim={rim} />
             {drops}
           </Layer>
@@ -582,34 +588,35 @@ export const act4: Shot[] = [
     },
   },
   {
-    // 54. 위에서 내려다봄: 화면 위쪽 구름 끝에 엎드린 아이의 후드와 뻗은 손. 친구가 검은 구름 바다 속으로 작아지며 떨어진다.
-    //     박(208)에 구름 속 번개가 친구 실루엣을 비추고 구름이 삼킨다. 끝에서 아이가 몸을 웅크린다(다이빙 예비동작)
+    // 54. 위에서 내려다봄: 구름 끝을 따라 엎드린 아이(후드·꼬리)가 모서리 밖으로 손을 뻗는다. 친구가 검은 구름 바다 속으로 작아지며 떨어진다.
+    //     박(208)에 구름 속 번개가 친구 실루엣을 비추고 구름이 삼킨다. 끝에서 아이가 몸을 당겨 웅크린다(다이빙 예비동작)
     id: "a4-fall", start: T54, key: "storm", enter: { type: "cut" },
     render: (c) => {
       const k = ST, lt = c.lt, t = c.t;
       const tGone = beat(208) - T54;
-      const VP = { x: 1010, y: 690 };
+      const VP = { x: 1060, y: 700 };
       const z = 1 + .75 * lt + 1.9 * lt * lt;
-      const f0 = { x: 930, y: 420 };
+      const f0 = { x: 610, y: 430 };
       const fx = VP.x + (f0.x - VP.x) / z + n2(541, t) * 20 / z, fy = VP.y + (f0.y - VP.y) / z;
       const fs = 330 / z;
       const fl = clamp(strike(lt - tGone, 1) + strike(lt - .3, .35));
       const hh = handheld(t, 54, 6, .55);
-      const cam: Cam = { x: 960 + hh.x, y: 540 + hh.y, zoom: kf(lt, [[0, 1], [c.dur, 1.12, "in"]]), rot: hh.r + .03, focus: 1, dof: 3 };
+      const cam: Cam = { x: 960 + hh.x, y: 540 + hh.y, zoom: kf(lt, [[0, 1], [c.dur, 1.1, "in"]]), rot: hh.r + .03, focus: 1, dof: 3 };
       const close = ease("io", lin(tGone - .45, tGone + .25, lt));
-      const fp = pose({ ...P.flail, anchor: "center", x: fx, y: fy, s: fs, facing: -1, rot: .35 * Math.sin(lt * 2.2) + lt * .4, armN: [2.4, .2], armF: [2.1, .5], swing: 2.2, legN: [.9 + .3 * Math.sin(lt * 9), .6], legF: [-.3, 1.0 + .3 * Math.sin(lt * 8)], mouth: .8 });
+      const fp = pose({ ...P.flail, anchor: "center", x: fx, y: fy, s: fs, facing: -1, rot: .35 * Math.sin(lt * 2.2) + lt * .4, armN: [1.9, .3], armF: [2.4, .6], swing: 2.2, legN: [.9 + .3 * Math.sin(lt * 9), .6], legF: [-.3, 1.0 + .3 * Math.sin(lt * 8)], mouth: .8 });
       const ready = smooth(tGone + .05, c.dur, lt);
-      const KS = 720;
-      let kp: Partial<Pose> = pose({ anchor: "center", x: 820 - ready * 30, y: -190 - ready * 70, s: KS, facing: 1, rot: Math.PI - .42, lean: .1, headTilt: mix(-.3, .25, ready), armF: [1.6, 1.2], legN: [.1, .2], legF: [-.1, .25], swing: 1.1 + n2(542, t * 2) * .3 });
-      kp = ikArm(kp, 0, mix(fx, 900, ready), mix(fy, 160, ready));
+      const KS = 600;
+      // 엎드린 아이: 몸은 구름 끝을 따라 눕고(머리 오른쪽), 가까운 팔이 모서리 밖 아래로
+      let kp: Partial<Pose> = pose({ anchor: "center", x: 400 - ready * 40, y: 120 - ready * 50, s: KS, facing: 1, rot: Math.PI / 2 + .15 - ready * .15, lean: .05, headTilt: mix(.35, -.1, ready), armF: [1.2, 1.4], legN: [.1, .2], legF: [-.1, .25], swing: 1.0 + n2(542, t * 2) * .3 });
+      kp = ikArm(kp, 0, mix(fx, 560, ready), mix(fy, 140, ready));
       const ksk = skeleton(kp);
       const ha = Math.atan2(ksk.haN.y - ksk.elN.y, ksk.haN.x - ksk.elN.x);
       const hs = .17 * KS;
-      const handC = { x: ksk.haN.x - Math.cos(ha) * .12 * hs, y: ksk.haN.y - Math.sin(ha) * .12 * hs };
-      const abyss = Array.from({ length: 22 }, (_, i) => {
-        const th = (i / 22) * TAU + rnd(547, i) * .3;
-        const r = 260 + rnd(548, i) * 520;
-        return { x: VP.x + Math.cos(th) * r, y: VP.y + Math.sin(th) * r * .8, r: 150 + rnd(549, i) * 170 };
+      const handW = { x: ksk.haN.x - Math.cos(ha) * .15 * hs, y: ksk.haN.y - Math.sin(ha) * .15 * hs };
+      const abyss = Array.from({ length: 26 }, (_, i) => {
+        const th = (i / 26) * TAU + rnd(547, i) * .3;
+        const r = 180 + rnd(548, i) * 640;
+        return { x: VP.x + Math.cos(th) * r, y: VP.y + Math.sin(th) * r * .8, r: 170 + rnd(549, i) * 190 };
       });
       const puffs = Array.from({ length: 9 }, (_, i) => {
         const th = (i / 9) * TAU + rnd(543, i);
@@ -617,15 +624,20 @@ export const act4: Shot[] = [
         const r = mix(r0, r0 * .16, close) + n2(545 + i, t * .5) * 30;
         return { x: VP.x + Math.cos(th) * r, y: VP.y + Math.sin(th) * r * .8, rr: 230 + rnd(546, i) * 140 };
       });
-      const edgePts = Array.from({ length: 13 }, (_, i) => ({ x: -200 + i * 190 + rnd(551, i) * 60, y: 40 + rnd(552, i) * 70, r: 120 + rnd(553, i) * 80 }));
+      // 위쪽 구름 끝(내려다봄): 왼쪽 위를 덮고 오른쪽 아래로 울퉁불퉁한 가장자리
+      const edgePts = Array.from({ length: 16 }, (_, i) => {
+        const u = i / 15;
+        return { x: -250 + u * 1700 + rnd(551, i) * 60, y: mix(250, -60, u * u) + rnd(552, i) * 50, r: 110 + rnd(553, i) * 90 };
+      });
       return (
         <Scene cam={cam} bg={k.sky[0]}>
           <Layer d={Infinity} blur={0}>
             <rect x={-200} y={-200} width={2400} height={1500} fill={k.sky[0]} />
-            <Glow x={VP.x} y={VP.y} r={1000} color={k.cloud} opacity={.8} />
+            <Glow x={VP.x} y={VP.y} r={1100} color={mixhex(k.cloud, k.cloudLit, .3)} opacity={.75} />
           </Layer>
           <Layer d={9} blur={1.5}>
-            <TopPuffs pts={abyss} lit={mixhex(k.cloud, k.cloudLit, .55)} dark={k.sky[1]} />
+            {abyss.map((p, i) => <Glow key={i} x={p.x} y={p.y} r={p.r * 1.3} color={mixhex(k.cloud, k.cloudLit, .55)} opacity={.75} />)}
+            {abyss.map((p, i) => <Glow key={"d" + i} x={p.x + p.r * .4} y={p.y + p.r * .45} r={p.r * .9} color={k.sky[0]} opacity={.6} />)}
             <Glow x={VP.x - 30} y={VP.y + 20} r={600} color={k.glow} opacity={fl * .9} />
             <Glow x={VP.x - 30} y={VP.y + 20} r={170} color="#ffffff" opacity={fl * .75} />
             <Lightning seed={549} x0={VP.x - 320} y0={VP.y - 140} x1={VP.x + 140} y1={VP.y + 220} flash={strike(lt - tGone, .9)} width={2.5} branches={3} />
@@ -634,16 +646,16 @@ export const act4: Shot[] = [
             <Kid variant="friend" accent={PINK} pose={fp} sil={k.sil} rim={RIM(k, .2, 1, .025, 1, "#ffffff")} opacity={1 - smooth(tGone + .12, tGone + .35, lt)} />
           </Layer>
           <Layer d={4} blur={2}>
-            {puffs.map((p, i) => <Glow key={i} x={p.x} y={p.y} r={p.rr} color={mixhex(k.cloud, k.cloudLit, .2 + fl * .5)} opacity={.85 * (.35 + close * .65)} />)}
+            {puffs.map((p, i) => <Glow key={i} x={p.x} y={p.y} r={p.rr} color={mixhex(k.cloud, k.cloudLit, .25 + fl * .5)} opacity={.85 * (.3 + close * .7)} />)}
           </Layer>
           <Layer d={Infinity} blur={0}>
             <RadialRain t={t} vx={VP.x} vy={VP.y} count={90} speed={1.0} color="#cfe6ee" opacity={.3} width={1.4} />
           </Layer>
           <Layer d={1}>
-            <TopPuffs pts={edgePts} lit={mixhex(k.cloudLit, "#ffffff", .2)} dark={mixhex(k.cloud, k.sil, .2)} cx={.5} cy={.35} />
-            <rect x={-300} y={-400} width={2600} height={440} fill={mixhex(k.cloudLit, k.cloud, .3)} />
-            <Kid pose={kp} sil={k.sil} rim={RIM(k, .1, 1, .012 + fl * .02, 1, "#e8f8ff")} />
-            <Hand x={handC.x} y={handC.y} a={ha} s={hs} curl={mix(.25, .9, ready)} spread={.7} thumb={.1} sleeve={.5} color={k.sil} rim={{ dx: .1, dy: 1, color: "#e8f8ff", w: .03, opacity: .5 + fl * .5 }} />
+            <path d={`M-400,-400H1700V${-60}` + edgePts.slice().reverse().map((p) => `L${p.x},${p.y + p.r * .5}`).join("") + "L-400,300Z"} fill={mixhex(k.cloudLit, k.cloud, .45)} />
+            <TopPuffs pts={edgePts} lit={mixhex(k.cloudLit, "#ffffff", .15)} dark={mixhex(k.cloudLit, k.cloud, .3)} cx={.45} cy={.35} />
+            <Kid pose={kp} sil={k.sil} rim={RIM(k, .15, 1, .014 + fl * .02, 1, "#e8f8ff")} />
+            <Hand x={handW.x} y={handW.y} a={ha} s={hs} curl={mix(.25, .9, ready)} spread={.7} thumb={.1} sleeve={.4} color={k.sil} rim={{ dx: .1, dy: 1, color: "#e8f8ff", w: .03, opacity: .5 + fl * .5 }} />
           </Layer>
           <Layer d={.55} blur={8}>
             <Streaks t={t} count={14} dir={Math.PI / 2 + .1} speed={900} len={260} width={5} opacity={.22} />
@@ -685,13 +697,13 @@ export const act4: Shot[] = [
           </Layer>
           <Layer d={7} blur={0}>
             {Array.from({ length: 16 }, (_, i) => (
-              <Glow key={i} x={(i % 2 ? 1750 : 170) + rnd(553, i) * 300 - 150} y={colY(i)} r={500} rx={300 + rnd(554, i) * 160} ry={800} color={mixhex(k.cloud, k.cloudLit, .15 + fl * .3)} opacity={.9} />
+              <Glow key={i} x={(i % 2 ? 1750 : 170) + rnd(553, i) * 300 - 150} y={colY(i)} r={500} rx={300 + rnd(554, i) * 160} ry={800} color={mixhex(k.cloud, k.cloudLit, .3 + fl * .3)} opacity={.95} />
             ))}
             <Lightning seed={555} x0={250} y0={camY / 7 - 300} x1={420} y1={camY / 7 + 500} flash={fl} width={3} branches={4} />
           </Layer>
           <Layer d={2.6} blur={2}>
             {Array.from({ length: 14 }, (_, i) => (
-              <Glow key={i} x={(i % 2 ? 1950 : 0) + rnd(556, i) * 260 - 130} y={colY(i) * 1.4 + 300} r={500} rx={340 + rnd(557, i) * 160} ry={1000} color={mixhex(k.cloud, k.cloudLit, .25 + fl * .4)} opacity={.95} />
+              <Glow key={i} x={(i % 2 ? 1950 : 0) + rnd(556, i) * 260 - 130} y={colY(i) * 1.4 + 300} r={500} rx={340 + rnd(557, i) * 160} ry={1000} color={mixhex(k.cloud, k.cloudLit, .45 + fl * .4)} opacity={1} />
             ))}
           </Layer>
           <Layer d={1}>
@@ -700,64 +712,89 @@ export const act4: Shot[] = [
             <Kid pose={kp} sil={k.sil} rim={RIM(k, -.6, -.8, .016 + fl * .03, .9, "#e8f8ff")} />
           </Layer>
           <Layer d={.4} blur={7}>
-            <Streaks seed={559} t={t} count={22} dir={-Math.PI / 2} speed={7000} len={520} width={7} color="#e8f6ff" opacity={.3} x0={-600} x1={2520} y0={-600} y1={1700} />
+            <Streaks seed={559} t={t} count={30} dir={-Math.PI / 2} speed={7500} len={620} width={5} color="#e8f6ff" opacity={.5} x0={-600} x1={2520} y0={-600} y1={1700} />
           </Layer>
         </Scene>
       );
     },
   },
   {
-    // 56. 익스트림 클로즈업 → 미디엄: 박(210)에 손가락이 맞물린다(금빛 터짐, 흔들림). 다이빙의 힘으로 둘이 맞잡은 손을 축으로 돌며
-    //     굴러떨어지고 카메라가 빠진다. 박(212)의 번개가 둘을 비춘다. 끝은 검은 구름 속으로
+    // 56. 익스트림 클로즈업 → (박 211에 안에서 자름) 미디엄: 박(210)에 손가락이 맞물린다(금빛 터짐, 흔들림, 손이 돌기 시작).
+    //     박 211부터 둘이 맞잡은 손을 축으로 돌며 굴러떨어지고 카메라가 빠진다. 박(212)의 번개가 둘을 비춘다. 끝은 검은 구름 속으로
     id: "a4-catch", start: T56, key: "storm", enter: { type: "cut" },
     render: (c) => {
       const k = ST, lt = c.lt, t = c.t;
-      const tL = beat(212) - T56;
-      const spin = 2.1 * (1 - Math.exp(-lt * 1.5)) + .1 * lt;
-      const phi = -Math.PI / 2 - .3 + spin;
-      const Pc = { x: 960, y: 540 };
-      const s = 400;
+      const tCut = beat(211) - T56, tL = beat(212) - T56;
+      const spin = 2.3 * (1 - Math.exp(-lt * 1.4)) + .1 * lt;
       const fl = strike(lt - tL, 1);
-      const shake = Math.exp(-lt * 7) * 22;
-      const zoom = kf(lt, [[0, 6.2], [.45, 5.5, "out"], [1.9, 1.0, "sineIO"]]);
-      const cam: Cam = { x: Pc.x + Math.sin(lt * 57) * shake / zoom * 3, y: Pc.y + Math.cos(lt * 49) * shake / zoom * 3, zoom, rot: spin * .3 + Math.sin(lt * 33) * .01 * shake / 22, focus: 1, dof: 4 };
+      const gold = Math.exp(-lt * 2.4);
+      const sky = (
+        <Layer d={Infinity} blur={0}>
+          <rect x={-600} y={-600} width={3120} height={2280} fill={k.sky[1]} />
+          <Glow x={1500} y={200} r={1100} color={k.glow} opacity={.12 + fl * .7} />
+          <g transform={`rotate(${(spin * 25).toFixed(2)} 960 540)`}>
+            <Streaks seed={56} t={t} count={120} dir={-Math.PI / 2 - .1} speed={1500} len={110} width={1.6} opacity={.35} x0={-500} x1={2420} y0={-500} y1={1580} />
+          </g>
+        </Layer>
+      );
+      if (lt < tCut) {
+        // ECU: 아이 손(위 왼쪽에서), 친구 손(아래 오른쪽에서). 박에 갈고리가 걸리고 곧 돌기 시작한다
+        const shake = Math.exp(-lt * 9) * 26;
+        const cam: Cam = { x: 960 + Math.sin(lt * 61) * shake, y: 540 + Math.cos(lt * 53) * shake, zoom: mix(1.06, 1, ease("expoOut", lin(0, .4, lt))), rot: .01 * Math.sin(lt * 40) * Math.exp(-lt * 6), focus: 1, dof: 6 };
+        const C = { x: 960, y: 540 };
+        const a = 1.05 + spin * .55;
+        const s = 560;
+        const grip = mix(.55, .82, ease("back", lin(0, .16, lt)));
+        const { K, F } = hookPair(C, a, s, mix(.08, 0, ease("expoOut", lin(0, .12, lt))));
+        const rim = { dx: -.35, dy: -.94, color: mixc("#e8f8ff", GOLD, gold), w: .02, opacity: clamp(.4 + gold) };
+        return (
+          <Scene cam={cam} bg={k.sky[0]}>
+            {sky}
+            <Layer d={5} blur={6}>
+              {Array.from({ length: 8 }, (_, i) => (
+                <Glow key={i} x={-200 + rnd(567, i) * 2300} y={((rnd(568, i) * 2200 - lt * 1400) % 2200 + 2200) % 2200 - 500} r={420} rx={380} ry={700} color={mixhex(k.cloud, k.cloudLit, .3)} opacity={.8} />
+              ))}
+            </Layer>
+            <Layer d={1}>
+              <Hand x={F.x} y={F.y} a={a + Math.PI} s={s} curl={grip} spread={.26} thumb={.6} sleeve={1.6} color={mixhex(k.sil, k.silFar, .7)} rim={rim} />
+              <Hand x={K.x} y={K.y} a={a} s={s} curl={grip} spread={.26} thumb={.6} sleeve={1.6} color={k.sil} rim={rim} />
+            </Layer>
+            <Layer d={1} blend="screen">
+              <Glow x={C.x} y={C.y} r={260} color={GOLD} opacity={gold * .85} />
+              <Burst x={C.x} y={C.y} t={t} t0={T56} dur={1.0} n={40} r={560} color={GOLD} />
+              <Burst x={C.x} y={C.y} t={t} t0={T56 + .03} dur={.6} n={20} r={260} color="#fff3c8" seed={14} />
+            </Layer>
+            <Layer d={.6} blur={8}>
+              <Streaks seed={566} t={t} count={12} dir={-Math.PI / 2} speed={2600} len={320} width={7} opacity={.2} />
+            </Layer>
+          </Scene>
+        );
+      }
+      // 미디엄: 맞잡은 손을 축으로 도는 둘
+      const l2 = lt - tCut;
+      const Pc = { x: 960, y: 540 };
+      const s = 300;
+      const phi = -Math.PI / 2 - .9 + spin;
+      const zoom = kf(l2, [[0, 1.7], [1.3, 1.02, "sineIO"]]);
+      const cam: Cam = { x: Pc.x, y: Pc.y + 20, zoom, rot: (spin - 1.2) * .25, focus: 1, dof: 4 };
       const kp = hangFrom(Pc, phi, { s, armF: [1.9, .7], legN: [.1, .3 + .2 * Math.sin(lt * 5)], legF: [-.2, .5], toe: 1, headTilt: -.3, swing: 2.0 + n2(561, t * 2) * .4 });
       const fp = hangFrom(Pc, phi + Math.PI, { s: s * .97, armF: [1.5, 1.0], legN: [.6, .9 + .3 * Math.sin(lt * 6)], legF: [-.2, .7], headTilt: -.4, swing: 2.2 + n2(562, t * 2) * .4 });
-      const ska = skeleton(kp), skb = skeleton(fp);
-      const ak = Math.atan2(ska.haN.y - ska.elN.y, ska.haN.x - ska.elN.x);
-      const af = Math.atan2(skb.haN.y - skb.elN.y, skb.haN.x - skb.elN.x);
-      const hs = .19 * s;
-      const grip = mix(.6, 1.25, ease("back", lin(0, .22, lt)));
-      const ecu = 1 - smooth(1.1, 1.6, lt);
-      const gold = Math.exp(-lt * 2.2);
-      const rimC = mixc("#e8f8ff", GOLD, gold);
-      const rim = { dx: -.4, dy: -.9, color: rimC, w: .04, opacity: clamp(.35 + gold + fl) };
-      const kw = hookWrist(Pc, ak, hs, .02 * (1 - grip)), fw = hookWrist(Pc, af, hs, .02 * (1 - grip));
       const swallow = ease("in", lin(2.0, c.dur, lt));
+      const rimC = mixc("#e8f8ff", GOLD, gold * .7);
       return (
         <Scene cam={cam} bg={k.sky[0]}>
-          <Layer d={Infinity} blur={0}>
-            <rect x={-600} y={-600} width={3120} height={2280} fill={k.sky[1]} />
-            <Glow x={1500} y={200} r={1100} color={k.glow} opacity={.12 + fl * .7} />
-            <Streaks seed={56} t={t} count={120} dir={-Math.PI / 2 - .1} speed={1500} len={110} width={1.6} opacity={.35} x0={-500} x1={2420} y0={-500} y1={1580} />
-          </Layer>
+          {sky}
           <Layer d={4} blur={2.5}>
             {Array.from({ length: 10 }, (_, i) => (
               <Glow key={i} x={-300 + rnd(563, i) * 2500} y={((rnd(564, i) * 2600 - lt * 900) % 2600 + 2600) % 2600 - 800} r={300 + rnd(565, i) * 200} ry={600} rx={340} color={mixhex(k.cloud, k.cloudLit, .25 + fl * .5)} opacity={.75} />
             ))}
           </Layer>
-          <Layer d={1}>
-            <Kid variant="friend" accent={PINK} pose={fp} sil={mixhex(k.sil, k.silFar, .4)} rim={RIM(k, -.4, -.9, .016 + fl * .02, .9, mixc("#e8f8ff", GOLD, gold * .7))} />
-            <Kid pose={kp} sil={k.sil} rim={RIM(k, -.4, -.9, .016 + fl * .02, .9, mixc("#e8f8ff", GOLD, gold * .7))} />
-            <g opacity={ecu}>
-              <Hand x={fw.x} y={fw.y} a={af} s={hs} curl={grip} spread={.2} thumb={.8} sleeve={.7} color={mixhex(k.sil, k.silFar, .4)} rim={rim} />
-              <Hand x={kw.x} y={kw.y} a={ak} s={hs} curl={grip} spread={.2} thumb={.8} sleeve={.7} color={k.sil} rim={rim} />
-            </g>
-          </Layer>
           <Layer d={1} blend="screen">
-            <Glow x={Pc.x} y={Pc.y} r={60} color={GOLD} opacity={gold * .9} />
-            <Burst x={Pc.x} y={Pc.y} t={t} t0={T56} dur={1.1} n={36} r={95} color={GOLD} />
-            <Burst x={Pc.x} y={Pc.y} t={t} t0={T56 + .04} dur={.7} n={18} r={45} color="#fff3c8" seed={14} />
+            <Glow x={Pc.x} y={Pc.y} r={90} color={GOLD} opacity={gold * .8 + .15} />
+          </Layer>
+          <Layer d={1}>
+            <Kid variant="friend" accent={PINK} pose={fp} sil={mixhex(k.sil, k.silFar, .4)} rim={RIM(k, -.4, -.9, .009 + fl * .02, .7, rimC)} />
+            <Kid pose={kp} sil={k.sil} rim={RIM(k, -.4, -.9, .009 + fl * .02, .7, rimC)} />
           </Layer>
           <Layer d={.7} blur={9}>
             <Glow x={960} y={mix(2300, 520, swallow)} r={900} rx={1600} ry={900} color={k.sky[0]} opacity={swallow} />
@@ -778,7 +815,7 @@ export const act4: Shot[] = [
       const on1 = onAt(lt - t1), on2 = onAt(lt - t2);
       const look = ease("back", lin(tLook - .1, tLook + .3, lt));
       const hh = handheld(t, 57, 4, .3);
-      const zoom = kf(lt, [[0, 1.2], [1.9, 1.08, "out"], [c.dur, .5, "in"]]);
+      const zoom = kf(lt, [[0, 1.2], [1.9, 1.08, "out"], [TEND - T57, .42, "in"]]);
       const cam: Cam = { x: 960 + hh.x, y: 530 + hh.y, zoom, rot: hh.r, focus: 1, dof: 4 };
       const s = 520, cx = 960, cy = 560;
       const gap = .36 * s;
@@ -803,6 +840,10 @@ export const act4: Shot[] = [
         </g>
       );
       const faint = strike(lt - .2, .25);
+      // 카메라 바로 앞을 지나는 굵은 빗방울(깊이 .55): 폰 빛이 닿는 자리에서만 보인다
+      const near = [p1, p2].map((p) => { const q = project(cam, 1, p.x, p.y); return unproject(cam, .55, q.x, q.y); });
+      const nearS = 1 + (zoom - 1) / .55;
+      const nm = "a4dnm";
       return (
         <Scene cam={cam} bg="#000">
           <Layer d={Infinity} blur={0}>
@@ -841,6 +882,18 @@ export const act4: Shot[] = [
             <Glow x={p2.x + .05 * s} y={p2.y - .08 * s} r={s * .22} color={k.cold} opacity={clamp(on2) * .22} />
             <Glow x={p1.x} y={p1.y} r={s * .12} color="#ffffff" opacity={clamp(on1) * .55} />
             <Glow x={p2.x} y={p2.y} r={s * .12} color="#ffffff" opacity={clamp(on2) * .55} />
+          </Layer>
+          <Layer d={.55} blur={6}>
+            <defs>
+              <mask id={nm} maskUnits="userSpaceOnUse" x={-3000} y={-3000} width={8000} height={7000}>
+                <rect x={-3000} y={-3000} width={8000} height={7000} fill="#000" />
+                <circle cx={near[0].x} cy={near[0].y} r={s * 1.1 * zoom / nearS} fill={`url(#${rg})`} opacity={clamp(on1)} />
+                <circle cx={near[1].x} cy={near[1].y} r={s * 1.1 * zoom / nearS} fill={`url(#${rg})`} opacity={clamp(on2)} />
+              </mask>
+            </defs>
+            <g mask={`url(#${nm})`}>
+              <Rain seed={571} t={t} count={40} angle={.12} color={k.cold} opacity={.7} speed={1900} len={120} width={6} x0={-600} x1={2500} y0={-600} y1={1700} />
+            </g>
           </Layer>
         </Scene>
       );

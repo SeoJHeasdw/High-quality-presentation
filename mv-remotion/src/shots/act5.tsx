@@ -10,14 +10,15 @@ import { Layer, Scene, type Cam } from "../lib/camera";
 import { K } from "../lib/palette";
 import { B, beat } from "../lib/song";
 import { clamp, ease, handheld, kf, lin, mix, mixc, mixhex, n2, rnd, smooth, springStep } from "../lib/math";
-import { Cloud, CloudBank, Glow, GodRays, Lightning, Moon, Rain, Stars, Wisp } from "../lib/sky";
-import { Bed, Curtain, Skyline, WindowFrame, buildings } from "../lib/city";
+import { Cloud, CloudBank, Glow, GodRays, Lightning, Moon, Rain, Wisp } from "../lib/sky";
+import { Skyline, buildings } from "../lib/city";
 import { Moths, Burst, Thread, stream, swarm, toward, type M } from "../lib/moths";
 import { getLength, getPointAtLength } from "@remotion/paths";
 import { Kid, ikArm, skeleton } from "../kid/rig";
 import { P, lerpPose, pose, type Pose } from "../kid/pose";
 import { PhoneLight, Rings, RushClouds, SkyLayer, cradlePts, rescueStreams, sparks, type StreamOpt } from "./act5-kit";
-import { BookendCity, ROWS, mixKey, windowsOf, type Landing } from "./act5-city";
+import { LandingThreads, igniteAt, litShare, mixKey, shot1Lit, type Landing } from "./act5-city";
+import { CityEstablish, cityCam } from "./act1-sets";
 import type { Shot } from "./types";
 
 // 편집표의 59번 시작 beat(222)는 B(55)와 같은 시각이라 길이 0이 된다 → 마디 가운데 beat(220)에서 자른다
@@ -95,29 +96,20 @@ const BloomThread: React.FC<{ th: (typeof BLOOM.threads)[number]; t: number; col
   );
 };
 
-/** 65: 실이 내려앉는 자리와 박. 243에 바로 그 창(1번 컷의 창)이 있는 건물 */
+/** 65: 실이 내려앉는 자리(1번 도시의 층·건물 순서 u)와 박. 243에 바로 그 창(1번 컷의 창)이 있는 건물 */
 const IGN = (() => {
-  const near = (ri: number, x: number) => {
-    const W = windowsOf(ROWS[ri]);
-    let bi = 0, best = 1e9;
-    W.forEach((w, i) => { const d = Math.abs(w.b.x + w.b.w / 2 - x); if (d < best) { best = d; bi = i; } });
-    return bi;
-  };
-  const tb = near(3, 1180);
-  const tw = windowsOf(ROWS[3])[tb];
-  const kWin = tw.cols * 3 + 1;
   const lands: Landing[] = [
-    { row: 2, bi: near(2, 560), t: beat(242.5) },
-    { row: 3, bi: tb, t: beat(243) },
-    { row: 1, bi: near(1, 1500), t: beat(243.5) }, { row: 4, bi: near(4, 250), t: beat(243.5) },
-    { row: 2, bi: near(2, 1350), t: beat(244) }, { row: 0, bi: near(0, 760), t: beat(244) },
-    { row: 3, bi: near(3, 380), t: beat(244.5) }, { row: 1, bi: near(1, 300), t: beat(244.5) },
-    { row: 4, bi: near(4, 1600), t: beat(245) }, { row: 2, bi: near(2, 150), t: beat(245) }, { row: 0, bi: near(0, 1650), t: beat(245) },
-    { row: 3, bi: near(3, 1750), t: beat(245.5) }, { row: 1, bi: near(1, 900), t: beat(245.5) },
+    { row: 2, u: .4, t: beat(242.5) },
+    { row: 3, u: .55, t: beat(243), target: true },
+    { row: 1, u: .6, t: beat(243.5) }, { row: 3, u: .33, t: beat(243.5) },
+    { row: 2, u: .62, t: beat(244) }, { row: 0, u: .45, t: beat(244) },
+    { row: 3, u: .44, t: beat(244.5) }, { row: 1, u: .37, t: beat(244.5) },
+    { row: 2, u: .5, t: beat(245) }, { row: 3, u: .66, t: beat(245) }, { row: 0, u: .58, t: beat(245) },
+    { row: 1, u: .47, t: beat(245.5) }, { row: 2, u: .34, t: beat(245.5) },
     // 8분음표마다 더 작은 실들(박 사이를 잇는 잔비)
-    ...[4, 2, 1, 3, 0, 2, 4, 1, 3, 2, 0, 1].map((row, j) => ({ row, bi: near(row, -100 + rnd(652, j) * 2100), t: beat(243.25 + j * .25) })),
+    ...[3, 2, 1, 3, 0, 2, 3, 1, 2, 0, 1, 2].map((row, j) => ({ row, u: .3 + rnd(652, j) * .4, t: beat(243.25 + j * .25) })),
   ];
-  return { tb, kWin, lands, target: tw.at(kWin) };
+  return { lands };
 })();
 
 /** 67: 골목(한 점 원근). 단위는 세계 좌표, 카메라는 -Z에서 +Z를 본다 */
@@ -231,9 +223,7 @@ export const act5: Shot[] = [
       const lift = ease("expoIn", lin(beat(225.6), T61 + .05, t));
       const cam: Cam = { x: 960 + hh.x, y: mix(470, 540, ease("out", lin(0, lc, lt))) + hh.y + bump - lift * 30, zoom: kf(lt, [[0, 1.0], [lc, 1.06, "out"], [c.dur, 1.13, "io"]]), rot: hh.r, focus: 1, dof: 4 };
       // 요람: 박에 눌렸다가 튕긴다
-      const dip = caught ? (1 - springStep(a, 13, .32)) * -1 + 1 : 0; // 0 → 1(되돌아옴)
-      const sag = caught ? Math.sin(Math.min(1, a * 4) * Math.PI) * 0 + (1 - springStep(a, 11, .3)) * 46 : 0;
-      void dip;
+      const sag = caught ? (1 - springStep(a, 11, .3)) * 46 : 0;
       const cy = 690 + sag - lift * 160;
       const rx = 540, ry = 235;
       const seatY = cy + ry * .5;
@@ -402,11 +392,11 @@ export const act5: Shot[] = [
       return (
         <Scene cam={cam}>
           <SkyLayer k={k} horizon={1080} glowOpacity={.6} stars={.35} t={t} />
-          <Layer d={60}>
+          <Layer d={60} blur={0}>
             <GodRays x={1230} y={300} t={t} color={k.moon} opacity={.18} len={2600} count={20} />
             <Moon x={1230} y={300} r={330} color={k.moon} glow={1.15} pulse={c.pulse * .3} texture={1} />
           </Layer>
-          <Layer d={20}>
+          <Layer d={20} blur={0}>
             <Wisp x={500} y={520} w={1800} color={k.cloudLit} opacity={.25} t={t} drift={10} />
             <Wisp x={1500} y={700} w={1600} color={k.cloudLit} opacity={.2} t={t} drift={-8} />
           </Layer>
@@ -492,8 +482,9 @@ export const act5: Shot[] = [
                   const bx = Kn.x + side * (26 - f * 4) * sc, by = Kn.y + (-6 + f * 22 - (i ? 11 : 0)) * sc;
                   return <line key={f} x1={bx} y1={by} x2={bx - side * 64 * sc} y2={by - 20 * sc + f * 4 * sc} strokeWidth={21 * sc} />;
                 })}
-                {/* 엄지: 위로 세워 달에 닿는다 */}
-                <line x1={Kn.x + side * 30 * sc} y1={Kn.y - 6 * sc} x2={P0.x + side * 13 * sc} y2={P0.y + 2 * sc - g * .1} strokeWidth={22 * sc} />
+                {/* 두 엄지가 끝을 맞대 뾰족한 하나(첨탑 모양)가 되어 달에 닿는다 */}
+                <line x1={Kn.x + side * 36 * sc} y1={Kn.y - 2 * sc} x2={P0.x + side * 4 * sc} y2={P0.y + 4 * sc - g * .1} strokeWidth={22 * sc} />
+                <path strokeWidth={0} d={`M${Kn.x + side * 40 * sc},${Kn.y + 4 * sc}L${P0.x},${P0.y + 10 * sc - g * .1}L${Kn.x},${Kn.y + 10 * sc}Z`} />
               </g>
             );
           })}
@@ -577,26 +568,33 @@ export const act5: Shot[] = [
     },
   },
   {
-    // 65. 북엔드: 1번 컷과 같은 높은 시점의 도시, 같은 창으로 천천히 밀어 들어간다. 그 창은 아직 폰 빛으로 차갑다.
-    //     금빛 실이 박마다 지붕에 내려앉고(243에 바로 그 창), 닿은 자리에서 창이 하나씩 번져 켜진다. 끝에서 도시 전체가 따뜻하다
+    // 65. 북엔드: 1번 컷과 똑같은 도시·카메라(1막의 CityEstablish·cityCam)로 같은 창을 향해 밀어 들어간다. 그 창은 아직 폰 빛으로 차갑게 깜빡인다.
+    //     금빛 실이 박마다 지붕에 내려앉고(243에 바로 그 건물), 닿은 자리에서 창이 하나씩 번져 켜진다. 끝에서 도시 전체가 따뜻하다
     id: "a5-ignite", start: T65, key: "bloom", enter: { type: "cut" },
     render: (c) => {
       const lt = c.lt, t = c.t;
       const warmth = smooth(beat(242.6), beat(246), t);
       const k = mixKey(K.lonely, K.bloom, warmth);
-      const hh = handheld(t, 65, 3, .3);
-      const f = ease("io", lin(0, c.dur + .3, lt)) * .5;
-      const T = IGN.target, d = ROWS[3].d;
-      const cam: Cam = { x: 960 + (T.x - 960) * d * f + hh.x, y: 540 + (T.y - 540) * d * f + hh.y, zoom: mix(1, 1.32, ease("io", lin(0, c.dur + .3, lt))), rot: hh.r, focus: 2.2, dof: 1.6 };
-      const cold = 1 - smooth(beat(243) - .03, beat(243) + .06, t);
+      const tw = smooth(beat(243) - .02, beat(243) + .1, t);
+      const ignite = (u: number, i: number) => {
+        const base = shot1Lit(u, i);
+        if (!litShare(u, i)) return base;
+        const tOn = igniteAt(u, i, IGN.lands, beat(245.1));
+        return Math.max(base, smooth(tOn, tOn + .12, t));
+      };
+      // 먼 하늘(d 40)에 내리는 실: 도시 너머로 떨어지는 금빛 비
+      const far = Array.from({ length: 9 }, (_, i) => {
+        const x = mix(-200, 2100, (i + rnd(653, i) * .7) / 9), t0 = T65 - .3 + rnd(654, i) * 1.8;
+        const d = `M${x + (rnd(655, i) - .5) * 300},-500Q${x + (rnd(656, i) - .5) * 200},100 ${x},${520 + rnd(657, i) * 40}`;
+        return <Thread key={i} d={d} progress={clamp((t - t0) / 1.1)} color={K.bloom.accent} width={1.4} opacity={.7} />;
+      });
       return (
-        <Scene cam={cam}>
-          <SkyLayer k={k} horizon={330} glowOpacity={.5 + warmth * .3} glowR={1100} stars={1 - warmth * .7} t={t}>
-            <Glow x={960} y={-200} r={900} color={K.bloom.glow} opacity={.25 + warmth * .2} />
-          </SkyLayer>
-          <BookendCity t={t} kCold={K.lonely} kWarm={K.bloom} warmth={warmth} lands={IGN.lands} sweep={beat(245.2)} threadColor={K.bloom.accent} target={{ row: 3, bi: IGN.tb, k: IGN.kWin, cold }} />
-          <Layer d={3} blend="screen">
-            <Glow x={960} y={760} rx={1900} ry={520} r={900} color={K.bloom.win} opacity={warmth * .3} />
+        <Scene cam={cityCam(lt, c.dur, t, 1.9)}>
+          <CityEstablish k={k} t={t} target={{ on: 1, color: mixhex(K.lonely.cold, K.bloom.win, tw), flicker: tw < .5 }} ignite={ignite} winDim={mix(.45, .1, warmth)} stars={1 - warmth * .8} kid={false}
+            sky={<g><Glow x={960} y={-240} r={900} color={K.bloom.glow} opacity={.15 + warmth * .3} />{far}</g>} />
+          <LandingThreads t={t} lands={IGN.lands} color={K.bloom.accent} />
+          <Layer d={4} blend="screen" blur={0}>
+            <Glow x={960} y={860} rx={2400} ry={520} r={900} color={K.bloom.win} opacity={warmth * .28} />
           </Layer>
           <Layer d={.7} blend="screen">
             <Moths t={t} at={(tt) => sparks(651, 14, tt, { x0: -200, x1: 2200, y0: -300, y1: 1300, speed: 180, size: 7, sway: 50 })} color={K.bloom.accent} wings={false} opacity={.8} />
@@ -709,16 +707,17 @@ export const act5: Shot[] = [
       const ZK = AL.ZK;
       const kidP = pj(-A + 12, 70, ZK), friP = pj(A - 12, 70, ZK);
       const sKid = 270 * kidP.s;
-      const waveArm = (o: number): [number, number] => [mix(1.3, 2.62, waveOn) + Math.sin(ph + o) * .1 * waveOn, mix(1.4, .5, waveOn) + Math.sin(ph + o) * .55 * waveOn];
+      // 손 흔들기는 서로를 향해 앞·위로(팔이 후드 실루엣 안으로 들어가면 안 읽힌다): 위팔 ≈ 수평보다 20°, 아래팔이 박마다 한 번 젖혀진다
+      const waveArm = (o: number): [number, number] => [mix(1.3, 1.9, waveOn) + Math.sin(ph + o) * .05 * waveOn, mix(1.4, .1, waveOn) + Math.sin(ph + o) * .45 * waveOn];
       const faceL = .35 + look * .4;
       const kid = pose({
-        x: kidP.x, y: kidP.y, s: sKid, facing: 1, lean: mix(.42, .25, look), bend: .08, headTilt: mix(.45, -.08, look) - hop * .1, squash: -hop * .05,
+        x: kidP.x, y: kidP.y, s: sKid, facing: 1, lean: mix(mix(.42, .25, look), .06, waveOn), bend: .08 * (1 - waveOn), headTilt: mix(.45, -.08, look) - hop * .1, squash: -hop * .05,
         armN: waveArm(0), armF: [1.25, 1.45], legN: [.05, .05], legF: [-.05, .05], swing: .15 + Math.sin(t * 1.3) * .08,
         face: faceL, faceColor: "#ffd2a8", faceDir: .15, eyes: 1 + see * .25, mouth: see * .6, smile: waveOn > .5 ? 1 : 0,
       });
       const friY = mix(380, 0, rise);
       const fri = pose({
-        x: friP.x, y: pj(A - 12, 70 + friY, ZK).y, s: sKid, facing: -1, lean: mix(.1, .3, waveOn), bend: .05, headTilt: mix(-.25, -.05, look) - hop * .1, squash: -hop * .05,
+        x: friP.x, y: pj(A - 12, 70 + friY, ZK).y, s: sKid, facing: -1, lean: mix(.1, .06, waveOn), bend: .05, headTilt: mix(-.25, -.05, look) - hop * .1, squash: -hop * .05,
         armN: stretch > .01 ? [mix(waveArm(1.3)[0], 2.9, stretch), mix(waveArm(1.3)[1], .15, stretch)] : waveArm(1.3), armF: [mix(1.25, 2.7, stretch), mix(1.45, .2, stretch)],
         face: rise * faceL, faceColor: "#ffd2a8", faceDir: .15, eyes: stretch > .5 ? .05 : 1 + see * .25, mouth: stretch * .8 + see * .6, smile: waveOn > .5 ? 1 : 0,
       });
@@ -837,7 +836,7 @@ export const act5: Shot[] = [
             {laundry(300, -560, 683, 5)}
           </Layer>
           <Layer d={1} blur={7}>
-            {laundry(-420, -390, 684, 4)}
+            {laundry(-420, -480, 684, 4)}
           </Layer>
         </Scene>
       );

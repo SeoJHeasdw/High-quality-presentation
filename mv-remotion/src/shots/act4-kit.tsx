@@ -182,18 +182,20 @@ export const StormMass: React.FC<{
 export const Heap: React.FC<{
   seed: number; x: number; y: number; w: number; h: number; lit: string; dark: string; mid?: string;
   shape?: "mound" | "tower" | "stone"; n?: number; t?: number; churn?: number; light?: number;
-  flash?: number; flashColor?: string; fx?: number; fy?: number; edge?: string; opacity?: number; press?: number; base?: boolean;
-}> = ({ seed, x, y, w, h, lit, dark, mid, shape = "mound", n, t = 0, churn = 1, light = .38, flash = 0, flashColor = "#dff4ff", fx = .5, fy = .45, edge, opacity = 1, press = 0, base = true }) => {
+  flash?: number; flashColor?: string; fx?: number; fy?: number; edge?: string; opacity?: number; press?: number; base?: boolean; puff?: number;
+}> = ({ seed, x, y, w, h, lit, dark, mid, shape = "mound", n, t = 0, churn = 1, light = .38, flash = 0, flashColor = "#dff4ff", fx = .5, fy = .45, edge, opacity = 1, press = 0, base, puff = 1 }) => {
   const id = useUid("hp");
-  const N = n ?? (shape === "tower" ? 34 : shape === "stone" ? 9 : 20);
+  const N = n ?? (shape === "tower" ? 56 : shape === "stone" ? 9 : 20);
   const prof = (v: number) => shape === "tower" ? .5 + .5 * Math.pow(1 - v, 2) + .6 * Math.pow(clamp((v - .66) / .34), 1.4) : shape === "stone" ? Math.sqrt(clamp(1 - v * v * .6)) : Math.sqrt(clamp(1 - v * v));
   const sq = 1 - press * .14;
   const puffs = Array.from({ length: N }, (_, i) => {
     const v = shape === "stone" ? rnd(seed, i) * .6 : Math.pow(rnd(seed, i), shape === "tower" ? .9 : .75);
     const half = w * .5 * prof(v);
-    const px = x + (rnd(seed, i + 300) * 2 - 1) * half * .82 + n2(seed + i, t * .15 * churn) * h * .015;
-    const rr = (shape === "tower" ? h * (.13 + rnd(seed, i + 600) * .09) : h * (.28 + rnd(seed, i + 600) * .2)) * (1 - .35 * Math.abs(px - x) / (w * .5 + 1));
-    const py = y - v * h * (shape === "tower" ? .9 : .75) * sq + rr * .5 + n2(seed + i * 3, t * .2 * churn + 5) * rr * .06;
+    const anvil = shape === "tower" && v > .72;
+    const px = x + (rnd(seed, i + 300) * 2 - 1) * half * .82 + n2(seed + i, t * .15 * churn) * h * .015 + (anvil ? (v - .72) * w * .5 : 0);
+    const rr = puff * (shape === "tower" ? h * (anvil ? .06 + rnd(seed, i + 600) * .05 : .1 + rnd(seed, i + 600) * .08) : h * (.28 + rnd(seed, i + 600) * .2)) * (1 - .35 * Math.abs(px - x) / (w * .5 + 1));
+    const hv = shape === "tower" ? (v < .72 ? v : .72 + (v - .72) * .4) * .95 : v * .75;
+    const py = y - hv * h * sq + rr * .5 + n2(seed + i * 3, t * .2 * churn + 5) * rr * .06;
     return { x: px, y: py, r: rr * (1 + press * .05) };
   }).sort((a, b) => a.y - a.r - (b.y - b.r));
   const gx = x + (fx - .5) * w * .7, gy = y - fy * h;
@@ -220,7 +222,7 @@ export const Heap: React.FC<{
         ))}
       </defs>
       {edge ? puffs.map((p, i) => <circle key={"e" + i} cx={p.x - 3} cy={p.y - 4} r={p.r + 3} fill={edge} opacity={.55} />) : null}
-      {base ? <ellipse cx={x} cy={y - h * .12} rx={w * .46} ry={h * .2} fill={dark} /> : null}
+      {(base ?? shape !== "stone") ? <ellipse cx={x} cy={y - h * .12} rx={w * .4} ry={h * .16} fill={dark} /> : null}
       {puffs.map((p, i) => <circle key={i} cx={p.x} cy={p.y} r={p.r} fill={`url(#${id}b${band(p)})`} />)}
       {flash > .01 ? (
         <g style={{ mixBlendMode: "screen" }}>
@@ -237,12 +239,12 @@ export const Heap: React.FC<{
 };
 
 /** 더미 여러 개를 한 줄로(구름 바다). size는 더미 너비, y는 밑동 */
-export const HeapRow: React.FC<{ seed: number; y: number; x0: number; x1: number; size: number; count: number; lit: string; dark: string; mid?: string; t?: number; drift?: number; edge?: string; flash?: number; flashColor?: string; light?: number; hk?: number }> = ({ seed, y, x0, x1, size, count, lit, dark, mid, t = 0, drift = 0, edge, flash = 0, flashColor, light, hk = .5 }) => (
+export const HeapRow: React.FC<{ seed: number; y: number; x0: number; x1: number; size: number; count: number; lit: string; dark: string; mid?: string; t?: number; drift?: number; edge?: string; flash?: number; flashColor?: string; light?: number; hk?: number; n?: number }> = ({ seed, y, x0, x1, size, count, lit, dark, mid, t = 0, drift = 0, edge, flash = 0, flashColor, light, hk = .5, n }) => (
   <g>
     {Array.from({ length: count }, (_, i) => {
       const u = (i + rnd(seed, i) * .7) / count;
       const w = size * (.7 + rnd(seed, i + 10) * .7);
-      return <Heap key={i} seed={seed * 37 + i} x={mix(x0, x1, u) + drift * t * (.6 + rnd(seed, i + 30))} y={y + (rnd(seed, i + 20) - .5) * size * .15} w={w} h={w * hk * (.75 + rnd(seed, i + 40) * .5)} lit={lit} dark={dark} mid={mid} t={t} edge={edge} flash={flash * rnd(seed, i + 50)} flashColor={flashColor} light={light} />;
+      return <Heap key={i} seed={seed * 37 + i} x={mix(x0, x1, u) + drift * t * (.6 + rnd(seed, i + 30))} y={y + (rnd(seed, i + 20) - .5) * size * .15} w={w} h={w * hk * (.75 + rnd(seed, i + 40) * .5)} lit={lit} dark={dark} mid={mid} t={t} edge={edge} flash={flash * rnd(seed, i + 50)} flashColor={flashColor} light={light} n={n} />;
     })}
   </g>
 );

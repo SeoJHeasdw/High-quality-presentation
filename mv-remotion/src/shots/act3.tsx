@@ -5,8 +5,7 @@
  *   → 나방이 유리를 두드림(4번의 거울) → 망설임(얼굴 반은 차갑고 반은 금빛) → 두 손(2마디, 감정의 정점, B(37)에 닿음)
  *   → 함께 솟음 → 올려다본 나선 → 구름을 뚫고 달 앞을 가로지름 → 달 둘레의 나방 고리, 구름 바다로(후렴 → 은빛)
  *
- * 편집표 메모: ART.md의 38번 a3-whip은 "B(33) → beat(134)"인데 B(33) = beat(134)라 길이가 0이다.
- * 휙 패닝을 한 박으로 두고(B(33) → beat(135)) 39번 a3-friend를 beat(135)에서 시작한다.
+ * 편집표 정정(코디네이터): 38번 a3-whip은 B(33) → beat(136)(반 마디), 39번 a3-friend는 beat(136) → B(34).
  */
 import React from "react";
 import { Layer, Scene, Screen, project, unproject, type Cam } from "../lib/camera";
@@ -14,8 +13,8 @@ import { K, type Key } from "../lib/palette";
 import { B, beat } from "../lib/song";
 import { TAU, clamp, ease, handheld, kf, lin, mix, mixhex, n2, rnd, smooth, springStep } from "../lib/math";
 import { Cloud, CloudBank, Glow, GodRays, Moon, SkyFill, Stars, Wisp } from "../lib/sky";
-import { Antenna, Curtain, Skyline, WindowFrame } from "../lib/city";
-import { Burst, Moths, Thread, stream, swarm, toward, type M } from "../lib/moths";
+import { Curtain, Skyline, WindowFrame } from "../lib/city";
+import { Burst, Moths, Thread, stream, swarm, type M } from "../lib/moths";
 import { Kid, ikArm, skeleton } from "../kid/rig";
 import { P, lerpPose, pose, type Pose } from "../kid/pose";
 import type { Shot } from "./types";
@@ -27,7 +26,7 @@ const FAR = mixhex(k.sil, k.silFar, .28);
 const RIM = (dx: number, dy: number, w = .014, color: string = k.rim, glow = .7) => ({ dx, dy, color, width: w, glow });
 
 // 컷 시작(초)
-const T33 = B(28), T34 = B(29), T35 = beat(120), T36 = B(30), T37 = B(32), T38 = B(33), T39 = beat(135), T40 = B(34), T41 = B(35), T42 = B(36), T43 = B(38), T44 = B(39), T45 = B(40), T46 = B(42);
+const T33 = B(28), T34 = B(29), T35 = beat(120), T36 = B(30), T37 = B(32), T38 = B(33), T39 = beat(136), T40 = B(34), T41 = B(35), T42 = B(36), T43 = B(38), T44 = B(39), T45 = B(40), T46 = B(42);
 /** 박 i의 컷 안 시각 */
 const at = (i: number, t0: number) => beat(i) - t0;
 
@@ -134,16 +133,16 @@ const C42 = { x: 960, y: 560 };
 const KH0 = { ang: -.07, s: 300, flip: -1 };
 const FH0 = { ang: Math.PI + .1, s: 285, flip: -1 };
 const KCURL0 = [.03, .06, .1, .16], FCURL0 = [.04, .2, .3, .4];
-const KCURL1 = [.55, .6, .65, .7], FCURL1 = [.5, .55, .6, .65];
+const KCURL1 = [.62, .66, .7, .74], FCURL1 = [.42, .48, .54, .6];
 // 닿는 순간의 손끝이 C42에서 만나도록 손목 자리를 미리 푼다
 const kTip0 = handGeo({ x: 0, y: 0, ...KH0, curl: KCURL0, spread: .45 }).tip(1);
 const fTip0 = handGeo({ x: 0, y: 0, ...FH0, curl: FCURL0, spread: .5 }).tip(0);
 const KW42 = { x: C42.x - kTip0.x - 3, y: C42.y - kTip0.y };
 const FW42 = { x: C42.x - fTip0.x + 3, y: C42.y - fTip0.y };
 // 맞잡은 자리: 친구 손바닥이 아이 손바닥 위로 손가락 길이만큼 겹친다
-const KC42 = { x: KW42.x + 190, y: KW42.y + 20 };
-const FC42 = { x: KC42.x + .95 * 300 + .95 * 285 - .6 * 300, y: KC42.y - .4 * 300 };
-const CL42 = { x: KC42.x + .95 * 300 - .25 * 300, y: KC42.y - .2 * 300 };
+const KC42 = { x: KW42.x + 150, y: KW42.y + 20 };
+const FC42 = { x: KC42.x + .95 * 300 + .95 * 285 - .38 * 300, y: KC42.y - .33 * 300 };
+const CL42 = { x: KC42.x + 1.05 * 300, y: KC42.y - .22 * 300 };
 
 // ───────────────────────────── 44 ─────────────────────────────
 const V44 = { x: 960, y: -420 };
@@ -176,9 +175,9 @@ const UpWall: React.FC<{ x0: number; x1: number; y0: number; roof: number; color
   );
 };
 function pair44(lt: number) {
-  const a = 1.2 + lt * 5.0 + .4 * ease("in", lin(0, 2.72, lt));
-  const cy = mix(980, 240, ease("io", lin(-.2, 2.9, lt)));
-  const r = mix(470, 110, ease("io", lin(-.2, 2.9, lt)));
+  const a = 1.2 + 14.2 * ease("sineIO", lin(-.5, 3.1, lt)) - 3.1;
+  const cy = mix(800, 230, ease("io", lin(-.3, 2.9, lt)));
+  const r = mix(420, 110, ease("io", lin(-.3, 2.9, lt)));
   return { x: 960 + Math.cos(a) * r, y: cy + Math.sin(a) * r * .72, a, r, s: mix(235, 95, ease("out", lin(0, 2.72, lt))) };
 }
 
@@ -253,8 +252,8 @@ export const act3: Shot[] = [
             <Kid pose={kp} sil={k.sil} rim={RIM(.6, -.8, .035, k.rim, .9)} />
           </Layer>
           <Layer d={.5} blur={9}>
-            <Cloud seed={337} x={260} y={1220} w={1100} dark={k.cloud} lit={k.cloudLit} t={c.t} drift={30} opacity={.85} />
-            <Cloud seed={338} x={1750} y={1320} w={900} dark={k.cloud} lit={k.cloudLit} t={c.t} drift={-25} opacity={.75} />
+            <Cloud seed={337} x={260} y={1110} w={1100} dark={k.cloud} lit={mixhex(k.cloudLit, k.cloud, .35)} t={c.t} drift={30} opacity={.7} />
+            <Cloud seed={338} x={1750} y={1190} w={900} dark={k.cloud} lit={k.cloudLit} t={c.t} drift={-25} opacity={.75} />
           </Layer>
           <Screen>
             <Glow x={g.ms.x} y={g.ms.y} r={1500 * (.6 + white)} color="#fffaf0" opacity={white} />
@@ -335,7 +334,7 @@ export const act3: Shot[] = [
       const fold = smooth(.35, 1.1, lt);
       const vortexHit = blip(lt, tB, .05, .35);
       const kp = pose({
-        ...P.hang, anchor: "center", x: kq.x, y: kq.y, s: 370, facing: 1, squash: stretch, rot: .08 * Math.sin(lt * 5),
+        ...P.hang, anchor: "center", x: kq.x, y: kq.y, s: 440, facing: 1, squash: stretch, rot: .08 * Math.sin(lt * 5),
         armN: [3.08, .04], armF: [mix(1.6, 2.4, fold) + .3 * Math.sin(lt * 7), mix(.9, .4, fold)],
         legN: [mix(.1, 1.1, fold), mix(.15, 1.6, fold)], legF: [mix(-.15, .55, fold), mix(.3, 1.2, fold)], toe: 1,
         swing: mix(-1.5, -.6, fold) + .3 * Math.sin(lt * 11), headTilt: mix(-.15, -.55, fold), faceDir: .35,
@@ -411,7 +410,7 @@ export const act3: Shot[] = [
       const pitch = clamp(vy / 1600, -.45, .45);
       const burst = blip(lt, tB31, .05, .5);
       const kp = pose({
-        ...P.hang, anchor: "center", x: kq.x, y: kq.y, s: 300, facing: 1, rot: .62 + pitch * .7 + .06 * n2(361, c.t * 1.3),
+        ...P.hang, anchor: "center", x: kq.x, y: kq.y, s: 240, facing: 1, rot: .62 + pitch * .7 + .06 * n2(361, c.t * 1.3),
         armN: [2.8, .06], armF: [mix(1.25, 2.3, burst) + .15 * n2(362, c.t * 2), .45],
         legN: [-.2 + .25 * n2(363, c.t * 2.5) - pitch * .5, .6 + .2 * n2(364, c.t * 3)], legF: [-.55 + .25 * n2(365, c.t * 2.5), .95], toe: 1,
         swing: 1.25 + .45 * n2(366, c.t * 4), headTilt: -.5 - pitch * .3, faceDir: .2,
@@ -443,7 +442,7 @@ export const act3: Shot[] = [
           <Layer d={2.2}>
             <Skyline seed={373} base={1260} minH={250} maxH={520} minW={120} maxW={260} color={mixhex(k.silFar, k.sil, .5)} t={c.t} win={{ density: .18, size: 1, warm: k.win, cold: k.cold, coldRatio: .4 }} x0={-600} x1={7600} />
           </Layer>
-          <Layer d={1.35}>
+          <Layer d={1.35} blur={0}>
             <Skyline seed={374} base={1420} minH={200} maxH={430} minW={150} maxW={300} color={k.sil} t={c.t} win={{ density: .12, size: 1.4, warm: k.win, cold: k.cold, coldRatio: .45 }} x0={-400} x1={10400} />
           </Layer>
           <Layer d={1}>
@@ -497,7 +496,7 @@ export const act3: Shot[] = [
           cells.push(
             <g key={`${i}-${r}`}>
               {who === "kid" || who === "tv" ? <Glow x={x + 150} y={y + 200} r={330} color={k.cold} opacity={.16} /> : null}
-              <LonelyWin x={x} y={y} w={300} h={380} k={k} t={c.t} seed={i * 7 + r * 3 + 1000} who={who} frame={mixhex(k.silFar, k.sil, .55)} />
+              <LonelyWin x={x} y={y} w={300} h={380} k={k} t={c.t} seed={i * 7 + r * 3 + 1000} who={who} frame={mixhex(k.silFar, k.sil, .55)} gold={smooth(520, 80, Math.abs((x + 150 - cx) - (kx - camX)) ) * (r === 1 ? .9 : .45)} />
             </g>,
           );
         }
@@ -524,14 +523,14 @@ export const act3: Shot[] = [
     },
   },
   {
-    // 38. 휙 패닝(한 박)이 한 창에서 멈춘다: 분홍 방울의 친구. 금빛 나방 몇 마리가 패닝을 따라 그 창으로 간다
+    // 38. 휙 패닝(반 마디)이 한 창에서 멈춘다: 분홍 방울의 친구. 금빛 나방 몇 마리가 패닝을 따라 그 창으로 간다
     id: "a3-whip", start: T38, key: "chorus", enter: { type: "whip", dir: 1 },
     render: (c) => {
       const lt = c.lt;
       const hh = handheld(c.t, 38, 3);
       const camX = camX38(lt);
       const v = (camX38(lt + .015) - camX38(lt - .015)) / .03;
-      const cam: Cam = { x: camX + hh.x, y: 540 + hh.y, zoom: Z38 + .03 * ease("out", lin(0, c.dur, lt)), rot: hh.r, focus: 1.25, dof: 3 };
+      const cam: Cam = { x: camX + hh.x, y: 540 + hh.y, zoom: Z38 + .08 * ease("sineIO", lin(.35, c.dur, lt)), rot: hh.r, focus: 1.25, dof: 3 };
       const blurX = Math.abs(v / D38 / 30) * .5;
       const cells: React.ReactNode[] = [];
       for (let i = -6; i <= 2; i++) {
@@ -583,12 +582,12 @@ export const act3: Shot[] = [
       const scroll = Math.max(0, Math.sin(lt * 4.2)) * .12;
       const fp = pose({
         ...lerpPose(P.sitKnees, P.phone, .9), anchor: "center", x: 1190, y: 990, s: 1050, facing: -1, phone: 1, phoneHand: 0,
-        headTilt: .36 + .03 * Math.sin(lt * 1.3), faceDir: .12, face: .95, faceColor: k.cold, eyes: .5 + .05 * Math.sin(lt * 2), swing: .2,
+        headTilt: .36 + .03 * Math.sin(lt * 1.3), faceDir: .12, face: .95, faceColor: k.cold, eyes: .5 + .05 * Math.sin(lt * 2) - (Math.abs(lt - .42) < .06 ? .5 : 0), swing: .2,
         armN: [.6, 1.4], armF: [.5, 1.5],
       });
       const sk = skeleton(fp);
       const ph = { x: mix(sk.haN.x, sk.haF.x, .35), y: mix(sk.haN.y, sk.haF.y, .35) };
-      const win = { x: 1000, y: 70, w: 900, h: 780 };
+      const win = { x: 1090, y: 70, w: 830, h: 780 };
       const wall = mixhex(k.sil, k.silFar, .22);
       const mothOn = smooth(tMoth - .3, tMoth + .2, lt);
       return (
@@ -612,7 +611,8 @@ export const act3: Shot[] = [
           </Layer>
           <Layer d={1}>
             <path d={`M${sk.head.x},${sk.head.y}L${sk.shN.x},${sk.shN.y}L${sk.elN.x},${sk.elN.y}L${sk.haN.x},${sk.haN.y}L${sk.haF.x},${sk.haF.y}L${sk.neck.x},${sk.neck.y}Z`} fill={k.sil} stroke={k.sil} strokeWidth={fp.s * .06} strokeLinejoin="round" />
-            <Kid pose={fp} variant="friend" accent={PINK} sil={k.sil} far={FAR} phoneColor={k.cold} rim={{ dx: 1, dy: -.25, color: mixhex(k.glow, "#ffffff", .35), width: .007, glow: .8 }} />
+            <ellipse cx={mix(sk.head.x, mix(sk.haN.x, sk.haF.x, .5), .5)} cy={mix(sk.head.y, mix(sk.haN.y, sk.haF.y, .5), .55)} rx={fp.s * .1} ry={fp.s * .14} fill={k.sil} />
+            <Kid pose={fp} variant="friend" accent={PINK} sil={k.sil} far={k.sil} phoneColor={k.cold} rim={{ dx: 1, dy: -.25, color: mixhex(k.glow, "#ffffff", .35), width: .007, glow: .8 }} />
           </Layer>
           <Layer d={1} blend="screen">
             <Glow x={ph.x} y={ph.y} r={520} color={k.cold} opacity={.28 + scroll} />
@@ -686,7 +686,7 @@ export const act3: Shot[] = [
             <rect x={-500} y={win.y + win.h} width={3000} height={600} fill={mixhex(wall, k.silFar, .25)} />
           </Layer>
           <Layer d={.55}>
-            <Kid pose={fh} variant="friend" accent={PINK} sil={k.sil} rim={{ dx: .8, dy: -.6, color: mixhex(k.glow, GOLD, look), width: .006, glow: .8 }} />
+            <Kid pose={fh} variant="friend" accent={PINK} sil={k.sil} rim={{ dx: .8, dy: -.6, color: mixhex(k.glow, GOLD, look), width: .006, glow: 0 }} />
           </Layer>
         </Scene>
       );
@@ -704,7 +704,7 @@ export const act3: Shot[] = [
       const open = ease("back", lin(0, .55, lt));
       const look = kf(lt, [[0, 0], [b1, 0], [b1 + .16, 1, "out"], [b2, 1], [b2 + .16, 0, "out"], [b3, 0], [b3 + .2, 1, "out"]]);
       const decide = ease("io", lin(b3, c.dur + .3, lt));
-      const handK = { x: 760 + 18 * Math.sin(lt * 1.6), y: 640 + 8 * Math.sin(lt * 2.1) };
+      const handK = { x: 690 + 18 * Math.sin(lt * 1.6), y: 735 + 8 * Math.sin(lt * 2.1) };
       const base: Partial<Pose> = {
         ...lerpPose(P.sitKnees, P.phone, .85), anchor: "center", x: 1190, y: 850, s: 760, facing: -1, phone: mix(1, .35, decide), phoneHand: 0,
         headTilt: mix(.42, -.1, look), faceDir: mix(.4, .78, look), face: 1, eyes: mix(.6, 1.15, look) - (Math.abs(lt - b2 - .1) < .06 ? .8 : 0), swing: .25,
@@ -734,7 +734,7 @@ export const act3: Shot[] = [
           </Layer>
           <Layer d={1.22}>
             <path d={`M${fsk.head.x},${fsk.head.y}L${fsk.shN.x},${fsk.shN.y}L${fsk.elN.x},${fsk.elN.y}L${fsk.haN.x},${fsk.haN.y}L${fsk.neck.x},${fsk.neck.y}Z`} fill={k.sil} stroke={k.sil} strokeWidth={50} strokeLinejoin="round" />
-            <Kid pose={pose({ ...fbase, faceColor: "#8fb4ff" })} variant="friend" accent={PINK} sil={k.sil} far={FAR} phoneColor={k.cold} rim={{ dx: -1, dy: -.2, color: GOLD, width: .01, glow: .9 }} rim2={{ dx: .6, dy: .8, color: k.cold, width: .008, glow: .5 }} />
+            <Kid pose={pose({ ...fbase, faceColor: "#8fb4ff" })} variant="friend" accent={PINK} sil={k.sil} far={k.sil} phoneColor={k.cold} rim={{ dx: -1, dy: -.2, color: GOLD, width: .01, glow: .9 }} rim2={{ dx: .6, dy: .8, color: k.cold, width: .008, glow: .5 }} />
             <defs>
               <linearGradient id="a3half41" gradientUnits="userSpaceOnUse" x1={fsk.head.x - 95} y1={0} x2={fsk.head.x + 5} y2={0}>
                 <stop offset="0%" stopColor="#fff" />
@@ -745,7 +745,7 @@ export const act3: Shot[] = [
               </mask>
             </defs>
             <g mask="url(#a3halfm41)">
-              <Kid pose={pose({ ...fbase, faceColor: "#ffbf62", phone: 0 })} variant="friend" accent={PINK} sil={k.sil} far={FAR} />
+              <Kid pose={pose({ ...fbase, faceColor: "#ffaa3c", phone: 0 })} variant="friend" accent={PINK} sil={k.sil} far={k.sil} />
             </g>
           </Layer>
           <Layer d={1.22} blend="screen">
@@ -759,14 +759,14 @@ export const act3: Shot[] = [
           </Layer>
           <Layer d={.62}>
             <Thread d={`M${-80},${-200}L${ksk.head.x + 60},${ksk.head.y - 40}`} color={THREAD} width={4} glow={1.2} />
-            <Kid pose={kidP} sil={k.sil} rim={RIM(1, -.1, .006, GOLD)} />
+            <Kid pose={kidP} sil={k.sil} rim={RIM(1, -.1, .006, GOLD, 0)} />
             <Lit draw={(cc) => <g><path d={armD} fill={cc} />{hand.draw(cc)}</g>} fill={k.sil}
               rims={[{ dx: .5, dy: -1, color: GOLD, width: 4, glow: .8 }]}
               spill={[{ x: handK.x + 160, y: handK.y - 60, r: 280, color: GOLD, a: .5 + pulse * .3 }]} />
-            <Moths t={c.t} at={(tt) => swarm(411, 26, tt, { cx: handK.x + 170, cy: handK.y - 90, rx: 200, ry: 150, size: 6, speed: .45 })} color={GOLD} trail={2} />
+            <Moths t={c.t} at={(tt) => swarm(411, 26, tt, { cx: handK.x + 120, cy: handK.y - 70, rx: 190, ry: 130, size: 6, speed: .45 })} color={GOLD} trail={2} />
           </Layer>
           <Layer d={.62} blend="screen">
-            <Glow x={handK.x + 170} y={handK.y - 80} r={320} color={GOLD} opacity={.3 + pulse * .35} />
+            <Glow x={handK.x + 130} y={handK.y - 70} r={320} color={GOLD} opacity={.3 + pulse * .35} />
           </Layer>
         </Scene>
       );
@@ -801,9 +801,10 @@ export const act3: Shot[] = [
       const warmR = mix(60, 1100, ease("out", clamp(after / 2.2)));
       const kRims = [{ dx: -.4, dy: -1, color: GOLD, width: 5, glow: .7 }, { dx: 1, dy: 0, color: GOLD_CORE, width: 3, glow: 1, opacity: spark + flash }];
       const fRims = [{ dx: .5, dy: .9, color: coldRim, width: 4, glow: .6 }, { dx: -.3, dy: -1, color: mixhex(k.rim, GOLD, warm), width: 3.5, glow: .5, opacity: .35 + warm * .65 }];
-      const wr = Math.min(warmR * .7, 520);
-      const spillK = [{ x: cl.x, y: cl.y, r: wr, color: GOLD, a: .22 + warm * .3 }];
-      const spillF = [{ x: fw.x + 160, y: fw.y + 260, r: 520, color: k.cold, a: .32 * (1 - warm) }, { x: cl.x, y: cl.y, r: wr, color: GOLD, a: warm * .38 }];
+      const wr = Math.min(warmR * .7, 520) * (1 - grab * .45);
+      const spillK = [{ x: cl.x, y: cl.y, r: wr, color: GOLD, a: (.22 + warm * .3) * (1 - grab * .45) }];
+      const spillF = [{ x: fw.x + 160, y: fw.y + 260, r: 520, color: k.cold, a: .32 * (1 - warm) }, { x: cl.x, y: cl.y, r: wr, color: GOLD, a: warm * .38 * (1 - grab * .45) }];
+      const kFingerRims = [...kRims, { dx: .2, dy: 1, color: GOLD_CORE, width: 3, glow: .6, opacity: grab }];
       const room = mixhex(mixhex(k.sil, k.silFar, .25), "#5a2448", warm * .75);
       return (
         <Scene cam={cam}>
@@ -825,12 +826,12 @@ export const act3: Shot[] = [
           <Layer d={1}>
             <Lit draw={(cc) => kh.draw(cc, "base")} fill={k.sil} rims={kRims} spill={spillK} />
             <Lit draw={(cc) => fh.draw(cc)} fill={k.sil} rims={fRims} spill={spillF} />
-            <Lit draw={(cc) => kh.draw(cc, "fingers")} fill={k.sil} rims={kRims} spill={spillK} />
+            <Lit draw={(cc) => kh.draw(cc, "fingers")} fill={k.sil} rims={kFingerRims} spill={spillK} />
           </Layer>
           <Layer d={1} blend="screen">
             {spark > .01 ? <Glow x={(kh.tip(1).x + fh.tip(0).x) / 2} y={(kh.tip(1).y + fh.tip(0).y) / 2} r={40 + 50 * spark} color={GOLD_CORE} opacity={spark * .9} /> : null}
             <Glow x={cl.x} y={cl.y} r={420} color={GOLD} opacity={flash * .9 + warm * (.18 + c.pulse * .08)} />
-            <Glow x={cl.x} y={cl.y} r={120} color={GOLD_CORE} opacity={grab * (.45 + c.pulse * .2)} />
+            <Glow x={cl.x - 20} y={cl.y + 30} r={150} color={GOLD} opacity={grab * (.35 + c.pulse * .15)} />
             <Burst x={C42.x} y={C42.y} t={lt} t0={tT} dur={1.6} n={44} r={560} color={GOLD} />
             <Burst x={C42.x} y={C42.y} t={lt} t0={tT + .08} dur={1.1} n={18} r={260} color="#ffffff" seed={4} />
             <Moths t={c.t} at={(tt) => {
@@ -886,7 +887,7 @@ export const act3: Shot[] = [
           </Layer>
           <Layer d={1}>
             <rect x={1240} y={-1800} width={1800} height={3800} fill={mixhex(k.silFar, k.sil, .6)} />
-            {Array.from({ length: 6 }, (_, r) => [0, 1, 2].map((cc) => {
+            {Array.from({ length: 4 }, (_, r) => [0, 1].map((cc) => {
               const x = 1390 + cc * 520, y = -900 + r * 600 + 20;
               if (cc === 0 && r === 2) return null;
               const v2 = rnd(437, r * 3 + cc);
@@ -970,7 +971,8 @@ export const act3: Shot[] = [
             <Moths t={c.t} at={(tt) => stream(450, 60, tt, (u) => { const p = pair44(tt - T44 - (1 - u) * 1.1); return { x: p.x, y: p.y + p.s * .5 }; }, { speed: .7, spread: 40, size: 6 })} color={GOLD} trail={4} />
             <Kid pose={hold.b} variant="friend" accent={PINK} sil={k.sil} rim={RIM(0, -1, .02, k.rim, .8)} />
             <Kid pose={hold.a} sil={k.sil} rim={RIM(0, -1, .02, k.rim, .8)} />
-            <Glow x={hold.m.x} y={hold.m.y} r={30} color={GOLD} opacity={.9} />
+            <Glow x={hold.m.x} y={hold.m.y} r={30 + 60 * blip(lt, at(160, T44), .05, .4)} color={GOLD} opacity={.9} />
+            <Burst x={hold.m.x} y={hold.m.y} t={lt} t0={at(160, T44)} dur={.8} n={24} r={260} color={GOLD} />
           </Layer>
           <Layer d={.45} blur={12}>
             <Moths t={c.t} at={(tt) => Array.from({ length: 7 }, (_, i) => {

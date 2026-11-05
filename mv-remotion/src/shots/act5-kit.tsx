@@ -4,7 +4,7 @@
  *   cradlePts      두 아이 아래의 빛 요람(아래로 둥근 그릇 모양 자리들)
  *   Rings          박에 맞춰 퍼지는 빛 고리
  *   RushClouds     카메라를 지나 아래로 쏟아지는 구름(상승 시차)
- *   SkyLayer       흐림 없는 하늘 층(SkyBackdrop은 무한 깊이 층도 심도 흐림을 먹는다)
+ *   SkyLayer       흐림 없는 하늘 층(키트의 무한 깊이 층도 심도 흐림을 먹어서 blur 0으로 고정)
  *   PhoneLight     한 손에 든 폰의 차가운 빛(키트의 phone은 두 손 사이에 놓인다)
  *   Sparks         떨어지는 금빛 불티
  */
@@ -82,11 +82,6 @@ export function cradlePts(seed: number, cx: number, cy: number, rx: number, ry: 
     const tan = Math.atan2(Math.cos(phi) * ry, -Math.sin(phi) * rx);
     return { x, y, a: tan + (rnd(seed, i + 300) > .5 ? Math.PI : 0), s: undefined as number | undefined };
   });
-}
-
-/** 자리에 앉은 나방도 살아 있게: 노이즈로 살짝 떨고 날개를 천천히 접었다 편다 */
-export function shimmer(ms: M[], t: number, seed: number, amp = 5): M[] {
-  return ms.map((m, i) => ({ ...m, x: m.x + n2(seed + i, t * 1.3) * amp, y: m.y + n2(seed + i, t * 1.3, 4) * amp }));
 }
 
 /** 박에 맞춰 퍼지는 빛 고리들 */

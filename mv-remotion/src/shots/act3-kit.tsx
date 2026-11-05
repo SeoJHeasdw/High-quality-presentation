@@ -12,7 +12,7 @@
 import React from "react";
 import { useUid } from "../lib/camera";
 import type { Key } from "../lib/palette";
-import { TAU, alpha, clamp, ease, mix, mixhex, n2, rnd, smooth } from "../lib/math";
+import { alpha, clamp, mix, mixhex, n2, rnd, smooth } from "../lib/math";
 import { Glow } from "../lib/sky";
 import { WindowFrame } from "../lib/city";
 import type { M } from "../lib/moths";
@@ -370,7 +370,3 @@ export const LonelyWin: React.FC<{
 /** 0..1의 부드러운 펄스(t0에서 솟았다 사그라든다) */
 export const blip = (t: number, t0: number, up = .06, down = .5) => (t < t0 ? smooth(t0 - up, t0, t) : Math.exp(-(t - t0) / down));
 
-/** 나선 비행: 중심(cx, cy) 둘레 반지름 r, 각 a. 앞(sin a > 0)일수록 크게 */
-export const orbit = (cx: number, cy: number, rx: number, ry: number, a: number) => ({ x: cx + Math.cos(a) * rx, y: cy + Math.sin(a) * ry, front: Math.sin(a) });
-
-export { TAU, ease };
