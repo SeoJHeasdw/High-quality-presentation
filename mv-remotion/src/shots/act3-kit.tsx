@@ -7,6 +7,7 @@
  *   CityCarpet  아주 높은 곳에서 내려다본 도시 불빛(지평선으로 모이는 대로·골목의 점 불빛)
  *   Bokeh       초점 밖 불빛 원판(CSS 흐림 없이 원판으로 그린다)
  *   LonelyWin   폰 빛에 갇힌 실루엣이 있는 창 하나
+ *   LonelyRoom  큰 창 너머의 방 하나(37번): 폰 빛이 뒤 벽을 넓게 밝혀 실루엣 자세가 크게 읽힌다. 지나가는 금빛에 얼굴이 바뀐다
  *   Speed       속도선(앞을 스치는 가는 빛줄기)
  */
 import React from "react";
@@ -16,7 +17,7 @@ import { alpha, clamp, mix, mixhex, n2, rnd, smooth } from "../lib/math";
 import { Glow } from "../lib/sky";
 import { WindowFrame } from "../lib/city";
 import type { M } from "../lib/moths";
-import { Kid } from "../kid/rig";
+import { Kid, skeleton } from "../kid/rig";
 import { P, lerpPose, pose, type Pose } from "../kid/pose";
 
 export const GOLD = "#ffc45a";
@@ -364,6 +365,109 @@ export const LonelyWin: React.FC<{
       {who === "kid" || who === "friend" ? <rect x={x - 10} y={bedY} width={w + 20} height={h} fill={mixhex(k.sil, room, .5)} /> : null}
       {body}
     </WindowFrame>
+  );
+};
+
+// ───────────────────────────── 큰 창 너머의 방 ─────────────────────────────
+
+export type RoomPose = "hunch" | "lie" | "floor" | "belly" | "chair";
+
+/**
+ * 방 하나(창 없이 안쪽만. 창틀은 앞 층이 덮는다). 인물은 옆모습 실루엣이고 폰 빛이 뒤 벽을 넓게 밝혀 자세가 읽힌다.
+ *   who: hunch 침대 끝에 웅크려 앉음 · lie 침대에 누워 폰을 얼굴 위로 · floor 바닥에 무릎 세우고 앉음 · belly 바닥에 엎드려 다리를 듦 · chair 의자에 웅크림
+ *   warm(0..1): 창밖을 지나는 아이의 금빛(lx = 그 빛의 x). 뒤 벽에 금빛이 번지고 얼굴이 금빛으로, 가장자리에 금빛 테두리
+ *   look(0..1): 빛을 따라 고개를 살짝 든다
+ *   margin: 창보다 넓게 그려 시차로 틀 안에서 밀려도 방 끝이 보이지 않게
+ */
+export const LonelyRoom: React.FC<{
+  cx: number; y0: number; w: number; h: number; k: Key; t: number; seed: number; who: RoomPose; facing: 1 | -1; s: number;
+  warm: number; look: number; lx: number; margin?: number;
+}> = ({ cx, y0, w, h, k, t, seed, who, facing: fc, s, warm, look, lx, margin = 240 }) => {
+  const room = mixhex(k.sil, k.silFar, .42);
+  const dark = mixhex(k.sil, room, .4);
+  const floorY = y0 + h * .9;
+  const flick = .84 + .16 * n2(seed, t * 2.2) + .05 * Math.sin(t * 14 + seed);
+  const X = (dx: number) => cx + fc * dx * s;
+  const up = look * .8;
+  const common: Partial<Pose> = { facing: fc, s, phone: 1, face: 1, faceDir: .35 * look, faceColor: mixhex(k.cold, WARM, clamp(warm * 1.25)), eyes: .6 + .5 * look };
+  const lit = (x0: number, x1: number, y: number) => <rect x={Math.min(x0, x1)} y={y - 2} width={Math.abs(x1 - x0)} height={4} fill={k.cold} opacity={.4 * flick} />;
+  let pin: Partial<Pose>;
+  let props: React.ReactNode = null;
+  if (who === "hunch") {
+    const top = floorY - .34 * s;
+    pin = { ...common, anchor: "seat", x: X(0), y: top + .02 * s, lean: .55, bend: .3, headTilt: .62 - up, armN: [.75, 1.3], armF: [.62, 1.42], legN: [1.38, 1.5], legF: [1.25, 1.38] };
+    props = (
+      <g fill={dark}>
+        <path d={`M${X(-.1)},${top}L${X(-1.6)},${top}L${X(-1.6)},${floorY}L${X(-.1)},${floorY}Z`} />
+        <ellipse cx={X(-1.25)} cy={top - .04 * s} rx={.2 * s} ry={.06 * s} />
+        {lit(X(-.1), X(-1.6), top)}
+      </g>
+    );
+  } else if (who === "lie") {
+    const top = floorY - .3 * s;
+    pin = { ...common, anchor: "feet", x: X(.1), y: top + .01 * s, rot: -1.42, lean: .05, headTilt: -.2 - .3 * look, faceDir: .1 + .3 * look, swing: 2.2, armN: [1.7, .6], armF: [1.55, .75], legN: [1.05, 2.05], legF: [.12, .18], toe: .3 };
+    props = (
+      <g fill={dark}>
+        <path d={`M${X(-.78)},${top}L${X(.8)},${top}L${X(.8)},${floorY}L${X(-.78)},${floorY}Z`} />
+        <rect x={Math.min(X(-.8), X(-.74))} y={top - .3 * s} width={.06 * s} height={.3 * s + floorY - top} />
+        <ellipse cx={X(-.4)} cy={top - .01 * s} rx={.16 * s} ry={.05 * s} />
+        {lit(X(-.74), X(.8), top)}
+      </g>
+    );
+  } else if (who === "floor") {
+    // 바닥에 앉아 침대 옆면에 기댄다: 한 다리는 뻗고 한 무릎은 세운다(실루엣이 L자로 읽힌다)
+    pin = { ...common, anchor: "feet", x: X(0), y: floorY, lean: -.05, bend: .35, headTilt: .72 - up, armN: [.55, 1.35], armF: [.45, 1.45], legN: [1.55, .05], legF: [2.05, 2.4] };
+    const top = floorY - .24 * s;
+    props = (
+      <g fill={dark}>
+        <path d={`M${X(-.13)},${top}L${X(-1.7)},${top}L${X(-1.7)},${floorY}L${X(-.13)},${floorY}Z`} />
+        {lit(X(-.13), X(-1.7), top)}
+      </g>
+    );
+  } else if (who === "belly") {
+    pin = { ...common, anchor: "feet", x: X(-.22), y: floorY, rot: 1.42, lean: -.4, bend: -.1, headTilt: -.25 - .3 * look, armN: [1.4, 1.65], armF: [1.3, 1.75], legN: [.08, 1.75], legF: [.2, 1.15], toe: .5 };
+  } else {
+    const seat = floorY - .3 * s;
+    pin = { ...common, anchor: "seat", x: X(0), y: seat + .02 * s, lean: .48, bend: .38, headTilt: .62 - up, armN: [1.05, .95], armF: [.9, 1.05], legN: [1.5, 1.45], legF: [1.38, 1.62] };
+    props = (
+      <g fill={dark}>
+        <rect x={Math.min(X(-.17), X(.17))} y={seat} width={.34 * s} height={.045 * s} />
+        <rect x={Math.min(X(-.2), X(-.15))} y={seat - .45 * s} width={.05 * s} height={.45 * s + .04 * s} />
+        <rect x={Math.min(X(-.15), X(-.12))} y={seat} width={.03 * s} height={floorY - seat} />
+        <rect x={Math.min(X(.12), X(.15))} y={seat} width={.03 * s} height={floorY - seat} />
+      </g>
+    );
+  }
+  const sk = skeleton(pose(pin));
+  const ha = sk.haN, hb = sk.haF;
+  const ph = { x: mix(ha.x, hb.x, .35), y: mix(ha.y, hb.y, .35) };
+  const L0 = cx - w / 2 - margin, Wd = w + 2 * margin;
+  const gid = useUid("rm");
+  const side = Math.sign(lx - cx) || 1;
+  return (
+    <g>
+      <rect x={L0} y={y0 - 160} width={Wd} height={h + 320} fill={room} />
+      {rnd(seed, 5) < .6 ? <rect x={cx + (rnd(seed, 6) - .5) * w * .5 - .1 * s} y={y0 + h * .14} width={.2 * s} height={.26 * s} fill="none" stroke={mixhex(room, k.cold, .3)} strokeWidth={5} opacity={.55} /> : null}
+      <Glow x={ph.x} y={ph.y} r={h * 1.05} color={k.cold} opacity={.6 * flick} />
+      <Glow x={ph.x} y={ph.y - h * .06} r={h * .42} color={k.cold} opacity={.42 * flick} />
+      {warm > .01 ? (
+        <>
+          <defs>
+            <linearGradient id={gid} x1="0" y1={y0} x2="0" y2={floorY} gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stopColor={GOLD} stopOpacity={.55} /><stop offset="100%" stopColor={GOLD} stopOpacity={0} />
+            </linearGradient>
+          </defs>
+          <Glow x={lx} y={y0 + h * .05} r={h} rx={h * .9} ry={h * 1.2} color={GOLD} opacity={.62 * warm} />
+          <path d={`M${lx - .16 * h},${y0}L${lx + .16 * h},${y0}L${lx + .42 * h},${floorY}L${lx - .1 * h},${floorY}Z`} fill={`url(#${gid})`} opacity={.6 * warm} />
+        </>
+      ) : null}
+      <rect x={L0} y={floorY} width={Wd} height={h} fill={mixhex(k.sil, room, .55)} />
+      <Glow x={ph.x} y={floorY + 10} r={h * .6} rx={h * .7} ry={h * .1} color={k.cold} opacity={.28 * flick} />
+      {props}
+      <Kid pose={pin} sil={k.sil} phoneColor={mixhex(k.cold, "#ffffff", .35)}
+        rim={{ dx: fc, dy: .2, color: k.cold, width: .009, glow: 0 }}
+        rim2={warm > .03 ? { dx: side * .45, dy: -1, color: GOLD, width: .018 * warm, glow: .9 } : undefined} />
+    </g>
   );
 };
 

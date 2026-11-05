@@ -18,7 +18,7 @@ import { Burst, Moths, Thread, stream, swarm, type M } from "../lib/moths";
 import { Kid, ikArm, skeleton } from "../kid/rig";
 import { P, lerpPose, pose, type Pose } from "../kid/pose";
 import type { Shot } from "./types";
-import { Bokeh, CityCarpet, GOLD, GOLD_CORE, LadderRails, Lit, LonelyWin, Speed, THREAD, WARM, blip, handGeo, ladderAt, mixKey, rungMoth, type Ladder } from "./act3-kit";
+import { Bokeh, CityCarpet, GOLD, GOLD_CORE, LadderRails, Lit, LonelyRoom, LonelyWin, Speed, THREAD, WARM, blip, handGeo, ladderAt, mixKey, rungMoth, type Ladder, type RoomPose } from "./act3-kit";
 
 const k = K.chorus;
 const PINK = K.chorus.accent;
@@ -99,14 +99,59 @@ function geo33(lt: number, t: number) {
 }
 
 // ───────────────────────────── 35 ─────────────────────────────
-const lift35 = (x: number) => (x <= 0 ? 0 : 560 * (1 - Math.exp(-x * 7)) + 1150 * x * x + 520 * x);
+const tB35 = at(121, T35);
+const DUR35 = B(30) - T35;
+/** 실이 끌어 올린 높이: 박(120)에 휙(.3초 안에 대부분) → 잠깐 매달림 → 박(121) 뒤 소용돌이와 함께 가속 */
+const lift35 = (x: number) => (x <= 0 ? 0 : 300 * (1 - Math.exp(-x * 9)) + 60 * x + 1500 * Math.pow(Math.max(0, x - tB35 + .1), 2));
 const L35: Ladder = { x0: 560, y0: 2300, x1: 915, y1: 815, w: 120, n: 18 };
 function kid35(lt: number) {
   return { x: 905 + 70 * ease("out", lin(0, 1.38, lt)) + 16 * Math.sin(lt * 9) * Math.exp(-lt * 3), y: 640 - lift35(lt) };
 }
+/** 박(121)에 살짝 뒤로 빠져 넓어지는 소용돌이를 담는다 */
+const zoom35 = (lt: number) => kf(lt, [[0, 1.04], [.3, 1], [tB35, 1], [DUR35, .93, "io"]]);
+/** 아이 골반이 화면 sy에 오도록. 휙 끌려 오를 때 카메라가 늦어서 아이가 화면 위로 튀어 오른다(그래서 휙이 읽힌다) */
 function camY35(lt: number) {
-  const f = kf(lt, [[0, 0], [.22, .6, "in"], [.5, .9, "out"], [.95, .93, "io"], [1.38, .8, "in"]]);
-  return 540 - lift35(lt) * f;
+  const sy = kf(lt, [[0, 560], [.26, 300, "out"], [tB35, 320, "io"], [1.12, 470, "io"], [DUR35 + .1, 480, "io"]]);
+  return kid35(lt).y - (sy - 540) / zoom35(lt);
+}
+/** 소용돌이: 아이 몸을 축으로 두 가닥 나선. 위쪽 발판 여섯 개가 나방 열둘씩으로 풀린다(맨 위 발판부터) */
+const HX35 = { n: 72, mpr: 12, top: -330, bot: 290, flat: .3, turns: 1.3, w: 6.4, climb: .2, inV: 2.4, entry: .2 };
+/** 나방 j(0 = 맨 위 발판의 첫 나방)가 풀리는 시각과 그 발판 */
+const rel35 = (j: number) => tB35 + j * .004;
+const rung35 = (j: number) => L35.n - 1 - Math.floor(j / HX35.mpr);
+/** 나선 가닥 위 u(0 발밑 … 1 머리 위)의 원기둥 좌표: 반지름 R, 각 th(sin th > 0이 카메라 쪽), 골반 기준 높이 y. 아이와 함께 오르며 넓어진다 */
+function coil35(u: number, lt: number, strand: number) {
+  const grow = ease("io", lin(tB35, DUR35, lt));
+  return { R: mix(140, 235, u) * (1 + .55 * grow), th: strand * Math.PI + HX35.turns * TAU * u + HX35.w * lt, y: mix(HX35.bot, HX35.top, u) };
+}
+/**
+ * 나방 j의 세계 좌표와 깊이 z(-1 뒤 … 1 앞). 풀리기 전에는 발판에서 떨고, 풀리면 나선 아래 끝으로 들어가
+ * 가닥을 따라 감겨 올라 제자리(먼저 풀린 나방일수록 위)에 선다. 그래서 움직임이 퍼지지 않고 아이 둘레로 모여 감긴다
+ */
+function helix35(j: number, lt: number) {
+  const m = j % HX35.mpr, rel = rel35(j);
+  const rm = rungMoth(L35, rung35(j), T35 + lt);
+  const pre = smooth(tB35 - .32, tB35, lt);
+  if (lt < rel) {
+    const jit = 4 * pre, lead = m === 0;
+    return { x: rm.x + Math.sin(lt * 47 + j) * jit, y: rm.y + Math.cos(lt * 39 + j * 2) * jit, z: 1, s: lead ? rm.s * (1 + .25 * pre) : 0, b: lead ? Math.min(1, rm.b + .3 * pre) : 0, a: rm.a, w: 0, on: 0 };
+  }
+  const side = (m / (HX35.mpr - 1) - .5) * L35.w * .75;
+  const P0 = { x: rm.x + Math.cos(rm.a - Math.PI / 2) * side, y: rm.y + Math.sin(rm.a - Math.PI / 2) * side };
+  const q = kid35(lt);
+  const strand = j % 2;
+  const uSlot = .9 * (1 - (j + .5) / HX35.n) + HX35.climb * Math.max(0, lt - tB35);
+  const u = Math.min(uSlot, HX35.inV * Math.max(0, lt - rel - HX35.entry * .4));
+  const C = coil35(u, lt, strand);
+  const set = smooth(.75, 1, u / Math.max(.01, uSlot));
+  const R = C.R * (1 + .07 * set * Math.sin(lt * 5 + j)), th = C.th + .22 * rnd(359, j) * set;
+  const z = Math.sin(th);
+  const hp = { x: q.x + R * Math.cos(th), y: q.y + C.y + 12 * set * Math.sin(lt * 7 + j * 1.3) - R * HX35.flat * z };
+  const w = ease("out", lin(rel, rel + HX35.entry, lt));
+  const dz = (z + 1) / 2;
+  const sz = (8.5 + 3.5 * rnd(357, j)) * mix(.6, 1.4, dz);
+  const b = (m === 0 ? 1 : smooth(rel, rel + .06, lt)) * mix(.3, 1, dz) * (.6 + .4 * w) * (1 - smooth(.97, 1.1, uSlot));
+  return { x: mix(P0.x, hp.x, w), y: mix(P0.y, hp.y, w), z, s: mix(rm.s * (m === 0 ? .55 : .3), sz, w), b, a: Math.atan2(-HX35.flat * Math.cos(th) - .5, -Math.sin(th)), w, on: smooth(rel + .17, rel + .27, lt) };
 }
 
 // ───────────────────────────── 36 ─────────────────────────────
@@ -119,9 +164,48 @@ function kid36(lt: number) {
 }
 
 // ───────────────────────────── 37 ─────────────────────────────
-const camX37 = (lt: number) => 2700 * lt - 900 * ism(.35, 1.15, lt) + 2600 * ism(1.85, 2.75, lt);
-const D37 = 1.32;
-const COL37 = 560, ROW37 = [80, 610];
+// 큰 창 한 줄. 창틀(정면, DW37)과 방 안(조금 더 깊은 DR37)이 다른 층이라 창 안의 인물이 틀 안에서 미끄러진다(시차).
+// 아이는 지붕선 위 하늘을 배경으로 날고, 그 금빛이 창마다 위에서 쏟아져 지나간다(XL37 = 빛이 떨어지는 화면 x).
+const DW37 = 1.3, DR37 = 1.45;
+const SP37 = 1150, OW37 = 660, OH37 = 560, OY37 = 400, ROOF37 = 285;
+const XL37 = 860;
+/** 창 1·2·3이 아이 빛 아래를 지나는 시각: 박 130.5 · 132 · 133.5(점 4분음 리듬) */
+const TL37 = [at(130.5, T37), at(132, T37), at(133.5, T37)];
+const PER37 = TL37[1] - TL37[0];
+/** 정면 층의 화면 이동량: 창 i의 가운데는 화면 x = i·SP37 − F37. 빛 아래에서 조금 느려지고(읽히게) 사이에서 빨라진다. 끝은 휙(다음 컷 whip) */
+const F37 = (lt: number) => SP37 - XL37 + (SP37 / PER37) * (lt - TL37[0]) - 75 * Math.sin((TAU * (lt - TL37[0])) / PER37) + 3000 * ism(2.45, 2.8, lt);
+const camX37 = (lt: number) => 960 + DW37 * F37(lt);
+/** 창 i의 방 가운데(방 층 세계 x): 그 창이 빛 아래에 있을 때 창틀과 정확히 겹친다 */
+const roomX37 = (i: number) => XL37 + (DW37 / DR37) * (i * SP37 - XL37);
+const WHO37: RoomPose[] = ["belly", "hunch", "lie", "floor", "chair", "hunch"];
+const FC37: (1 | -1)[] = [1, -1, 1, 1, -1, 1];
+const S37 = [430, 470, 450, 470, 450, 450];
+/** 아이(화면 좌표). 지붕선 위 하늘에서 앞으로 기울어 난다 */
+const kidS37 = (lt: number) => ({ x: 790 + 40 * Math.sin(lt * 1.6), y: 205 + 16 * Math.sin(lt * 2.4) });
+/** 37번 창틀 하나(정면 층): 틀 · 위 가로살 · 창 위 돌 · 창턱. 인물 앞을 가로지르는 살은 두지 않는다. warm = 아이 빛이 위에서 닿는 정도 */
+const Win37: React.FC<{ x: number; k: Key; frame: string; wall: string; seed: number; warm: number }> = ({ x, k: kk, frame, wall, seed, warm }) => {
+  const T = 22, y = OY37, w = OW37, h = OH37;
+  const tr = y + h * .15;
+  const curtain = rnd(376, seed) < .65;
+  const cw = w * .12;
+  const cur = rnd(376, seed + 40) < .5
+    ? `M${x},${y}H${x + cw}Q${x + cw * .45},${y + h * .55} ${x + cw * 1.1},${y + h}H${x}Z`
+    : `M${x + w},${y}H${x + w - cw}Q${x + w - cw * .45},${y + h * .55} ${x + w - cw * 1.1},${y + h}H${x + w}Z`;
+  return (
+    <g>
+      {curtain ? <path d={cur} fill={mixhex(kk.sil, kk.silFar, .5)} opacity={.93} /> : null}
+      <path d={`M${x + w * .58},${y}L${x + w * .74},${y}L${x + w * .36},${y + h}L${x + w * .2},${y + h}Z`} fill="#ffffff" opacity={.035} />
+      <path d={`M${x - T},${y - T}H${x + w + T}V${y + h + T}H${x - T}Z M${x},${y}V${y + h}H${x + w}V${y}Z`} fill={frame} fillRule="evenodd" />
+      <rect x={x} y={tr} width={w} height={14} fill={frame} />
+      <rect x={x + w / 2 - 7} y={y} width={14} height={tr - y} fill={frame} />
+      <rect x={x} y={tr + 14} width={w} height={3} fill={GOLD} opacity={.6 * warm} />
+      <rect x={x - T - 18} y={y - T - 34} width={w + 2 * T + 36} height={34} fill={mixhex(frame, wall, .35)} />
+      <rect x={x - T - 18} y={y - T - 37} width={w + 2 * T + 36} height={3} fill={mixhex(kk.glow, GOLD, warm)} opacity={.25 + .55 * warm} />
+      <rect x={x - T - 28} y={y + h + T - 4} width={w + 2 * T + 56} height={30} fill={mixhex(wall, kk.silFar, .45)} />
+      <rect x={x - T - 28} y={y + h + T - 6} width={w + 2 * T + 56} height={3} fill={mixhex(kk.cold, GOLD, warm)} opacity={.35 + .4 * warm} />
+    </g>
+  );
+};
 
 // ───────────────────────────── 38 ─────────────────────────────
 const D38 = 1.25, XF38 = 3000, Z38 = 1.38;
@@ -322,55 +406,75 @@ export const act3: Shot[] = [
     },
   },
   {
-    // 35. 실이 박(120)에 아이를 휙 끌어 올린다(늘어남). 위 발판부터 나방이 떨어져 나와 아이를 따라 소용돌이친다. 박(121)에 소용돌이가 아이를 감싼다
+    // 35. 실이 박(120)에 아이를 휙 끌어 올린다(늘어남. 카메라가 늦게 따라가 아이가 화면 위로 튄다).
+    //     박(121)에 위 발판부터 발판 나방이 네 마리씩 풀려 나와, 아이 몸을 축으로 감기는 두 가닥 나선이 된다.
+    //     나선은 아이와 함께 오르며 넓어진다. 카메라 쪽 반 바퀴의 나방은 크고 밝게 아이 앞에, 먼 반 바퀴는 작고 흐리게 아이 뒤에 그린다
     id: "a3-liftoff", start: T35, key: "chorus", enter: { type: "cut" },
     render: (c) => {
-      const lt = c.lt, tB = at(121, T35);
+      const lt = c.lt, tB = tB35;
       const hh = handheld(c.t, 35, 6);
       const kq = kid35(lt);
       const jolt = Math.exp(-lt * 9);
-      const cam: Cam = { x: 960 + hh.x + Math.sin(lt * 80) * 14 * jolt, y: camY35(lt) + hh.y, zoom: 1.0 + .05 * ease("out", lin(0, 1.38, lt)), rot: hh.r - .03 * ease("out", lin(0, 1.38, lt)), focus: 1, dof: 3 };
+      const zoom = zoom35(lt);
+      const cam: Cam = { x: 960 + hh.x + Math.sin(lt * 80) * 14 * jolt, y: camY35(lt) + hh.y, zoom, rot: hh.r - .03 * ease("out", lin(0, DUR35, lt)), focus: 1, dof: 3 };
       const stretch = lt < .02 ? .12 : -.3 * Math.exp(-lt * 4.5) * (1 + .3 * Math.sin(lt * 26) * Math.exp(-lt * 3));
-      const fold = smooth(.35, 1.1, lt);
-      const vortexHit = blip(lt, tB, .05, .35);
+      const fold = smooth(.3, 1.0, lt);
+      const form = smooth(tB + .05, tB + .5, lt);
+      const hit = blip(lt, tB, .05, .35);
       const kp = pose({
-        ...P.hang, anchor: "center", x: kq.x, y: kq.y, s: 440, facing: 1, squash: stretch, rot: .08 * Math.sin(lt * 5),
-        armN: [3.08, .04], armF: [mix(1.6, 2.4, fold) + .3 * Math.sin(lt * 7), mix(.9, .4, fold)],
-        legN: [mix(.1, 1.1, fold), mix(.15, 1.6, fold)], legF: [mix(-.15, .55, fold), mix(.3, 1.2, fold)], toe: 1,
-        swing: mix(-1.5, -.6, fold) + .3 * Math.sin(lt * 11), headTilt: mix(-.15, -.55, fold), faceDir: .35,
-        face: .55 + vortexHit * .4, faceColor: WARM, eyes: 1.2, mouth: lt < tB ? .8 : 0, smile: lt > tB ? 1 : 0,
+        ...P.hang, anchor: "center", x: kq.x, y: kq.y, s: 400, facing: 1, squash: stretch, rot: .08 * Math.sin(lt * 5),
+        armN: [3.08, .04], armF: [mix(1.6, 2.15, fold) + .25 * Math.sin(lt * 7), mix(.9, .35, fold)],
+        legN: [mix(.1, 1.0, fold), mix(.15, 1.5, fold)], legF: [mix(-.15, .45, fold), mix(.3, 1.1, fold)], toe: 1,
+        swing: mix(-1.5, -.5, fold) + .3 * Math.sin(lt * 11), headTilt: mix(-.2, .12, form), faceDir: mix(.3, .5, form),
+        face: .5 + .45 * Math.max(form, hit), faceColor: WARM, eyes: 1.2, mouth: .8 * (1 - form), smile: form > .5 ? 1 : 0,
       });
       const sk = skeleton(kp);
-      // 발판 나방: 위에서부터 차례로 떨어져 나와 아이 아래의 소용돌이로 빨려 든다
-      const rel = (i: number) => .05 + (L35.n - 1 - i) * .05;
-      const vort = (tt: number, i: number) => {
-        const l = tt - T35, q = kid35(l);
-        const a = l * 9 + i * 2.1;
-        const R = 120 + 140 * rnd(351, i) + 70 * Math.sin(l * 3 + i);
-        return { x: q.x - 20 + Math.cos(a) * R, y: q.y + 230 + rnd(352, i) * 380 + Math.sin(a) * R * .35, a: a + 1.57, front: Math.sin(a) };
-      };
-      const rungs = (tt: number): M[] => Array.from({ length: L35.n }, (_, i) => {
+      // 꼬리는 화면 기준 움직임으로 그린다(카메라가 함께 오른 만큼 되돌린다): 궤도의 호가 보이고 세로 줄(분수)이 되지 않는다
+      const cy0 = camY35(lt);
+      // 무리: 0 먼 반 바퀴(아이 뒤) · 1 카메라 쪽 반 바퀴(아이 앞) · 2 아직 발판에서 날아드는 중(꼬리를 짧게)
+      const moths = (grp: 0 | 1 | 2) => (tt: number): M[] => {
         const l = tt - T35;
-        const m = rungMoth(L35, i, tt);
-        const w = ease("expoOut", lin(rel(i), rel(i) + .5, l));
-        if (w <= 0) return m;
-        const v = vort(tt, i);
-        return { ...m, x: mix(m.x, v.x, w), y: mix(m.y, v.y, w), s: mix(m.s, 9 + 5 * (v.front + 1), w), a: v.a, f: tt * 20 + i, b: 1 };
-      });
-      const extra = (tt: number): M[] => {
-        const l = tt - T35;
-        const w = smooth(tB - .25, tB + .15, l);
-        return Array.from({ length: 52 }, (_, i) => {
-          const v = vort(tt, i + 40);
-          return { x: v.x, y: v.y - 80, s: (6 + 4 * (v.front + 1)) * w, a: v.a, f: tt * 20 + i, b: w * (.6 + .4 * rnd(353, i)) };
+        const dy = cy0 - camY35(l), zr = zoom35(l) / zoom;
+        return Array.from({ length: HX35.n }, (_, j) => {
+          const h = helix35(j, l);
+          const on = h.on, wz = smooth(-.14, .14, h.z);
+          const vis = grp === 2 ? 1 - on : on * (grp === 1 ? wz : 1 - wz);
+          return { x: h.x, y: cy0 + (h.y + dy - cy0) * zr, s: h.s, a: h.a, f: tt * 22 + j * 1.3, b: h.b * vis };
         });
       };
-      const remain = clamp(1 - lt / (rel(0) + .05));
-      const topU = clamp(1 - Array.from({ length: L35.n }, (_, i) => (lt > rel(i) ? 1 : 0) as number).reduce((a, b) => a + b, 0) / L35.n);
+      // 나선 가닥(나방이 지나간 빛의 길): 카메라 쪽 반 바퀴와 먼 반 바퀴로 나눠 아이 앞·뒤에 그린다
+      const strands = (front: boolean) => {
+        const ub = Math.min(.97, HX35.inV * (lt - tB) - .05);
+        const ua = HX35.climb * Math.max(0, lt - tB) + .03;
+        if (form <= .01 || ub <= ua + .05) return null;
+        const segs: string[] = [];
+        for (let st = 0; st < 2; st++) {
+          let cur: string[] = [];
+          for (let i = 0; i <= 64; i++) {
+            const C = coil35(mix(ua, ub, i / 64), lt, st);
+            const z = Math.sin(C.th);
+            if ((z >= 0) === front) cur.push(`${(kq.x + C.R * Math.cos(C.th)).toFixed(1)},${(kq.y + C.y - C.R * HX35.flat * z).toFixed(1)}`);
+            else { if (cur.length > 1) segs.push(cur.join(" ")); cur = []; }
+          }
+          if (cur.length > 1) segs.push(cur.join(" "));
+        }
+        return (
+          <g fill="none" strokeLinecap="round" opacity={form * (front ? .6 : .3)}>
+            {segs.map((pts, i) => <polyline key={"w" + i} points={pts} stroke={GOLD} strokeWidth={front ? 18 : 10} strokeOpacity={.12} />)}
+            {segs.map((pts, i) => <polyline key={"c" + i} points={pts} stroke={front ? GOLD_CORE : GOLD} strokeWidth={front ? 2.4 : 1.5} strokeOpacity={.55} />)}
+          </g>
+        );
+      };
+      const relRung = (i: number) => (i >= L35.n - HX35.n / HX35.mpr ? rel35((L35.n - 1 - i) * HX35.mpr) : 99);
+      const nRel = Array.from({ length: L35.n }, (_, i) => (lt >= relRung(i) ? 1 : 0) as number).reduce((a, b) => a + b, 0);
+      const topU = clamp(1 - nRel / L35.n);
+      const rails = 1 - smooth(tB, tB + .45, lt);
+      const topRung = rungMoth(L35, L35.n - 1, c.t);
+      const speed = Math.max(.6 * (1 - smooth(.15, .45, lt)) * smooth(.02, .08, lt), smooth(tB, tB + .4, lt));
       return (
         <Scene cam={cam}>
           <SkyL k={k} t={c.t} horizon={1250} glow={.6} />
-          <MoonL k={k} t={c.t} x={1480} y={170} r={150} rays={.9} pulse={vortexHit * .6} />
+          <MoonL k={k} t={c.t} x={1660} y={140} r={130} rays={.8} pulse={hit * .6} />
           <Layer d={14} blur={1}>
             <CityCarpet k={k} t={c.t} horizon={980} h0={1200} n={520} seed={355} />
           </Layer>
@@ -379,17 +483,20 @@ export const act3: Shot[] = [
             <Wisp x={1500} y={-600} w={1600} color={k.cloudLit} opacity={.22} t={c.t} />
           </Layer>
           <Layer d={1}>
-            {remain > 0 || topU > 0 ? <LadderRails L={{ ...L35, x1: mix(L35.x0, L35.x1, topU), y1: mix(L35.y0, L35.y1, topU) }} width={4} opacity={.9} /> : null}
-            <Moths t={c.t} at={rungs} color={GOLD} trail={4} />
-            <Thread d={`M${sk.haN.x},${sk.haN.y}L${sk.haN.x + 30 + Math.sin(lt * 50) * 8 * jolt},${cam.y - 900}`} color={THREAD} width={3.4} glow={1.4} />
-            <Glow x={sk.pelvis.x} y={sk.pelvis.y + 120} r={380} color={GOLD} opacity={.2 + vortexHit * .5} />
+            {rails > .01 && topU > 0 ? <LadderRails L={{ ...L35, x1: mix(L35.x0, L35.x1, topU), y1: mix(L35.y0, L35.y1, topU) }} width={4} opacity={.9 * rails} rungs={(i) => (lt < relRung(i) ? 1 : 0)} /> : null}
+            <Thread d={`M${sk.haN.x},${sk.haN.y}L${sk.haN.x + 30 + Math.sin(lt * 50) * 8 * jolt},${cam.y - 1100}`} color={THREAD} width={3.4} glow={1.4} />
+            <Glow x={sk.pelvis.x} y={sk.pelvis.y - 20} r={460} color={GOLD} opacity={.1 + .22 * form + hit * .3} />
+            {strands(false)}
+            <Moths t={c.t} at={moths(2)} color={GOLD} core={GOLD_CORE} trail={1} trailDt={.02} />
+            <Moths t={c.t} at={moths(0)} color={mixhex(GOLD, k.glow, .35)} core={mixhex(GOLD_CORE, GOLD, .45)} glow={.8} trail={4} />
             {[3, 2, 1].map((i) => { const g = kid35(lt - i * .035); return <Kid key={i} pose={{ ...kp, x: g.x, y: g.y }} sil={mixhex(k.sil, k.sky[2], .3)} opacity={.22 * (1 - i / 4) * (1 - smooth(.15, .45, lt))} />; })}
-            <Kid pose={kp} sil={k.sil} far={FAR} rim={RIM(.6, -.8, .014)} rim2={{ dx: -.2, dy: 1, color: GOLD, width: .012, glow: .8 }} />
-            <Moths t={c.t} at={extra} color={GOLD} trail={4} />
-            <Burst x={sk.pelvis.x} y={sk.pelvis.y + 60} t={lt} t0={tB} dur={.8} n={30} r={420} color={GOLD} />
+            <Kid pose={kp} sil={k.sil} far={FAR} rim={RIM(.6, -.8, .014)} rim2={{ dx: -.15, dy: 1, color: GOLD, width: .01 + .012 * form, glow: .9 }} />
+            {strands(true)}
+            <Moths t={c.t} at={moths(1)} color={GOLD} core={GOLD_CORE} glow={1.15} trail={4} />
+            <Burst x={topRung.x} y={topRung.y} t={lt} t0={tB} dur={.7} n={26} r={300} color={GOLD} />
           </Layer>
           <Layer d={.5} blur={4}>
-            <Speed seed={357} n={44} phase={lift35(lt) * 2} ux={0} uy={1} x0={-600} x1={2600} y0={cam.y * 2 - 2400} y1={cam.y * 2 + 1200} len={420} color={k.cloudLit} opacity={.6 * smooth(.03, .2, lt)} width={3.5} />
+            <Speed seed={357} n={36} phase={lift35(lt) * 2} ux={0} uy={1} x0={-600} x1={2600} y0={cam.y * 2 - 2400} y1={cam.y * 2 + 1200} len={380} color={k.cloudLit} opacity={.45 * speed} width={3} />
             {[0, 1, 2].map((i) => <Wisp key={i} x={400 + i * 700} y={-300 - i * 1700} w={1300} h={110} color={k.cloudLit} opacity={.35} />)}
           </Layer>
         </Scene>
@@ -469,54 +576,96 @@ export const act3: Shot[] = [
     },
   },
   {
-    // 37. 빠르게 스치는 창의 벽. 창마다 폰 빛에 갇힌 외로운 실루엣. 앞을 나는 아이의 실루엣이 그 빛을 가로지른다(가로 모션 블러)
+    // 37. 큰 창 한 줄이 스쳐 간다(다섯 개). 창마다 폰 빛에 갇힌 실루엣 하나: 엎드림 · 침대 끝에 웅크림 · 누움 · 바닥에 앉음 · 의자.
+    //     창틀(정면 층)·기둥·전선만 빠르게 흐리고 방 안의 인물은 또렷하다(방은 조금 더 깊은 층이라 틀 안에서 미끄러진다).
+    //     지붕선 위 하늘을 나는 아이의 금빛이 창마다 위에서 쏟아져 지나가며 얼굴을 잠깐 금빛으로 바꾸고, 인물은 고개를 살짝 든다
     id: "a3-windows", start: T37, key: "chorus", enter: { type: "cut" },
     render: (c) => {
       const lt = c.lt;
       const hh = handheld(c.t, 37, 5, .6);
       const camX = camX37(lt);
-      const v = (camX37(lt + .02) - camX37(lt - .02)) / .04;
-      const cam: Cam = { x: camX + hh.x, y: 540 + hh.y, zoom: 1, rot: hh.r, focus: 1.15, dof: 4 };
-      const blurX = (v / D37 / 30) * .32;
-      const cx = 960 + (camX - 960) / D37;
-      const i0 = Math.floor((cx - 1300) / COL37), i1 = Math.ceil((cx + 1300) / COL37);
-      const kx = camX - 470 + 50 * Math.sin(lt * 1.7), ky = 820 + 26 * Math.sin(lt * 2.6);
+      const cam: Cam = { x: camX + hh.x, y: 540 + hh.y, zoom: 1, rot: hh.r, focus: 1.4, dof: 2 };
+      const F = F37(lt);
+      const vF = (F37(lt + .02) - F37(lt - .02)) / .04;
+      const blurX = clamp((vF / 30) * .3, 2, 40);
+      const ks = kidS37(lt);
+      const kx = camX - 960 + ks.x, ky = ks.y;
       const kp = pose({
-        ...P.hang, anchor: "center", x: kx, y: ky, s: 290, facing: 1, rot: .7 + .05 * n2(371, c.t), armN: [2.8, .06], armF: [1.4 + .1 * n2(372, c.t * 2), .5],
-        legN: [-.25 + .2 * n2(373, c.t * 3), .6], legF: [-.6, .9], toe: 1, swing: 1.4 + .3 * n2(374, c.t * 4), headTilt: -.3, faceDir: .1,
-        face: .35, faceColor: mixhex(k.cold, WARM, .3), eyes: .9,
+        ...P.hang, anchor: "center", x: kx, y: ky, s: 330, facing: 1, rot: .78 + .05 * n2(371, c.t), armN: [2.75, .06], armF: [1.2 + .12 * n2(372, c.t * 2), .45],
+        legN: [-.3 + .2 * n2(373, c.t * 3), .55], legF: [-.65, .85], toe: 1, swing: 1.45 + .3 * n2(374, c.t * 4), headTilt: .3, faceDir: .2,
+        face: .45, faceColor: WARM, eyes: .9,
       });
       const sk = skeleton(kp);
-      const cells: React.ReactNode[] = [];
-      for (let i = i0; i <= i1; i++) {
-        for (let r = 0; r < 2; r++) {
-          const v2 = rnd(377, i * 2 + r + 500);
-          const who = v2 < .62 ? "kid" : v2 < .74 ? "tv" : v2 < .86 ? "warm" : "dark";
-          const x = i * COL37 + 130, y = ROW37[r];
-          cells.push(
-            <g key={`${i}-${r}`}>
-              {who === "kid" || who === "tv" ? <Glow x={x + 150} y={y + 200} r={330} color={k.cold} opacity={.16} /> : null}
-              <LonelyWin x={x} y={y} w={300} h={380} k={k} t={c.t} seed={i * 7 + r * 3 + 1000} who={who} frame={mixhex(k.silFar, k.sil, .55)} gold={smooth(520, 80, Math.abs((x + 150 - cx) - (kx - camX)) ) * (r === 1 ? .9 : .45)} />
-            </g>,
-          );
-        }
-      }
+      // 화면에 걸리는 창만(창 가장자리 + 여유 50px)
+      const i0 = Math.ceil((F - OW37 / 2 - 50) / SP37), i1 = Math.floor((F + 1920 + OW37 / 2 + 50) / SP37);
+      const idx = Array.from({ length: i1 - i0 + 1 }, (_, n) => i0 + n);
+      const wi = (i: number) => ((i % WHO37.length) + WHO37.length) % WHO37.length;
+      /** 창 i가 아이 빛 아래에 얼마나 가까운가(0..1) */
+      const warmAt = (i: number, l: number) => Math.exp(-Math.pow((i * SP37 - F37(l) - XL37) / 380, 2));
+      const fx0 = 960 + F; // 정면 층 좌표에서 화면 가운데
+      const wallD = (() => {
+        let d = `M${fx0 - 1060},${ROOF37}H${fx0 + 1060}V1180H${fx0 - 1060}Z`;
+        for (const i of idx) { const x = i * SP37 - OW37 / 2; d += `M${x},${OY37}V${OY37 + OH37}H${x + OW37}V${OY37}Z`; }
+        return d;
+      })();
+      const lightX = XL37 + F;
+      const wall = mixhex(k.silFar, k.sil, .42), wallTop = mixhex(k.silFar, k.fog, .35), frameC = mixhex(k.sil, k.silFar, .3);
+      const poleX = (lp: number) => 960 + (camX37(lp) - 960) / .5;
+      const poles = [poleX(.86), poleX(1.9)];
       return (
         <Scene cam={cam}>
-          <Layer d={D37} defs={<filter id="a3mb37" x="-10%" y="-10%" width="120%" height="120%"><feGaussianBlur stdDeviation={`${blurX.toFixed(1)} 0`} /></filter>}>
+          <SkyL k={k} t={c.t} horizon={330} glow={.8} stars={.6} y0={-500} />
+          <Layer d={5} blur={1}>
+            <Skyline seed={379} base={345} minH={70} maxH={230} minW={60} maxW={160} color={mixhex(k.fog, k.sky[2], .35)} t={c.t} win={{ density: .12, size: .6, warm: k.win, cold: k.cold }} details={false} x0={-900} x1={2600 + (camX - 960) / 5} />
+          </Layer>
+          {/* 방 안(깊은 층, 흐림 없음): 인물이 또렷하게 */}
+          <Layer d={DR37} blur={0}>
+            {idx.map((i) => (
+              <LonelyRoom key={i} cx={roomX37(i)} y0={OY37} w={OW37} h={OH37} k={k} t={c.t} seed={377 + i * 13} who={WHO37[wi(i)]} facing={FC37[wi(i)]} s={S37[wi(i)]}
+                warm={warmAt(i, lt)} look={smooth(.2, .85, warmAt(i, lt - .1))} lx={XL37 + (camX - 960) / DR37} />
+            ))}
+          </Layer>
+          {/* 정면(창틀·벽): 빠르게 지나가니 가로로만 흐린다 */}
+          <Layer d={DW37} blur={0} defs={
+            <>
+              <filter id="a3mb37" x="-3%" y="-3%" width="106%" height="106%"><feGaussianBlur stdDeviation={`${blurX.toFixed(1)} 0`} /></filter>
+              <clipPath id="a3wall37"><path d={wallD} clipRule="evenodd" /></clipPath>
+              <linearGradient id="a3wg37" x1="0" y1={ROOF37} x2="0" y2={1100} gradientUnits="userSpaceOnUse">
+                <stop offset="0%" stopColor={wallTop} /><stop offset="30%" stopColor={wall} /><stop offset="100%" stopColor={mixhex(wall, k.sil, .55)} />
+              </linearGradient>
+            </>
+          }>
             <g filter="url(#a3mb37)">
-              <rect x={cx - 1600} y={-600} width={3200} height={2400} fill={mixhex(k.silFar, k.sil, .45)} />
-              {[0, 1, 2].map((r) => <rect key={r} x={cx - 1600} y={-30 + r * 530} width={3200} height={34} fill={mixhex(k.silFar, k.sil, .7)} />)}
-              {cells}
+              <path d={wallD} fill="url(#a3wg37)" fillRule="evenodd" />
+              <g clipPath="url(#a3wall37)">
+                {[i0 - 1, ...idx].map((i) => <rect key={"p" + i} x={(i + .5) * SP37 - 75} y={ROOF37} width={150} height={900} fill={mixhex(wall, k.silFar, .3)} />)}
+                {[i0 - 1, ...idx].map((i) => <rect key={"q" + i} x={(i + .5) * SP37 + 66} y={ROOF37} width={12} height={900} fill={mixhex(wall, k.sil, .6)} />)}
+                {idx.map((i) => <Glow key={"c" + i} x={i * SP37} y={OY37 + OH37 + 60} r={420} rx={520} ry={220} color={k.cold} opacity={.12} />)}
+                <Glow x={lightX} y={ROOF37 + 30} r={760} rx={860} ry={560} color={GOLD} opacity={.36} />
+              </g>
+              {idx.map((i) => <Win37 key={"w" + i} x={i * SP37 - OW37 / 2} k={k} frame={frameC} wall={wall} seed={i} warm={warmAt(i, lt)} />)}
+              {/* 처마: 하늘 빛을 받은 윗변 */}
+              <rect x={fx0 - 1060} y={ROOF37 - 36} width={2120} height={50} fill={frameC} />
+              <rect x={fx0 - 1060} y={ROOF37 - 38} width={2120} height={5} fill={mixhex(k.glow, k.sky[2], .35)} opacity={.8} />
+              <rect x={fx0 - 1060} y={ROOF37 + 14} width={2120} height={18} fill={mixhex(frameC, k.sil, .5)} />
+              <Glow x={lightX} y={ROOF37 - 30} r={380} rx={560} ry={70} color={GOLD} opacity={.55} />
             </g>
           </Layer>
           <Layer d={1}>
-            <Moths t={c.t} at={(tt) => stream(378, 30, tt, (u) => { const l = tt - T37 - (1 - u) * .5; return { x: camX37(l) - 470 - 40, y: 860 + 26 * Math.sin(l * 2.6) }; }, { speed: .9, spread: 50, size: 6 })} color={GOLD} trail={4} />
-            <Thread d={qD(sk.haN, { x: sk.haN.x + 200, y: sk.haN.y - 500 }, { x: sk.haN.x + 650, y: sk.haN.y - 1300 })} color={THREAD} width={3} glow={1.2} />
-            <Kid pose={kp} sil={k.sil} far={FAR} rim={{ dx: .3, dy: -1, color: k.cold, width: .012, glow: .6 }} rim2={{ dx: -.7, dy: .5, color: GOLD, width: .01, glow: .5 }} />
+            <Glow x={sk.pelvis.x + 40} y={sk.pelvis.y} r={330} color={GOLD} opacity={.3} />
+            <Moths t={c.t} at={(tt) => stream(378, 34, tt, (u) => { const l = tt - T37 - (1 - u) * .55; const s2 = kidS37(l); return { x: camX37(l) - 960 + s2.x - 60, y: s2.y + 15 }; }, { speed: .9, spread: 40, size: 6.5 })} color={GOLD} trail={4} />
+            <Thread d={qD(sk.haN, { x: sk.haN.x + 110, y: sk.haN.y - 260 }, { x: sk.haN.x + 380, y: sk.haN.y - 900 })} color={THREAD} width={3} glow={1.2} />
+            <Kid pose={kp} sil={k.sil} far={FAR} rim={{ dx: -.2, dy: -1, color: k.rim, width: .012, glow: .6 }} rim2={{ dx: .4, dy: .9, color: GOLD, width: .012, glow: .7 }} />
           </Layer>
-          <Layer d={.5} blur={12}>
-            {Array.from({ length: 6 }, (_, i) => <rect key={i} x={1200 + i * 2900} y={-300} width={110} height={1800} fill={k.sil} />)}
+          {/* 전경: 카메라 앞을 휙 지나는 기둥과 처진 전선(흐림) */}
+          <Layer d={.5} blur={13}>
+            {poles.map((x, i) => <rect key={i} x={x - 55} y={-400} width={110} height={2000} fill={k.sil} />)}
+            {poles.map((x, i) => (
+              <g key={"w" + i} stroke={k.sil} strokeWidth={8} fill="none">
+                <path d={`M${x - 3400},${960}Q${x - 1700},${1150} ${x},${960}Q${x + 1700},${1150} ${x + 3400},${960}`} />
+                <path d={`M${x - 3400},${1010}Q${x - 1700},${1190} ${x},${1010}Q${x + 1700},${1190} ${x + 3400},${1010}`} />
+              </g>
+            ))}
           </Layer>
         </Scene>
       );
