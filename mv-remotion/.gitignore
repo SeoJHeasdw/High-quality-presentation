@@ -1,0 +1,6 @@
+node_modules/
+out/
+render/
+# prepare-assets가 ../deck/public, ../mv/public에서 복사해 온다
+public/song.wav
+public/analysis.json

@@ -1,0 +1,28 @@
+{
+  "name": "tel-mv-remotion",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "prepare-assets": "node tools/prepare-assets.mjs",
+    "studio": "npm run prepare-assets && remotion studio src/index.ts",
+    "still": "npm run prepare-assets && remotion still src/index.ts",
+    "render": "npm run prepare-assets && node tools/render.mjs",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@remotion/cli": "4.0.540",
+    "@remotion/media-utils": "4.0.540",
+    "@remotion/motion-blur": "4.0.540",
+    "@remotion/noise": "4.0.540",
+    "@remotion/paths": "4.0.540",
+    "@remotion/transitions": "4.0.540",
+    "react": "19.1.0",
+    "react-dom": "19.1.0",
+    "remotion": "4.0.540"
+  },
+  "devDependencies": {
+    "@types/react": "19.1.8",
+    "typescript": "5.8.3"
+  }
+}
