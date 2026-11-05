@@ -6,19 +6,20 @@
  *   → 새벽 방(빛 구슬을 안고 잠듦) → 마주 보는 두 창(손 흔들기, 뒤로 빠짐)
  */
 import React from "react";
-import { Layer, Scene, type Cam } from "../lib/camera";
+import { Layer, Scene, project, type Cam } from "../lib/camera";
 import { K } from "../lib/palette";
 import { B, beat } from "../lib/song";
 import { clamp, ease, handheld, kf, lin, mix, mixc, mixhex, n2, rnd, smooth, springStep } from "../lib/math";
 import { Cloud, CloudBank, Glow, GodRays, Lightning, Moon, Rain, Wisp } from "../lib/sky";
 import { Skyline, buildings } from "../lib/city";
+import { StormBank, StormMass } from "../lib/storm";
 import { Moths, Burst, Thread, stream, swarm, toward, type M } from "../lib/moths";
 import { getLength, getPointAtLength } from "@remotion/paths";
 import { Kid, ikArm, skeleton } from "../kid/rig";
 import { P, lerpPose, pose, type Pose } from "../kid/pose";
-import { PhoneLight, Rings, RushClouds, SkyLayer, cradlePts, rescueStreams, sparks, type StreamOpt } from "./act5-kit";
+import { DawnView, Orb, PhoneLight, Rings, RushMasses, SkyLayer, SleepFace, SleepReveal, cradlePts, paneQuads, rescueStreams, sparks, type StreamOpt } from "./act5-kit";
 import { LandingThreads, igniteAt, litShare, mixKey, shot1Lit, type Landing } from "./act5-city";
-import { CityEstablish, cityCam } from "./act1-sets";
+import { CityEstablish, RoomWall, cityCam } from "./act1-sets";
 import type { Shot } from "./types";
 
 // 편집표의 59번 시작 beat(222)는 B(55)와 같은 시각이라 길이 0이 된다 → 마디 가운데 beat(220)에서 자른다
@@ -53,8 +54,28 @@ function pair(o: { cx: number; cy: number; s: number; t: number; anchor?: "cente
   return { a, b, ska: skeleton(a), skb: skeleton(b), hand: { x: cx, y: hy } };
 }
 
-/** 폭풍 속 어두운 구름 색(금빛이 들어올수록 밑면이 데워진다) */
-const stormCloud = (warm: number) => ({ dark: mixhex(kR.sky[0], kR.cloud, .7), lit: mixhex(mixhex(kR.cloud, "#4a5a60", .5), kR.cloudLit, warm) });
+/**
+ * 폭풍 덩어리(lib/storm의 StormMass) 색: 윗면(빛 받는 쪽)·몸통·밑면. fog는 공기 원근(멀수록 하늘색에 녹는다),
+ * warm은 위에서 오는 금빛, dark는 가까운 덩어리를 더 검게
+ */
+const stormTone = (fog: number, warm = 0, dark = 0) => ({
+  top: mixhex(mixhex(mixhex(mixhex(kR.cloud, "#8a7a80", .42), "#ffd9a0", warm), kR.sky[2], fog), kR.sky[0], dark * .6),
+  body: mixhex(mixhex(mixhex(kR.cloud, kR.sky[1], .3), kR.sky[2], fog * .75), kR.sky[0], dark),
+  base: mixhex(mixhex(kR.sky[0], kR.cloud, .3), kR.sky[1], fog * .5),
+});
+/** 머리 위 덩어리: 아래 지평선의 금빛을 밑면에 받는다(위가 어둡고 밑면이 밝다) */
+const underTone = (fog: number, warm = 0) => ({
+  top: mixhex(kR.sky[0], kR.cloud, .45),
+  body: mixhex(mixhex(kR.cloud, kR.sky[1], .25), kR.sky[2], fog * .5),
+  base: mixhex(mixhex(mixhex(kR.cloudLit, kR.cloud, .5), "#ffcf8a", warm), kR.sky[2], fog),
+});
+/** 덩어리 하나(층 좌표). 흐림은 층에 맡긴다(soft 0) */
+const SM: React.FC<{ seed: number; x: number; y: number; w: number; h?: number; tone: ReturnType<typeof stormTone>; t: number; drift?: number; flash?: number; flashX?: number; flashY?: number; rim?: number; rimColor?: string }> = ({ tone, ...o }) => (
+  <StormMass {...o} top={tone.top} body={tone.body} base={tone.base} soft={0} />
+);
+/** 번개 자리에서 가까운 덩어리일수록 세게 */
+const flashNear = (flash: number, x: number, bx: number, r: number) => flash * clamp(1 - Math.abs(x - bx) / r) ** 1.5;
+
 
 /** 64: 달에서 쏟아지는 실들. 경로 길이는 한 번만 잰다 */
 const BLOOM = (() => {
@@ -126,20 +147,26 @@ export const act5: Shot[] = [
       const turn = smooth(beat(219) - .15, beat(219) + .4, t);
       const pr = pair({ cx: 960, cy: 520 + lt * 10, s: 48, t, face: .9, faceC: kR.cold });
       const flash = Math.exp(-Math.max(0, lt - .18) * 9) * (lt > .18 ? 1 : 0) * .8;
-      const cl = stormCloud(.15 + turn * .15);
+      // 폭풍의 협곡: 먼 덩어리 두 줄(위는 평평한 밑면이 보이고 아래는 뭉게 윗면이 보인다), 가운데 덩어리 셋, 앞을 스치는 검은 덩어리
+      const far = stormTone(.42, .08 + turn * .1), mid = stormTone(.16, .05 + turn * .1, .15), near = stormTone(0, 0, .65);
+      const farU = underTone(.62, turn * .08), midU = underTone(.08, .15 + turn * .1);
+      const BX = 450, rim = flash * .9;
+      const top = [[-560, 200, 1000], [220, 330, 820], [900, 150, 1100], [1640, 310, 900], [2380, 210, 1050]] as const;
+      const bot = [[-420, 1190, 1100], [420, 1230, 980], [1250, 1215, 1150], [2050, 1180, 1050], [2800, 1220, 1000]] as const;
       return (
         <Scene cam={cam}>
           <SkyLayer k={kR} horizon={1150} glowOpacity={.25} glowR={900} />
           <Layer d={12}>
-            <Glow x={420} y={330} r={420} color="#9fc6d6" opacity={flash * .5} />
-            <Lightning seed={58} x0={380} y0={-60} x1={520} y1={420} flash={flash} width={2.4} branches={3} />
-            <CloudBank seed={581} y={260} x0={-900} x1={2900} size={900} count={7} dark={cl.dark} lit={cl.lit} t={t} drift={-14} />
-            <CloudBank seed={582} y={1180} x0={-900} x1={2900} size={1000} count={7} dark={cl.dark} lit={cl.lit} t={t} drift={10} />
+            {top.map(([x, y, w], i) => <SM key={i} seed={581 + i} x={x} y={y} w={w} h={w * .3} tone={farU} t={lt} drift={-14} flash={flashNear(flash, x, BX, 900)} flashX={clamp((BX - x) / w + .5, .15, .85)} flashY={.7} rim={rim * .6} rimColor="#cfe8ff" />)}
+            {bot.map(([x, y, w], i) => <SM key={i} seed={588 + i} x={x} y={y} w={w} h={w * .33} tone={far} t={lt} drift={10} rim={.25} rimColor={kR.cloudLit} />)}
           </Layer>
           <Layer d={4.5}>
-            <Cloud seed={583} x={-120} y={420} w={1300} h={520} dark={cl.dark} lit={cl.lit} t={t} drift={-20} />
-            <Cloud seed={584} x={2080} y={900} w={1400} h={560} dark={cl.dark} lit={cl.lit} t={t} drift={16} />
-            <Cloud seed={585} x={1700} y={80} w={1100} h={380} dark={cl.dark} lit={cl.lit} t={t} drift={-12} />
+            <Glow x={330} y={420} r={620} color="#9fc6d6" opacity={flash * .4} />
+            <Lightning seed={58} x0={300} y0={250} x1={430} y1={700} flash={flash} width={3} branches={3} />
+            <SM seed={583} x={60} y={330} w={1350} h={430} tone={midU} t={lt} drift={-20} flash={flash} flashX={.6} flashY={.62} rim={rim * .5} rimColor="#cfe8ff" />
+            <SM seed={585} x={1780} y={250} w={1150} h={360} tone={midU} t={lt} drift={-12} />
+            <SM seed={587} x={120} y={1080} w={1250} h={400} tone={mid} t={lt} drift={12} rim={.3} rimColor={kR.cloudLit} />
+            <SM seed={584} x={1900} y={980} w={1450} h={470} tone={mid} t={lt} drift={16} rim={.3} rimColor={kR.cloudLit} />
           </Layer>
           <Layer d={2.6} blend="screen">
             <Moths t={t} at={(tt) => streams(77, tt, { cx: 960, cy: 530, R0: 820, R1: 70, sy: .62, K: 12, per: 11, spin: -1.1, size: 4.6, wob: 40 })} color={kR.accent} trail={3} trailDt={.04} wings={false} glow={1.3} />
@@ -156,8 +183,8 @@ export const act5: Shot[] = [
             <Moths t={t} at={(tt) => streams(91, tt, { cx: 960, cy: 530, R0: 1000, R1: 80, sy: .6, K: 12, per: 12, spin: 1.2, size: 6.2, wob: 50 })} color={kR.accent} trail={4} trailDt={.04} glow={1.2} />
             <Glow x={960} y={530} r={700} color={kR.glow} opacity={turn * .08} />
           </Layer>
-          <Layer d={.5}>
-            <Cloud seed={586} x={mix(-200, -420, ease("out", c.p))} y={1060} w={1400} h={460} dark={mixhex(kR.sky[0], "#000000", .3)} lit={cl.dark} />
+          <Layer d={.5} blur={6}>
+            <SM seed={586} x={mix(-160, -400, ease("out", c.p))} y={1180} w={1500} h={520} tone={near} t={lt} />
           </Layer>
         </Scene>
       );
@@ -175,13 +202,14 @@ export const act5: Shot[] = [
       const warm = smooth(tHit - .35, tHit + .45, t);
       const look = (seed: number) => -.15 + n2(seed, t * 1.6) * .35 - warm * .2;
       const pr = pair({ cx: 960, cy: 560, s: 190, t, face: .95, faceC: mixc(kR.cold, GOLD, warm), base: { headTilt: look(5), eyes: 1 + warm * .15 }, baseF: { headTilt: look(9), eyes: 1 + warm * .15 } });
-      const cl = stormCloud(.25 + warm * .6);
+      const cTop = underTone(.4, warm * .35), cBot = stormTone(.3, .1 + warm * .35);
       return (
         <Scene cam={cam}>
           <SkyLayer k={kR} horizon={1100} glowOpacity={.2} />
           <Layer d={6}>
-            <CloudBank seed={591} y={180} x0={-1000} x1={3000} size={1000} count={7} dark={cl.dark} lit={cl.lit} t={t} drift={-30} />
-            <CloudBank seed={592} y={1250} x0={-1000} x1={3000} size={1100} count={7} dark={cl.dark} lit={cl.lit} t={t} drift={30} />
+            <StormBank seed={591} y={50} x0={-1000} x1={3000} size={1000} count={6} {...cTop} t={lt} drift={-30} soft={0} />
+            <StormBank seed={593} y={200} x0={-700} x1={2700} size={720} count={3} {...cTop} t={lt} drift={-40} soft={0} />
+            <StormBank seed={592} y={1260} x0={-1000} x1={3000} size={1100} count={6} {...cBot} t={lt} drift={30} soft={0} rim={.3} rimColor={kR.cloudLit} />
           </Layer>
           <Layer d={6} blend="screen">
             <Glow x={960} y={550} r={mix(380, 900, warm)} color={kR.glow} opacity={.18 + warm * .3} />
@@ -248,13 +276,14 @@ export const act5: Shot[] = [
       const formed = smooth(lc - .7, lc + .1, lt);
       const phoneOn = 1 - smooth(lc, lc + .6, lt) * .85;
       const cradlePath = `M${960 - rx * 1.02},${cy - 6}Q${960 - rx * .9},${cy + ry * 1.25} 960,${cy + ry * 1.12}Q${960 + rx * .9},${cy + ry * 1.25} ${960 + rx * 1.02},${cy - 6}Q${960 + rx * .5},${cy + ry * .55} 960,${cy + ry * .55}Q${960 - rx * .5},${cy + ry * .55} ${960 - rx * 1.02},${cy - 6}Z`;
-      const cl = stormCloud(.45 + warm * .4);
+      const cTop = underTone(.35, .1 + warm * .4), cBot = stormTone(.25, .2 + warm * .4);
       return (
         <Scene cam={cam}>
           <SkyLayer k={kR} horizon={1200} glowOpacity={.3} />
           <Layer d={7}>
-            <CloudBank seed={601} y={300} x0={-1100} x1={3100} size={1100} count={7} dark={cl.dark} lit={cl.lit} t={t} drift={-18} />
-            <CloudBank seed={602} y={1350} x0={-1100} x1={3100} size={1200} count={6} dark={cl.dark} lit={cl.lit} t={t} drift={14} />
+            <StormBank seed={601} y={90} x0={-1100} x1={3100} size={1100} count={6} {...cTop} t={lt} drift={-18} soft={0} />
+            <StormBank seed={603} y={250} x0={-800} x1={2800} size={780} count={3} {...cTop} t={lt} drift={-26} soft={0} />
+            <StormBank seed={602} y={1360} x0={-1100} x1={3100} size={1200} count={6} {...cBot} t={lt} drift={14} soft={0} rim={.35} rimColor={kR.cloudLit} />
           </Layer>
           <Layer d={7} blend="screen">
             <Glow x={960} y={760} r={mix(500, 1100, warm)} color={kR.glow} opacity={.15 + warm * .35} />
@@ -314,7 +343,9 @@ export const act5: Shot[] = [
       const tg = cradlePts(5, cx, cy, rx, ry, 140, 4);
       const tg2 = cradlePts(6, cx, cy + 8, rx * 1.12, ry * 1.15, 110, 3);
       const sit = (seed: number, list: typeof tg, size: number) => (tt: number): M[] => list.map((p, i) => ({ x: p.x + n2(seed + i, tt * 1.5) * 6, y: p.y + n2(seed + i, tt * 1.5, 4) * 6, a: p.a, s: size * (.6 + rnd(seed, i) * .8), f: tt * 10 + i, b: .7 + .3 * rnd(seed, i + 9) }));
-      const cl = { dark: mixhex(kR.sky[0], kR.cloud, .5), lit: mixhex(mixhex(kR.cloud, kR.cloudLit, .3), "#ffe2a8", light * .3) };
+      // 폭풍 덩어리 세 겹(+ 먼 벽): 멀수록 작고 느리고 하늘색에 녹고, 가까울수록 크고 검고 빠르고 흐리다. 위의 빛이 커질수록 윗면이 데워진다
+      const wall = stormTone(.5, .1 + light * .35), farT = stormTone(.22, .12 + light * .45, .1), midT = stormTone(.06, .1 + light * .4, .35), nearT = stormTone(0, light * .25, .7);
+      const bx = 380, rimC = bolt > .25 ? "#d6eeff" : "#ffe2b0", rimA = Math.max(bolt * .9, .2 + light * .6);
       // 꼬리: 요람 밑에서 카메라 쪽으로(아래로) 흘러내리며 원근으로 커진다
       const near = (m: M) => ({ ...m, s: m.s * (1 + clamp((m.y - cy) / 1000) * 2.6) });
       const tail = (tt: number) => stream(613, 90, tt, (u) => ({ x: cx - u * 260 + Math.sin(u * 5 + tt * 3) * 60 * u, y: cy + ry * .8 + u * 1150 }), { speed: 1.5, spread: 40 + 0, size: 7 }).map(near);
@@ -324,17 +355,19 @@ export const act5: Shot[] = [
           <SkyLayer k={kR} horizon={1300} glowOpacity={.2}>
             <Glow x={960} y={-120} r={mix(500, 1500, light)} color={K.clear.moon} opacity={.25 + light * .6} />
           </SkyLayer>
-          <Layer d={3.2} blur={5}>
-            <RushClouds seed={611} t={t} n={12} speed={950} x0={-900} x1={2800} y0={-1400} span={2900} size={720} dark={cl.dark} lit={cl.lit} />
-            <Glow x={260} y={300} r={700} color="#cfe8ff" opacity={bolt * .5} />
+          <Layer d={3.2} blur={3}>
+            {/* 먼 벽(층 하나를 아끼려고 같은 층에 그린다: 더 느리고 더 하늘색에 녹아 더 멀어 보인다) */}
+            <RushMasses seed={610} t={t} n={7} speed={420} x0={-1200} x1={3100} y0={-900} span={2700} size={1150} aspect={.36} {...wall} flash={bolt * .7} boltX={bx} boltR={1400} rim={rimA * .5} rimColor={rimC} />
+            <Glow x={bx - 120} y={300} r={760} color="#cfe8ff" opacity={bolt * .45} />
             <Lightning seed={611} x0={140} y0={-300} x1={620} y1={980} flash={bolt} width={4} branches={5} />
+            <RushMasses seed={611} t={t} n={10} speed={950} x0={-900} x1={2800} y0={-1100} span={2900} size={780} {...farT} flash={bolt} boltX={bx} boltR={1100} rim={rimA * .8} rimColor={rimC} />
           </Layer>
           <Layer d={3.2} blend="screen">
             <GodRays x={960} y={-200} t={t} count={16} len={1700} color={K.clear.moon} opacity={light * .6} spin={.01} />
             <Glow x={960} y={-60} r={mix(200, 900, light)} color="#fff3d0" opacity={light * .8} />
           </Layer>
           <Layer d={1.7} blur={2.5}>
-            <RushClouds seed={612} t={t} n={6} speed={2100} x0={-500} x1={2400} y0={-1300} span={2700} size={600} dark={cl.dark} lit={cl.lit} dx={-200} />
+            <RushMasses seed={612} t={t} n={6} speed={2100} x0={-500} x1={2400} y0={-1100} span={2700} size={680} dx={-200} {...midT} flash={bolt * .85} boltX={bx + 100} boltR={900} rim={rimA * .7} rimColor={rimC} />
           </Layer>
           <Layer d={1} blend="screen">
             <Rain t={t} count={120} angle={.06} color="#c9d6e0" opacity={.3 * (1 - light * .6)} speed={5200} len={240} width={1.6} />
@@ -349,8 +382,8 @@ export const act5: Shot[] = [
           <Layer d={1} blend="screen">
             <Moths t={t} at={sit(62, tg, 9)} color={kR.accent} />
           </Layer>
-          <Layer d={.55}>
-            {[[-260, .1], [2150, .62], [-120, 1.3]].map(([x, o], i) => <Cloud key={i} seed={614 + i} x={x} y={-1500 + ((lt + o) * 4300) % 4600} w={1300} h={520} dark={mixhex(cl.dark, "#000000", .3)} lit={cl.dark} />)}
+          <Layer d={.55} blur={9}>
+            {[[-300, .1, 1500], [2200, .62, 1700], [-160, 1.3, 1600], [1900, 1.85, 1400]].map(([x, o, w], i) => <SM key={i} seed={614 + i} x={x} y={-1300 + ((lt + o) * 4300) % 4800} w={w} h={w * .36} tone={nearT} t={t} flash={flashNear(bolt, x, bx - 300, 1500) * .6} flashX={x < 960 ? .7 : .3} rim={rimA * .6} rimColor={rimC} />)}
             <Moths t={t} at={fgTail} color={kR.accent} trail={3} trailDt={.03} />
           </Layer>
           <Layer d={Infinity} blur={0} blend="screen">
@@ -604,75 +637,151 @@ export const act5: Shot[] = [
     },
   },
   {
-    // 66. 새벽 방(dip), 바로 위에서 내려다봄: 빛 구슬 하나에서 시작해(달 ↔ 구슬 매치컷) 천천히 돌며 뒤로 빠지면,
-    //     옆으로 웅크려 구슬을 꼭 안고 잠든 아이. 창 모양 햇살(네 칸)이 이불 위에 비스듬히 눕고, 먼지가 떠다닌다.
-    //     머리맡 바닥의 폰은 꺼진 채 엎어져 있다
+    // 66. 새벽 방(dip). 2번 방의 거울: 같은 창(십자 창살·양쪽 커튼)과 그 앞의 침대, 왼쪽 앞의 스탠드를 옆에서 본다. 이제 창밖은 복숭앗빛 새벽.
+    //     빛 구슬(작은 달)의 동그란 빛 하나에서 열린다(65번 끝 창 빛 ↔ 구슬, 원 → 원). 빛이 번져 방이 드러나고 카메라는 구슬로 천천히 밀려 든다.
+    //     아이는 옆으로 웅크려 이불을 덮고 구슬을 꼭 안고 잠들었다. 구슬 빛이 감은 눈과 작은 미소를 비춘다.
+    //     창에서 긴 평행사변형 햇살이 이불과 바닥으로 비스듬히 눕고 먼지가 떠다닌다. 커튼이 살짝 흔들린다. 머리맡 탁자의 폰은 꺼져 엎어져 있다
     id: "a5-sleep", start: T66, key: "dawn", enter: { type: "dip" },
     render: (c) => {
       const lt = c.lt, t = c.t;
       const k = K.dawn;
-      const breath = Math.sin(t * 1.9);
-      // 위에서 본 옆으로 누운 자세: rot +π/2, facing -1 → 머리는 왼쪽(베개), 몸 앞(얼굴·무릎)은 화면 아래
+      const breath = Math.sin(t * 2.1);
+      // 옆으로 누워 웅크림(facing 1, 머리 오른쪽 베개, 등은 위·창 쪽, 몸 앞·무릎·구슬은 카메라 쪽)
+      const lean = .42;
       const kp = pose({
-        anchor: "center", x: 700, y: 440, s: 640, facing: -1, rot: 1.48 + breath * .006,
-        lean: .32, bend: .22, headTilt: .3, armN: [1.25, 2.05], armF: [1.05, 2.15], legN: [1.35, 1.9], legF: [1.15, 2.05], toe: .2, swing: -.6,
-        face: .9, faceColor: "#ffd9a0", smile: 1, eyes: 0, squash: breath * .012,
+        anchor: "center", x: 1180, y: 664 - breath * 1.5, s: 520, facing: 1, rot: Math.PI / 2 - lean - .04, lean, bend: .2 + breath * .012, headTilt: .3, faceDir: .45,
+        armN: [.55, 2.45], armF: [.45, 2.5], legN: [1.5, 2.15], legF: [1.3, 2.2], toe: .35, swing: 3.9 + breath * .03,
+        face: .95, faceColor: "#ffdcaa", eyes: 0, smile: 0, mouth: 0,
       });
       const sk = skeleton(kp);
-      const orb = { x: mix(sk.haN.x, sk.haF.x, .5), y: mix(sk.haN.y, sk.haF.y, .5) + 18, r: 32 * (1 + .05 * breath) };
-      const pull = ease("expoOut", lin(.12, 2.7, lt));
-      const hh = handheld(t, 66, 2.5, .3);
-      const cam: Cam = { x: mix(orb.x, 960, pull) + hh.x, y: mix(orb.y, 530, pull) + hh.y, zoom: mix(2.7, 1.02, pull), rot: mix(.22, 0, pull) + hh.r, focus: 1, dof: 5 };
-      const floor = mixhex(k.sil, k.fog, .18);
-      const sheet = mixhex(k.fog, k.glow, .18);
-      const blanket = mixhex(k.accent, k.fog, .45);
-      const bed = { x: 250, y: 150, w: 1420, h: 780 };
-      // 창 모양 햇살: 2×2 칸, 오른쪽 위에서 비스듬히
-      const pane = (i: number, j: number) => {
-        const x0 = 1350 + i * 250, y0 = 120 + j * 300, w = 230, h = 280, sh = -.5;
-        return `M${x0 + y0 * sh},${y0}L${x0 + w + y0 * sh},${y0}L${x0 + w + (y0 + h) * sh},${y0 + h}L${x0 + (y0 + h) * sh},${y0 + h}Z`;
-      };
-      const motes = (tt: number): M[] => Array.from({ length: 34 }, (_, i) => {
-        const x = mix(500, 1700, rnd(661, i)) + n2(663 + i, tt * .12) * 70, y = mix(40, 1000, rnd(662, i)) + n2(664 + i, tt * .12) * 60;
-        return { x, y, s: 1.6 + rnd(665, i) * 2.6, a: 0, f: 0, b: .25 + .45 * Math.sin(tt * 1.3 + i) ** 2 };
+      // 몸의 팔은 몸통 안으로 접어 두고(덩어리가 생기지 않게), 구슬을 안은 팔은 따로 그린다
+      const ha = skeleton({ ...kp, armN: [1.2, 1.85] }).haN;
+      const orb = { x: ha.x - 44, y: ha.y - 40 + breath * .8, r: 33 };
+      // 구슬을 안은 두 손: 가까운 아래팔이 구슬 밑을 둥글게 받치고(손은 구슬 오른쪽), 먼 손은 구슬 왼쪽 위를 감싼다
+      const hug = { e: { x: orb.x - orb.r * 1.2, y: orb.y + orb.r * .9 }, c: { x: orb.x - 4, y: orb.y + orb.r * 1.45 }, h: { x: orb.x + orb.r * .95, y: orb.y + orb.r * .55 }, f: { x: orb.x - orb.r * .78, y: orb.y - orb.r * .62 } };
+      const armD = `M${hug.e.x},${hug.e.y}Q${hug.c.x},${hug.c.y} ${hug.h.x},${hug.h.y}`;
+      // 카메라: 구슬이 화면 가운데(65번 끝의 창 빛 자리)에서 시작해 천천히 밀려 든다
+      const push = ease("sineIO", lin(0, c.dur, lt));
+      const hh = handheld(t, 66, 2.2, .25);
+      const cam: Cam = { x: orb.x + mix(0, -40, push) + hh.x, y: orb.y + mix(0, -60, push) + hh.y, zoom: mix(1.2, 1.4, push), rot: hh.r, focus: 1, dof: 4.5 };
+      // 색
+      const wall = mixhex(mixhex(k.sil, k.fog, .2), "#5a3040", .25);
+      const bedC = mixhex(k.sil, wall, .25);
+      const sheet = mixhex(k.fog, k.sil, .42);
+      const blanket = mixhex(mixhex(k.accent, "#b0606e", .5), k.sil, .62);
+      const floorY = 1012;
+      const win = { x: 790, y: 150, w: 680, h: 600 };
+      const bed = { x0: 590, x1: 1770, far: 692, near: 800, bottom: 966 };
+      // 이불: 허리에서 접혀 엉덩이 둔덕을 넘어 발치로, 침대 앞으로 늘어진다
+      const pv = sk.pelvis, s = kp.s;
+      const A = { x: pv.x + .005 * s, y: pv.y - .16 * s }, Bk = { x: pv.x + .14 * s, y: bed.near + 4 };
+      const H = { x: pv.x - .07 * s, y: pv.y - .19 * s }, Cb = { x: pv.x - .25 * s, y: pv.y - .08 * s }, D = { x: pv.x - .44 * s, y: bed.far + 8 };
+      const hem = (x: number, i: number) => `${x.toFixed(1)},${(bed.near + 92 + Math.sin(i * 1.7 + t * .4) * 8 + (i % 2) * 10).toFixed(1)}`;
+      const blanketD = `M${A.x},${A.y}C${A.x - .04 * s},${A.y - .07 * s} ${H.x + .1 * s},${H.y} ${H.x},${H.y}C${H.x - .1 * s},${H.y} ${Cb.x + .03 * s},${Cb.y - .08 * s} ${Cb.x},${Cb.y}`
+        + `C${Cb.x - .05 * s},${Cb.y + .06 * s} ${D.x + .1 * s},${D.y - 4} ${D.x},${D.y}L${bed.x0 + 30},${bed.far + 12}Q${bed.x0 - 8},${bed.far + 16} ${bed.x0 - 10},${bed.near}`
+        + `L${hem(bed.x0 - 14, 0)}` + Array.from({ length: 7 }, (_, i) => `L${hem(mix(bed.x0 - 14, Bk.x + 70, (i + 1) / 7), i + 1)}`).join("")
+        + `L${Bk.x + 66},${bed.near + 2}Q${Bk.x + 20},${bed.near - 6} ${Bk.x},${Bk.y - 6}C${Bk.x - .02 * s},${Bk.y - .1 * s} ${A.x + .07 * s},${A.y + .12 * s} ${A.x},${A.y}Z`;
+      // 햇살 조각: 창 아래 모서리가 이불 위(벽 가까이), 창 위 모서리가 바닥(카메라 가까이)에 떨어진다. 해가 오른쪽이라 왼쪽 아래로 길게 눕는다
+      const po = { x: 770, y: bed.far + 8 }, PU = { x: 420, y: 0 }, PV = { x: -330, y: 560 };
+      const panes = paneQuads(po, PU, PV, .04, .58);
+      const shaft = `M${win.x + 40},${win.y + 30}L${win.x + win.w - 40},${win.y + 30}L${po.x + PU.x + PV.x},${po.y + PV.y}L${po.x + PV.x},${po.y + PV.y}Z`;
+      const motes = (tt: number): M[] => Array.from({ length: 46 }, (_, i) => {
+        const u = rnd(663, i), a = (rnd(664, i) + tt * .03 * (rnd(665, i) - .4)) % 1;
+        const top = { x: win.x + 40 + (win.w - 80) * u, y: win.y + 30 }, bot = { x: po.x + PV.x + PU.x * u, y: po.y + PV.y };
+        const x = mix(top.x, bot.x, a) + n2(666 + i, tt * .25) * 40, y = mix(top.y, bot.y, a) + n2(667 + i, tt * .25) * 30;
+        return { x, y, s: 1.4 + rnd(668, i) * 2.6, a: 0, f: 0, b: (.3 + .7 * Math.sin(tt * 1.1 + i * 2.3) ** 2) * smooth(0, .12, a) * (1 - smooth(.85, 1, a)) };
       });
-      const hip = sk.pelvis;
-      // 이불은 발치로 걷어차여 뭉쳐 있다(웅크린 실루엣이 밝은 시트 위에서 읽히도록)
-      const bx = bed.x + bed.w;
-      const blanketD = `M${bx - 330},${bed.y + 20}Q${bx - 420},${bed.y + 250} ${bx - 300},${bed.y + 420}Q${bx - 400},${bed.y + 600} ${bx - 260},${bed.y + bed.h - 10}L${bx - 10},${bed.y + bed.h - 10}L${bx - 10},${bed.y + 20}Z`;
+      // 열림: 구슬의 둥근 빛 하나에서 방이 번져 드러난다
+      const os = project(cam, 1, orb.x, orb.y);
+      const reveal = mix(150, 5200, ease("in", lin(.05, 1.75, lt)));
+      const lamp = { x: 930, y: 1010 };
       return (
         <Scene cam={cam}>
-          <Layer d={1.08}>
-            <rect x={-1500} y={-1200} width={5000} height={3600} fill={floor} />
-            {Array.from({ length: 22 }, (_, i) => <rect key={i} x={-1500} y={-1100 + i * 120} width={5000} height={4} fill={mixhex(floor, k.sil, .45)} />)}
-            {Array.from({ length: 30 }, (_, i) => <rect key={"v" + i} x={-1400 + rnd(667, i) * 4600} y={-1100 + Math.floor(rnd(668, i) * 22) * 120} width={4} height={120} fill={mixhex(floor, k.sil, .45)} />)}
-            <rect x={1700} y={300} width={220} height={220} rx={14} fill={mixhex(floor, k.sil, .55)} />
-            <rect x={1770} y={360} width={70} height={120} rx={10} fill="#0e0918" />
-            <ellipse cx={420} cy={980} rx={58} ry={30} fill={mixhex(floor, k.accent, .25)} />
-            <ellipse cx={520} cy={1000} rx={58} ry={30} fill={mixhex(floor, k.accent, .25)} />
+          <Layer d={6}>
+            <DawnView k={k} t={t} sunX={1250} base={560} />
+          </Layer>
+          <Layer d={1.3} blur={0} defs={
+            <linearGradient id="a5sleepCeil" x1="0" y1={-500} x2="0" y2={win.y + 40} gradientUnits="userSpaceOnUse">
+              <stop offset="0" stopColor={k.sil} stopOpacity={.85} />
+              <stop offset="1" stopColor={k.sil} stopOpacity={0} />
+            </linearGradient>
+          }>
+            <RoomWall k={k} t={t} {...win} floorY={floorY} wind={.14} wall={wall} spill="#ffb88a" spillA={.42} frame={mixhex(k.sil, wall, .3)} />
+            <rect x={-2000} y={-500} width={6000} height={win.y + 540} fill="url(#a5sleepCeil)" />
+            <rect x={1610} y={300} width={170} height={210} fill={mixhex(k.sil, wall, .45)} />
+            <rect x={1626} y={316} width={138} height={178} fill={mixhex(wall, "#ffb88a", .18)} />
+            <rect x={1610} y={300} width={170} height={4} fill={k.rim} opacity={.35} />
+          </Layer>
+          <Layer d={1.3} blend="screen" blur={3}>
+            <Glow x={win.x + win.w * .6} y={win.y + win.h * .7} r={900} rx={1100} ry={700} color="#ff9a7a" opacity={.3} />
+            <Glow x={win.x + win.w + 420} y={win.y + 260} r={700} color="#ffb070" opacity={.16} />
           </Layer>
           <Layer d={1}>
-            <rect x={bed.x - 26} y={bed.y - 26} width={bed.w + 52} height={bed.h + 52} rx={46} fill={mixhex(k.sil, floor, .35)} />
-            <rect x={bed.x} y={bed.y} width={bed.w} height={bed.h} rx={34} fill={sheet} />
-            <rect x={bed.x + 40} y={bed.y + 120} width={250} height={430} rx={70} fill={mixhex(sheet, "#ffffff", .12)} />
-            <path d={`M${bed.x + 70},${bed.y + 200}Q${bed.x + 160},${bed.y + 230} ${bed.x + 250},${bed.y + 190}`} stroke={mixhex(sheet, k.sil, .3)} strokeWidth={5} fill="none" />
+            <rect x={-2000} y={floorY} width={6000} height={1400} fill={mixhex(k.sil, wall, .4)} />
+            <rect x={-2000} y={floorY} width={6000} height={10} fill={mixhex(k.sil, wall, .25)} />
+            {/* 침대: 다리 · 앞면 · 매트리스 윗면 · 베개 */}
+            <rect x={bed.x0 + 30} y={bed.bottom - 10} width={28} height={floorY - bed.bottom + 14} fill={bedC} />
+            <rect x={bed.x1 - 58} y={bed.bottom - 10} width={28} height={floorY - bed.bottom + 14} fill={bedC} />
+            <ellipse cx={(bed.x0 + bed.x1) / 2} cy={floorY + 8} rx={(bed.x1 - bed.x0) * .56} ry={26} fill={k.sil} opacity={.5} />
+            <path d={`M${bed.x0},${bed.far}L${bed.x1},${bed.far}L${bed.x1 + 6},${bed.near}L${bed.x0 - 6},${bed.near}Z`} fill={sheet} />
+            <rect x={bed.x0 - 8} y={bed.near - 4} width={bed.x1 - bed.x0 + 16} height={bed.bottom - bed.near + 4} rx={14} fill={bedC} />
+            <rect x={bed.x0 - 8} y={bed.near - 4} width={bed.x1 - bed.x0 + 16} height={5} fill={mixhex(bedC, k.rim, .35)} />
+            <ellipse cx={1530} cy={bed.far + 30} rx={170} ry={52} fill={mixhex(sheet, "#fff0e0", .18)} />
+            <path d={`M1380,${bed.far + 34}Q1530,${bed.far - 4} 1690,${bed.far + 30}`} stroke={k.rim} strokeWidth={3} fill="none" opacity={.35} />
+            {/* 머리맡 탁자와 꺼진 폰(엎어져 있다, 차가운 빛은 없다) */}
+            <rect x={1810} y={770} width={190} height={floorY - 770} rx={8} fill={bedC} />
+            <rect x={1810} y={770} width={190} height={4} fill={k.rim} opacity={.3} />
+            <rect x={1828} y={812} width={154} height={6} fill={mixhex(bedC, k.sil, .5)} />
+            <g transform="rotate(-4 1880 760)">
+              <rect x={1836} y={750} width={98} height={16} rx={4} fill="#120c1a" />
+              <rect x={1841} y={750} width={88} height={2.5} fill="#ffcfa0" opacity={.4} />
+            </g>
+          </Layer>
+          <Layer d={1}>
+            <Kid pose={kp} sil={k.sil} rim={{ dx: .35, dy: -1, color: k.rim, width: .01, glow: .7 }} rim2={{ dx: .1, dy: 1, color: "#ffd08a", width: .012, glow: 1 }} />
+            <SleepFace p={kp} smile={1} />
+            <path d={`M${sk.shN.x},${sk.shN.y}L${hug.e.x},${hug.e.y}`} stroke={k.sil} strokeWidth={.066 * s} strokeLinecap="round" />
+            <circle cx={hug.f.x} cy={hug.f.y} r={.034 * s} fill={k.sil} />
             <path d={blanketD} fill={blanket} />
-            <path d={`M${bx - 300},${bed.y + 130}Q${bx - 160},${bed.y + 200} ${bx - 40},${bed.y + 150}M${bx - 320},${bed.y + 420}Q${bx - 180},${bed.y + 380} ${bx - 40},${bed.y + 460}M${bx - 240},${bed.y + 620}Q${bx - 140},${bed.y + 680} ${bx - 40},${bed.y + 640}`} stroke={mixhex(blanket, k.sil, .3)} strokeWidth={8} fill="none" strokeLinecap="round" />
-            <ellipse cx={hip.x - 20} cy={hip.y + 60} rx={300} ry={170} fill={mixhex(sheet, k.sil, .2)} opacity={.35} />
-            <Kid pose={kp} sil={k.sil} rim={{ dx: .5, dy: -.85, color: k.rim, width: .01, glow: .6 }} />
+            <path d={`M${A.x},${A.y}C${A.x + .07 * s},${A.y + .12 * s} ${Bk.x - .02 * s},${Bk.y - .1 * s} ${Bk.x},${Bk.y - 6}`} stroke={mixhex(blanket, "#ffe0c0", .35)} strokeWidth={9} fill="none" strokeLinecap="round" />
+            <path d={`M${H.x - 20},${H.y + 40}Q${Cb.x},${Cb.y + 40} ${D.x + 30},${D.y + 40}M${bed.x0 + 120},${bed.near + 20}Q${bed.x0 + 260},${bed.near + 60} ${bed.x0 + 300},${bed.near + 92}M${Bk.x - 140},${bed.near + 30}Q${Bk.x - 60},${bed.near + 50} ${Bk.x - 30},${bed.near + 96}`} stroke={mixhex(blanket, k.sil, .35)} strokeWidth={6} fill="none" strokeLinecap="round" />
+          </Layer>
+          <Layer d={1} blend="screen" blur={1.6} defs={
+            <>
+              <clipPath id="a5sleepPatch"><path d={blanketD} /><rect x={bed.x0} y={bed.far} width={bed.x1 - bed.x0} height={bed.near - bed.far} /><rect x={-2000} y={floorY + 34} width={6000} height={1400} /></clipPath>
+              <linearGradient id="a5sleepShaft" x1="0" y1={win.y} x2="0" y2={po.y + PV.y} gradientUnits="userSpaceOnUse">
+                <stop offset="0" stopColor="#ffd2a0" stopOpacity={.42} />
+                <stop offset="1" stopColor="#ffb07a" stopOpacity={.04} />
+              </linearGradient>
+            </>
+          }>
+            <path d={shaft} fill="url(#a5sleepShaft)" opacity={.45} />
+            <path d={panes} fill="#ffc690" opacity={.46} clipPath="url(#a5sleepPatch)" />
+            <Moths t={t} at={motes} color="#ffe6c8" wings={false} glow={.6} />
           </Layer>
           <Layer d={1} blend="screen">
-            <g fill={k.glow} opacity={.11}>{[0, 1].map((i) => [0, 1].map((j) => <path key={`${i}${j}`} d={pane(i, j)} />))}</g>
-            <Glow x={orb.x} y={orb.y} r={orb.r * 14 * (1 + c.pulse * .06)} color={K.bloom.accent} opacity={.55} />
-            <Glow x={orb.x} y={orb.y} r={orb.r * 2.4} color="#fff6dc" opacity={.95} />
-            <circle cx={orb.x} cy={orb.y} r={orb.r * .78} fill="#fffdf4" />
+            <Glow x={orb.x} y={orb.y} r={460} color="#ffb766" opacity={.42 + breath * .04} />
+            <Orb x={orb.x} y={orb.y} r={orb.r} breath={breath} />
           </Layer>
-          <Layer d={.7} blend="screen">
-            <Moths t={t} at={motes} color="#fff0d0" wings={false} />
+          <Layer d={1} defs={<clipPath id="a5sleepArm"><circle cx={orb.x} cy={orb.y} r={orb.r * 2.4} /></clipPath>}>
+            {/* 가까운 아래팔을 구슬 앞으로 다시 그린다: 구슬 아래쪽을 받쳐 안고, 구슬 빛이 팔 윗가장자리를 비춘다 */}
+            <g transform="translate(0 -3.5)" clipPath="url(#a5sleepArm)" opacity={.95}>
+              <path d={armD} stroke="#ffd59a" strokeWidth={.05 * s + 6} strokeLinecap="round" fill="none" />
+              <circle cx={hug.h.x} cy={hug.h.y} r={.036 * s + 3} fill="#ffd59a" />
+            </g>
+            <path d={armD} stroke={k.sil} strokeWidth={.05 * s} strokeLinecap="round" fill="none" />
+            <circle cx={hug.h.x} cy={hug.h.y} r={.036 * s} fill={k.sil} />
           </Layer>
-          <Layer d={.45}>
-            <Moths t={t} at={(tt) => [{ x: mix(1900, 1300, ease("out", lin(0, c.dur, tt - T66))), y: mix(1050, 820, lin(0, c.dur, tt - T66)) + Math.sin(tt * 3) * 20, s: 30, a: -2.6, f: tt * 9, b: .9 }]} color={k.accent} />
+          <Layer d={.6} blur={5}>
+            {/* 2번 방의 스탠드(흐린 전경 실루엣) */}
+            <rect x={lamp.x - 600} y={lamp.y} width={760} height={600} fill={k.sil} />
+            <rect x={lamp.x - 600} y={lamp.y - 14} width={780} height={20} fill={k.sil} />
+            <path d={`M${lamp.x},${lamp.y - 10}L${lamp.x + 14},${lamp.y - 250}L${lamp.x + 130},${lamp.y - 330}`} stroke={k.sil} strokeWidth={16} fill="none" strokeLinecap="round" />
+            <path d={`M${lamp.x + 80},${lamp.y - 340}L${lamp.x + 220},${lamp.y - 380}L${lamp.x + 202},${lamp.y - 250}Z`} fill={k.sil} />
+            <ellipse cx={lamp.x} cy={lamp.y - 6} rx={70} ry={14} fill={k.sil} />
+            <path d={`M${lamp.x + 220},${lamp.y - 380}L${lamp.x + 202},${lamp.y - 250}`} stroke={k.rim} strokeWidth={4} opacity={.45} />
           </Layer>
+          <SleepReveal x={os.x} y={os.y} r={reveal} />
         </Scene>
       );
     },

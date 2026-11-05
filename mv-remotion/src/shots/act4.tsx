@@ -18,7 +18,7 @@ import { Glow, GodRays, Lightning, Moon, Rain, SkyFill, Stars, Wisp } from "../l
 import { Moths, Burst, swarm, type M } from "../lib/moths";
 import { Kid, ikArm, skeleton } from "../kid/rig";
 import { P, lerpPose, pose, type Pose } from "../kid/pose";
-import { AlleyView, CloudMass, Hand, Heap, HeapRow, PovLegs, RadialRain, Streaks, TopPuffs, Vapor, lerpKey, type HandSpec } from "./act4-kit";
+import { AlleyView, CloudMass, Hand, Heap, HeapRow, PovLegs, RadialRain, Storm, Streaks, TopPuffs, Vapor, bank, lerpKey, ring, stormTone, tower, type Bolt, type HandSpec, type Mass } from "./act4-kit";
 import type { Shot } from "./types";
 
 const SIL = K.silver, ST = K.storm;
@@ -124,6 +124,23 @@ function hopPose(t: number, s: number, dx: number, facing: 1 | -1, seed: number)
     if (h.i === 6) base = lerpPose(base, { ...P.stand, headTilt: -.15 }, smooth(.12, .45, h.since));
   }
   return { ...base, anchor: "feet", x: h.x + dx, y: h.y, s, facing, swing: (h.air ? 1.3 : .5) + n2(seed, t * 1.8) * .35 };
+}
+
+/** 화면 밖 덩어리는 그리지 않는다(깊이 d 층, 카메라 cam). 넓게 깔린 줄·벽의 대부분이 화면 밖이다 */
+const seen = (cam: Cam, d: number, ms: Mass[], pad = 1.15) => ms.filter((m) => {
+  const h = m.h ?? m.w * .32;
+  const q = project(cam, d, m.x, m.y);
+  const R = (m.w * .5 + h * 1.2) * q.s * pad;
+  return q.x > -R && q.x < 1920 + R && q.y > -R && q.y < 1080 + R;
+});
+
+/** 떨어지는 동안 위로 스쳐 지나가는 양옆 덩어리(부푼 면이 가운데를 본다). off만큼 위로 흐르고 span마다 되돌아온다 */
+function rising(seed: number, n: number, off: number, span: number, y0: number, x: number, w: number): Mass[] {
+  return Array.from({ length: n }, (_, i) => {
+    const side = i % 2 ? 1 : -1;
+    const ww = w * (.8 + rnd(seed, i) * .45);
+    return { seed: seed * 19 + i, x: 960 + side * (x + rnd(seed, i + 20) * 260), y: ((rnd(seed, i + 40) * span - off) % span + span) % span + y0, w: ww, h: ww * .36, rot: -side * Math.PI / 2 };
+  });
 }
 
 export const act4: Shot[] = [
@@ -343,8 +360,16 @@ export const act4: Shot[] = [
         kp = ikArm(kp, 1, mix(ksk.haF.x, hx, hj), mix(ksk.haF.y, hy, hj));
         fp = ikArm(fp, 0, mix(fsk.haN.x, hx, hj), mix(fsk.haN.y, hy, hj));
       }
-      const sea = { lit: k.cloudLit, dark: mixhex(k.cloud, k.sil, .2), mid: mixhex(k.cloudLit, k.cloud, .5) };
-      const tower = { lit: mixhex(ST.cloudLit, k.cloudLit, .45), dark: mixhex(ST.cloud, ST.sil, .3), mid: mixhex(ST.cloud, ST.cloudLit, .35) };
+      // 폭풍: 먼 지평선 줄(안개) → 탑(달빛 윗면, 속에서 번개) → 구름 바다 둘(은빛이 빠진다). 번개 점은 탑 속 세 군데
+      const bolts: Bolt[] = [
+        { x: 1300, y: 660, a: strike(lt - tF1, 1.1), r: 650 },
+        { x: 1400, y: 580, a: strike(lt - tF2, 1.5), r: 900 },
+        { x: 1660, y: 470, a: strike(lt - tF3, 1.15), r: 650 },
+      ];
+      const seaBolts: Bolt[] = bolts.map((b) => ({ ...b, y: b.y + 280, a: b.a * .6, r: 1000 }));
+      const towerTone = stormTone(lerpKey(SIL, ST, mix(.5, 1, kw)), .3, mix(.75, .35, kw));
+      const moonRim = mix(.75, .25, kw) + flash * .6;
+      const rimC = mixc(k.moon, "#ffffff", flash);
       return (
         <Scene cam={cam}>
           <Sky k={k} t={t} horizon={800} glowX={1300} glowOpacity={.5 + flash * .25} stars={.5 * (1 - kw)} />
@@ -352,13 +377,16 @@ export const act4: Shot[] = [
             <Moon x={360} y={210} r={56} color={k.moon} glow={mix(1.1, .4, kw)} />
             <Wisp x={200 + wind * .25} y={230} w={900} h={70} color={mixhex(k.cloud, k.sil, .3)} opacity={kw * .85} />
           </Layer>
+          <Layer d={30} blur={1.6}>
+            <Storm masses={seen(cam, 30, bank(505, 805, 300, 3000, 420, 8, { hk: .26, drift: -3, t }))} tone={stormTone(k, 1)} t={t} bolts={bolts.map((b) => ({ ...b, a: b.a * .5, r: 1400 }))} rim={flash * .5} rimColor="#ffffff" />
+          </Layer>
           <Layer d={18} blur={0}>
-            <Heap seed={50} shape="tower" x={1450} y={840} w={1300} h={mix(500, 700, kw)} n={70} {...tower} t={t * 2} flash={flash} fx={.38 + (lt > tF2 ? .22 : 0)} fy={.5} edge={flash > .05 ? mixc(k.cloudLit, "#ffffff", flash) : undefined} />
-            <Lightning seed={501} x0={1430} y0={430} x1={1330} y1={820} flash={strike(lt - tF2)} width={2.2} branches={3} />
-            <HeapRow seed={502} y={845} x0={700} x1={3200} size={380} count={9} hk={.4} {...tower} t={t} drift={-6} />
+            <Storm masses={tower(50, 1450, 845, 1150, mix(560, 760, kw), { lean: .08, t, rim: moonRim })} tone={towerTone} t={t} bolts={bolts} rimColor={rimC} />
+            <Lightning seed={501} x0={1430} y0={480} x1={1330} y1={820} flash={strike(lt - tF2)} width={2.2} branches={3} />
+            <Storm masses={seen(cam, 18, bank(502, 850, 760, 3200, 380, 8, { hk: .3, drift: -6, t }))} tone={stormTone(k, .55, .2)} t={t} bolts={bolts} rim={moonRim * .35} rimColor={rimC} />
           </Layer>
           <Layer d={8} blur={0}>
-            <HeapRow seed={503} y={900} x0={-1600} x1={3500} size={480} count={12} n={14} hk={.38} {...sea} t={t} drift={-8} edge={flash > .05 ? mixc(k.cloudLit, "#ffffff", flash) : undefined} flash={flash * .5} flashColor={k.glow} />
+            <Storm masses={seen(cam, 8, bank(503, 905, -1600, 3500, 480, 12, { hk: .26, drift: -8, t }))} tone={stormTone(k, .5, .3 * (1 - kw))} t={t} bolts={seaBolts} rim={(1 - kw) * .3 + flash * .25} rimColor={rimC} />
           </Layer>
           <Layer d={4} blur={.6}>
             {[0, 1, 2, 3, 4, 5].map((i) => (
@@ -366,7 +394,7 @@ export const act4: Shot[] = [
             ))}
           </Layer>
           <Layer d={3} blur={1.2}>
-            <HeapRow seed={508} y={1180} x0={-1400} x1={3400} size={800} count={6} hk={.3} {...sea} t={t} drift={-10} />
+            <Storm masses={seen(cam, 3, bank(508, 1190, -1400, 3400, 800, 6, { hk: .26, drift: -10, t }))} tone={stormTone(k, .15, .25 * (1 - kw))} t={t} bolts={seaBolts.map((b) => ({ ...b, a: b.a * .5 }))} rim={(1 - kw) * .2} rimColor={rimC} />
           </Layer>
           <Layer d={1}>
             <CloudMass seed={509} x0={-900} x1={640} y={908} depth={360} dark={mixhex(k.cloud, k.sil, .2)} lit={k.cloudLit} rim={mixc(k.cloudLit, "#ffffff", .5 + flash * .5)} ends="R" />
@@ -415,30 +443,48 @@ export const act4: Shot[] = [
         if (t < L) return 0;
         return springStep(t - L, 20, .35) * Math.exp(-(t - L) * 2.5) * .9;
       };
-      const stone = { lit: mixc(k.cloudLit, "#ffffff", .15 + flash * .5), dark: mixhex(k.cloud, k.sil, .35), mid: mixhex(k.cloud, k.cloudLit, .45) };
-      const tower = { lit: k.cloudLit, dark: mixhex(k.cloud, k.sil, .6), mid: mixhex(k.cloud, k.sil, .2) };
+      // 징검돌은 아직 은빛이 남은 순한 구름(밝고 둥글다). 폭풍이 다가올수록 조금씩 빛이 빠진다
+      const calm = 1 - c.p * .45;
+      const stone = { lit: mixc(k.cloudLit, "#e6f4f8", .5 * calm + flash * .4), dark: mixhex(k.cloud, k.cloudLit, .5 * calm), mid: mixc(k.cloudLit, "#b8ccd2", .25 * calm) };
+      // 폭풍 벽(깊이 5): 덩어리를 아래(앞)에서 위(뒤)로 쌓아 화면 위로 빠져나가게. 앞(왼쪽) 끝은 들쭉날쭉. 꼭대기에서 선반 구름이 왼쪽으로 뻗어 하늘을 덮는다
+      const churn = t * 2.2;
+      const wallM: Mass[] = [
+        { seed: 5140, x: wall.x + 700, y: 120, w: 2600, h: 260, rough: .7 },
+        ...Array.from({ length: 6 }, (_, j) => {
+          const jj = 5 - j;
+          const w = 1500 + rnd(514, jj) * 500;
+          return { seed: 5141 + jj, x: wall.x + w / 2 - 60 + (rnd(514, jj + 20) - .5) * 220 + (jj % 2 ? 90 : -30), y: 1180 - jj * 205, w, h: w * (.22 + rnd(514, jj + 40) * .06) };
+        }),
+      ];
+      const wallBolts: Bolt[] = [
+        { x: wall.x + 820, y: 520, a: strike(lt - tL1, .9), r: 800 },
+        { x: wall.x + 300, y: 160, a: strike(lt - tL2, 1.4), r: 900 },
+        { x: wall.x + 620, y: 330, a: strike(lt - tL3, 1.1), r: 750 },
+      ];
+      const farX = unproject(cam, 14, wallSx - 150, 0).x;
+      const farBolts = wallBolts.map((b) => ({ ...b, x: farX + (b.x - wall.x) * .3, y: 700, a: b.a * .7, r: 1100 }));
       return (
         <Scene cam={cam}>
           <Sky k={k} t={t} horizon={760} glowX={600} glowOpacity={.35 + flash * .3} />
           <Layer d={60} blur={0}>
             <g opacity={1 - smooth(.25, .7, c.p)}><Moon x={330} y={190} r={42} color={k.moon} glow={.7 * (1 - c.p * .8)} /></g>
             <Wisp x={-200 + lt * 160} y={200} w={700} h={60} color={mixhex(k.cloud, k.sil, .4)} opacity={.9} />
-            <HeapRow seed={510} y={330} x0={-300} x1={2400} size={460} count={7} n={12} hk={.35} lit={k.cloud} dark={mixhex(k.cloud, k.sil, .5)} t={t} drift={-25} />
+            <Storm masses={seen(cam, 60, bank(510, 300, -300, 2400, 520, 7, { hk: .24, drift: -25, t, rough: .8 }))} tone={stormTone(k, .55)} t={t} rim={.25} rimColor={k.glow} bolts={[{ x: 1500, y: 250, a: flash * .6, r: 1200 }]} />
           </Layer>
-          <Layer d={14} blur={0}>
-            <HeapRow seed={513} y={800} x0={-2600} x1={3800} size={480} count={12} n={12} hk={.38} lit={mixhex(k.cloudLit, k.cloud, .3)} dark={mixhex(k.cloud, k.sil, .4)} t={t} drift={-6} />
+          <Layer d={14} blur={1.4}>
+            <Storm masses={seen(cam, 14, bank(513, 812, -2600, 3800, 480, 13, { hk: .26, drift: -6, t }))} tone={stormTone(k, .9)} t={t} bolts={farBolts} rim={flash * .3} rimColor="#ffffff" />
           </Layer>
           <Layer d={5} blur={0}>
-            <Heap seed={514} shape="tower" x={wall.x + 760} y={1150} w={2100} h={1700} n={72} puff={.68} {...tower} t={t * 2.5} flash={flash} fx={.25} fy={.55} edge={flash > .05 ? mixc(k.cloudLit, "#ffffff", flash) : undefined} />
+            <Storm masses={seen(cam, 5, wallM)} tone={stormTone(k, .12)} t={churn} bolts={wallBolts} rim={.3 + flash * .4} rimColor={mixc(k.glow, "#ffffff", flash)} />
             <Lightning seed={515} x0={wall.x + 300} y0={-250} x1={wall.x + 60} y1={760} flash={strike(lt - tL2)} width={4} branches={5} />
             <Lightning seed={516} x0={wall.x + 600} y0={-100} x1={wall.x + 420} y1={600} flash={strike(lt - tL3, .8)} width={3} branches={3} />
           </Layer>
           <Layer d={3.2} blur={1.4}>
-            <HeapRow seed={517} y={1220} x0={-3000} x1={3200} size={820} count={9} n={14} hk={.36} {...stone} lit={mixhex(k.cloud, k.cloudLit, .6)} t={t} drift={-12} />
+            <Storm masses={seen(cam, 3.2, bank(517, 1235, -3000, 3200, 820, 9, { hk: .24, drift: -12, t }))} tone={stormTone(k, .05)} t={t} bolts={[{ x: unproject(cam, 3.2, 1700, 0).x, y: 1100, a: flash * .5, r: 1400 }]} />
           </Layer>
           <Layer d={1.8} blur={0}>
             {Array.from({ length: 7 }, (_, i) => (
-              <Heap key={i} seed={5180 + i} shape="stone" x={1900 - i * 640 + rnd(518, i) * 260} y={800 + rnd(519, i) * 130} w={190 + rnd(520, i) * 140} h={100 + rnd(521, i) * 50} lit={mixhex(k.cloudLit, k.cloud, .35)} dark={mixhex(k.cloud, k.sil, .45)} />
+              <Heap key={i} seed={5180 + i} shape="stone" x={1900 - i * 640 + rnd(518, i) * 260} y={800 + rnd(519, i) * 130} w={190 + rnd(520, i) * 140} h={100 + rnd(521, i) * 50} lit={mixc(k.cloudLit, "#cfe2e8", .3 * calm)} dark={mixhex(k.cloud, k.cloudLit, .3)} n={12} />
             ))}
           </Layer>
           <Layer d={Infinity} blur={0}>
@@ -446,7 +492,7 @@ export const act4: Shot[] = [
           </Layer>
           <Layer d={1}>
             {HOP.xs.map((x, i) => (
-              <Heap key={i} seed={5200 + i} shape="stone" x={x} y={HOP.tops[i] + 92 + Math.sin(t * 1.4 + i) * 5} w={i === 0 ? 340 : 300} h={150} {...stone} press={press(i)} edge={flash > .05 ? mixc(k.cloudLit, "#ffffff", flash) : undefined} />
+              <Heap key={i} seed={5200 + i} shape="stone" x={x} y={HOP.tops[i] + 92 + Math.sin(t * 1.4 + i) * 5} w={i === 0 ? 340 : 300} h={150} {...stone} n={13} puff={.88} press={press(i)} edge={flash > .05 ? mixc(k.cloudLit, "#ffffff", flash) : undefined} />
             ))}
             {HOP.L.map((L, i) => <Vapor key={i} x={HOP.xs[i + 1] + 50} y={HOP.tops[i + 1] - 4} t={t} t0={L} r={150} color={mixc(k.cloudLit, k.fog, .3)} seed={530 + i} n={10} dur={.9} />)}
             <Kid variant="friend" accent={PINK} pose={pose(fp)} sil={k.sil} rim={RIM(k, .85, -.5, .014 + flash * .02, .9)} />
@@ -459,8 +505,7 @@ export const act4: Shot[] = [
             {Array.from({ length: 6 }, (_, i) => (
               <Wisp key={i} x={1800 - i * 1100 + rnd(521, i) * 300} y={i % 2 ? 1000 : 120} w={900} h={110} color={k.cloudLit} opacity={.35} />
             ))}
-            <Heap seed={522} shape="stone" x={-200} y={1180} w={560} h={240} lit={k.cloud} dark={k.sil} />
-            <Heap seed={523} shape="stone" x={-1700} y={1160} w={640} h={260} lit={k.cloud} dark={k.sil} />
+            <Storm masses={seen(cam, .45, [{ seed: 522, x: -200, y: 1215, w: 760, h: 230 }, { seed: 523, x: -1700, y: 1200, w: 860, h: 260 }])} tone={stormTone(k, 0)} t={t} />
           </Layer>
         </Scene>
       );
@@ -506,16 +551,22 @@ export const act4: Shot[] = [
         });
       };
       const bx1 = 1210, by1 = G + 20;
-      const stone = { lit: mixc(k.cloudLit, "#ffffff", bolt * .7), dark: mixhex(k.cloud, k.sil, .35), mid: mixhex(k.cloud, k.cloudLit, .4) };
+      const stone = { lit: mixc(k.cloudLit, "#e6f4f8", .3 + bolt * .6), dark: mixhex(k.cloud, k.cloudLit, .3), mid: mixc(k.cloudLit, "#b8ccd2", .1 + bolt * .4) };
       return (
         <Scene cam={cam}>
           <Sky k={k} t={t} horizon={880} glowX={bx1} glowOpacity={.3 + bolt * .5}>
             <rect x={-400} y={-400} width={2720} height={1880} fill="#dcefff" opacity={bolt * .75} />
             <Glow x={bx1} y={300} r={1300} color="#ffffff" opacity={bolt * .7} />
           </Sky>
-          <Layer d={10} blur={0}>
-            <HeapRow seed={521} y={960} x0={-1400} x1={3400} size={520} count={10} hk={.4} {...stone} t={t} drift={-8} />
-            <HeapRow seed={522} y={160} x0={-1400} x1={3400} size={720} count={6} hk={.35} lit={mixc(k.cloud, "#dff4ff", bolt * .5)} dark={mixhex(k.cloud, k.sil, .5)} t={t} drift={-14} />
+          <Layer d={18} blur={1.4}>
+            <Storm masses={seen(cam, 18, bank(5210, 905, -900, 2900, 460, 9, { hk: .28, drift: -5, t }))} tone={stormTone(k, .95)} t={t} bolts={[{ x: bx1 - 60, y: 820, a: bolt * 1.1, r: 1100 }]} rim={.2 + bolt * .5} rimColor="#ffffff" />
+          </Layer>
+          <Layer d={9} blur={0}>
+            {/* 천장: 번개가 빠져나온 덩어리가 안에서 하얗게 비친다 */}
+            <Storm masses={seen(cam, 9, bank(522, 150, -1300, 3300, 760, 7, { hk: .3, drift: -14, t, jitter: .2 }))} tone={stormTone(k, .3)} t={t * 2}
+              bolts={[{ x: 1330, y: 120, a: bolt * 1.4, r: 1000 }, { x: 500, y: 160, a: strike(lt - (beat(203) - T52), .8), r: 800 }]} />
+            <Storm masses={seen(cam, 9, bank(521, 995, -1400, 3400, 520, 10, { hk: .28, drift: -8, t }))} tone={stormTone(k, .45)} t={t}
+              bolts={[{ x: bx1, y: 900, a: bolt * 1.2, r: 900 }]} rim={.15 + bolt * .6} rimColor="#ffffff" />
           </Layer>
           <Layer d={2.2} blur={1}>
             <Glow x={bx1} y={by1} r={700} color="#e8f8ff" opacity={bolt * .55} />
@@ -572,8 +623,9 @@ export const act4: Shot[] = [
             <Glow x={1000} y={470} r={380} color="#ffffff" opacity={clamp(fl - .25) * .55} />
           </Sky>
           <Layer d={6} blur={6}>
-            <HeapRow seed={531} y={1180} x0={-1200} x1={3200} size={800} count={7} hk={.4} lit={mixc(k.cloudLit, "#ffffff", fl * .4)} dark={mixhex(k.cloud, k.sil, .4)} t={t} drift={-4} />
-            <HeapRow seed={532} y={260} x0={-1200} x1={3200} size={640} count={6} hk={.35} lit={k.cloudLit} dark={mixhex(k.cloud, k.sil, .5)} t={t} drift={3} />
+            <Storm masses={seen(cam, 6, bank(532, 300, -1200, 3200, 700, 6, { hk: .3, drift: 3, t, jitter: .25 }))} tone={stormTone(k, .6)} t={t} bolts={[{ x: 1150, y: 260, a: strike(lt - tSep + .03, 1.3), r: 1000 }]} />
+            <Storm masses={seen(cam, 6, bank(531, 1200, -1200, 3200, 820, 7, { hk: .3, drift: -4, t }))} tone={stormTone(k, .4, .3)} t={t}
+              bolts={[{ x: 1000, y: 1020, a: clamp(fl - .3) * 1.4, r: 1100 }]} rim={.2 + fl * .4} rimColor="#e8f8ff" />
           </Layer>
           <Layer d={2} blur={3}>
             <Rain seed={532} t={t * .12} count={90} angle={.15} color="#d6eef6" opacity={.5} speed={2200} len={22} width={2.2} />
@@ -591,77 +643,128 @@ export const act4: Shot[] = [
     },
   },
   {
-    // 54. 위에서 내려다봄: 구름 끝을 따라 엎드린 아이(후드·꼬리)가 모서리 밖으로 손을 뻗는다. 친구가 검은 구름 바다 속으로 작아지며 떨어진다.
-    //     박(209)에 구름 속 번개가 친구 실루엣을 비추고 구름이 삼킨다. 그 뒤 아이가 몸을 당겨 웅크리고 카메라가 심연으로 밀려 들어간다(다이빙 예비동작)
+    // 54. 위에서 내려다봄: 구름 끝에 엎드린 아이가 머리와 두 팔을 모서리 밖으로 내밀어 손을 뻗는다(밝은 구름 가장자리 위의 검은 실루엣).
+    //     친구는 분홍 테두리 빛을 달고 폭풍 구멍 속 밝은 안개 쪽으로 작아지며 떨어진다. 구멍 둘레의 덩어리는 세 겹(깊을수록 밝고 흐리다).
+    //     박(209)에 구멍 속 번개가 덩어리들을 안에서 밝히고 둘을 실루엣으로 세운다. 그 뒤 가까운 덩어리가 오므라들어 친구를 삼키고,
+    //     아이가 몸을 당겨 웅크리며 카메라가 구멍으로 밀려 들어간다(다이빙 예비동작)
     id: "a4-fall", start: T54, key: "storm", enter: { type: "cut" },
     render: (c) => {
       const k = ST, lt = c.lt, t = c.t;
-      const tGone = beat(209) - T54;
-      const VP = { x: 1060, y: 700 };
-      const z = 1 + .55 * lt + .95 * lt * lt;
-      const f0 = { x: 610, y: 430 };
-      const fx = VP.x + (f0.x - VP.x) / z + n2(541, t) * 20 / z, fy = VP.y + (f0.y - VP.y) / z;
-      const fs = 330 / z;
-      const fl = clamp(strike(lt - tGone, 1) + strike(lt - .3, .35) + strike(lt - (beat(207) - T54), .45));
+      const tGone = beat(209) - T54, t207 = beat(207) - T54;
+      const VP = { x: 1120, y: 700 };
+      // 아이 어깨 → 소실점 방향(손·친구·구멍이 모두 이 대각선 위에 놓인다)
+      const S0 = { x: 492, y: 330 };
+      const dl = Math.hypot(VP.x - S0.x, VP.y - S0.y), ux = (VP.x - S0.x) / dl, uy = (VP.y - S0.y) / dl;
+      const z = 1 + .35 * lt + .38 * lt * lt;
+      const f0 = { x: S0.x + ux * 250, y: S0.y + uy * 250 };
+      const fx = VP.x + (f0.x - VP.x) / z + n2(541, t) * 18 / z, fy = VP.y + (f0.y - VP.y) / z;
+      const fs = 300 / z;
+      const big = strike(lt - tGone, 1);
+      const fl = clamp(big + strike(lt - .3, .35) + strike(lt - t207, .5));
       const hh = handheld(t, 54, 6, .55);
-      const cam: Cam = { x: 960 + hh.x, y: 540 + hh.y, zoom: kf(lt, [[0, 1], [tGone, 1.06, "io"], [c.dur, 1.28, "in"]]), rot: hh.r + .03, focus: 1, dof: 3 };
-      const close = ease("io", lin(tGone - .45, tGone + .25, lt));
-      const fp = pose({ ...P.flail, anchor: "center", x: fx, y: fy, s: fs, facing: -1, rot: .35 * Math.sin(lt * 2.2) + lt * .4, armN: [1.9, .3], armF: [2.4, .6], swing: 2.2, legN: [.9 + .3 * Math.sin(lt * 9), .6], legF: [-.3, 1.0 + .3 * Math.sin(lt * 8)], mouth: .8 });
+      const zoom = kf(lt, [[0, 1], [tGone, 1.06, "io"], [c.dur, 1.3, "in"]]);
+      // 소실점을 화면에 붙잡아 둔 채 밀어 들어간다
+      const cam: Cam = { x: VP.x - (VP.x - 960) / zoom + hh.x, y: VP.y - (VP.y - 540) / zoom + hh.y, zoom, rot: hh.r + .03, focus: 1, dof: 3 };
+      const close = ease("io", lin(tGone + .08, tGone + .62, lt));
       const ready = smooth(tGone + .05, c.dur, lt);
-      const KS = 600;
-      // 엎드린 아이: 몸은 구름 끝을 따라 눕고(머리 오른쪽), 가까운 팔이 모서리 밖 아래로
-      let kp: Partial<Pose> = pose({ anchor: "center", x: 400 - ready * 40, y: 120 - ready * 50, s: KS, facing: 1, rot: Math.PI / 2 + .15 - ready * .15, lean: .05, headTilt: mix(.35, -.1, ready), armF: [1.2, 1.4], legN: [.1, .2], legF: [-.1, .25], swing: 1.0 + n2(542, t * 2) * .3 });
-      kp = ikArm(kp, 0, mix(fx, 560, ready), mix(fy, 140, ready));
+      // 친구: 머리가 아이 쪽(facing -1이면 rig가 회전을 뒤집는다), 천천히 구른다
+      const fAng = Math.atan2(-uy, -ux) + Math.PI / 2;
+      let fp: Partial<Pose> = pose({ ...P.flail, anchor: "center", x: fx, y: fy, s: fs, facing: -1, rot: -(fAng + .3 * Math.sin(lt * 2.2) + lt * .25), armN: [2.2, .1], armF: [1.9, .35], swing: 2.2, legN: [.9 + .3 * Math.sin(lt * 9), .6], legF: [-.3, 1.0 + .3 * Math.sin(lt * 8)], mouth: .8 });
+      // 친구의 두 손이 아이 손 쪽으로(곧게 뻗은 팔이 대각선을 잇는다)
+      fp = ikArm(fp, 0, S0.x + ux * 100, S0.y + uy * 100);
+      fp = ikArm(fp, 1, S0.x + ux * 100 - uy * 60, S0.y + uy * 100 + ux * 60);
+      const fsk = skeleton(fp);
+      // 엎드린 아이: 구름 끝을 따라 눕고(머리는 모서리를 따라 오른쪽 위), 얼굴과 가까운 팔이 구멍 쪽. 박 209 뒤 몸을 당겨 웅크린다
+      const KS = 430;
+      const kRot = Math.atan2(uy, ux);
+      const pull = ready * 80;
+      const kBase: Partial<Pose> = {
+        anchor: "center", x: 0, y: 0, s: KS, facing: 1, rot: kRot + n2(542, t * .8) * .03, lean: mix(0, .25, ready), bend: mix(.08, .4, ready), headTilt: mix(.45, .1, ready),
+        legN: [mix(.15, 1.1, ready), mix(.25, 1.5, ready)], legF: [mix(-.1, .9, ready), mix(.35, 1.6, ready)], swing: 1.0 + n2(543, t * 2) * .3, armF: [.6, .3],
+      };
+      const sh0 = skeleton(pose(kBase)).shN;
+      let kp: Partial<Pose> = pose({ ...kBase, x: S0.x - sh0.x - ux * pull, y: S0.y - sh0.y - uy * pull });
+      const tgt = { x: mix(fsk.haF.x, S0.x + ux * 60, ready), y: mix(fsk.haF.y, S0.y + uy * 60, ready) };
+      kp = ikArm(kp, 0, tgt.x, tgt.y);
+      kp = ikArm(kp, 1, S0.x + ux * 70 + uy * 70 - ux * pull, S0.y + uy * 70 - ux * 70 - uy * pull);
       const ksk = skeleton(kp);
       const ha = Math.atan2(ksk.haN.y - ksk.elN.y, ksk.haN.x - ksk.elN.x);
       const hs = .17 * KS;
       const handW = { x: ksk.haN.x - Math.cos(ha) * .15 * hs, y: ksk.haN.y - Math.sin(ha) * .15 * hs };
-      const abyss = Array.from({ length: 26 }, (_, i) => {
-        const th = (i / 26) * TAU + rnd(547, i) * .3;
-        const r = 180 + rnd(548, i) * 640;
-        return { x: VP.x + Math.cos(th) * r, y: VP.y + Math.sin(th) * r * .8, r: 170 + rnd(549, i) * 190 };
+      // 구름 끝(모서리): 소실점을 둘러싼 호. 덩어리의 부푼 윗면이 구멍 쪽을 보고, 모서리 쪽이 가장 밝다
+      const lipR = 640;
+      const lipA = Math.atan2(S0.y - VP.y, S0.x - VP.x);
+      const lip: Mass[] = Array.from({ length: 7 }, (_, i) => {
+        const a = lipA + (i - 3) * .25 + (rnd(5410, i) - .5) * .06;
+        const r = lipR + (rnd(5411, i) - .5) * 60 + 190;
+        const x = VP.x + Math.cos(a) * r, y = VP.y + Math.sin(a) * r * .86;
+        const w = 470 + rnd(5412, i) * 170;
+        return { seed: 5413 + i, x, y, w, h: w * .34, rot: Math.atan2(VP.y - y, VP.x - x) + Math.PI / 2, rough: 1.1 };
       });
-      const puffs = Array.from({ length: 9 }, (_, i) => {
-        const th = (i / 9) * TAU + rnd(543, i);
-        const r0 = 520 + rnd(544, i) * 260;
-        const r = mix(r0, r0 * .16, close) + n2(545 + i, t * .5) * 30;
-        return { x: VP.x + Math.cos(th) * r, y: VP.y + Math.sin(th) * r * .8, rr: 230 + rnd(546, i) * 140 };
-      });
-      // 위쪽 구름 끝(내려다봄): 왼쪽 위를 덮고 오른쪽 아래로 울퉁불퉁한 가장자리
-      const edgePts = Array.from({ length: 16 }, (_, i) => {
-        const u = i / 15;
-        return { x: -250 + u * 1700 + rnd(551, i) * 60, y: mix(250, -60, u * u) + rnd(552, i) * 50, r: 110 + rnd(553, i) * 90 };
-      });
+      const surf = mixc(k.cloudLit, "#9db6bc", .25), lipLit = mixc(k.cloudLit, "#d8ecf0", .5);
+      const lipTone = { top: lipLit, body: mixc(k.cloudLit, "#a9c3c9", .15), base: surf };
+      const lipPoly = Array.from({ length: 13 }, (_, i) => {
+        const a = lipA - (i - 6) * .16;
+        return `L${(VP.x + Math.cos(a) * (lipR + 220)).toFixed(1)},${(VP.y + Math.sin(a) * (lipR + 220) * .86).toFixed(1)}`;
+      }).join("");
+      const lipGA = { x: VP.x + Math.cos(lipA) * (lipR + 900), y: VP.y + Math.sin(lipA) * (lipR + 900) };
+      // 구멍 속 번개 점(박 209가 가장 세다)
+      const deepB: Bolt[] = [
+        { x: VP.x - 30, y: VP.y + 20, a: big * 1.5, r: 650 },
+        { x: VP.x + 260, y: VP.y - 120, a: strike(lt - t207, .9), r: 500 },
+        { x: VP.x - 200, y: VP.y + 160, a: strike(lt - .3, .7), r: 500 },
+      ];
+      const fogC = mixc(k.glow, k.cloudLit, .45);
+      const rimF = Math.max(.04, 5.5 / fs);
       return (
         <Scene cam={cam} bg={k.sky[0]}>
           <Layer d={Infinity} blur={0}>
-            <rect x={-200} y={-200} width={2400} height={1500} fill={k.sky[0]} />
-            <Glow x={VP.x} y={VP.y} r={1100} color={mixhex(k.cloud, k.cloudLit, .3)} opacity={.75} />
+            <rect x={-300} y={-300} width={2520} height={1680} fill={k.sky[1]} />
+            {/* 구멍 바닥의 밝은 안개: 떨어지는 친구가 이 앞에서 검게 읽힌다 */}
+            <Glow x={VP.x} y={VP.y} r={1000} color={fogC} opacity={.62 + fl * .3} />
+            <Glow x={VP.x} y={VP.y} r={420} color={mixc(fogC, "#e8f8ff", .35)} opacity={.45 + fl * .5} />
+            <Glow x={VP.x - 30} y={VP.y + 20} r={260} color="#ffffff" opacity={big * .9} />
           </Layer>
-          <Layer d={9} blur={1.5}>
-            {abyss.map((p, i) => <Glow key={i} x={p.x} y={p.y} r={p.r * 1.3} color={mixhex(k.cloud, k.cloudLit, .55)} opacity={.75} />)}
-            {abyss.map((p, i) => <Glow key={"d" + i} x={p.x + p.r * .4} y={p.y + p.r * .45} r={p.r * .9} color={k.sky[0]} opacity={.6} />)}
-            <Glow x={VP.x - 30} y={VP.y + 20} r={600} color={k.glow} opacity={fl * .9} />
-            <Glow x={VP.x - 30} y={VP.y + 20} r={170} color="#ffffff" opacity={fl * .75} />
-            <Lightning seed={549} x0={VP.x - 320} y0={VP.y - 140} x1={VP.x + 140} y1={VP.y + 220} flash={strike(lt - tGone, .9)} width={2.5} branches={3} />
+          <Layer d={9} blur={2}>
+            <Storm masses={ring(5401, VP.x, VP.y, 330, 6, 540, { sq: .82, spin: lt * .08, hk: .36 })} tone={stormTone(k, 1, .5)} t={t * 1.5} bolts={deepB} rim={big * .6} rimColor="#e8f8ff" />
+            <Lightning seed={549} x0={VP.x - 300} y0={VP.y - 160} x1={VP.x + 120} y1={VP.y + 200} flash={strike(lt - tGone, .95)} width={2.5} branches={3} />
           </Layer>
-          <Layer d={1} blur={0}>
-            <Kid variant="friend" accent={PINK} pose={fp} sil={k.sil} rim={RIM(k, .2, 1, .025, 1, "#ffffff")} opacity={1 - smooth(tGone + .12, tGone + .35, lt)} />
+          <Layer d={4} blur={1}>
+            <Storm masses={ring(5402, VP.x, VP.y, 640, 7, 800, { sq: .84, spin: -lt * .05, hk: .34, gap: Math.atan2(f0.y - VP.y, f0.x - VP.x), gapW: .38 })} tone={stormTone(k, .3)} t={t * 1.5}
+              bolts={deepB.map((b) => ({ ...b, a: b.a * .8, r: 1000 }))} rim={big * .5} rimColor="#e8f8ff" />
           </Layer>
-          <Layer d={4} blur={2}>
-            {puffs.map((p, i) => <Glow key={i} x={p.x} y={p.y} r={p.rr} color={mixhex(k.cloud, k.cloudLit, .25 + fl * .5)} opacity={.85 * (.3 + close * .7)} />)}
+          <Layer d={1} blend="screen">
+            <Glow x={fx} y={fy} r={fs * .95} color={PINK} opacity={.22 * (1 - close)} />
+          </Layer>
+          <Layer d={1}>
+            <Kid variant="friend" accent={PINK} pose={fp} sil={k.sil} opacity={1 - smooth(tGone + .25, tGone + .55, lt)}
+              rim={{ dx: ux, dy: uy, color: mixc(PINK, "#ffffff", .3), width: rimF, glow: 1 }}
+              rim2={big > .05 ? { dx: -ux, dy: -uy, color: "#ffffff", width: rimF * .8, glow: big } : undefined} />
+          </Layer>
+          <Layer d={1.8} blur={0}>
+            {/* 가까운 덩어리가 오므라들고 가운데 어둠이 번져 친구를 삼킨다 */}
+            <Glow x={VP.x} y={VP.y} r={mix(150, 900, close)} color={k.sky[0]} opacity={close * .95} />
+            <Storm masses={seen(cam, 1.8, ring(5403, VP.x, VP.y, mix(1080, 700, close), 6, 1250, { sq: .86, spin: lt * .05 + close * .25, hk: .36, gap: lipA, gapW: .5 }))} tone={stormTone(k, 0)} t={t * 1.5}
+              bolts={deepB.map((b) => ({ ...b, a: b.a * .55, r: 1200 }))} rim={big * .4} rimColor="#e8f8ff" />
           </Layer>
           <Layer d={Infinity} blur={0}>
             <RadialRain t={t} vx={VP.x} vy={VP.y} count={90} speed={1.0} color="#cfe6ee" opacity={.3} width={1.4} />
           </Layer>
           <Layer d={1}>
-            <path d={`M-400,-400H1700V${-60}` + edgePts.slice().reverse().map((p) => `L${p.x},${p.y + p.r * .5}`).join("") + "L-400,300Z"} fill={mixhex(k.cloudLit, k.cloud, .45)} />
-            <TopPuffs pts={edgePts} lit={mixhex(k.cloudLit, "#ffffff", .15)} dark={mixhex(k.cloudLit, k.cloud, .3)} cx={.45} cy={.35} />
-            <Kid pose={kp} sil={k.sil} rim={RIM(k, .15, 1, .014 + fl * .02, 1, "#e8f8ff")} />
-            <Hand x={handW.x} y={handW.y} a={ha} s={hs} curl={mix(.25, .9, ready)} spread={.7} thumb={.1} sleeve={.4} color={k.sil} rim={{ dx: .1, dy: 1, color: "#e8f8ff", w: .03, opacity: .5 + fl * .5 }} />
+            <defs>
+              <linearGradient id="a4fs" x1={lipGA.x} y1={lipGA.y} x2={VP.x} y2={VP.y} gradientUnits="userSpaceOnUse">
+                <stop offset="0%" stopColor={mixc(k.cloudLit, k.cloud, .3)} />
+                <stop offset="45%" stopColor={surf} />
+                <stop offset="62%" stopColor={mixc(surf, lipLit, .6)} />
+              </linearGradient>
+            </defs>
+            <path d={`M-600,-600H2400${lipPoly}L-600,2600Z`} fill="url(#a4fs)" />
+            <Storm masses={lip} tone={lipTone} t={t} bolts={[{ x: VP.x, y: VP.y, a: big * .9 + fl * .2, r: 1100 }]} rim={.35 + fl * .5} rimColor="#e8f8ff" />
+            <Kid pose={kp} sil={k.sil} rim={RIM(k, ux, uy, .02 + fl * .02, 1, "#e8f8ff")} />
+            <Hand x={handW.x} y={handW.y} a={ha} s={hs} curl={mix(.2, .9, ready)} spread={.75} thumb={.1} sleeve={.4} color={k.sil} rim={{ dx: ux, dy: uy, color: "#e8f8ff", w: .035, opacity: .6 + fl * .4 }} />
           </Layer>
-          <Layer d={.55} blur={8}>
-            <Streaks t={t} count={14} dir={Math.PI / 2 + .1} speed={900} len={260} width={5} opacity={.22} />
+          <Layer d={.55} blur={3}>
+            <Streaks t={t} count={14} dir={Math.PI / 2 + .1} speed={900} len={260} width={6} opacity={.2} />
           </Layer>
         </Scene>
       );
@@ -682,7 +785,10 @@ export const act4: Shot[] = [
       const camY = 540 + fall(lt - .05) + 120 * ease("out", lin(push, .4, lt));
       const fl = strike(lt - tL, 1);
       const hh = handheld(t, 55, 8, 1.2);
-      const cam: Cam = { x: 980 + hh.x, y: camY + hh.y, zoom: 1.04, rot: -.05 + hh.r, focus: 1, dof: 4 };
+      // 박차는 순간 살짝 넓어지며(속도감) 카메라가 천천히 옆으로 구른다
+      const roll = mix(0, .13, ease("io", lin(push, c.dur, lt))) + .02 * Math.sin(lt * 6.5) * smooth(push, .5, lt);
+      const zoom = kf(lt, [[0, 1.04], [push, 1.08, "io"], [push + .4, .98, "expoOut"], [c.dur, 1.01, "io"]]);
+      const cam: Cam = { x: 980 + hh.x, y: camY + hh.y, zoom, rot: -.05 + hh.r + roll, focus: 1, dof: 4 };
       const dive = ease("expoOut", lin(push - .03, .42, lt));
       const kp = lt < push
         ? pose({ ...lerpPose(P.crouch, { ...P.crouch, squash: .25, lean: .7, headTilt: .3 }, smooth(0, push, lt)), anchor: "feet", x: 860, y: 330, s: 330, facing: 1 })
@@ -690,32 +796,46 @@ export const act4: Shot[] = [
       const fyS = kf(lt, [[.72, 1350], [c.dur, 840, "out"]]);
       const fw = unproject(cam, 1, 1060, fyS);
       const fp = pose({ ...P.hang, anchor: "center", x: fw.x, y: fw.y, s: 300, facing: -1, rot: .25 + n2(552, t * 2) * .1, swing: 2.4, armN: [2.4, .05], armF: [2.1, .4], headTilt: -.6, legN: [.4, .9], legF: [-.3, .7] });
-      const colY = (i: number) => i * 700;
+      // 떨어지는 구멍의 벽: 양옆 덩어리의 부푼 면이 가운데를 본다. 먼 벽(깊이 8, 안개)·가운데 벽(깊이 3)·코앞을 스치는 검은 덩어리(깊이 .5)
+      const wall = (seed: number, n: number, y0: number, step: number, x: number, w: number, hk: number): Mass[] => Array.from({ length: n * 2 }, (_, i) => {
+        const side = i % 2 ? 1 : -1, j = Math.floor(i / 2);
+        const ww = w * (.8 + rnd(seed, i) * .45);
+        return { seed: seed * 17 + i, x: 960 + side * (x + rnd(seed, i + 40) * 120), y: y0 + j * step + (side > 0 ? step * .5 : 0) + rnd(seed, i + 60) * step * .3, w: ww, h: ww * hk, rot: -side * Math.PI / 2 };
+      });
+      const cy8 = 540 + (camY - 540) / 8, cy3 = 540 + (camY - 540) / 3;
+      const bolts: Bolt[] = [{ x: 260, y: cy8 - 60, a: fl * 1.4, r: 900 }];
+      const near: Mass[] = Array.from({ length: 4 }, (_, i) => {
+        const side = i % 2 ? 1 : -1;
+        const sy = 1700 - (((lt * 4200 + i * 900) % 3600) + 3600) % 3600;
+        const p = unproject(cam, .5, 960 + side * 1020, sy);
+        return { seed: 5590 + i, x: p.x, y: p.y, w: 1300, h: 420, rot: -side * Math.PI / 2 };
+      });
       return (
         <Scene cam={cam} bg={k.sky[0]}>
           <Layer d={Infinity} blur={0}>
             <rect x={-300} y={-300} width={2520} height={1680} fill={k.sky[1]} />
+            <Glow x={960} y={1000} r={900} color={mixc(k.glow, k.cloudLit, .5)} opacity={.35 + fl * .4} />
             <Glow x={300} y={300} r={900} color={k.glow} opacity={.15 + fl * .6} />
             <Streaks seed={55} t={t} count={150} dir={-Math.PI / 2 - .04} speed={3600} len={240} width={1.8} color="#cfe6ee" opacity={.4} />
           </Layer>
-          <Layer d={7} blur={0}>
-            {Array.from({ length: 16 }, (_, i) => (
-              <Glow key={i} x={(i % 2 ? 1750 : 170) + rnd(553, i) * 300 - 150} y={colY(i)} r={500} rx={300 + rnd(554, i) * 160} ry={800} color={mixhex(k.cloud, k.cloudLit, .3 + fl * .3)} opacity={.95} />
-            ))}
-            <Lightning seed={555} x0={250} y0={camY / 7 - 300} x1={420} y1={camY / 7 + 500} flash={fl} width={3} branches={4} />
+          <Layer d={8} blur={1.6}>
+            <Storm masses={seen(cam, 8, wall(553, 7, -300, 370, 900, 860, .36))} tone={stormTone(k, .9, .3)} t={t * 2} bolts={bolts} rim={fl * .5} rimColor="#e8f8ff" />
+            <Lightning seed={555} x0={250} y0={cy8 - 500} x1={420} y1={cy8 + 300} flash={fl} width={3} branches={4} />
           </Layer>
-          <Layer d={2.6} blur={2}>
-            {Array.from({ length: 14 }, (_, i) => (
-              <Glow key={i} x={(i % 2 ? 1950 : 0) + rnd(556, i) * 260 - 130} y={colY(i) * 1.4 + 300} r={500} rx={340 + rnd(557, i) * 160} ry={1000} color={mixhex(k.cloud, k.cloudLit, .45 + fl * .4)} opacity={1} />
-            ))}
+          <Layer d={3} blur={2}>
+            <Storm masses={seen(cam, 3, wall(556, 8, -300, 420, 1040, 1000, .4))} tone={stormTone(k, .4)} t={t * 2} bolts={[{ x: 200, y: cy3 - 100, a: fl * 1.1, r: 1200 }]} rim={fl * .4} rimColor="#e8f8ff" />
           </Layer>
           <Layer d={1}>
             <CloudMass seed={558} x0={-900} x1={930} y={330} depth={500} dark={mixhex(k.cloud, k.sil, .2)} lit={k.cloudLit} rim={mixc(k.cloudLit, "#ffffff", .4)} ends="R" />
             <Kid variant="friend" accent={PINK} pose={fp} sil={k.sil} rim={RIM(k, -.6, -.8, .016 + fl * .02, .9, "#e8f8ff")} />
             <Kid pose={kp} sil={k.sil} rim={RIM(k, -.6, -.8, .016 + fl * .03, .9, "#e8f8ff")} />
           </Layer>
-          <Layer d={.4} blur={7}>
-            <Streaks seed={559} t={t} count={30} dir={-Math.PI / 2} speed={7500} len={620} width={5} color="#e8f6ff" opacity={.5} x0={-600} x1={2520} y0={-600} y1={1700} />
+          <Layer d={.5} blur={5}>
+            <Storm masses={seen(cam, .5, near)} tone={stormTone(k, 0)} t={t * 2} bolts={[{ x: unproject(cam, .5, 300, 300).x, y: unproject(cam, .5, 300, 300).y, a: fl * .5, r: 1400 }]} />
+          </Layer>
+          {/* 코앞을 스치는 비(화면에 붙어 카메라와 함께 구른다): 굵고 빠르다 */}
+          <Layer d={Infinity} blur={2.2}>
+            <Streaks seed={559} t={t} count={36} dir={-Math.PI / 2 - .04} speed={6400} len={560} width={4} color="#e8f6ff" opacity={.5 * smooth(push - .05, push + .15, lt)} x0={-500} x1={2420} y0={-500} y1={1580} />
           </Layer>
         </Scene>
       );
@@ -754,9 +874,7 @@ export const act4: Shot[] = [
           <Scene cam={cam} bg={k.sky[0]}>
             {sky}
             <Layer d={5} blur={6}>
-              {Array.from({ length: 8 }, (_, i) => (
-                <Glow key={i} x={-200 + rnd(567, i) * 2300} y={((rnd(568, i) * 2200 - lt * 1400) % 2200 + 2200) % 2200 - 500} r={420} rx={380} ry={700} color={mixhex(k.cloud, k.cloudLit, .3)} opacity={.8} />
-              ))}
+              <Storm masses={seen(cam, 5, rising(567, 6, lt * 1400, 2400, -600, 640, 900))} tone={stormTone(k, .5)} t={t * 2} bolts={[{ x: 1500, y: 300, a: gold * .5, r: 1400 }]} />
             </Layer>
             <Layer d={1}>
               <Hand x={F.x} y={F.y} a={a + Math.PI} s={s} curl={grip} spread={.26} thumb={.6} sleeve={1.6} color={mixhex(k.sil, k.silFar, .7)} rim={rim} />
@@ -788,9 +906,7 @@ export const act4: Shot[] = [
         <Scene cam={cam} bg={k.sky[0]}>
           {sky}
           <Layer d={4} blur={2.5}>
-            {Array.from({ length: 10 }, (_, i) => (
-              <Glow key={i} x={-300 + rnd(563, i) * 2500} y={((rnd(564, i) * 2600 - lt * 900) % 2600 + 2600) % 2600 - 800} r={300 + rnd(565, i) * 200} ry={600} rx={340} color={mixhex(k.cloud, k.cloudLit, .25 + fl * .5)} opacity={.75} />
-            ))}
+            <Storm masses={seen(cam, 4, rising(563, 8, lt * 900, 2600, -800, 720, 800))} tone={stormTone(k, .45)} t={t * 2} bolts={[{ x: 1500, y: 300, a: fl * 1.3, r: 1300 }]} rim={fl * .5} rimColor="#e8f8ff" />
           </Layer>
           <Layer d={1} blend="screen">
             <Glow x={Pc.x} y={Pc.y} r={90} color={GOLD} opacity={gold * .8 + .15} />
@@ -851,6 +967,9 @@ export const act4: Shot[] = [
         <Scene cam={cam} bg="#000">
           <Layer d={Infinity} blur={0}>
             <rect x={-500} y={-500} width={2920} height={2080} fill={mixhex("#000000", k.sky[0], .8)} />
+            {/* 먼 번개가 한 번 덩어리 속을 비춰 폭풍이 둘레에 있음을 알린다 */}
+            <Storm masses={[{ seed: 5701, x: 1560, y: 360, w: 1300, h: 380 }, { seed: 5702, x: 420, y: 330, w: 1100, h: 300 }]} tone={{ top: mixhex(k.sky[0], k.cloud, .6), body: mixhex("#000000", k.sky[0], .9), base: "#000000" }} t={t}
+              bolts={[{ x: 1640, y: 170, a: faint * 3, r: 900 }]} />
             <Glow x={1600} y={180} r={700} color={k.glow} opacity={faint * .5} />
           </Layer>
           <Layer d={1}>

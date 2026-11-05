@@ -9,12 +9,15 @@
  *   TopPuffs     위에서 내려다본 구름 윗면 덩이 · PovLegs 시점 컷에서 화면 아래로 늘어진 두 다리
  *   Streaks      한 방향으로 흐르는 줄(빠른 낙하의 비·속도선)
  *   RadialRain   소실점으로 빨려 들어가는 비(위에서 내려다본 낙하, 54번)
+ *   Storm        폭풍 덩어리(lib/storm의 StormMass) 무리. 구름 속 번개 점(bolts)이 가까운 덩어리를 안에서 밝힌다
+ *   stormTone    깊이별 폭풍 색(멀수록 밝고 안개에 묻힘, 가까울수록 어둡다) · bank/tower/ring 덩어리 배치
  */
 import React from "react";
 import { useUid } from "../lib/camera";
 import { TAU, clamp, ease, mix, mixc, mixhex, n2, rnd } from "../lib/math";
 import type { Key } from "../lib/palette";
 import { Glow } from "../lib/sky";
+import { StormMass } from "../lib/storm";
 
 /** hex든 rgb(...)든 받아 hex로 */
 export const toHex = (c: string) => c.startsWith("#") ? c : "#" + (c.match(/\d+(\.\d+)?/g) ?? ["0", "0", "0"]).slice(0, 3).map((v) => Math.round(+v).toString(16).padStart(2, "0")).join("");
@@ -437,3 +440,120 @@ export const RadialRain: React.FC<{ seed?: number; t: number; vx: number; vy: nu
     })}
   </g>
 );
+
+/* ───────────── 폭풍 덩어리 ───────────── */
+
+export type Tone = { top: string; body: string; base: string };
+
+/**
+ * 폭풍 덩어리 색. far 0 = 가까움(어둡고 대비가 세다) … 1 = 멂(밝고 안개에 묻혀 대비가 약하다).
+ * lift는 윗면만 더 밝힌다(달빛을 받는 탑 꼭대기, 빛 쪽 가장자리)
+ */
+export function stormTone(k: Key, far: number, lift = 0): Tone {
+  const f = clamp(far);
+  const fog = mx(k.sky[3], k.glow, .3);
+  const top = mx(mx(k.cloud, k.cloudLit, .62), mx(k.cloudLit, k.glow, .22), f);
+  return {
+    top: lift > 0 ? mx(top, mx(k.cloudLit, k.glow, .55), clamp(lift)) : top,
+    body: mx(mx(k.cloud, k.sil, .12), mx(k.cloudLit, fog, .6), f),
+    base: mx(mx(k.cloud, k.sil, .78), mx(fog, k.sky[3], .55), f),
+  };
+}
+
+export type Mass = { seed: number; x: number; y: number; w: number; h?: number; rot?: number; rough?: number; rim?: number; opacity?: number; tone?: Tone };
+/** 구름 속 번개 점(세계 좌표). a 세기, r 닿는 거리 */
+export type Bolt = { x: number; y: number; a: number; r: number };
+
+/**
+ * 폭풍 덩어리 무리. 뒤에서 앞 순서로 그린다(목록 앞이 뒤). rot(rad)이면 밑동 (x, y)를 축으로 돌린다
+ * (위에서 내려다본 구멍·떨어지는 벽에서 부푼 윗면이 가운데를 보게).
+ * bolts: 덩어리마다 가장 센 번개 하나가 안에서 비친다. 흐림은 덩어리마다 걸지 않고 층(Layer blur)에 맡긴다(soft 0)
+ */
+export const Storm: React.FC<{ masses: Mass[]; tone: Tone; t: number; bolts?: Bolt[]; rim?: number; rimColor?: string; soft?: number; flashColor?: string }> = ({ masses, tone, t, bolts = [], rim = 0, rimColor, soft = 0, flashColor }) => (
+  <g>
+    {masses.map((m, i) => {
+      const h = m.h ?? m.w * .32;
+      const r = m.rot ?? 0, c = Math.cos(r), s = Math.sin(r);
+      const mcx = m.x + s * h * .45, mcy = m.y - c * h * .45;
+      let fa = 0, fx = .5, fy = .4;
+      for (const b of bolts) {
+        if (b.a <= .01) continue;
+        const a = b.a * Math.pow(clamp(1 - Math.hypot(b.x - mcx, b.y - mcy) / b.r), 1.2);
+        if (a > fa) {
+          fa = a;
+          const dx = b.x - m.x, dy = b.y - m.y;
+          const lx = dx * c + dy * s, ly = -dx * s + dy * c;
+          fx = (lx + m.w / 2) / m.w;
+          fy = (ly + h * 1.1) / (h * 1.34);
+        }
+      }
+      if (fa < .07) fa = 0; // 약한 번쩍임은 그리지 않는다(덩어리마다 섞기 층이 하나씩 생긴다)
+      const tn = m.tone ?? tone;
+      const el = (
+        <StormMass key={i} seed={m.seed} x={m.x} y={m.y} w={m.w} h={h} top={tn.top} body={tn.body} base={tn.base} t={t} rough={m.rough ?? 1} soft={soft}
+          flash={clamp(fa)} flashX={fx} flashY={fy} flashColor={flashColor} rim={m.rim ?? rim} rimColor={rimColor} opacity={m.opacity} />
+      );
+      return r ? <g key={i} transform={`rotate(${((r * 180) / Math.PI).toFixed(2)} ${m.x.toFixed(1)} ${m.y.toFixed(1)})`}>{el}</g> : el;
+    })}
+  </g>
+);
+
+/** 지평선을 따라 이어지는 덩어리 자리. drift(px/s)로 흐른다 */
+export function bank(seed: number, y: number, x0: number, x1: number, size: number, count: number, o: { hk?: number; jitter?: number; drift?: number; t?: number; rough?: number } = {}): Mass[] {
+  const { hk = .3, jitter = .12, drift = 0, t = 0, rough = 1 } = o;
+  return Array.from({ length: count }, (_, i) => {
+    const u = (i + .3 + rnd(seed, i) * .4) / count;
+    const w = size * (.75 + rnd(seed, i + 10) * .6);
+    return { seed: seed * 37 + i, x: mix(x0, x1, u) + drift * t * (.6 + rnd(seed, i + 40) * .8), y: y + (rnd(seed, i + 20) - .5) * size * jitter, w, h: w * hk * (.85 + rnd(seed, i + 30) * .35), rough };
+  });
+}
+
+/**
+ * 적란운 탑: 넓은 밑동에서 좁아지며 솟고 꼭대기에 모루가 오른쪽으로 퍼진다. (x, y) 밑동 가운데, w 밑동 너비, h 전체 높이.
+ * 목록은 위(뒤)에서 아래(앞) 순서: 아래 덩어리의 부푼 윗면이 위 덩어리의 평평한 밑을 덮는다
+ */
+export function tower(seed: number, x: number, y: number, w: number, h: number, o: { anvil?: number; lean?: number; t?: number; rim?: number } = {}): Mass[] {
+  const { anvil = 1, lean = 0, t = 0, rim } = o;
+  // 층마다 좌우 두 덩이(높이·너비를 엇갈려) → 윗면 윤곽이 탑 너비를 가로지르는 줄무늬가 되지 않게
+  const lv = [
+    { u: .72, k: .46 }, { u: .6, k: .54 }, { u: .47, k: .62 }, { u: .34, k: .72 }, { u: .2, k: .84 },
+  ];
+  const out: Mass[] = [{ seed: seed * 11, x: x + (.26 + lean * .86) * w, y: y - .86 * h, w: w * 1.3 * anvil, h: h * .075, rough: .5, rim: rim === undefined ? undefined : rim }];
+  lv.forEach((l, i) => {
+    for (let j = 0; j < 2; j++) {
+      const r1 = rnd(seed, i * 7 + j), r2 = rnd(seed, i * 7 + j + 3);
+      const side = j ? 1 : -1;
+      const lw = w * l.k * (.62 + r1 * .22);
+      out.push({
+        seed: seed * 11 + 1 + i * 2 + j,
+        x: x + (side * l.k * .2 + (r2 - .5) * .08 + lean * l.u) * w + n2(seed + i * 2 + j, t * .08) * w * .015,
+        y: y - (l.u + (j ? .045 : -.02) * (r2 + .3)) * h,
+        w: lw, h: h * (.2 + r1 * .07),
+        rim: rim === undefined ? undefined : rim * (.2 + .8 * l.u),
+      });
+    }
+  });
+  out.push({ seed: seed * 11 + 30, x: x + n2(seed, t * .08) * w * .015, y: y - .05 * h, w: w, h: h * .24, rim: rim === undefined ? undefined : rim * .25 });
+  return out;
+}
+
+/**
+ * 위에서 내려다본 구멍(소실점 vx, vy)을 둘러싼 덩어리 고리. 부푼 윗면이 구멍 가운데를 본다.
+ * r 고리 반지름(밑동까지), w 덩어리 너비, sq 세로 눌림, spin 고리 회전(rad), gap(rad)·gapW 비워 둘 방향
+ */
+export function ring(seed: number, vx: number, vy: number, r: number, count: number, w: number, o: { sq?: number; spin?: number; hk?: number; gap?: number; gapW?: number; jitter?: number } = {}): Mass[] {
+  const { sq = .82, spin = 0, hk = .34, gap, gapW = 0, jitter = .18 } = o;
+  const out: Mass[] = [];
+  for (let i = 0; i < count; i++) {
+    const th = (i / count) * TAU + rnd(seed, i) * .5 + spin;
+    if (gap !== undefined) {
+      const d = Math.atan2(Math.sin(th - gap), Math.cos(th - gap));
+      if (Math.abs(d) < gapW) continue;
+    }
+    const rr = r * (1 + (rnd(seed, i + 10) - .5) * jitter * 2);
+    const ww = w * (.8 + rnd(seed, i + 20) * .45);
+    const x = vx + Math.cos(th) * rr, y = vy + Math.sin(th) * rr * sq;
+    out.push({ seed: seed * 23 + i, x, y, w: ww, h: ww * hk * (.85 + rnd(seed, i + 30) * .3), rot: Math.atan2(vy - y, vx - x) + Math.PI / 2 });
+  }
+  return out;
+}
