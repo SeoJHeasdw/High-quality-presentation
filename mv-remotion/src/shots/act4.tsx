@@ -671,7 +671,7 @@ export const act4: Shot[] = [
     render: (c) => {
       const k = ST, lt = c.lt, t = c.t;
       const tL = beat(211) - T55;
-      const push = .13;
+      const push = .2;
       const crouch = pose({ ...P.crouch, anchor: "feet", x: 860, y: 330, s: 330, facing: 1 });
       const pc = skeleton(crouch).pelvis;
       const fall = (x: number) => (x < push ? 0 : 1900 * (x - push) + 2600 * (x - push) * (x - push));
