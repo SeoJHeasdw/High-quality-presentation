@@ -273,6 +273,11 @@ export const Kid: React.FC<KidProps> = ({ pose: pin, variant = "kid", sil = "#05
     return (
       <g opacity={clamp(p.face)}>
         <defs>
+          <linearGradient id={`${id}hs`} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor={sil} stopOpacity={.85} />
+            <stop offset="22%" stopColor={sil} stopOpacity={.45} />
+            <stop offset="48%" stopColor={sil} stopOpacity={0} />
+          </linearGradient>
           <radialGradient id={`${id}fg`} cx="50%" cy="88%" r="95%">
             <stop offset="0%" stopColor={p.faceColor} stopOpacity={.95} />
             <stop offset="45%" stopColor={p.faceColor} stopOpacity={.62} />
@@ -282,6 +287,8 @@ export const Kid: React.FC<KidProps> = ({ pose: pin, variant = "kid", sil = "#05
         </defs>
         <g transform={`translate(${c.x} ${c.y}) rotate(${ang * (p.facing === 1 ? 1 : -1) * 0 + (p.rot * 180) / Math.PI})`}>
           <ellipse rx={rx} ry={ry} fill={`url(#${id}fg)`} />
+          {/* 후드 그늘: 얼굴 위쪽이 후드 안으로 들어가 보이게(평평한 가면처럼 보이지 않게) */}
+          <ellipse rx={rx * 1.02} ry={ry * 1.02} fill={`url(#${id}hs)`} />
           {eyes.map((ex, i) => (
             smile > .5
               ? <path key={i} d={`M${ex * s - .018 * s},${eyeY + .004 * s}Q${ex * s},${eyeY - .016 * s} ${ex * s + .018 * s},${eyeY + .004 * s}`} stroke="#1a1020" strokeWidth={.009 * s} strokeLinecap="round" fill="none" />
