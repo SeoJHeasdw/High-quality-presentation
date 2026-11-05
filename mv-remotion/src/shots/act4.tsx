@@ -378,12 +378,12 @@ export const act4: Shot[] = [
             <Wisp x={200 + wind * .25} y={230} w={900} h={70} color={mixhex(k.cloud, k.sil, .3)} opacity={kw * .85} />
           </Layer>
           <Layer d={30} blur={1.6}>
-            <Storm masses={seen(cam, 30, bank(505, 805, 300, 3000, 420, 8, { hk: .26, drift: -3, t }))} tone={stormTone(k, 1)} t={t} bolts={bolts.map((b) => ({ ...b, a: b.a * .5, r: 1400 }))} rim={flash * .5} rimColor="#ffffff" />
+            <Storm lite masses={seen(cam, 30, bank(505, 805, 300, 3000, 420, 8, { hk: .26, drift: -3, t }))} tone={stormTone(k, 1)} t={t} bolts={bolts.map((b) => ({ ...b, a: b.a * .5, r: 1400 }))} rim={flash * .5} rimColor="#ffffff" />
           </Layer>
           <Layer d={18} blur={0}>
             <Storm masses={tower(50, 1450, 845, 1150, mix(560, 760, kw), { lean: .08, t, rim: moonRim })} tone={towerTone} t={t} bolts={bolts} rimColor={rimC} />
             <Lightning seed={501} x0={1430} y0={480} x1={1330} y1={820} flash={strike(lt - tF2)} width={2.2} branches={3} />
-            <Storm masses={seen(cam, 18, bank(502, 850, 760, 3200, 380, 8, { hk: .3, drift: -6, t }))} tone={stormTone(k, .55, .2)} t={t} bolts={bolts} rim={moonRim * .35} rimColor={rimC} />
+            <Storm lite masses={seen(cam, 18, bank(502, 850, 760, 3200, 380, 8, { hk: .3, drift: -6, t }))} tone={stormTone(k, .55, .2)} t={t} bolts={bolts} rim={moonRim * .35} rimColor={rimC} />
           </Layer>
           <Layer d={8} blur={0}>
             <Storm masses={seen(cam, 8, bank(503, 905, -1600, 3500, 480, 12, { hk: .26, drift: -8, t }))} tone={stormTone(k, .5, .3 * (1 - kw))} t={t} bolts={seaBolts} rim={(1 - kw) * .3 + flash * .25} rimColor={rimC} />
@@ -469,10 +469,10 @@ export const act4: Shot[] = [
           <Layer d={60} blur={0}>
             <g opacity={1 - smooth(.25, .7, c.p)}><Moon x={330} y={190} r={42} color={k.moon} glow={.7 * (1 - c.p * .8)} /></g>
             <Wisp x={-200 + lt * 160} y={200} w={700} h={60} color={mixhex(k.cloud, k.sil, .4)} opacity={.9} />
-            <Storm masses={seen(cam, 60, bank(510, 300, -300, 2400, 520, 7, { hk: .24, drift: -25, t, rough: .8 }))} tone={stormTone(k, .55)} t={t} rim={.25} rimColor={k.glow} bolts={[{ x: 1500, y: 250, a: flash * .6, r: 1200 }]} />
+            <Storm lite masses={seen(cam, 60, bank(510, 300, -300, 2400, 520, 7, { hk: .24, drift: -25, t, rough: .8 }))} tone={stormTone(k, .55)} t={t} rim={.25} rimColor={k.glow} bolts={[{ x: 1500, y: 250, a: flash * .6, r: 1200 }]} />
           </Layer>
           <Layer d={14} blur={1.4}>
-            <Storm masses={seen(cam, 14, bank(513, 812, -2600, 3800, 480, 13, { hk: .26, drift: -6, t }))} tone={stormTone(k, .9)} t={t} bolts={farBolts} rim={flash * .3} rimColor="#ffffff" />
+            <Storm lite masses={seen(cam, 14, bank(513, 812, -2600, 3800, 480, 13, { hk: .26, drift: -6, t }))} tone={stormTone(k, .9)} t={t} bolts={farBolts} rim={flash * .3} rimColor="#ffffff" />
           </Layer>
           <Layer d={5} blur={0}>
             <Storm masses={seen(cam, 5, wallM)} tone={stormTone(k, .12)} t={churn} bolts={wallBolts} rim={.3 + flash * .4} rimColor={mixc(k.glow, "#ffffff", flash)} />
@@ -505,7 +505,7 @@ export const act4: Shot[] = [
             {Array.from({ length: 6 }, (_, i) => (
               <Wisp key={i} x={1800 - i * 1100 + rnd(521, i) * 300} y={i % 2 ? 1000 : 120} w={900} h={110} color={k.cloudLit} opacity={.35} />
             ))}
-            <Storm masses={seen(cam, .45, [{ seed: 522, x: -200, y: 1215, w: 760, h: 230 }, { seed: 523, x: -1700, y: 1200, w: 860, h: 260 }])} tone={stormTone(k, 0)} t={t} />
+            <Storm lite masses={seen(cam, .45, [{ seed: 522, x: -200, y: 1215, w: 760, h: 230 }, { seed: 523, x: -1700, y: 1200, w: 860, h: 260 }])} tone={stormTone(k, 0)} t={t} />
           </Layer>
         </Scene>
       );
@@ -559,7 +559,7 @@ export const act4: Shot[] = [
             <Glow x={bx1} y={300} r={1300} color="#ffffff" opacity={bolt * .7} />
           </Sky>
           <Layer d={18} blur={1.4}>
-            <Storm masses={seen(cam, 18, bank(5210, 905, -900, 2900, 460, 9, { hk: .28, drift: -5, t }))} tone={stormTone(k, .95)} t={t} bolts={[{ x: bx1 - 60, y: 820, a: bolt * 1.1, r: 1100 }]} rim={.2 + bolt * .5} rimColor="#ffffff" />
+            <Storm lite masses={seen(cam, 18, bank(5210, 905, -900, 2900, 460, 9, { hk: .28, drift: -5, t }))} tone={stormTone(k, .95)} t={t} bolts={[{ x: bx1 - 60, y: 820, a: bolt * 1.1, r: 1100 }]} rim={.2 + bolt * .5} rimColor="#ffffff" />
           </Layer>
           <Layer d={9} blur={0}>
             {/* 천장: 번개가 빠져나온 덩어리가 안에서 하얗게 비친다 */}
@@ -623,8 +623,8 @@ export const act4: Shot[] = [
             <Glow x={1000} y={470} r={380} color="#ffffff" opacity={clamp(fl - .25) * .55} />
           </Sky>
           <Layer d={6} blur={6}>
-            <Storm masses={seen(cam, 6, bank(532, 300, -1200, 3200, 700, 6, { hk: .3, drift: 3, t, jitter: .25 }))} tone={stormTone(k, .6)} t={t} bolts={[{ x: 1150, y: 260, a: strike(lt - tSep + .03, 1.3), r: 1000 }]} />
-            <Storm masses={seen(cam, 6, bank(531, 1200, -1200, 3200, 820, 7, { hk: .3, drift: -4, t }))} tone={stormTone(k, .4, .3)} t={t}
+            <Storm lite masses={seen(cam, 6, bank(532, 300, -1200, 3200, 700, 6, { hk: .3, drift: 3, t, jitter: .25 }))} tone={stormTone(k, .6)} t={t} bolts={[{ x: 1150, y: 260, a: strike(lt - tSep + .03, 1.3), r: 1000 }]} />
+            <Storm lite masses={seen(cam, 6, bank(531, 1200, -1200, 3200, 820, 7, { hk: .3, drift: -4, t }))} tone={stormTone(k, .4, .3)} t={t}
               bolts={[{ x: 1000, y: 1020, a: clamp(fl - .3) * 1.4, r: 1100 }]} rim={.2 + fl * .4} rimColor="#e8f8ff" />
           </Layer>
           <Layer d={2} blur={3}>
@@ -726,11 +726,11 @@ export const act4: Shot[] = [
             <Glow x={VP.x - 30} y={VP.y + 20} r={260} color="#ffffff" opacity={big * .9} />
           </Layer>
           <Layer d={9} blur={2}>
-            <Storm masses={ring(5401, VP.x, VP.y, 330, 6, 540, { sq: .82, spin: lt * .08, hk: .36 })} tone={stormTone(k, 1, .5)} t={t * 1.5} bolts={deepB} rim={big * .6} rimColor="#e8f8ff" />
+            <Storm lite masses={ring(5401, VP.x, VP.y, 330, 6, 540, { sq: .82, spin: lt * .08, hk: .36 })} tone={stormTone(k, 1, .5)} t={t * 1.5} bolts={deepB} rim={big * .6} rimColor="#e8f8ff" />
             <Lightning seed={549} x0={VP.x - 300} y0={VP.y - 160} x1={VP.x + 120} y1={VP.y + 200} flash={strike(lt - tGone, .95)} width={2.5} branches={3} />
           </Layer>
           <Layer d={4} blur={1}>
-            <Storm masses={ring(5402, VP.x, VP.y, 640, 7, 800, { sq: .84, spin: -lt * .05, hk: .34, gap: Math.atan2(f0.y - VP.y, f0.x - VP.x), gapW: .38 })} tone={stormTone(k, .3)} t={t * 1.5}
+            <Storm lite masses={ring(5402, VP.x, VP.y, 640, 7, 800, { sq: .84, spin: -lt * .05, hk: .34, gap: Math.atan2(f0.y - VP.y, f0.x - VP.x), gapW: .38 })} tone={stormTone(k, .3)} t={t * 1.5}
               bolts={deepB.map((b) => ({ ...b, a: b.a * .8, r: 1000 }))} rim={big * .5} rimColor="#e8f8ff" />
           </Layer>
           <Layer d={1} blend="screen">
@@ -744,7 +744,7 @@ export const act4: Shot[] = [
           <Layer d={1.8} blur={0}>
             {/* 가까운 덩어리가 오므라들고 가운데 어둠이 번져 친구를 삼킨다 */}
             <Glow x={VP.x} y={VP.y} r={mix(150, 900, close)} color={k.sky[0]} opacity={close * .95} />
-            <Storm masses={seen(cam, 1.8, ring(5403, VP.x, VP.y, mix(1080, 700, close), 6, 1250, { sq: .86, spin: lt * .05 + close * .25, hk: .36, gap: lipA, gapW: .5 }))} tone={stormTone(k, 0)} t={t * 1.5}
+            <Storm lite masses={seen(cam, 1.8, ring(5403, VP.x, VP.y, mix(1080, 700, close), 6, 1250, { sq: .86, spin: lt * .05 + close * .25, hk: .36, gap: lipA, gapW: .5 }))} tone={stormTone(k, 0)} t={t * 1.5}
               bolts={deepB.map((b) => ({ ...b, a: b.a * .55, r: 1200 }))} rim={big * .4} rimColor="#e8f8ff" />
           </Layer>
           <Layer d={Infinity} blur={0}>
@@ -819,7 +819,7 @@ export const act4: Shot[] = [
             <Streaks seed={55} t={t} count={150} dir={-Math.PI / 2 - .04} speed={3600} len={240} width={1.8} color="#cfe6ee" opacity={.4} />
           </Layer>
           <Layer d={8} blur={1.6}>
-            <Storm masses={seen(cam, 8, wall(553, 7, -300, 370, 900, 860, .36))} tone={stormTone(k, .9, .3)} t={t * 2} bolts={bolts} rim={fl * .5} rimColor="#e8f8ff" />
+            <Storm lite masses={seen(cam, 8, wall(553, 7, -300, 370, 900, 860, .36))} tone={stormTone(k, .9, .3)} t={t * 2} bolts={bolts} rim={fl * .5} rimColor="#e8f8ff" />
             <Lightning seed={555} x0={250} y0={cy8 - 500} x1={420} y1={cy8 + 300} flash={fl} width={3} branches={4} />
           </Layer>
           <Layer d={3} blur={2}>
@@ -831,7 +831,7 @@ export const act4: Shot[] = [
             <Kid pose={kp} sil={k.sil} rim={RIM(k, -.6, -.8, .016 + fl * .03, .9, "#e8f8ff")} />
           </Layer>
           <Layer d={.5} blur={5}>
-            <Storm masses={seen(cam, .5, near)} tone={stormTone(k, 0)} t={t * 2} bolts={[{ x: unproject(cam, .5, 300, 300).x, y: unproject(cam, .5, 300, 300).y, a: fl * .5, r: 1400 }]} />
+            <Storm lite masses={seen(cam, .5, near)} tone={stormTone(k, 0)} t={t * 2} bolts={[{ x: unproject(cam, .5, 300, 300).x, y: unproject(cam, .5, 300, 300).y, a: fl * .5, r: 1400 }]} />
           </Layer>
           {/* 코앞을 스치는 비(화면에 붙어 카메라와 함께 구른다): 굵고 빠르다 */}
           <Layer d={Infinity} blur={2.2}>
@@ -874,7 +874,7 @@ export const act4: Shot[] = [
           <Scene cam={cam} bg={k.sky[0]}>
             {sky}
             <Layer d={5} blur={6}>
-              <Storm masses={seen(cam, 5, rising(567, 6, lt * 1400, 2400, -600, 640, 900))} tone={stormTone(k, .5)} t={t * 2} bolts={[{ x: 1500, y: 300, a: gold * .5, r: 1400 }]} />
+              <Storm lite masses={seen(cam, 5, rising(567, 6, lt * 1400, 2400, -600, 640, 900))} tone={stormTone(k, .5)} t={t * 2} bolts={[{ x: 1500, y: 300, a: gold * .5, r: 1400 }]} />
             </Layer>
             <Layer d={1}>
               <Hand x={F.x} y={F.y} a={a + Math.PI} s={s} curl={grip} spread={.26} thumb={.6} sleeve={1.6} color={mixhex(k.sil, k.silFar, .7)} rim={rim} />
@@ -906,7 +906,7 @@ export const act4: Shot[] = [
         <Scene cam={cam} bg={k.sky[0]}>
           {sky}
           <Layer d={4} blur={2.5}>
-            <Storm masses={seen(cam, 4, rising(563, 8, lt * 900, 2600, -800, 720, 800))} tone={stormTone(k, .45)} t={t * 2} bolts={[{ x: 1500, y: 300, a: fl * 1.3, r: 1300 }]} rim={fl * .5} rimColor="#e8f8ff" />
+            <Storm lite masses={seen(cam, 4, rising(563, 8, lt * 900, 2600, -800, 720, 800))} tone={stormTone(k, .45)} t={t * 2} bolts={[{ x: 1500, y: 300, a: fl * 1.3, r: 1300 }]} rim={fl * .5} rimColor="#e8f8ff" />
           </Layer>
           <Layer d={1} blend="screen">
             <Glow x={Pc.x} y={Pc.y} r={90} color={GOLD} opacity={gold * .8 + .15} />
@@ -968,7 +968,7 @@ export const act4: Shot[] = [
           <Layer d={Infinity} blur={0}>
             <rect x={-500} y={-500} width={2920} height={2080} fill={mixhex("#000000", k.sky[0], .8)} />
             {/* 먼 번개가 한 번 덩어리 속을 비춰 폭풍이 둘레에 있음을 알린다 */}
-            <Storm masses={[{ seed: 5701, x: 1560, y: 360, w: 1300, h: 380 }, { seed: 5702, x: 420, y: 330, w: 1100, h: 300 }]} tone={{ top: mixhex(k.sky[0], k.cloud, .6), body: mixhex("#000000", k.sky[0], .9), base: "#000000" }} t={t}
+            <Storm lite masses={[{ seed: 5701, x: 1560, y: 360, w: 1300, h: 380 }, { seed: 5702, x: 420, y: 330, w: 1100, h: 300 }]} tone={{ top: mixhex(k.sky[0], k.cloud, .6), body: mixhex("#000000", k.sky[0], .9), base: "#000000" }} t={t}
               bolts={[{ x: 1640, y: 170, a: faint * 3, r: 900 }]} />
             <Glow x={1600} y={180} r={700} color={k.glow} opacity={faint * .5} />
           </Layer>

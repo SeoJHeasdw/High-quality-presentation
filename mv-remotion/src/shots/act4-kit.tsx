@@ -17,7 +17,7 @@ import { useUid } from "../lib/camera";
 import { TAU, clamp, ease, mix, mixc, mixhex, n2, rnd } from "../lib/math";
 import type { Key } from "../lib/palette";
 import { Glow } from "../lib/sky";
-import { StormMass } from "../lib/storm";
+import { StormMass, smoothClosed, stormOutline } from "../lib/storm";
 
 /** hex든 rgb(...)든 받아 hex로 */
 export const toHex = (c: string) => c.startsWith("#") ? c : "#" + (c.match(/\d+(\.\d+)?/g) ?? ["0", "0", "0"]).slice(0, 3).map((v) => Math.round(+v).toString(16).padStart(2, "0")).join("");
@@ -460,6 +460,45 @@ export function stormTone(k: Key, far: number, lift = 0): Tone {
   };
 }
 
+/**
+ * 먼(흐린) 층용 가벼운 덩어리: StormMass와 같은 윤곽(lib/storm의 stormOutline)과 위→아래 그라데이션·속 번개·윗가장자리 빛.
+ * 안쪽 결(잘라 낸 작은 부풂들)과 섞기 층이 없어 훨씬 싸다. 층 흐림에 결이 어차피 묻히는 먼 덩어리에 쓴다
+ */
+const StormLite: React.FC<{ seed: number; x: number; y: number; w: number; h: number; top: string; body: string; base: string; t: number; rough: number; flash: number; flashX: number; flashY: number; flashColor?: string; rim: number; rimColor?: string; opacity?: number }> = ({ seed, x, y, w, h, top, body, base, t, rough, flash, flashX, flashY, flashColor = "#dff4ff", rim, rimColor = "#ffffff", opacity }) => {
+  const id = useUid("sl");
+  const pts = stormOutline(seed, x, y, w, h, t, rough, 64);
+  const d = smoothClosed(pts);
+  let y0 = Infinity, y1 = -Infinity;
+  for (const p of pts) { if (p[1] < y0) y0 = p[1]; if (p[1] > y1) y1 = p[1]; }
+  return (
+    <g opacity={opacity}>
+      <defs>
+        <linearGradient id={id + "f"} x1="0" y1={y0} x2="0" y2={y1} gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stopColor={top} />
+          <stop offset="45%" stopColor={body} />
+          <stop offset="100%" stopColor={base} />
+        </linearGradient>
+        {flash > .01 ? (
+          <radialGradient id={id + "l"} cx={x - w / 2 + w * flashX} cy={mix(y0, y1, flashY)} r={w * .45} gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stopColor={flashColor} stopOpacity={.9} />
+            <stop offset="35%" stopColor={flashColor} stopOpacity={.4} />
+            <stop offset="100%" stopColor={flashColor} stopOpacity={0} />
+          </radialGradient>
+        ) : null}
+        {rim > 0 ? (
+          <linearGradient id={id + "r"} x1="0" y1={y0} x2="0" y2={y0 + h * .7} gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stopColor={rimColor} stopOpacity={1} />
+            <stop offset="100%" stopColor={rimColor} stopOpacity={0} />
+          </linearGradient>
+        ) : null}
+      </defs>
+      {rim > 0 ? <path d={d} fill="none" stroke={`url(#${id}r)`} strokeWidth={Math.max(2, h * .05)} opacity={rim} /> : null}
+      <path d={d} fill={`url(#${id}f)`} />
+      {flash > .01 ? <path d={d} fill={`url(#${id}l)`} opacity={flash} /> : null}
+    </g>
+  );
+};
+
 export type Mass = { seed: number; x: number; y: number; w: number; h?: number; rot?: number; rough?: number; rim?: number; opacity?: number; tone?: Tone };
 /** 구름 속 번개 점(세계 좌표). a 세기, r 닿는 거리 */
 export type Bolt = { x: number; y: number; a: number; r: number };
@@ -467,9 +506,10 @@ export type Bolt = { x: number; y: number; a: number; r: number };
 /**
  * 폭풍 덩어리 무리. 뒤에서 앞 순서로 그린다(목록 앞이 뒤). rot(rad)이면 밑동 (x, y)를 축으로 돌린다
  * (위에서 내려다본 구멍·떨어지는 벽에서 부푼 윗면이 가운데를 보게).
- * bolts: 덩어리마다 가장 센 번개 하나가 안에서 비친다. 흐림은 덩어리마다 걸지 않고 층(Layer blur)에 맡긴다(soft 0)
+ * bolts: 덩어리마다 가장 센 번개 하나가 안에서 비친다. 흐림은 덩어리마다 걸지 않고 층(Layer blur)에 맡긴다(soft 0).
+ * lite: 먼(흐린) 층은 안쪽 결 없는 가벼운 덩어리로(StormLite)
  */
-export const Storm: React.FC<{ masses: Mass[]; tone: Tone; t: number; bolts?: Bolt[]; rim?: number; rimColor?: string; soft?: number; flashColor?: string }> = ({ masses, tone, t, bolts = [], rim = 0, rimColor, soft = 0, flashColor }) => (
+export const Storm: React.FC<{ masses: Mass[]; tone: Tone; t: number; bolts?: Bolt[]; rim?: number; rimColor?: string; soft?: number; flashColor?: string; lite?: boolean }> = ({ masses, tone, t, bolts = [], rim = 0, rimColor, soft = 0, flashColor, lite = false }) => (
   <g>
     {masses.map((m, i) => {
       const h = m.h ?? m.w * .32;
@@ -489,7 +529,10 @@ export const Storm: React.FC<{ masses: Mass[]; tone: Tone; t: number; bolts?: Bo
       }
       if (fa < .07) fa = 0; // 약한 번쩍임은 그리지 않는다(덩어리마다 섞기 층이 하나씩 생긴다)
       const tn = m.tone ?? tone;
-      const el = (
+      const el = lite ? (
+        <StormLite key={i} seed={m.seed} x={m.x} y={m.y} w={m.w} h={h} top={tn.top} body={tn.body} base={tn.base} t={t} rough={m.rough ?? 1}
+          flash={clamp(fa)} flashX={fx} flashY={fy} flashColor={flashColor} rim={m.rim ?? rim} rimColor={rimColor} opacity={m.opacity} />
+      ) : (
         <StormMass key={i} seed={m.seed} x={m.x} y={m.y} w={m.w} h={h} top={tn.top} body={tn.body} base={tn.base} t={t} rough={m.rough ?? 1} soft={soft}
           flash={clamp(fa)} flashX={fx} flashY={fy} flashColor={flashColor} rim={m.rim ?? rim} rimColor={rimColor} opacity={m.opacity} />
       );
