@@ -119,8 +119,10 @@ function mothGlyph(key: string | number, f: RF, ids: Ids, o: { spread: number; t
   const bm = `matrix(${nx * bw} ${ny * bw} ${-f.ux * body} ${-f.uy * body} ${f.x} ${f.y})`;
   return (
     <g key={key} opacity={b}>
-      <circle cx={f.x} cy={f.y} r={gr * 1.7 * g} fill={`url(#${ids.glow})`} opacity={.55 + fl * .8} />
-      {fl > .02 ? <circle cx={f.x} cy={f.y} r={gr * (1.1 + fl * 1.6)} fill={`url(#${ids.hot})`} opacity={fl} /> : null}
+      <g transform={m(1).replace(/matrix\(([^ ]+) ([^ ]+)/, `matrix(${f.sx} ${f.sy}`)}>
+        <ellipse rx={1.9 * g} ry={2.4 * g} fill={`url(#${ids.glow})`} opacity={.55 + fl * .8} />
+        {fl > .02 ? <ellipse rx={1.3 + fl * 1.6} ry={1.6 + fl * 2} fill={`url(#${ids.hot})`} opacity={fl} /> : null}
+      </g>
       {wing(1)}
       {wing(-1)}
       <g transform={bm}>
@@ -520,7 +522,7 @@ export const City3D: React.FC<{ c: Cam3; k: CityK; t: number; fogD?: number; myW
       if (nx * (camP.x - fx) + nz * (camP.z - fz) <= 0) continue;
       const q = ix.map((i) => corners[i]);
       const lit = .5 + .5 * (nz * .8 + nx * .25); // 달(+z) 쪽 벽이 조금 밝다
-      const wall = mixhex(mixhex(k.sil, k.silFar, .35 + lit * .45), k.fog, fw * .9);
+      const wall = mixhex(mixhex(k.sil, k.silFar, .12 + lit * .3), k.fog, fw * .85);
       g.push(<path key={`w${nx}${nz}`} d={`M${q[0].x},${q[0].y}L${q[1].x},${q[1].y}L${q[2].x},${q[2].y}L${q[3].x},${q[3].y}Z`} fill={wall} />);
       // 창
       const hpx = Math.abs(q[3].y - q[0].y) + Math.abs(q[3].x - q[0].x);
@@ -534,7 +536,7 @@ export const City3D: React.FC<{ c: Cam3; k: CityK; t: number; fogD?: number; myW
           const u0 = (cc + .25) / cols, u1 = (cc + .75) / cols, v0 = (r + .3) / floors, v1 = (r + .75) / floors;
           const a1 = bl(u0, v0), a2 = bl(u1, v0), a3 = bl(u1, v1), a4 = bl(u0, v1);
           const fl = cold ? .6 + .4 * Math.sin(t * (4 + rnd(b.seed, r + cc) * 6) + r * 3 + cc) : 1;
-          g.push(<path key={`n${nx}${nz}${r}_${cc}`} d={`M${a1.x},${a1.y}L${a2.x},${a2.y}L${a3.x},${a3.y}L${a4.x},${a4.y}Z`} fill={cold ? k.cold : k.win} opacity={(.45 + rnd(b.seed + 3, r * 40 + cc) * .5) * fl * (1 - fw * .75)} />);
+          g.push(<path key={`n${nx}${nz}${r}_${cc}`} d={`M${a1.x},${a1.y}L${a2.x},${a2.y}L${a3.x},${a3.y}L${a4.x},${a4.y}Z`} fill={cold ? k.cold : k.win} opacity={(.6 + rnd(b.seed + 3, r * 40 + cc) * .4) * fl * (1 - fw * .6)} />);
         }
       } else if (hpx > 4) {
         // 작은 벽: 불 켜진 점 몇 개
@@ -548,8 +550,8 @@ export const City3D: React.FC<{ c: Cam3; k: CityK; t: number; fogD?: number; myW
     }
     if (camP.y > b.h) {
       const q = [corners[4], corners[5], corners[6], corners[7]];
-      const roof = mixhex(mixhex(k.silFar, k.fog, .3), k.fog, fw * .9);
-      g.push(<path key="r" d={`M${q[0].x},${q[0].y}L${q[1].x},${q[1].y}L${q[2].x},${q[2].y}L${q[3].x},${q[3].y}Z`} fill={roof} />);
+      const roof = mixhex(mixhex(k.sil, k.silFar, .62), k.fog, fw * .85);
+      g.push(<path key="r" d={`M${q[0].x},${q[0].y}L${q[1].x},${q[1].y}L${q[2].x},${q[2].y}L${q[3].x},${q[3].y}Z`} fill={roof} stroke={mixhex(roof, k.glow, .22)} strokeWidth={.8} />);
       // 지붕 위 작은 상자(물탱크·계단실)
       if (rnd(b.seed, 99) > .45 && b.x1 - b.x0 > 8) {
         const tx = mix(b.x0 + 2, b.x1 - 6, rnd(b.seed, 98)), tz = mix(b.z0 + 2, b.z1 - 6, rnd(b.seed, 97)), th = 2.5;
@@ -592,6 +594,20 @@ export const City3D: React.FC<{ c: Cam3; k: CityK; t: number; fogD?: number; myW
         const r = Math.max(.7, .32 * p.s);
         const fw = 1 - Math.exp(-p.z / fogD);
         lamp.push(<circle key={`l${a}_${j}_${dir}`} cx={p.x} cy={p.y} r={r * 3} fill={`url(#${id}lg)`} opacity={(1 - fw * .6) * lights} />);
+      }
+    }
+    // 거리: 가로등 빛이 길을 따라 번진 선(건물 사이 골목이 따뜻하게 빛난다)
+    for (let a = -N; a <= N; a++) for (let j = -N; j < N; j++) {
+      for (const dir of [0, 1]) {
+        const s0 = (a + .5) * CELL, u0 = (j + .5) * CELL, u1 = (j + 1.5) * CELL;
+        const A = dir ? p3(c, u0, 0, s0) : p3(c, s0, 0, u0), Bq = dir ? p3(c, u1, 0, s0) : p3(c, s0, 0, u1);
+        if (A.z < 2 || Bq.z < 2) continue;
+        if (Math.hypot((dir ? u0 : s0) - c.x, (dir ? s0 : u0) - c.z) > radius) continue;
+        if (Math.max(A.x, Bq.x) < -50 || Math.min(A.x, Bq.x) > 1970 || Math.max(A.y, Bq.y) < -50 || Math.min(A.y, Bq.y) > 1130) continue;
+        const w = Math.max(1.2, 7 * (A.s + Bq.s) / 2);
+        const fw = 1 - Math.exp(-A.z / fogD);
+        lamp.push(<line key={`s${a}_${j}_${dir}`} x1={A.x} y1={A.y} x2={Bq.x} y2={Bq.y} stroke={k.win} strokeOpacity={.16 * (1 - fw * .5) * lights} strokeWidth={w} strokeLinecap="round" />);
+        lamp.push(<line key={`t${a}_${j}_${dir}`} x1={A.x} y1={A.y} x2={Bq.x} y2={Bq.y} stroke="#ffd9a0" strokeOpacity={.22 * (1 - fw * .5) * lights} strokeWidth={Math.max(.6, w * .18)} />);
       }
     }
     // 차: 몇 줄의 길을 따라 움직이는 빛 점
@@ -688,4 +704,17 @@ export const add3 = (a: { x: number; y: number; z: number }, ...bs: [{ x: number
 export function lookAt(p: { x: number; y: number; z: number }, q: { x: number; y: number; z: number }) {
   const dx = q.x - p.x, dy = q.y - p.y, dz = q.z - p.z;
   return { yaw: Math.atan2(dx, dz), pitch: Math.atan2(dy, Math.hypot(dx, dz)) };
+}
+/** 화면 점(sx, sy)을 지나는 시선의 세계 방향(p3의 역) */
+export function rayDir(c: Cam3, sx: number, sy: number) {
+  let dx = sx - (c.cx ?? 960), dy = sy - (c.cy ?? 540);
+  const r = -(c.roll ?? 0);
+  [dx, dy] = [dx * Math.cos(r) - dy * Math.sin(r), dx * Math.sin(r) + dy * Math.cos(r)];
+  let x = dx / c.f, y = -dy / c.f, z = 1;
+  const cp = Math.cos(c.pitch), sp = Math.sin(c.pitch);
+  [y, z] = [y * cp + z * sp, -y * sp + z * cp];
+  const cy = Math.cos(c.yaw), sy2 = Math.sin(c.yaw);
+  [x, z] = [x * cy + z * sy2, -x * sy2 + z * cy];
+  const l = Math.hypot(x, y, z);
+  return { x: x / l, y: y / l, z: z / l };
 }

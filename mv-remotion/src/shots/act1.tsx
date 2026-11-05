@@ -227,7 +227,7 @@ export const act1: Shot[] = [
     render: (c) => {
       const k = LK, lt = c.lt;
       const taps = [.04, beat(13) - T4, beat(13.5) - T4];
-      const spots = [{ x: 1060, y: 540 }, { x: 1120, y: 470 }, { x: 1040, y: 500 }];
+      const spots = [{ x: 1470, y: 720 }, { x: 1540, y: 660 }, { x: 1450, y: 690 }];
       // 유리에서 떨어진 거리 z(0 = 닿음): 두드림 사이를 포물선으로 튕긴다
       const zAt = (l: number) => {
         if (l < taps[0]) return (taps[0] - l) * 4;
@@ -239,7 +239,7 @@ export const act1: Shot[] = [
         while (i < taps.length - 1 && l >= taps[i + 1]) i++;
         const a = spots[i], b = spots[Math.min(i + 1, spots.length - 1)];
         const u = i < taps.length - 1 ? smooth(taps[i], taps[i + 1], l) : 0;
-        return { x: mix(a.x, b.x, u) + n2(3, l * 2) * 40 * zAt(l), y: mix(a.y, b.y, u) - zAt(l) * 120 + n2(4, l * 2) * 30 * zAt(l) };
+        return { x: mix(a.x, b.x, u) + n2(3, l * 2) * 40 * zAt(l) - zAt(l) * 60, y: mix(a.y, b.y, u) - zAt(l) * 90 + n2(4, l * 2) * 30 * zAt(l) };
       };
       const z = zAt(lt), q = posAt(lt);
       const shake = taps.reduce((s, tp, i) => s + wob(lt - tp, 55, 14) * (i === 1 ? 7 : 4), 0);
@@ -266,22 +266,25 @@ export const act1: Shot[] = [
             <g fill="#cfe4ff" opacity={.16}>
               {Array.from({ length: 70 }, (_, i) => <circle key={i} cx={300 + rnd(51, i) * 1650} cy={110 + rnd(52, i) * 980} r={.8 + rnd(53, i) * 2.6} />)}
             </g>
-            <path d="M380,1080L1240,90L1420,90L560,1080Z" fill="#ffffff" opacity={.035} />
+            <path d="M260,1080L1100,0L1300,0L460,1080Z" fill="#ffffff" opacity={.035} />
+            <path d="M1300,1080L1800,440L1880,440L1380,1080Z" fill="#ffffff" opacity={.03} />
             {taps.map((tp, i) => <Smear key={"s" + i} x={spots[i].x} y={spots[i].y} t={lt} t0={tp} r={i === 1 ? 170 : 120} color={GOLD} life={2.4} />)}
-            {taps.map((tp, i) => <Ripple key={"r" + i} x={spots[i].x} y={spots[i].y} t={lt} t0={tp} r={i === 1 ? 420 : 260} color={mixc(GOLD, "#ffffff", .4)} width={i === 1 ? 6 : 4} />)}
+            {taps.map((tp, i) => <Ripple key={"r" + i} x={spots[i].x} y={spots[i].y} t={lt} t0={tp} r={i === 1 ? 330 : 220} color={mixc(GOLD, "#ffffff", .4)} width={i === 1 ? 6 : 4} />)}
           </Layer>
           <Layer d={1} blend="screen" blur={3}>
             {/* 등 뒤 폰의 차가운 반사 */}
-            <rect x={540} y={760} width={120} height={210} rx={18} fill={k.cold} opacity={.16 * phoneFlicker(c.t, 9)} transform="rotate(-8 600 860)" />
-            <Glow x={600} y={860} r={330} color={k.cold} opacity={.12} />
+            <rect x={560} y={700} width={120} height={210} rx={18} fill={k.cold} opacity={.16 * phoneFlicker(c.t, 9)} transform="rotate(-8 620 800)" />
+            <Glow x={620} y={800} r={330} color={k.cold} opacity={.12} />
           </Layer>
           <Layer d={1} blur={0}>
-            {/* 창살(왼쪽 세로, 위 가로)과 걸쇠 */}
-            <rect x={230} y={-100} width={70} height={1300} fill={mixhex(k.sil, k.fog, .12)} />
-            <rect x={-100} y={40} width={2200} height={56} fill={mixhex(k.sil, k.fog, .12)} />
-            <rect x={296} y={-100} width={4} height={1300} fill={k.rim} opacity={.25} />
-            <rect x={300} y={94} width={1700} height={3} fill={k.rim} opacity={.2} />
-            <rect x={205} y={560} width={50} height={90} rx={8} fill={mixhex(k.sil, k.fog, .2)} />
+            {/* 창살 십자: 오른쪽 아래 칸이 3번 폰 화면과 같은 자리(매치컷). 왼쪽 끝은 창틀 */}
+            <rect x={1196} y={-100} width={74} height={1300} fill={mixhex(k.sil, k.fog, .12)} />
+            <rect x={-100} y={400} width={2200} height={60} fill={mixhex(k.sil, k.fog, .12)} />
+            <rect x={-100} y={-100} width={150} height={1300} fill={mixhex(k.sil, k.fog, .08)} />
+            <rect x={1266} y={-100} width={4} height={1300} fill={k.rim} opacity={.25} />
+            <rect x={50} y={458} width={2000} height={3} fill={k.rim} opacity={.2} />
+            <rect x={46} y={-100} width={4} height={1300} fill={k.rim} opacity={.18} />
+            <rect x={1172} y={560} width={50} height={90} rx={8} fill={mixhex(k.sil, k.fog, .2)} />
           </Layer>
           <Layer d={.45}>
             <path d="M-200,-100C-40,200 -100,600 40,1200L-300,1200Z" fill={k.sil} />
@@ -570,8 +573,8 @@ export const act1: Shot[] = [
     render: (c) => {
       const k = K.moths, lt = c.lt;
       const tl = beat(28) - T9;
-      const tip = { x: 1130, y: 470 };
-      const hs = 330;
+      const tip = { x: 1180, y: 380 };
+      const hs = 520;
       const dip = wob(lt - tl, 14, 5) * 14;
       const approach = (l: number) => {
         const u = ease("expoOut", clamp(l / tl) * .995);
@@ -597,16 +600,16 @@ export const act1: Shot[] = [
             <Kid pose={kp} sil={k.sil} rim={{ dx: .8, dy: -.5, color: k.rim, width: .006, glow: .8 }} />
           </Layer>
           <Layer d={1} blur={mix(10, 0, rack)}>
-            <Rimmed dx={.25} dy={-1} w={7} rim={mixc(k.rim, "#ffffff", .2 * lit)} sil={k.sil} glow={.8 * lit}>
+            <Rimmed dx={.25} dy={-1} w={9} rim={mixc(k.rim, "#ffffff", .2 * lit)} sil={k.sil} glow={.8 * lit}>
               {(f) => fingerHand(tip.x, tip.y + dip, hs, f)}
             </Rimmed>
           </Layer>
           <Layer d={1} blend="screen" blur={0}>
             <Glow x={m.x} y={m.y} r={260} color={k.accent} opacity={.25 + .25 * lit} />
-            {landed ? <Burst x={tip.x} y={tip.y} t={lt} t0={tl} dur={.8} r={190} n={22} color={k.accent} /> : null}
+            {landed ? <Burst x={tip.x} y={tip.y} t={lt} t0={tl} dur={.8} r={240} n={24} color={k.accent} /> : null}
           </Layer>
           <Layer d={1} blur={mix(6, 0, rack)}>
-            <BigMoth x={m.x} y={m.y} s={58} a={landed ? -Math.PI / 2 + Math.sin(lt * 1.3) * .05 : Math.atan2(tip.y - m.y, tip.x - m.x) * .5 - Math.PI / 2 * .5} flap={flap} color={k.accent} glow={.7} />
+            <BigMoth x={m.x} y={m.y} s={74} a={landed ? -Math.PI / 2 + Math.sin(lt * 1.3) * .05 : Math.atan2(tip.y - m.y, tip.x - m.x) * .5 - Math.PI / 2 * .5} flap={flap} color={k.accent} glow={.7} />
           </Layer>
         </Scene>
       );
@@ -714,8 +717,8 @@ export const act1: Shot[] = [
       }
       const camRise = ease("sineIO", clamp(lt / (c.dur - .15)));
       const hh = handheld(c.t, 26, 5);
-      const cam: Cam = { x: 900 + hh.x + camRise * 50, y: mix(560, topY + 120, camRise) + hh.y, zoom: mix(1, 1.04, camRise), rot: hh.r, focus: 1, dof: 2 };
-      const wall = mixhex(k.silFar, k.sil, .25);
+      const cam: Cam = { x: 900 + hh.x + camRise * 50, y: mix(560, topY + 150, camRise) + hh.y, zoom: mix(1.1, .98, camRise), rot: hh.r + mix(-.02, .01, camRise), focus: 1, dof: 2 };
+      const wall = mixhex(k.sil, k.silFar, .5);
       const fl = phoneFlicker(c.t, 41);
       const lonely = new Set(["2,2", "1,1", "2,0", "0,3"]);
       return (
@@ -731,18 +734,18 @@ export const act1: Shot[] = [
             <Glow x={1700} y={800} r={60} rx={1400} ry={40} color={mixhex(k.win, k.fog, .5)} opacity={.35} />
           </Layer>
           <Layer d={2.6}>
-            <rect x={1440} y={-40} width={480} height={3000} fill={mixhex(k.silFar, k.fog, .2)} />
+            <rect x={1440} y={-40} width={480} height={3000} fill={mixhex(k.silFar, k.sil, .3)} />
             <rect x={1430} y={-56} width={500} height={18} fill={mixhex(k.silFar, k.sil, .3)} />
-            <rect x={1920} y={180} width={700} height={3000} fill={mixhex(k.silFar, k.fog, .3)} />
+            <rect x={1920} y={180} width={700} height={3000} fill={mixhex(k.silFar, k.fog, .12)} />
             {Array.from({ length: 8 }, (_, r) => Array.from({ length: 4 }, (_, cI) => {
               const x = cI < 2 ? 1490 + cI * 220 : 1990 + (cI - 2) * 260, y = (cI < 2 ? 20 : 240) + r * 260;
               const on = rnd(55, r * 4 + cI) > .72;
-              return <rect key={`${r}-${cI}`} x={x} y={y} width={120} height={150} fill={on ? mixhex(k.win, k.fog, .25) : mixhex(k.sil, k.silFar, .6)} />;
+              return <rect key={`${r}-${cI}`} x={x} y={y} width={120} height={150} fill={on ? mixhex(k.win, k.fog, .25) : mixhex(k.sil, k.silFar, .35)} />;
             }))}
           </Layer>
           <Layer d={1}>
             <rect x={-1400} y={topY} width={2640} height={3000} fill={wall} />
-            <Glow x={1200} y={topY + 200} r={700} color={k.fog} opacity={.25} />
+            <Glow x={1240} y={topY + 160} r={760} color={k.fog} opacity={.3} />
             <rect x={-1400} y={topY - 34} width={2660} height={36} fill={k.sil} />
             <rect x={1236} y={topY} width={6} height={3000} fill={k.rim} opacity={.2} />
             {/* 창 격자: 지나가는 몇 개는 폰 빛에 갇힌 실루엣 */}
@@ -890,12 +893,12 @@ export const act1: Shot[] = [
         headTilt: mix(-.08, -.95, look), lean: mix(.03, -.12, look), armN: [mix(.15, .35, look), .3], armF: [mix(-.1, -.3, look), .3],
         swing: .25 + wob(lt - b51, 9, 3) * .8 + wob(lt - b52 - .12, 10, 2.6) * 1.5,
       });
-      const tilt = ease("io", lin(b52 + .5, c.dur + .4, lt));
+      const tilt = ease("io", lin(b52 + .25, c.dur + .5, lt));
       const hh = handheld(c.t, 35, 4);
-      const cam: Cam = { x: 980 + hh.x + (1 - ease("expoOut", lin(0, b51 + .4, lt))) * -60, y: 560 - tilt * 200 + hh.y, zoom: 1, rot: hh.r - .012, focus: 1, dof: .3 };
+      const cam: Cam = { x: 980 + hh.x + (1 - ease("expoOut", lin(0, b51 + .4, lt))) * -60, y: 560 - tilt * 300 + hh.y, zoom: 1, rot: hh.r - .012, focus: 1, dof: .3 };
       const lift = (t: number): M[] => {
         const l = t - T14;
-        const u = Math.pow(clamp((l - b52 + .03) / 1.05), 1.45);
+        const u = Math.pow(clamp((l - b52 + .04) / 1.9), 1.35);
         return Array.from({ length: 40 }, (_, i) => {
           const d = rnd(181, i) * .25;
           const uu = clamp(u * 1.25 - d);

@@ -16,6 +16,11 @@ import { TAU, clamp, ease, mix, mixc, mixhex, n2, rnd } from "../lib/math";
 import type { Key } from "../lib/palette";
 import { Glow } from "../lib/sky";
 
+/** hex든 rgb(...)든 받아 hex로 */
+export const toHex = (c: string) => c.startsWith("#") ? c : "#" + (c.match(/\d+(\.\d+)?/g) ?? ["0", "0", "0"]).slice(0, 3).map((v) => Math.round(+v).toString(16).padStart(2, "0")).join("");
+/** 색 섞기(hex·rgb 모두) */
+export const mx = (a: string, b: string, w: number) => mixc(toHex(a), toHex(b), w);
+
 export function lerpKey(a: Key, b: Key, w: number): Key {
   const m = (p: string, q: string) => mixhex(p, q, clamp(w));
   return {
@@ -36,6 +41,7 @@ export const CloudMass: React.FC<{
   ends?: "L" | "R" | "LR" | ""; bump?: number; t?: number; sheen?: number; fade?: boolean;
 }> = ({ seed, x0, x1, y, depth = 520, dark, lit, rim, ends = "L", bump = 1, t = 0, sheen = .35, fade = true }) => {
   const id = useUid("cm");
+  const L = ends.includes("L"), R = ends.includes("R");
   const top: Puff[] = [];
   const n = Math.max(3, Math.round((x1 - x0) / 120));
   for (let i = 0; i <= n; i++) {
@@ -43,35 +49,46 @@ export const CloudMass: React.FC<{
     const r = (50 + rnd(seed, i) * 60) * bump;
     top.push({ x: mix(x0, x1, u) + (rnd(seed, i + 50) - .5) * 50, y: y + r * .78 + n2(seed, i * .7 + t * .12) * 3, r });
   }
+  // 둥근 끝: 윗면 끝에서 아래 안쪽으로 파고드는 곡선(걸터앉은 다리가 허공에 뜬다). 곡선을 따라 덩이를 붙인다
+  const cut = 260 * bump;
+  const endCurve = (x: number, dir: number) => (u: number) => {
+    const a = { x, y: y + 15 }, c1 = { x: x + dir * 45, y: y + depth * .35 }, c2 = { x: x - dir * 110, y: y + depth * .8 }, b = { x: x - dir * cut, y: y + depth };
+    const m = 1 - u;
+    return { x: m * m * m * a.x + 3 * m * m * u * c1.x + 3 * m * u * u * c2.x + u * u * u * b.x, y: m * m * m * a.y + 3 * m * m * u * c1.y + 3 * m * u * u * c2.y + u * u * u * b.y };
+  };
   const side: Puff[] = [];
-  const end = (x: number, dir: number) => {
+  const lumps = (x: number, dir: number) => {
+    const f = endCurve(x, dir);
     for (let j = 0; j < 6; j++) {
-      const v = j / 5;
-      const r = (75 + v * 110 + rnd(seed, 100 + j + (dir > 0 ? 20 : 0)) * 40) * bump;
-      // 맨 위 덩이가 가장 튀어나오고 아래로 갈수록 안쪽으로 들어간다(걸터앉은 다리가 허공에 뜬다)
-      side.push({ x: x + dir * (40 * (1 - v) - v * 160 - r * .55) + (rnd(seed, 140 + j) - .5) * 30, y: y + r * .85 + v * depth * .5, r });
+      const u = .06 + j * .14;
+      const q = f(u);
+      const r = (55 + u * 70 + rnd(seed, 100 + j + (dir > 0 ? 20 : 0)) * 30) * bump;
+      side.push({ x: q.x - dir * r * .55, y: q.y + r * .2, r });
     }
   };
-  const bodyX0 = ends.includes("L") ? x0 : x0 - 600, bodyX1 = ends.includes("R") ? x1 : x1 + 600;
+  if (L) lumps(x0, -1);
+  if (R) lumps(x1, 1);
+  const bx0 = L ? x0 : x0 - 800, bx1 = R ? x1 : x1 + 800;
+  const curveD = (x: number, dir: number, rev: boolean) => {
+    const f = endCurve(x, dir);
+    const pts = Array.from({ length: 9 }, (_, i) => f(i / 8));
+    return (rev ? pts.reverse() : pts).map((p) => `L${p.x.toFixed(1)},${p.y.toFixed(1)}`).join("");
+  };
+  const body = `M${bx0},${y + 15}L${bx1},${y + 15}` + (R ? curveD(x1, 1, false) : `L${bx1},${y + depth}`) + (L ? curveD(x0, -1, true) : `L${bx0},${y + depth}`) + "Z";
   return (
     <g>
       <defs>
         <linearGradient id={id} x1="0" y1={y - 90} x2="0" y2={y + depth} gradientUnits="userSpaceOnUse">
           <stop offset="0%" stopColor={lit} />
-          <stop offset="20%" stopColor={mixc(lit, dark, .45)} />
+          <stop offset="20%" stopColor={mx(lit, dark, .45)} />
           <stop offset="55%" stopColor={dark} />
           <stop offset="100%" stopColor={dark} stopOpacity={fade ? 0 : 1} />
         </linearGradient>
-        <radialGradient id={id + "c"} cx=".42" cy=".3" r=".75">
-          <stop offset="0%" stopColor={lit} />
-          <stop offset="60%" stopColor={mixc(lit, dark, .22)} />
-          <stop offset="100%" stopColor={mixc(lit, dark, .5)} />
-        </radialGradient>
       </defs>
       {rim ? top.map((p, i) => <circle key={"r" + i} cx={p.x} cy={p.y - 4} r={p.r + 4} fill={rim} opacity={.45} />) : null}
-      <rect x={bodyX0} y={y + 30} width={bodyX1 - bodyX0} height={depth - 30} rx={60} fill={`url(#${id})`} />
+      <path d={body} fill={`url(#${id})`} />
       {side.map((p, i) => <circle key={"s" + i} cx={p.x} cy={p.y} r={p.r} fill={`url(#${id})`} />)}
-      {top.map((p, i) => <circle key={i} cx={p.x} cy={p.y} r={p.r} fill={`url(#${id}c)`} />)}
+      {top.map((p, i) => <circle key={i} cx={p.x} cy={p.y} r={p.r} fill={`url(#${id})`} />)}
       {sheen > 0 ? <Glow x={(x0 + x1) / 2} y={y + 10} r={60} rx={(x1 - x0) * .55} ry={70} color={lit} opacity={sheen} /> : null}
     </g>
   );
@@ -135,7 +152,7 @@ export const StormMass: React.FC<{
       <defs>
         <linearGradient id={id} x1="0" y1={y - h} x2="0" y2={y} gradientUnits="userSpaceOnUse">
           <stop offset="0%" stopColor={lit} />
-          <stop offset="35%" stopColor={mixc(lit, dark, .6)} />
+          <stop offset="35%" stopColor={mx(lit, dark, .6)} />
           <stop offset="100%" stopColor={dark} />
         </linearGradient>
       </defs>
@@ -168,30 +185,43 @@ export const Heap: React.FC<{
   flash?: number; flashColor?: string; fx?: number; fy?: number; edge?: string; opacity?: number; press?: number; base?: boolean;
 }> = ({ seed, x, y, w, h, lit, dark, mid, shape = "mound", n, t = 0, churn = 1, light = .38, flash = 0, flashColor = "#dff4ff", fx = .5, fy = .45, edge, opacity = 1, press = 0, base = true }) => {
   const id = useUid("hp");
-  const N = n ?? (shape === "tower" ? 46 : shape === "stone" ? 9 : 22);
+  const N = n ?? (shape === "tower" ? 34 : shape === "stone" ? 9 : 20);
   const prof = (v: number) => shape === "tower" ? .5 + .5 * Math.pow(1 - v, 2) + .6 * Math.pow(clamp((v - .66) / .34), 1.4) : shape === "stone" ? Math.sqrt(clamp(1 - v * v * .6)) : Math.sqrt(clamp(1 - v * v));
   const sq = 1 - press * .14;
   const puffs = Array.from({ length: N }, (_, i) => {
     const v = shape === "stone" ? rnd(seed, i) * .6 : Math.pow(rnd(seed, i), shape === "tower" ? .9 : .75);
     const half = w * .5 * prof(v);
     const px = x + (rnd(seed, i + 300) * 2 - 1) * half * .82 + n2(seed + i, t * .15 * churn) * h * .015;
-    const rr = (shape === "tower" ? h * (.1 + rnd(seed, i + 600) * .07) : h * (.28 + rnd(seed, i + 600) * .2)) * (1 - .35 * Math.abs(px - x) / (w * .5 + 1));
+    const rr = (shape === "tower" ? h * (.13 + rnd(seed, i + 600) * .09) : h * (.28 + rnd(seed, i + 600) * .2)) * (1 - .35 * Math.abs(px - x) / (w * .5 + 1));
     const py = y - v * h * (shape === "tower" ? .9 : .75) * sq + rr * .5 + n2(seed + i * 3, t * .2 * churn + 5) * rr * .06;
     return { x: px, y: py, r: rr * (1 + press * .05) };
   }).sort((a, b) => a.y - a.r - (b.y - b.r));
   const gx = x + (fx - .5) * w * .7, gy = y - fy * h;
+  // 높이 띠 넷: 위 덩이일수록 밝다. 덩이 안의 결은 약하게(공처럼 보이지 않게)
+  const NB = 4;
+  const md = mid ?? mx(lit, dark, .5);
+  const band = (p: { y: number; r: number }) => Math.min(NB - 1, Math.max(0, Math.floor(clamp((y - (p.y - p.r)) / (h * .95)) * NB)));
+  const cols = Array.from({ length: NB }, (_, j) => {
+    const u = (j + 1) / NB;
+    const top = u > .5 ? mx(md, lit, (u - .5) * 2) : mx(dark, md, u * 2);
+    const v = j / NB;
+    const bot = v > .5 ? mx(md, lit, (v - .5) * 1.2) : mx(dark, md, v * 1.6);
+    return { top, bot };
+  });
   return (
     <g opacity={opacity}>
       <defs>
-        <radialGradient id={id} cx={light} cy=".28" r=".78">
-          <stop offset="0%" stopColor={lit} />
-          <stop offset="50%" stopColor={mid ?? mixc(lit, dark, .55)} />
-          <stop offset="100%" stopColor={dark} />
-        </radialGradient>
+        {cols.map((c, j) => (
+          <radialGradient key={j} id={`${id}b${j}`} cx={light} cy=".12" r="1.05">
+            <stop offset="0%" stopColor={c.top} />
+            <stop offset="55%" stopColor={c.top} />
+            <stop offset="100%" stopColor={c.bot} />
+          </radialGradient>
+        ))}
       </defs>
       {edge ? puffs.map((p, i) => <circle key={"e" + i} cx={p.x - 3} cy={p.y - 4} r={p.r + 3} fill={edge} opacity={.55} />) : null}
       {base ? <ellipse cx={x} cy={y - h * .12} rx={w * .46} ry={h * .2} fill={dark} /> : null}
-      {puffs.map((p, i) => <circle key={i} cx={p.x} cy={p.y} r={p.r} fill={`url(#${id})`} />)}
+      {puffs.map((p, i) => <circle key={i} cx={p.x} cy={p.y} r={p.r} fill={`url(#${id}b${band(p)})`} />)}
       {flash > .01 ? (
         <g style={{ mixBlendMode: "screen" }}>
           <Glow x={gx} y={gy} r={h * .5} rx={w * .42} ry={h * .48} color={flashColor} opacity={flash * .7} />
@@ -322,7 +352,7 @@ export const AlleyView: React.FC<{ cx: number; cy: number; F: number; zs?: numbe
   const roofL = poly([P(-6, -YM, 1), P(-.5, -YM, 1), P(-.5, YM, 1), P(-6, YM, 1)]);
   const roofR = poly([P(.5, -YM, 1), P(6, -YM, 1), P(6, YM, 1), P(.5, YM, 1)]);
   const wallDark = mixhex(k.sil, k.silFar, .55), wallLit = mixhex(k.silFar, k.fog, .45);
-  const roofC = mixhex(k.silFar, k.fog, .25);
+  const roofC = mixhex(k.sil, k.silFar, .7);
   // 창: 층(Z)과 칸(Y)
   const floors = [1.18, 1.46, 1.74, 2.02, 2.3, 2.58];
   const special = 1; // 마주 보는 두 창이 있는 층
@@ -407,18 +437,18 @@ export const AlleyView: React.FC<{ cx: number; cy: number; F: number; zs?: numbe
 };
 
 /** 위에서 내려다본 구름 윗면: 가운데가 밝고 가장자리가 어두운 덩이들(빛이 위에서). pts는 덩이 중심·반지름 */
-export const TopPuffs: React.FC<{ pts: { x: number; y: number; r: number }[]; lit: string; dark: string; cx?: number; cy?: number }> = ({ pts, lit, dark, cx = .45, cy = .4 }) => {
+export const TopPuffs: React.FC<{ pts: { x: number; y: number; r: number }[]; lit: string; dark: string; cx?: number; cy?: number; soft?: boolean; opacity?: number }> = ({ pts, lit, dark, cx = .45, cy = .4, soft = false, opacity = 1 }) => {
   const id = useUid("tp");
   return (
     <g>
       <defs>
         <radialGradient id={id} cx={cx} cy={cy} r=".7">
           <stop offset="0%" stopColor={lit} />
-          <stop offset="65%" stopColor={mixc(lit, dark, .45)} />
-          <stop offset="100%" stopColor={dark} />
+          <stop offset="65%" stopColor={mx(lit, dark, .45)} stopOpacity={soft ? .5 : 1} />
+          <stop offset="100%" stopColor={dark} stopOpacity={soft ? 0 : 1} />
         </radialGradient>
       </defs>
-      {pts.map((p, i) => <circle key={i} cx={p.x} cy={p.y} r={p.r} fill={`url(#${id})`} />)}
+      <g opacity={opacity}>{pts.map((p, i) => <circle key={i} cx={p.x} cy={p.y} r={p.r} fill={`url(#${id})`} />)}</g>
     </g>
   );
 };

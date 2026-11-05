@@ -77,8 +77,8 @@ const L33: Ladder = { x0: 150, y0: 1560, x1: 862, y1: 600, w: 62, n: 21 };
 const M33 = { x: 1330, y: 215, r: 235 };
 function geo33(lt: number, t: number) {
   const hh = handheld(t, 33, 4);
-  const down = ease("io", lin(0, 2.3, lt));
-  const cam: Cam = { x: 960 + hh.x, y: mix(330, 548, down) + hh.y, zoom: mix(1, 1.05, ease("sineIO", lin(0, 2.73, lt))), rot: hh.r + mix(-.02, 0, down), focus: 1, dof: 1.4 };
+  const down = ease("out", lin(0, 2.6, lt));
+  const cam: Cam = { x: 960 + hh.x, y: mix(430, 548, down) + hh.y, zoom: mix(1, 1.05, ease("sineIO", lin(0, 2.73, lt))), rot: hh.r + mix(-.02, 0, down), focus: 1, dof: 1.4 };
   const top = ladderAt(L33, (L33.n - .5) / L33.n);
   const tReach = at(116, T33), tArrive = at(117, T33);
   const reach = ease("back", lin(tReach - .12, tReach + .3, lt));
@@ -179,7 +179,7 @@ function pair44(lt: number) {
   const a = 1.2 + lt * 5.0 + .4 * ease("in", lin(0, 2.72, lt));
   const cy = mix(980, 240, ease("io", lin(-.2, 2.9, lt)));
   const r = mix(470, 110, ease("io", lin(-.2, 2.9, lt)));
-  return { x: 960 + Math.cos(a) * r, y: cy + Math.sin(a) * r * .72, a, r, s: mix(175, 72, lin(0, 2.72, lt)) };
+  return { x: 960 + Math.cos(a) * r, y: cy + Math.sin(a) * r * .72, a, r, s: mix(235, 95, ease("out", lin(0, 2.72, lt))) };
 }
 
 // ───────────────────────────── 45 ─────────────────────────────
@@ -335,7 +335,7 @@ export const act3: Shot[] = [
       const fold = smooth(.35, 1.1, lt);
       const vortexHit = blip(lt, tB, .05, .35);
       const kp = pose({
-        ...P.hang, anchor: "center", x: kq.x, y: kq.y, s: 330, facing: 1, squash: stretch, rot: .08 * Math.sin(lt * 5),
+        ...P.hang, anchor: "center", x: kq.x, y: kq.y, s: 370, facing: 1, squash: stretch, rot: .08 * Math.sin(lt * 5),
         armN: [3.08, .04], armF: [mix(1.6, 2.4, fold) + .3 * Math.sin(lt * 7), mix(.9, .4, fold)],
         legN: [mix(.1, 1.1, fold), mix(.15, 1.6, fold)], legF: [mix(-.15, .55, fold), mix(.3, 1.2, fold)], toe: 1,
         swing: mix(-1.5, -.6, fold) + .3 * Math.sin(lt * 11), headTilt: mix(-.15, -.55, fold), faceDir: .35,
@@ -343,7 +343,7 @@ export const act3: Shot[] = [
       });
       const sk = skeleton(kp);
       // 발판 나방: 위에서부터 차례로 떨어져 나와 아이 아래의 소용돌이로 빨려 든다
-      const rel = (i: number) => .04 + (L35.n - 1 - i) * .04;
+      const rel = (i: number) => .05 + (L35.n - 1 - i) * .05;
       const vort = (tt: number, i: number) => {
         const l = tt - T35, q = kid35(l);
         const a = l * 9 + i * 2.1;
@@ -611,7 +611,7 @@ export const act3: Shot[] = [
             <rect x={-1000} y={win.y + win.h + 28} width={4000} height={40} fill={mixhex(wall, k.silFar, .4)} />
           </Layer>
           <Layer d={1}>
-            <circle cx={mix(sk.head.x, sk.neck.x, .55)} cy={mix(sk.head.y, sk.neck.y, .55)} r={fp.s * .13} fill={k.sil} />
+            <path d={`M${sk.head.x},${sk.head.y}L${sk.shN.x},${sk.shN.y}L${sk.elN.x},${sk.elN.y}L${sk.haN.x},${sk.haN.y}L${sk.haF.x},${sk.haF.y}L${sk.neck.x},${sk.neck.y}Z`} fill={k.sil} stroke={k.sil} strokeWidth={fp.s * .06} strokeLinejoin="round" />
             <Kid pose={fp} variant="friend" accent={PINK} sil={k.sil} far={FAR} phoneColor={k.cold} rim={{ dx: 1, dy: -.25, color: mixhex(k.glow, "#ffffff", .35), width: .007, glow: .8 }} />
           </Layer>
           <Layer d={1} blend="screen">
@@ -733,9 +733,10 @@ export const act3: Shot[] = [
             <path d={`M-200,1010L2000,1010L2000,1600L-200,1600Z`} fill={mixhex(k.sil, k.silFar, .1)} />
           </Layer>
           <Layer d={1.22}>
-            <Kid pose={pose({ ...fbase, faceColor: k.cold })} variant="friend" accent={PINK} sil={k.sil} far={FAR} phoneColor={k.cold} rim={{ dx: -1, dy: -.2, color: GOLD, width: .01, glow: .9 }} rim2={{ dx: .6, dy: .8, color: k.cold, width: .008, glow: .5 }} />
+            <path d={`M${fsk.head.x},${fsk.head.y}L${fsk.shN.x},${fsk.shN.y}L${fsk.elN.x},${fsk.elN.y}L${fsk.haN.x},${fsk.haN.y}L${fsk.neck.x},${fsk.neck.y}Z`} fill={k.sil} stroke={k.sil} strokeWidth={50} strokeLinejoin="round" />
+            <Kid pose={pose({ ...fbase, faceColor: "#8fb4ff" })} variant="friend" accent={PINK} sil={k.sil} far={FAR} phoneColor={k.cold} rim={{ dx: -1, dy: -.2, color: GOLD, width: .01, glow: .9 }} rim2={{ dx: .6, dy: .8, color: k.cold, width: .008, glow: .5 }} />
             <defs>
-              <linearGradient id="a3half41" gradientUnits="userSpaceOnUse" x1={fsk.head.x - 150} y1={0} x2={fsk.head.x + 10} y2={0}>
+              <linearGradient id="a3half41" gradientUnits="userSpaceOnUse" x1={fsk.head.x - 95} y1={0} x2={fsk.head.x + 5} y2={0}>
                 <stop offset="0%" stopColor="#fff" />
                 <stop offset="100%" stopColor="#000" />
               </linearGradient>
@@ -744,7 +745,7 @@ export const act3: Shot[] = [
               </mask>
             </defs>
             <g mask="url(#a3halfm41)">
-              <Kid pose={pose({ ...fbase, faceColor: WARM, phone: 0 })} variant="friend" accent={PINK} sil={k.sil} far={FAR} />
+              <Kid pose={pose({ ...fbase, faceColor: "#ffbf62", phone: 0 })} variant="friend" accent={PINK} sil={k.sil} far={FAR} />
             </g>
           </Layer>
           <Layer d={1.22} blend="screen">
@@ -800,8 +801,9 @@ export const act3: Shot[] = [
       const warmR = mix(60, 1100, ease("out", clamp(after / 2.2)));
       const kRims = [{ dx: -.4, dy: -1, color: GOLD, width: 5, glow: .7 }, { dx: 1, dy: 0, color: GOLD_CORE, width: 3, glow: 1, opacity: spark + flash }];
       const fRims = [{ dx: .5, dy: .9, color: coldRim, width: 4, glow: .6 }, { dx: -.3, dy: -1, color: mixhex(k.rim, GOLD, warm), width: 3.5, glow: .5, opacity: .35 + warm * .65 }];
-      const spillK = [{ x: cl.x, y: cl.y, r: warmR * .8, color: GOLD, a: .25 + warm * .55 }];
-      const spillF = [{ x: fw.x + 160, y: fw.y + 260, r: 520, color: k.cold, a: .32 * (1 - warm) }, { x: cl.x, y: cl.y, r: warmR * .8, color: GOLD, a: warm * .65 }];
+      const wr = Math.min(warmR * .7, 520);
+      const spillK = [{ x: cl.x, y: cl.y, r: wr, color: GOLD, a: .22 + warm * .3 }];
+      const spillF = [{ x: fw.x + 160, y: fw.y + 260, r: 520, color: k.cold, a: .32 * (1 - warm) }, { x: cl.x, y: cl.y, r: wr, color: GOLD, a: warm * .38 }];
       const room = mixhex(mixhex(k.sil, k.silFar, .25), "#5a2448", warm * .75);
       return (
         <Scene cam={cam}>

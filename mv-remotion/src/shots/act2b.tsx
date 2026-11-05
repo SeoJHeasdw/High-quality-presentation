@@ -17,7 +17,7 @@ import { Moths, type M } from "../lib/moths";
 import { Kid, ikArm, skeleton } from "../kid/rig";
 import { P, lerpPose, pose } from "../kid/pose";
 import {
-  CORE, GOLD, HALF, Ladder, MOON_DIR, MY_WIN, RUNG, S_M, WHITE, City3D, Ground3D, add3, bodySteps, climbPose, kidFrame3, ladder2d, ladder3, landFront, landGather, lookAt, p3, pDir, rung3,
+  CORE, GOLD, HALF, Ladder, MOON_DIR, MY_WIN, RUNG, S_M, WHITE, City3D, Ground3D, add3, bodySteps, climbPose, kidFrame3, ladder2d, ladder3, landFront, landGather, lookAt, p3, pDir, rayDir, rung3,
   type Cam3, type RF, type V2,
 } from "./act2b-ladder";
 import type { Shot } from "./types";
@@ -272,18 +272,15 @@ export const act2b: Shot[] = [
       const lt = c.lt, t = c.t;
       const Lk = 420.2;
       const F3 = kidFrame3(Lk);
-      const a = Math.atan2(F3.u.z, F3.u.y);
-      const eye0 = add3(F3.p, [F3.u, .5 * S_M], [F3.n, .36 * S_M], [F3.h, -.42]);
+      // 몸을 사다리 옆으로 내밀고 곧장 아래를 본다: 발은 화면 아래 오른쪽, 사다리는 그 발에서 저 아래 지붕(소실점)으로
+      const eye0 = add3(F3.p, [F3.u, .5 * S_M], [F3.n, .32 * S_M], [F3.h, -.62]);
       const dz = ease("sineIO", lin(0, c.dur, lt));
-      const back = .42 * dz;
+      const back = .5 * dz;
       const hh = handheld(t, 27, 1, .9);
-      const pitch = -(Math.PI / 2 + a) + .16 + hh.y * .003;
-      const yaw = .2 + hh.x * .003;
-      const fwd = { x: Math.sin(yaw) * Math.cos(pitch), y: Math.sin(pitch), z: Math.cos(yaw) * Math.cos(pitch) };
-      const eye = add3(eye0, [fwd, -back]);
-      const dF = .95;
-      const f = 820 * (dF + back) / dF;
-      const cam3: Cam3 = { ...eye, yaw, pitch, roll: Math.sin(lt * 1.6) * .035 + hh.r * 4, f };
+      const eye = add3(eye0, [{ x: 0, y: 1, z: 0 }, back]);
+      const dF = 1.05;
+      const f = 700 * (dF + back) / dF;
+      const cam3: Cam3 = { ...eye, yaw: Math.PI + .06 + hh.x * .002, pitch: -Math.PI / 2 + .2 + hh.y * .002, roll: .3 + Math.sin(lt * 1.7) * .04 + hh.r * 4, f };
       const lad = ladder3(cam3, 1);
       const land = landFront(Lk + 40, T27 - 9);
       // 발(신발): 발판 Lk-1.2 위. 뒤꿈치는 아이 쪽(n), 발끝은 사다리 너머
@@ -291,10 +288,11 @@ export const act2b: Shot[] = [
         const R = rung3(ri);
         const base = { x: R.x + R.hx * sgn * .5, y: R.y + .03, z: R.z + R.hz * sgn * .5 };
         const heel = p3(cam3, ...xyz(add3(base, [F3.n, .13]))), toe = p3(cam3, ...xyz(add3(base, [F3.n, -.07])));
-        const knee = p3(cam3, ...xyz(add3(base, [F3.n, .2], [F3.u, .32])));
+        const knee = p3(cam3, ...xyz(add3(base, [F3.n, .3], [F3.u, .36], [F3.h, sgn * -.05])));
         return { heel, toe, knee, w: .06 * S_M * heel.s };
       };
       const feet = [foot(-1, Math.round(Lk - 1.2)), foot(1, Math.round(Lk - 1.2))];
+      const hip = p3(cam3, ...xyz(add3(F3.p, [F3.n, .05])));
       const camK = { ...k, sky: [...k.sky] };
       // 아래에서 사다리를 타고 올라오는 나방(작게 → 크게)
       const rising = (tt: number): M[] => Array.from({ length: 34 }, (_, i) => {
@@ -426,12 +424,12 @@ export const act2b: Shot[] = [
       const F3 = kidFrame3(L0 + 2);
       const target = add3(F3.p, [F3.u, .3 * S_M]);
       const pull = ease("out", lin(0, c.dur + .3, lt));
-      const dist = mix(14, 44, pull);
-      const dir = norm3(-1, -.5, .28);
-      const camP = add3(target, [dir, -dist]);
-      const look = lookAt(camP, target);
+      const dist = mix(12, 40, pull);
       const hh = handheld(t, 29, 2, .4);
-      const cam3: Cam3 = { ...camP, yaw: look.yaw - .1 + hh.x * .0006, pitch: look.pitch - .2 + hh.y * .0006, roll: .025 + hh.r, f: 1500 };
+      const base3: Cam3 = { x: 0, y: 0, z: 0, yaw: -Math.PI / 2 - .12 + hh.x * .0006, pitch: -.3 + hh.y * .0006, roll: .03 + hh.r, f: 1250 };
+      const rd = rayDir(base3, mix(840, 900, pull), mix(430, 360, pull));
+      const camP = add3(target, [rd, -dist]);
+      const cam3: Cam3 = { ...base3, ...camP };
       const lad = ladder3(cam3, -1);
       const kd = p3(cam3, ...xyz(F3.p));
       const s = S_M * kd.s;
@@ -481,45 +479,51 @@ export const act2b: Shot[] = [
       const lt = c.lt, t = c.t;
       const Lk = 600.2;
       const F3 = kidFrame3(Lk);
-      const pel = add3(F3.p, [F3.n, .12 * S_M]);
-      const head = add3(pel, [F3.u, .45 * S_M]);
-      const win = { x: MY_WIN.x, y: MY_WIN.y + MY_WIN.h / 2, z: MY_WIN.z };
-      const push = ease("sineIO", lin(1.1, c.dur + .2, lt));
-      const cam0 = add3(head, [F3.n, -1.15], [F3.h, 1.0], [F3.u, .55]);
-      const toWin = norm3(win.x - cam0.x, win.y - cam0.y, win.z - cam0.z);
-      const camP = add3(cam0, [toWin, push * 1.6]);
-      const aim = { x: mix(mix(head.x, win.x, .82), win.x, push), y: mix(mix(head.y, win.y, .82), win.y, push), z: mix(mix(head.z, win.z, .82), win.z, push) };
-      const look = lookAt(camP, aim);
-      const f = 950 * Math.pow(8.5, push);
-      const hh = handheld(t, 30, 1.6, .22);
-      const cam3: Cam3 = { ...camP, yaw: look.yaw + hh.x / f, pitch: look.pitch + hh.y / f, roll: -.03 + hh.r * .5, f };
+      const head = add3(F3.p, [F3.n, .12 * S_M], [F3.u, .45 * S_M]);
+      const win = { x: MY_WIN.x, y: MY_WIN.y + MY_WIN.h / 2, z: MY_WIN.z + .05 };
+      const push = ease("sineIO", lin(1.0, c.dur + .3, lt));
+      // 카메라: 아이 머리 바로 뒤·위. 창을 바라보되(시프트 렌즈) 창은 처음에 왼쪽 아래 → 끝에 가운데
+      const camP0 = add3(head, [F3.u, .8], [F3.n, .25], [F3.h, .5]);
+      const dW = norm3(win.x - camP0.x, win.y - camP0.y, win.z - camP0.z);
+      const camP = add3(camP0, [dW, push * .9]);
+      const look = lookAt(camP, win);
+      const f = 640 * Math.pow(12, push);
+      const cx = mix(700, 960, push), cy = mix(790, 560, push);
+      const pre: Cam3 = { ...camP, yaw: look.yaw, pitch: look.pitch, roll: 0, f, cx, cy };
+      const h0 = p3(pre, ...xyz(head));
+      // 머리가 창의 오른쪽 위(-35°)에 오도록 화면을 돌린다
+      const roll = -.6 - Math.atan2(h0.y - cy, h0.x - cx);
+      const hh = handheld(t, 30, 1.4, .22);
+      const cam3: Cam3 = { ...pre, yaw: look.yaw + hh.x / f, pitch: look.pitch + hh.y / f, roll: roll + hh.r * .4 };
       const lad = ladder3(cam3, -1);
-      // 아이(2D): 골반·머리를 투영해 놓는다. 등은 사다리, 왼쪽(창 쪽)을 본다
-      const P0 = p3(cam3, ...xyz(pel)), H0 = p3(cam3, ...xyz(head));
-      const s = S_M * P0.s;
-      const ang = Math.atan2(H0.x - P0.x, -(H0.y - P0.y));
-      const turn = ease("back", lin(.35, 1.5, lt));
+      const H0 = p3(cam3, ...xyz(head));
+      // 아이(2D): 머리는 투영한 자리, 몸은 창 반대쪽(화면 오른쪽 아래)으로 늘어진다. 창 쪽(왼쪽)을 본다
+      const s = Math.min(6000, S_M * H0.s * .62);
+      const D = norm2(H0.x - cx, H0.y - cy);
+      const bodyDown = norm2(D.x * .55 + .2, D.y * .55 + 1);
+      const th = Math.atan2(-bodyDown.x, bodyDown.y);
+      const turn = ease("back", lin(.3, 1.6, lt));
       const breath = Math.sin(lt * 1.9) * .025;
-      const grip = (() => { const r = rung3(Lk + 2.6); return p3(cam3, r.x + r.hx * 1.05, r.y, r.z + r.hz * 1.05); })();
-      let kp: Partial<import("../kid/pose").Pose> = pose({
-        ...P.stand, anchor: "center", x: P0.x, y: P0.y, s, facing: -1, rot: -ang,
-        lean: -.06 + breath, bend: .06 + breath, headTilt: mix(-.3, .62, turn), swing: mix(.6, -.1, turn) + Math.sin(lt * 1.3) * .08,
-        armF: [.15, .55], legN: [.08, .1], legF: [-.06, .08],
+      const base = pose({
+        ...P.stand, anchor: "center", x: 0, y: 0, s, facing: -1, rot: -th,
+        lean: -.04 + breath, bend: .08 + breath, headTilt: mix(-.35, .6, turn), swing: mix(.7, -.15, turn) + Math.sin(lt * 1.3) * .08,
+        armN: [-1.1, .3], armF: [.25, .9], legN: [.08, .1], legF: [-.06, .08],
       });
-      kp = ikArmTo(kp, 0, grip.x, grip.y);
+      const sk0 = skeleton(base);
+      const kp = { ...base, x: H0.x - sk0.head.x, y: H0.y - sk0.head.y };
       const ksk = skeleton(kp);
-      const rackKid = mix(0, 9, smooth(1.2, 3.6, lt));
-      const rackCity = mix(1.8, 0, smooth(1.2, 3.6, lt));
+      const rackKid = mix(0, 10, smooth(1.0, 3.4, lt));
+      const rackCity = mix(2.2, 0, smooth(1.0, 3.4, lt));
       const land = landFront(Lk + 30, T30 - 9);
-      // 나방 하나가 아이 곁에서 창 쪽으로 내려간다(시선을 끈다)
+      // 나방 하나가 아이 곁에서 창 쪽으로 천천히 내려간다(시선을 이끈다)
       const guide = (tt: number): M[] => {
-        const a = (tt - T30 - 1.0) / 3.6;
+        const a = (tt - T30 - .9) / 3.9;
         if (a < 0 || a > 1) return [];
         const u = ease("io", a);
-        const from = add3(head, [F3.n, .4], [F3.u, .3]);
-        const q = { x: mix(from.x, win.x, u) + Math.sin(u * 9) * .8 * (1 - u), y: mix(from.y, win.y + 1.5, Math.pow(u, .9)), z: mix(from.z, win.z + 1, u) };
+        const from = add3(head, [F3.n, .5], [F3.h, -.4]);
+        const q = { x: mix(from.x, win.x + .6, u) + Math.sin(u * 7) * 3 * (1 - u), y: mix(from.y, win.y + .9, Math.pow(u, .85)), z: mix(from.z, win.z + 1.4, u) };
         const pp = p3(cam3, q.x, q.y, q.z);
-        return [{ x: pp.x, y: pp.y, s: Math.max(2.5, Math.min(20, .09 * pp.s)), a: 1.6, f: tt * 12, b: Math.min(1, a * 6, (1 - a) * 3) }];
+        return [{ x: pp.x, y: pp.y, s: clamp(.08 * pp.s, 3, 26), a: 1.6, f: tt * 12, b: Math.min(1, a * 6, (1 - a) * 4) }];
       };
       return (
         <Scene cam={{ x: 960, y: 540, zoom: 1 }}>
@@ -531,12 +535,11 @@ export const act2b: Shot[] = [
             <Ladder frame={lad} lo={0} hi={Math.floor(Lk - 14)} t={t} land={land} sparks={20} lodBelow={9e9} dim={.75} />
             <Moths t={t} at={guide} color={GOLD} trail={4} trailDt={.06} />
           </Layer>
-          {P0.z > .4 ? (
+          {H0.z > .3 ? (
             <Layer d={Infinity} blur={rackKid}>
-              <Ladder frame={lad} lo={Math.floor(Lk - 14)} hi={Math.floor(Lk + 12)} t={t} land={land} sparks={8} dim={.7} part="back" />
-              <Kid pose={kp} sil={kq.sil} rim={{ dx: .5, dy: -.85, color: kq.rim, width: .008, glow: .5 }} rim2={{ dx: 1, dy: .1, color: GOLD, width: .01, glow: .5 }} />
-              <Glow x={ksk.haF.x} y={ksk.haF.y} r={s * .12} color={kq.cold} opacity={.45} />
-              <Ladder frame={lad} lo={Math.floor(Lk - 14)} hi={Math.floor(Lk + 12)} t={t} land={land} sparks={8} dim={.7} part="front" />
+              <Ladder frame={lad} lo={Math.floor(Lk - 14)} hi={Math.floor(Lk + 6)} t={t} land={land} sparks={0} dim={.7} />
+              <Kid pose={kp} sil={kq.sil} rim={{ dx: .5, dy: -.85, color: kq.rim, width: .006, glow: .5 }} rim2={{ dx: -.9, dy: .3, color: GOLD, width: .008, glow: .4 }} />
+              <Glow x={ksk.haF.x} y={ksk.haF.y} r={s * .1} color={kq.cold} opacity={.5} />
             </Layer>
           ) : null}
         </Scene>
@@ -547,6 +550,7 @@ export const act2b: Shot[] = [
 
 const xyz = (p: { x: number; y: number; z: number }): [number, number, number] => [p.x, p.y, p.z];
 const lerpV = (a: V2, b: V2, w: number): V2 => ({ x: mix(a.x, b.x, w), y: mix(a.y, b.y, w) });
+const norm2 = (x: number, y: number) => { const l = Math.hypot(x, y) || 1; return { x: x / l, y: y / l }; };
 const norm3 = (x: number, y: number, z: number) => { const l = Math.hypot(x, y, z) || 1; return { x: x / l, y: y / l, z: z / l }; };
 const ikArmTo = ikArm;
 

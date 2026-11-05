@@ -299,7 +299,8 @@ export const act5: Shot[] = [
     },
   },
   {
-    // 61. 아래에서 올려다본 상승: 빛 요람을 탄 둘이 폭풍을 뚫고 솟는다. 구름이 겹겹이 아래로 쏟아져 지나가고(시차), 비가 긴 줄로 스친다.
+    // 61. 아래에서 비스듬히 올려다본 상승(더치 앵글): 빛 요람을 탄 둘이 폭풍을 뚫고 솟는다. 요람에서 흘러내린 나방 꼬리가
+    //     카메라 쪽으로 넓어지며 앞을 스쳐 지나가고, 구름이 겹겹이 아래로 쏟아진다(시차), 비가 긴 줄로 스친다.
     //     박 228에 번개(차가운 빛)가 내리친다. 위쪽 빛이 점점 커져 끝에서 화면이 하얗게 찬다(다음 컷 white)
     id: "a5-ascent", start: T61, key: "rescue", enter: { type: "cut" },
     render: (c) => {
@@ -310,12 +311,12 @@ export const act5: Shot[] = [
       const white = smooth(c.dur - .8, c.dur, lt);
       const hh = handheld(t, 61, 8, .9);
       const launch = 1 - springStep(lt, 12, .4);
-      const cam: Cam = { x: 960 + hh.x + Math.sin(lt * 53) * bolt * 9, y: 560 + hh.y + launch * 30, zoom: kf(lt, [[0, 1.0], [c.dur, 1.12, "in"]]), rot: -.05 + hh.r, focus: 1, dof: 3.5 };
-      const cx = 960, cy = 560 + launch * 40, rx = 330, ry = 150;
+      const cam: Cam = { x: 960 + hh.x + Math.sin(lt * 53) * bolt * 9, y: 560 + hh.y + launch * 30, zoom: kf(lt, [[0, 1.0], [c.dur, 1.1, "in"]]), rot: -.11 + hh.r, focus: 1, dof: 3.5 };
+      const cx = 1000, cy = 330 + launch * 60 + Math.sin(lt * 3.1) * 8, rx = 290, ry = 120;
       const seatY = cy + ry * .48;
-      const s = 300;
+      const s = 250;
       const flinch = bolt * .6;
-      const look = (seed: number) => mix(-.55, .1, flinch) + n2(seed, t) * .06;
+      const look = (seed: number) => mix(-.7, .05, flinch) + n2(seed, t) * .06;
       const ride: Partial<Pose> = { lean: .05, bend: 0, legN: [.25, 1.8], legF: [.12, 1.75], toe: .4, swing: -.7 - light * .3, squash: launch * .18 - flinch * .05, face: .85, faceColor: mixc(GOLD, "#e6f6ff", bolt), eyes: 1.1 };
       const pr = pair({ cx, cy: seatY, s, t, anchor: "seat", gap: .34, tumble: 0, handY: -.35,
         base: { ...ride, armF: [mix(2.95, 2.5, flinch), .1], headTilt: look(3), mouth: .3 },
@@ -324,7 +325,10 @@ export const act5: Shot[] = [
       const tg2 = cradlePts(6, cx, cy + 8, rx * 1.12, ry * 1.15, 110, 3);
       const sit = (seed: number, list: typeof tg, size: number) => (tt: number): M[] => list.map((p, i) => ({ x: p.x + n2(seed + i, tt * 1.5) * 6, y: p.y + n2(seed + i, tt * 1.5, 4) * 6, a: p.a, s: size * (.6 + rnd(seed, i) * .8), f: tt * 10 + i, b: .7 + .3 * rnd(seed, i + 9) }));
       const cl = { dark: mixhex(kR.sky[0], kR.cloud, .5), lit: mixhex(mixhex(kR.cloud, kR.cloudLit, .3), "#ffe2a8", light * .3) };
-      const tail = (tt: number) => stream(613, 70, tt, (u) => ({ x: cx + Math.sin(u * 5 + tt * 3) * 50 * u - u * 120, y: cy + ry * .9 + u * 1100 }), { speed: 1.4, spread: 50 + 0, size: 8 });
+      // 꼬리: 요람 밑에서 카메라 쪽으로(아래로) 흘러내리며 원근으로 커진다
+      const near = (m: M) => ({ ...m, s: m.s * (1 + clamp((m.y - cy) / 1000) * 2.6) });
+      const tail = (tt: number) => stream(613, 90, tt, (u) => ({ x: cx - u * 260 + Math.sin(u * 5 + tt * 3) * 60 * u, y: cy + ry * .8 + u * 1150 }), { speed: 1.5, spread: 40 + 0, size: 7 }).map(near);
+      const fgTail = (tt: number) => stream(615, 16, tt, (u) => ({ x: mix(cx - 80, 640, u), y: mix(cy + 200, 1500, u) }), { speed: 1.9, spread: 160, size: 22 });
       return (
         <Scene cam={cam}>
           <SkyLayer k={kR} horizon={1300} glowOpacity={.2}>
@@ -357,6 +361,7 @@ export const act5: Shot[] = [
           </Layer>
           <Layer d={.55}>
             {[[-260, .1], [2150, .62], [-120, 1.3]].map(([x, o], i) => <Cloud key={i} seed={614 + i} x={x} y={-1500 + ((lt + o) * 4300) % 4600} w={1300} h={520} dark={mixhex(cl.dark, "#000000", .3)} lit={cl.dark} />)}
+            <Moths t={t} at={fgTail} color={kR.accent} trail={3} trailDt={.03} />
           </Layer>
           <Layer d={Infinity} blur={0} blend="screen">
             <Glow x={960} y={-150} r={mix(300, 2600, ease("in", white))} color="#fff8ec" core={.4} opacity={white} />
@@ -373,9 +378,9 @@ export const act5: Shot[] = [
       const lt = c.lt, t = c.t;
       const k = K.clear;
       const tApex = beat(232), la = tApex - T62;
-      const rise = ease("expoOut", lin(0, la + .5, lt));
+      const rise = ease("expoOut", lin(.28, la + .45, lt));
       const hh = handheld(t, 62, 5);
-      const cam: Cam = { x: 960 + hh.x, y: mix(700, 520, ease("expoOut", lin(0, la + .8, lt))) + hh.y, zoom: kf(lt, [[0, 1.0], [c.dur, 1.06, "io"]]), rot: hh.r, focus: 1, dof: 2.5 };
+      const cam: Cam = { x: 960 + hh.x, y: mix(700, 520, ease("expoOut", lin(.2, la + .8, lt))) + hh.y, zoom: kf(lt, [[0, 1.0], [c.dur, 1.06, "io"]]), rot: hh.r, focus: 1, dof: 2.5 };
       const cx = mix(880, 900, rise), cy = mix(1250, 560, rise) + Math.sin(lt * 2.2) * 6 * rise;
       const spread = ease("back", lin(la - .1, la + .5, lt));
       const rx = mix(220, 330, spread), ry = mix(110, 120, spread);
@@ -391,8 +396,8 @@ export const act5: Shot[] = [
       const tail = (tt: number) => stream(621, 60, tt, (u) => ({ x: mix(cx - 60, 760, u) + Math.sin(u * 4 + tt * 2) * 40 * u, y: mix(cy + ry, 1400, Math.pow(u, .8)) }), { speed: .9, spread: 50, size: 7 });
       const splash = (i: number) => {
         const a = -Math.PI / 2 + (rnd(62, i) - .5) * 2.6, v = 300 + rnd(63, i) * 600;
-        const e = ease("expoOut", lin(0, 1.6, lt));
-        return { x: 880 + Math.cos(a) * v * e, y: 1060 + Math.sin(a) * v * e * .7 + lt * lt * 40, r: (50 + rnd(64, i) * 80) * (1 + lin(0, 2.2, lt) * .5), o: 1 - smooth(.3, 1.8, lt) };
+        const e = ease("expoOut", lin(.3, 1.9, lt));
+        return { x: 880 + Math.cos(a) * v * e, y: 1060 + Math.sin(a) * v * e * .7 + lt * lt * 40, r: (50 + rnd(64, i) * 80) * (1 + lin(.3, 2.4, lt) * .5), o: smooth(.25, .35, lt) * (1 - smooth(.6, 2.0, lt)) };
       };
       return (
         <Scene cam={cam}>
@@ -425,6 +430,9 @@ export const act5: Shot[] = [
           <Layer d={1} blend="screen">
             <Moths t={t} at={wing(65, 8)} color={k.accent} />
             <Rings x={cx} y={cy} t={t} at={[tApex]} r={600} sy={.5} color={k.accent} width={6} />
+          </Layer>
+          <Layer d={.9}>
+            <CloudBank seed={626} y={1290} x0={-600} x1={2500} size={760} count={6} dark={mixhex(k.cloud, k.sil, .25)} lit={mixhex(k.cloudLit, k.cloud, .15)} t={t} drift={-12} />
           </Layer>
           <Layer d={.5}>
             {Array.from({ length: 3 }, (_, i) => <Cloud key={i} seed={625 + i} x={[-200, 1100, 2200][i]} y={1200 + lt * 520 * (1 + i * .3)} w={900} h={380} dark={mixhex(k.cloud, k.sil, .3)} lit={k.cloudLit} opacity={.85} />)}
