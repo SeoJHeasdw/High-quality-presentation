@@ -5,9 +5,9 @@
  *   → 미끄러지는 손가락(클로즈업, 느리게) → 떨어지는 친구(위에서 내려다봄) → 다이빙(빠른 카메라)
  *   → 박에 잡는 손(클로즈업 → 함께 굴러떨어짐) → 어둠 속 두 폰(차가운 빛 둘만)
  *
- * 편집표 손질: 52번(B(50) → beat(202))과 55번(B(52) → beat(210))은 B(50)=beat(202), B(52)=beat(210)이라 길이가 0이다.
- *   52 낙뢰 = B(50) → beat(203.5), 53 미끄러짐 = beat(203.5) → B(51)
- *   54 떨어짐 = B(51) → beat(208.5), 55 다이빙 = beat(208.5) → beat(210) ("beat(210) 직전"), 56은 그대로 beat(210)에 잡는다.
+ * 편집표 손질(총괄 정정): 52번·55번은 B(50)=beat(202), B(52)=beat(210)이라 길이가 0이었다. 정정된 시각:
+ *   52 낙뢰 B(50) → beat(204) · 53 미끄러짐 beat(204) → B(51) · 54 떨어짐 B(51) → B(52)
+ *   55 다이빙 B(52) → beat(212) · 56 잡기 beat(212) → B(53)(손이 정확히 박 212에 잡힌다) · 57 어둠 B(53) → B(54)
  */
 import React from "react";
 import { Layer, Scene, Screen, project, unproject, type Cam } from "../lib/camera";
@@ -27,7 +27,7 @@ const GOLD = "#ffd27a";
 const MOTH = "#ffcf7a";
 
 const TEND = B(54); // 5막 첫 컷(a5-call) 시작
-const T47 = B(44), T48 = beat(182), T49 = B(46), T50 = beat(190), T51 = B(48), T52 = B(50), T53 = beat(203.5), T54 = B(51), T55 = beat(208.5), T56 = beat(210), T57 = B(53);
+const T47 = B(44), T48 = beat(182), T49 = B(46), T50 = beat(190), T51 = B(48), T52 = B(50), T53 = beat(204), T54 = B(51), T55 = B(52), T56 = beat(212), T57 = B(53);
 
 const RIM = (k: Key, dx: number, dy: number, w = .014, glow = .7, color?: string) => ({ dx, dy, color: color ?? k.rim, width: w, glow });
 
@@ -589,7 +589,7 @@ export const act4: Shot[] = [
   },
   {
     // 54. 위에서 내려다봄: 구름 끝을 따라 엎드린 아이(후드·꼬리)가 모서리 밖으로 손을 뻗는다. 친구가 검은 구름 바다 속으로 작아지며 떨어진다.
-    //     박(208)에 구름 속 번개가 친구 실루엣을 비추고 구름이 삼킨다. 끝에서 아이가 몸을 당겨 웅크린다(다이빙 예비동작)
+    //     박(208)에 구름 속 번개가 친구 실루엣을 비추고 구름이 삼킨다. 박(209)부터 아이가 몸을 당겨 웅크린다(다이빙 예비동작)
     id: "a4-fall", start: T54, key: "storm", enter: { type: "cut" },
     render: (c) => {
       const k = ST, lt = c.lt, t = c.t;
@@ -599,12 +599,12 @@ export const act4: Shot[] = [
       const f0 = { x: 610, y: 430 };
       const fx = VP.x + (f0.x - VP.x) / z + n2(541, t) * 20 / z, fy = VP.y + (f0.y - VP.y) / z;
       const fs = 330 / z;
-      const fl = clamp(strike(lt - tGone, 1) + strike(lt - .3, .35));
+      const fl = clamp(strike(lt - tGone, 1) + strike(lt - .3, .35) + strike(lt - (beat(209.5) - T54), .45));
       const hh = handheld(t, 54, 6, .55);
       const cam: Cam = { x: 960 + hh.x, y: 540 + hh.y, zoom: kf(lt, [[0, 1], [c.dur, 1.1, "in"]]), rot: hh.r + .03, focus: 1, dof: 3 };
       const close = ease("io", lin(tGone - .45, tGone + .25, lt));
       const fp = pose({ ...P.flail, anchor: "center", x: fx, y: fy, s: fs, facing: -1, rot: .35 * Math.sin(lt * 2.2) + lt * .4, armN: [1.9, .3], armF: [2.4, .6], swing: 2.2, legN: [.9 + .3 * Math.sin(lt * 9), .6], legF: [-.3, 1.0 + .3 * Math.sin(lt * 8)], mouth: .8 });
-      const ready = smooth(tGone + .05, c.dur, lt);
+      const ready = smooth(beat(209) - T54, c.dur, lt);
       const KS = 600;
       // 엎드린 아이: 몸은 구름 끝을 따라 눕고(머리 오른쪽), 가까운 팔이 모서리 밖 아래로
       let kp: Partial<Pose> = pose({ anchor: "center", x: 400 - ready * 40, y: 120 - ready * 50, s: KS, facing: 1, rot: Math.PI / 2 + .15 - ready * .15, lean: .05, headTilt: mix(.35, -.1, ready), armF: [1.2, 1.4], legN: [.1, .2], legF: [-.1, .25], swing: 1.0 + n2(542, t * 2) * .3 });
@@ -665,12 +665,12 @@ export const act4: Shot[] = [
     },
   },
   {
-    // 55. 다이빙(1.5박): 구름 끝을 박차고 머리부터 내리꽂힌다. 카메라가 같이 떨어진다: 구름·비·속도선이 위로 쏟아져 지나간다.
-    //     박(209)의 번개, 아래에서 친구가 다가와 두 손이 거의 닿을 때 끊는다
+    // 55. 다이빙(2박): 구름 끝을 박차고 머리부터 내리꽂힌다. 카메라가 같이 떨어진다: 구름·비·속도선이 위로 쏟아져 지나간다.
+    //     박(211)의 번개, 아래에서 친구가 다가와 두 손이 거의 닿을 때(박 212 직전) 끊는다
     id: "a4-dive", start: T55, key: "storm", enter: { type: "cut" },
     render: (c) => {
       const k = ST, lt = c.lt, t = c.t;
-      const tL = beat(209) - T55;
+      const tL = beat(211) - T55;
       const push = .13;
       const crouch = pose({ ...P.crouch, anchor: "feet", x: 860, y: 330, s: 330, facing: 1 });
       const pc = skeleton(crouch).pelvis;
@@ -684,7 +684,7 @@ export const act4: Shot[] = [
       const kp = lt < push
         ? pose({ ...lerpPose(P.crouch, { ...P.crouch, squash: .25, lean: .7, headTilt: .3 }, smooth(0, push, lt)), anchor: "feet", x: 860, y: 330, s: 330, facing: 1 })
         : pose({ ...lerpPose({ ...P.leap, rot: .8 }, P.dive, dive), anchor: "center", x: kx, y: ky, s: 330, facing: 1, rot: mix(.8, 2.75, dive) + n2(551, t * 3) * .05, swing: mix(.5, 2.6, dive), armN: [mix(2.5, 2.4, dive), 0], armF: [mix(2.2, 2.15, dive), .08] });
-      const fyS = kf(lt, [[.5, 1350], [c.dur, 840, "out"]]);
+      const fyS = kf(lt, [[.72, 1350], [c.dur, 840, "out"]]);
       const fw = unproject(cam, 1, 1060, fyS);
       const fp = pose({ ...P.hang, anchor: "center", x: fw.x, y: fw.y, s: 300, facing: -1, rot: .25 + n2(552, t * 2) * .1, swing: 2.4, armN: [2.4, .05], armF: [2.1, .4], headTilt: -.6, legN: [.4, .9], legF: [-.3, .7] });
       const colY = (i: number) => i * 700;
@@ -719,12 +719,12 @@ export const act4: Shot[] = [
     },
   },
   {
-    // 56. 익스트림 클로즈업 → (박 211에 안에서 자름) 미디엄: 박(210)에 손가락이 맞물린다(금빛 터짐, 흔들림, 손이 돌기 시작).
-    //     박 211부터 둘이 맞잡은 손을 축으로 돌며 굴러떨어지고 카메라가 빠진다. 박(212)의 번개가 둘을 비춘다. 끝은 검은 구름 속으로
+    // 56. 익스트림 클로즈업 → (박 213에 안에서 자름) 미디엄: 박(212)에 손가락이 맞물린다(금빛 터짐, 흔들림, 손이 돌기 시작).
+    //     박 213부터 둘이 맞잡은 손을 축으로 돌며 굴러떨어지고 카메라가 빠진다. 박(213.5)의 번개가 둘을 비춘다. 끝은 검은 구름 속으로
     id: "a4-catch", start: T56, key: "storm", enter: { type: "cut" },
     render: (c) => {
       const k = ST, lt = c.lt, t = c.t;
-      const tCut = beat(211) - T56, tL = beat(212) - T56;
+      const tCut = beat(213) - T56, tL = beat(213.5) - T56;
       const spin = 2.3 * (1 - Math.exp(-lt * 1.4)) + .1 * lt;
       const fl = strike(lt - tL, 1);
       const gold = Math.exp(-lt * 2.4);
@@ -775,11 +775,11 @@ export const act4: Shot[] = [
       const Pc = { x: 960, y: 540 };
       const s = 300;
       const phi = -Math.PI / 2 - .9 + spin;
-      const zoom = kf(l2, [[0, 1.7], [1.3, 1.02, "sineIO"]]);
+      const zoom = kf(l2, [[0, 1.65], [c.dur - tCut, 1.06, "out"]]);
       const cam: Cam = { x: Pc.x, y: Pc.y + 20, zoom, rot: (spin - 1.2) * .25, focus: 1, dof: 4 };
       const kp = hangFrom(Pc, phi, { s, armF: [1.9, .7], legN: [.1, .3 + .2 * Math.sin(lt * 5)], legF: [-.2, .5], toe: 1, headTilt: -.3, swing: 2.0 + n2(561, t * 2) * .4 });
       const fp = hangFrom(Pc, phi + Math.PI, { s: s * .97, armF: [1.5, 1.0], legN: [.6, .9 + .3 * Math.sin(lt * 6)], legF: [-.2, .7], headTilt: -.4, swing: 2.2 + n2(562, t * 2) * .4 });
-      const swallow = ease("in", lin(2.0, c.dur, lt));
+      const swallow = ease("in", lin(tL + .1, c.dur, lt));
       const rimC = mixc("#e8f8ff", GOLD, gold * .7);
       return (
         <Scene cam={cam} bg={k.sky[0]}>
