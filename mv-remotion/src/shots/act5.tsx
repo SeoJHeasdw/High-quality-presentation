@@ -760,7 +760,7 @@ export const act5: Shot[] = [
             <Moths t={t} at={motes} color="#ffe6c8" wings={false} glow={.6} />
           </Layer>
           <Layer d={1} blend="screen">
-            <Glow x={orb.x} y={orb.y} r={460} color="#ffb766" opacity={.42 + breath * .04} />
+            <Glow x={orb.x} y={orb.y} r={460} color="#ffb766" opacity={.42 + breath * .04 + c.pulse * .04} />
             <Orb x={orb.x} y={orb.y} r={orb.r} breath={breath} />
           </Layer>
           <Layer d={1} defs={<clipPath id="a5sleepArm"><circle cx={orb.x} cy={orb.y} r={orb.r * 2.4} /></clipPath>}>

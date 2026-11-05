@@ -3,8 +3,7 @@
  *   rescueStreams  어둠 속 사방에서 한 점으로 나선을 그리며 모여드는 나방 줄기들(58~60이 같은 시간표를 공유)
  *   cradlePts      두 아이 아래의 빛 요람(아래로 둥근 그릇 모양 자리들)
  *   Rings          박에 맞춰 퍼지는 빛 고리
- *   RushClouds     카메라를 지나 아래로 쏟아지는 구름(상승 시차)
- *   RushMasses     같은 일을 폭풍 덩어리(lib/storm의 StormMass)로: 61번 상승
+ *   RushMasses     카메라를 지나 아래로 쏟아지는 폭풍 덩어리(lib/storm의 StormMass, 상승 시차)
  *   DawnView / Orb / paneQuads / SleepFace / SleepReveal   66번 새벽 방(창밖 새벽, 빛 구슬, 창 모양 햇살, 잠든 얼굴, 둥근 빛에서 열림)
  *   SkyLayer       흐림 없는 하늘 층(키트의 무한 깊이 층도 심도 흐림을 먹어서 blur 0으로 고정)
  *   PhoneLight     한 손에 든 폰의 차가운 빛(키트의 phone은 두 손 사이에 놓인다)
@@ -14,7 +13,7 @@ import React from "react";
 import { Layer, Screen, useUid } from "../lib/camera";
 import { TAU, clamp, ease, mix, mixhex, n2, rnd } from "../lib/math";
 import type { Key } from "../lib/palette";
-import { Cloud, Glow, Moon, SkyFill, Stars, Wisp } from "../lib/sky";
+import { Glow, Moon, SkyFill, Stars, Wisp } from "../lib/sky";
 import { Skyline } from "../lib/city";
 import { StormMass } from "../lib/storm";
 import type { M } from "../lib/moths";
@@ -106,18 +105,6 @@ export const Rings: React.FC<{ x: number; y: number; t: number; at: number[]; r:
           <ellipse cx={x} cy={y} rx={rr} ry={rr * sy} fill="none" stroke={core} strokeWidth={width * .45 * (1 - k * .6)} opacity={a} />
         </g>
       );
-    })}
-  </g>
-);
-
-/** 아래로 지나가는 구름(올라가는 카메라). speed는 px/초, span은 되풀이 높이 */
-export const RushClouds: React.FC<{ seed: number; t: number; n: number; speed: number; x0: number; x1: number; y0: number; span: number; size: number; dark: string; lit: string; opacity?: number; dx?: number }> = ({ seed, t, n, speed, x0, x1, y0, span, size, dark, lit, opacity = 1, dx = 0 }) => (
-  <g opacity={opacity}>
-    {Array.from({ length: n }, (_, i) => {
-      const y = y0 + ((rnd(seed, i) * span + t * speed * (.85 + rnd(seed, i + 9) * .3)) % span);
-      const x = mix(x0, x1, (i + rnd(seed, i + 20) * .8) / n) + dx * (y - y0) / span;
-      const w = size * (.6 + rnd(seed, i + 40) * .8);
-      return <Cloud key={i} seed={seed * 17 + i} x={x} y={y} w={w} h={w * (.35 + rnd(seed, i + 60) * .25)} dark={dark} lit={lit} />;
     })}
   </g>
 );
