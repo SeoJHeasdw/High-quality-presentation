@@ -9,6 +9,7 @@ Technology Expert Lab 발표용 16:9 브라우저 덱.
 
 `감성 힙합 초안` 3분 뮤직비디오는 두 가지다. 첫 시안은 브라우저 캔버스 유화([mv/README.md](mv/README.md)),
 그 약점을 고친 두 번째는 Remotion 실루엣 영화([mv-remotion/README.md](mv-remotion/README.md), 67컷 편집표는 [mv-remotion/ART.md](mv-remotion/ART.md))다.
+같은 수준을 다시 만드는 법은 [docs/motion-quality-playbook.md](docs/motion-quality-playbook.md).
 
 ```bash
 cd deck

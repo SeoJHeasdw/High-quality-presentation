@@ -3,6 +3,7 @@
 `감성 힙합 초안` 3분에 맞춘 뮤직비디오. **Blender 없이 Remotion(React + SVG)만으로** 그린다.
 이야기는 [첫 뮤비](../mv/README.md)와 같다(외로운 밤 → 나방 → 달 → 친구 → 폭풍 → 새벽). 바뀐 것은 그리는 법이다.
 무엇을 왜 바꿨는지, 컬러 스크립트, 67컷 편집표는 [ART.md](ART.md)에 있다.
+다음 작품을 같은 수준으로 만드는 순서와 요청 문장은 [../docs/motion-quality-playbook.md](../docs/motion-quality-playbook.md)에 있다.
 
 | 첫 뮤비 | 뮤비 2 |
 | --- | --- |
@@ -46,5 +47,5 @@ src/
   kid/pose.ts       자세 모델과 자세 목록(P)·걸음/달리기·사다리 오르기   kid/rig.tsx   실루엣 아이·친구, IK
   shots/act1.tsx … act5.tsx   막별 컷(act2a가 기준 장면)
   entries/actN.ts   막 하나만 묶는 진입점(미리보기용)
-tools/  render.mjs · stills.mjs · sheet.py · prepare-assets.mjs
+tools/  render.mjs · stills.mjs · sheet.py · measure.py(색·밝기·컷·완급을 숫자로) · prepare-assets.mjs
 ```
