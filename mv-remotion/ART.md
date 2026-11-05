@@ -50,7 +50,7 @@ import { P, pose, lerpPose, poseSeq, gait, climb, STRIDE } from "../kid/pose";
 
 ## 4. 편집표 (67컷)
 
-박 번호 → 시각은 `beat(i)`, 마디 첫 박은 `B(n) = beat(2 + 4n)`. 한 박 ≈ 0.683초, 한 마디 ≈ 2.74초.
+박 번호 → 시각은 `beat(i)`, 마디 첫 박은 `B(n) = beat(2 + 4n)`(그래서 `B(22)`와 `beat(90)`은 같은 순간이다). 한 박 ≈ 0.683초, 한 마디 ≈ 2.74초.
 구간 경계: B(4)=13.69 · B(8)=24.70 · B(15)=44.00 · B(19)=54.97 · B(24)=68.73 · B(28)=79.55 · B(44)=123.33 · B(48)=134.35 · B(60)=167.34 · B(64)=178.35.
 거리: EWS 익스트림 와이드 · WS 와이드 · MS 미디엄 · CU 클로즈업 · ECU 익스트림 클로즈업 · INS 인서트 · OTS 어깨 너머 · POV 시점.
 
@@ -86,8 +86,8 @@ import { P, pose, lerpPose, poseSeq, gait, climb, STRIDE } from "../kid/pose";
 | 24 | a2-gather | B(19) → B(20) | hope | flash | EWS 지붕 위. 도시 곳곳(창·거리)에서 나방 줄기가 모여들어 달 쪽으로 쌓이기 시작한다 |
 | 25 | a2-rungs | B(20) → B(21) | hope | cut | CU 사다리가 조립된다. 난간 두 줄과 발판(나방 한 마리 = 발판 하나)이 8분음마다 차례로 붙으며 화면 위로 이어진다 |
 | 26 | a2-climb | B(21) → B(22) | hope | cut | WS 낮은 각도. 한 박에 한 칸씩 오른다(`climb(박)`). 사다리가 달로 향한다 |
-| 27 | a2-vertigo | B(22) → beat(90) | hope | cut | POV 아래. 까마득한 도시, 깊이로 줄어드는 발판. 약한 돌리 줌 |
-| 28 | a2-wobble | beat(90) → B(23) | hope | cut | MS 휘청, 난간을 꽉 잡는다. 발판 나방들이 밝아져 받쳐 준다. 숨을 고른다 |
+| 27 | a2-vertigo | B(22) → beat(92) | hope | cut | POV 아래. 까마득한 도시, 깊이로 줄어드는 발판. 약한 돌리 줌 |
+| 28 | a2-wobble | beat(92) → B(23) | hope | cut | MS 휘청, 난간을 꽉 잡는다. 발판 나방들이 밝아져 받쳐 준다. 숨을 고른다 |
 | 29 | a2-higher | B(23) → B(24) | hope | cut | WS 더 높이. 사다리가 아래로 아득하다. 천천히 뒤로 빠진다 |
 | 30 | a2-lookback | B(24) → B(26) | quiet | dip | 긴 테이크(5.5초). 소리가 빠진다. 사다리 위에서 어깨 너머로 돌아본다. 저 아래 자기 방 창 하나가 폰 빛으로 차갑다. 그 창으로 천천히 밀어 들어감 |
 | 31 | a2-pocket | B(26) → B(27) | quiet | cut | CU 손. 폰(차가운 빛)을 보다가 끄고 주머니에 넣는다. 차가운 빛이 꺼진다 |
@@ -102,8 +102,8 @@ import { P, pose, lerpPose, poseSeq, gait, climb, STRIDE } from "../kid/pose";
 | 35 | a3-liftoff | beat(120) → B(30) | chorus | cut | 실이 아이를 휙 끌어 올린다(늘어남). 사다리가 나방 소용돌이로 풀린다 |
 | 36 | a3-flyover | B(30) → B(32) | chorus | cut | 긴 비행(2마디). 옆에서 따라가는 카메라, 도시 층이 휙휙 지나가는 시차, 창 불빛 보케, 나방 꼬리 |
 | 37 | a3-windows | B(32) → B(33) | chorus | cut | 빠르게 스치는 창의 벽. 창마다 폰 빛에 갇힌 외로운 실루엣 |
-| 38 | a3-whip | B(33) → beat(134) | chorus | whip | 휙 패닝이 한 창에서 멈춘다: 분홍 방울의 친구 |
-| 39 | a3-friend | beat(134) → B(34) | chorus | cut | CU 창 안의 친구. 폰 빛에 차가운 얼굴, 혼자. 2번 컷의 거울 구도 |
+| 38 | a3-whip | B(33) → beat(136) | chorus | whip | 휙 패닝이 한 창에서 멈춘다: 분홍 방울의 친구 |
+| 39 | a3-friend | beat(136) → B(34) | chorus | cut | CU 창 안의 친구. 폰 빛에 차가운 얼굴, 혼자. 2번 컷의 거울 구도 |
 | 40 | a3-tap | B(34) → B(35) | chorus | cut | 나방이 유리를 두드린다(4번의 거울). 친구가 고개를 든다. 창밖에 실을 잡고 떠 있는 아이가 손을 흔든다 |
 | 41 | a3-hesitate | B(35) → B(36) | chorus | cut | 창이 열린다. 친구는 폰(차가운 빛)과 내민 손(금빛)을 번갈아 본다. 얼굴 반은 차갑고 반은 따뜻하다 |
 | 42 | a3-hands | B(36) → B(38) | chorus | cut | ECU 두 손이 다가간다(2마디, 감정의 정점이라 길게). B(37)에 손끝이 닿고 금빛이 터지며 손이 맞잡힌다 |
@@ -118,22 +118,22 @@ import { P, pose, lerpPose, poseSeq, gait, climb, STRIDE } from "../kid/pose";
 | --- | --- | --- | --- | --- | --- |
 | 47 | a4-sit | B(44) → beat(182) | silver | cross | WS 구름 끝에 나란히 걸터앉아 다리를 흔든다(`P.sitEdge`). 은빛, 고요 |
 | 48 | a4-peek | beat(182) → B(46) | silver | cut | POV 구름 틈 아래로 좁은 길 하나를 사이에 두고 마주 보는 두 창 |
-| 49 | a4-realize | B(46) → beat(190) | silver | cut | MS 서로를 본다. 이웃이었다. 웃음(달빛 얼굴), 몸이 튄다 |
+| 49 | a4-realize | B(46) → beat(190) | silver | cut | MS 구름 틈의 양쪽 끝에 마주 앉아(48번의 마주 보는 창을 되풀이) 서로를 본다. 이웃이었다. 웃음(달빛 얼굴), 몸이 튄다 |
 | 50 | a4-hint | beat(190) → B(48) | silver→storm | cut | 먼 지평선에 번개가 깜빡인다. 바람이 인다. 색이 빠지기 시작한다 |
 | 51 | a4-hop | B(48) → B(50) | storm | flash | 옆 트래킹. 구름 징검다리를 함께 뛴다(착지마다 박). 오른쪽에서 검은 구름이 밀려온다 |
-| 52 | a4-strike | B(50) → beat(202) | storm | cut | 번개가 내리친다. 하얀 번쩍임, 나방이 사방으로 흩어진다 |
-| 53 | a4-slip | beat(202) → B(51) | storm | cut | CU 맞잡은 손가락이 미끄러져 떨어진다(느리게) |
+| 52 | a4-strike | B(50) → beat(204) | storm | cut | 번개가 내리친다. 하얀 번쩍임, 나방이 사방으로 흩어진다 |
+| 53 | a4-slip | beat(204) → B(51) | storm | cut | CU 맞잡은 손가락이 미끄러져 떨어진다(느리게) |
 | 54 | a4-fall | B(51) → B(52) | storm | cut | 위에서 내려다봄. 친구가 검은 구름 속으로 작아지며 떨어진다. 위에서 손을 뻗는 아이 |
-| 55 | a4-dive | beat(210) 직전 B(52) → beat(210) | storm | cut | 머리부터 다이빙(`P.dive`). 비 줄기, 빠른 카메라 |
-| 56 | a4-catch | beat(210) → B(53) | storm | cut | CU 박에 손을 잡는다(`Burst`). 둘이 함께 굴러 떨어진다 |
+| 55 | a4-dive | B(52) → beat(212) | storm | cut | 머리부터 다이빙(`P.dive`). 비 줄기, 빠른 카메라 |
+| 56 | a4-catch | beat(212) → B(53) | storm | cut | ECU 박(212)에 손을 잡는다(`Burst`). 박(213)에 컷 안에서 미디엄으로 바뀌어 둘이 함께 굴러 떨어진다 |
 | 57 | a4-dark | B(53) → B(54) | storm | dip | 폭풍 속 거의 어둠. 둘이 폰을 켠다. 작은 차가운 빛 두 개만 얼굴을 비춘다. 비 |
 
 ### 5막 · 구조, 달, 새벽 (2:30–3:00) — `act5.tsx`
 
 | # | id | 시작 → 끝 | 키 | 들어옴 | 화면 |
 | --- | --- | --- | --- | --- | --- |
-| 58 | a5-call | B(54) → beat(222) | rescue | cut | EWS 어두운 폭풍 한가운데 차가운 점 둘. 멀리서 금빛 점들이 그 빛을 향해 돈다 |
-| 59 | a5-converge | beat(222) → B(55) | rescue | cut | 사방에서 나방 줄기가 빠르게 모여든다(꼬리) |
+| 58 | a5-call | B(54) → beat(220) | rescue | cut | EWS 어두운 폭풍 한가운데 차가운 점 둘. 멀리서 금빛 점들이 그 빛을 향해 돈다 |
+| 59 | a5-converge | beat(220) → B(55) | rescue | cut | 사방에서 나방 줄기가 빠르게 모여든다(꼬리) |
 | 60 | a5-cradle | B(55) → B(56) | rescue | cut | 나방이 두 아이 아래에 빛나는 요람을 만들어 받는다. 얼굴이 금빛으로 덮인다 |
 | 61 | a5-ascent | B(56) → B(57) | rescue | cut | 폭풍을 뚫고 빠르게 오른다. 비가 아래로 스치고 번개, 빛이 커진다 |
 | 62 | a5-break | B(57) → B(58) | clear | white | 폭풍 꼭대기를 뚫고 맑은 하늘. 거대한 달 |
