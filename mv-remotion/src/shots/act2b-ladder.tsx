@@ -10,7 +10,7 @@
 import React from "react";
 import { useUid } from "../lib/camera";
 import { K } from "../lib/palette";
-import { beat, beatAt } from "../lib/song";
+import { beat } from "../lib/song";
 import { clamp, ease, mix, mixhex, n2, rnd } from "../lib/math";
 import { toward } from "../lib/moths";
 import { Glow } from "../lib/sky";
@@ -560,8 +560,8 @@ export const City3D: React.FC<{ c: Cam3; k: CityK; t: number; fogD?: number; myW
           g.push(<path key={`n${nx}${nz}${r}_${cc}`} d={`M${a1.x},${a1.y}L${a2.x},${a2.y}L${a3.x},${a3.y}L${a4.x},${a4.y}Z`} fill={cold ? k.cold : rv < .05 ? "#fff0d0" : k.win} opacity={(.55 + rnd(b.seed + 3, r * 40 + cc) * .45) * fl * (1 - fw * .7)} />);
         }
       } else if (hpx > 4) {
-        // 작은 벽: 불 켜진 점 몇 개
-        for (let j = 0; j < 3; j++) {
+        // 작은 벽(또는 먼 고리): 불 켜진 점 몇 개
+        for (let j = 0; j < (isFar ? 7 : 3); j++) {
           if (rnd(b.seed + nx * 7 + nz, j) > .45) continue;
           const u = rnd(b.seed + 21, j * 2 + nx), v = .2 + rnd(b.seed + 23, j + nz) * .7;
           const x = mix(mix(q[0].x, q[1].x, u), mix(q[3].x, q[2].x, u), v), y = mix(mix(q[0].y, q[1].y, u), mix(q[3].y, q[2].y, u), v);

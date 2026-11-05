@@ -11,14 +11,14 @@ import { K, type Key } from "../lib/palette";
 import { B, beat, beatAt } from "../lib/song";
 import { clamp, ease, handheld, kf, lin, mix, mixc, mixhex, n2, rnd, smooth, springStep } from "../lib/math";
 import { CityLayers, SkyBackdrop } from "../lib/sets";
-import { Glow, Moon, GodRays, Wisp, Stars, SkyFill } from "../lib/sky";
+import { Glow, Moon, Wisp, Stars, SkyFill } from "../lib/sky";
 import { Antenna, Parapet, WaterTank, buildings } from "../lib/city";
 import { Moths, type M } from "../lib/moths";
 import { Kid, ikArm, skeleton } from "../kid/rig";
 import { P, lerpPose, pose } from "../kid/pose";
 import {
-  CORE, GOLD, HALF, Ladder, MOON_DIR, MY_WIN, RUNG, S_M, WHITE, City3D, Ground3D, add3, bodySteps, climbPose, kidFrame3, ladder2d, ladder3, landFront, landGather, lookAt, p3, pDir, rayDir, rung3,
-  type Cam3, type RF, type V2,
+  CORE, GOLD, Ladder, MOON_DIR, MY_WIN, S_M, City3D, Ground3D, add3, bodySteps, climbPose, kidFrame3, ladder2d, ladder3, landFront, landGather, lookAt, p3, pDir, rayDir, rung3,
+  type Cam3, type V2,
 } from "./act2b-ladder";
 import type { Shot } from "./types";
 
@@ -496,7 +496,7 @@ export const act2b: Shot[] = [
       const land = landFront(L0 + 16, T29 - .4, 2.6);
       const moon = pDir(cam3, MOON_DIR.x, MOON_DIR.y, MOON_DIR.z);
       // 사다리를 타고 저 아래에서 올라오는 나방
-      const rising = (tt: number): M[] => Array.from({ length: 70 }, (_, i) => {
+      const rising = (tt: number): M[] => Array.from({ length: 110 }, (_, i) => {
         const u = ((rnd(290, i) + tt * (.05 + rnd(291, i) * .04)) % 1);
         const ii = mix(30, Lnow + 18, Math.pow(u, .5));
         const fr = lad(ii);
@@ -508,7 +508,7 @@ export const act2b: Shot[] = [
           <Layer d={Infinity} blur={1.2}>
             <Ground3D c={cam3} k={k} />
             <Stars seed={29} t={t} alpha={.8} y1={300} />
-            <City3D c={cam3} k={k} t={t} />
+            <City3D c={cam3} k={k} t={t} fogD={800} />
           </Layer>
           <Layer d={Infinity} blend="screen">
             <Glow x={Math.min(moon.x, 2200)} y={Math.max(moon.y, -200)} r={900} color={k.moon} opacity={.35} />
@@ -740,8 +740,3 @@ const lerpV = (a: V2, b: V2, w: number): V2 => ({ x: mix(a.x, b.x, w), y: mix(a.
 const sneaker = (L: number, w: number) => `M${-L * .5},0C${-L * .5},${-w * .42} ${-L * .25},${-w * .5} 0,${-w * .5}C${L * .3},${-w * .52} ${L * .5},${-w * .4} ${L * .5},0C${L * .5},${w * .45} ${L * .3},${w * .5} 0,${w * .48}C${-L * .25},${w * .46} ${-L * .5},${w * .4} ${-L * .5},0Z`;
 const norm2 = (x: number, y: number) => { const l = Math.hypot(x, y) || 1; return { x: x / l, y: y / l }; };
 const norm3 = (x: number, y: number, z: number) => { const l = Math.hypot(x, y, z) || 1; return { x: x / l, y: y / l, z: z / l }; };
-const ikArmTo = ikArm;
-
-// 아직 쓰지 않은 키트(다음 컷에서 쓴다)
-void [mixc, GodRays, HALF, RUNG, WHITE, sizeOf];
-function sizeOf(f: RF) { return f.k; }
